@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --primary-color: #1A1A1A;
+    --bg: #FFFFFF;
+    --surface: #F5F5F3;
+    --text-primary: #1A1A1A;
+    --text-secondary: #6B6B6B;
+    --text-tertiary: #ADADAD;
+    --border: #E5E5E5;
+    --border-strong: #CCCCCC;
+    --origin: #E24B4A;
+    --insertion: #378ADD;
+    --success: #639922;
+    --tight: #E24B4A;
+    --weak: #378ADD;
+    --progress: #E24B4A;
+    --highlight: #FFE066;
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
+    --r-xl: 20px;
+
+    /* shadcn compatibility */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 0 0% 10%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 10%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 42%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 10%;
+    --destructive: 1 73% 59%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 44%;
+    --radius: 0.75rem;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    font-family: 'Pretendard', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #F5F5F3;
+    color: #1A1A1A;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .touch-scroll {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .phone-safe-area {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .text-origin { color: #E24B4A; }
+  .text-insertion { color: #378ADD; }
+  .text-success { color: #639922; }
+  .bg-origin { background-color: #E24B4A; }
+  .bg-insertion { background-color: #378ADD; }
+  .bg-success { background-color: #639922; }
+  .bg-surface { background-color: #F5F5F3; }
+  .border-custom { border-color: #E5E5E5; }
+  .text-secondary-custom { color: #6B6B6B; }
+  .text-tertiary { color: #ADADAD; }
+  .highlight { background-color: #FFE066; }
+}
