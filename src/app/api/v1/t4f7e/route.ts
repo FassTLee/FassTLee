@@ -2,11 +2,18 @@
 // Rate limit: 분당 10회 (middleware에서 처리)
 
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { encrypt } from '@/lib/crypto'
+
+const DB_UNAVAILABLE = NextResponse.json(
+  { error: 'Database not configured' },
+  { status: 503 }
+)
 
 // POST: 랜딩 테스트 결과 저장
 export async function POST(req: NextRequest) {
+  if (!isSupabaseConfigured) return DB_UNAVAILABLE
+
   const body = await req.json().catch(() => null)
   if (!body) {
     return NextResponse.json({ error: 'Bad Request' }, { status: 400 })

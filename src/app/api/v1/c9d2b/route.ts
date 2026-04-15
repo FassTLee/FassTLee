@@ -1,13 +1,20 @@
-// /api/v1/c9d2b → Content/Gamification API (난독화)
+// /api/v1/c9d2b → Gamification API (난독화)
 // Rate limit: 분당 60회 (middleware에서 처리)
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { supabase } from '@/lib/supabase'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+
+const DB_UNAVAILABLE = NextResponse.json(
+  { error: 'Database not configured' },
+  { status: 503 }
+)
 
 // GET: 게이미피케이션 현황 조회
 export async function GET(_req: NextRequest) {
+  if (!isSupabaseConfigured) return DB_UNAVAILABLE
+
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -30,6 +37,8 @@ export async function GET(_req: NextRequest) {
 
 // PATCH: XP / 스트릭 업데이트
 export async function PATCH(req: NextRequest) {
+  if (!isSupabaseConfigured) return DB_UNAVAILABLE
+
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

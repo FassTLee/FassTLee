@@ -4,10 +4,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { supabase } from '@/lib/supabase'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+
+const DB_UNAVAILABLE = NextResponse.json(
+  { error: 'Database not configured' },
+  { status: 503 }
+)
 
 // GET: 학습 진도 조회
 export async function GET(req: NextRequest) {
+  if (!isSupabaseConfigured) return DB_UNAVAILABLE
+
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -31,6 +38,8 @@ export async function GET(req: NextRequest) {
 
 // POST: 학습 진도 업데이트
 export async function POST(req: NextRequest) {
+  if (!isSupabaseConfigured) return DB_UNAVAILABLE
+
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

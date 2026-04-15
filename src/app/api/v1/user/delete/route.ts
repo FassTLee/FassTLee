@@ -4,9 +4,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { supabase } from '@/lib/supabase'
+import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+
+const DB_UNAVAILABLE = NextResponse.json(
+  { error: 'Database not configured' },
+  { status: 503 }
+)
 
 export async function DELETE(_req: NextRequest) {
+  if (!isSupabaseConfigured) return DB_UNAVAILABLE
+
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
