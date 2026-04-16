@@ -73,7 +73,7 @@ export default function LandingPage() {
           <p className="text-[16px] text-white/70 leading-relaxed mb-8">
             기초 해부학부터 컨디셔닝 실습까지,<br />
             게이미피케이션으로 즐겁게 배우는<br />
-            <strong className="text-white">FassT Education</strong>
+            <strong className="text-white">Kinepia Education</strong>
           </p>
 
           {/* Stats */}

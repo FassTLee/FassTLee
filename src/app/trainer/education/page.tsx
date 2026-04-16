@@ -87,7 +87,7 @@ export default function EducationPage() {
       <div className="flex flex-col bg-[#F5F5F3]" style={{ minHeight: '812px' }}>
         <StatusBar />
         <Header
-          title="FassT Education"
+          title="Kinepia Education"
           leftAction={<span />}
           rightAction={
             <button

@@ -3,8 +3,8 @@ import type { Metadata } from 'next'
 import { AppFooter } from '@/components/common/AppFooter'
 
 export const metadata: Metadata = {
-  title: '개인정보처리방침 | FassT',
-  description: 'FassT 개인정보처리방침 — 수집 항목, 이용 목적, 보유 기간 및 사용자 권리',
+  title: '개인정보처리방침 | Kinepia',
+  description: 'Kinepia 개인정보처리방침 — 수집 항목, 이용 목적, 보유 기간 및 사용자 권리',
 }
 
 const SECTIONS = [
@@ -99,7 +99,7 @@ const SECTIONS = [
       },
       {
         sub: '요청 방법',
-        items: ['이메일: privacy@fasst.io', '앱 내: 설정 > 개인정보 > 데이터 삭제 요청'],
+        items: ['이메일: privacy@kinepia.io', '앱 내: 설정 > 개인정보 > 데이터 삭제 요청'],
       },
     ],
   },
@@ -131,7 +131,7 @@ export default function PrivacyPage() {
             href="/"
             className="text-[13px] text-white/50 hover:text-white/80 transition-colors mb-6 block"
           >
-            ← FassT 홈
+            ← Kinepia 홈
           </Link>
           <h1 className="text-[28px] font-black mb-2">개인정보처리방침</h1>
           <p className="text-[14px] text-white/60">시행일: 2026년 4월 14일</p>
@@ -142,7 +142,7 @@ export default function PrivacyPage() {
       <div className="bg-[#F5F5F3] border-b border-[#E5E5E5] px-6 py-6">
         <div className="max-w-2xl mx-auto">
           <p className="text-[14px] text-[#6B6B6B] leading-relaxed">
-            FassT(이하 &ldquo;서비스&rdquo;)는 이용자의 개인정보를 중요하게 생각합니다.
+            Kinepia(이하 &ldquo;서비스&rdquo;)는 이용자의 개인정보를 중요하게 생각합니다.
             본 방침은 Google OAuth를 통해 수집되는 정보와 서비스 이용 중 생성되는
             학습 데이터의 처리 방법을 설명합니다.
           </p>
@@ -181,8 +181,8 @@ export default function PrivacyPage() {
           <section className="bg-[#F5F5F3] rounded-2xl p-6 border border-[#E5E5E5]">
             <h2 className="text-[18px] font-black text-[#1A1A1A] mb-3">개인정보 보호책임자</h2>
             <div className="space-y-1">
-              <p className="text-[14px] text-[#1A1A1A] font-medium">FassT 운영팀</p>
-              <p className="text-[13px] text-[#6B6B6B]">이메일: <a href="mailto:privacy@fasst.io" className="text-[#378ADD] hover:underline">privacy@fasst.io</a></p>
+              <p className="text-[14px] text-[#1A1A1A] font-medium">Kinepia 운영팀</p>
+              <p className="text-[13px] text-[#6B6B6B]">이메일: <a href="mailto:privacy@kinepia.io" className="text-[#378ADD] hover:underline">privacy@kinepia.io</a></p>
               <p className="text-[13px] text-[#6B6B6B]">처리 기간: 요청 수신 후 영업일 5일 이내</p>
             </div>
           </section>

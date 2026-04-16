@@ -90,7 +90,7 @@ export function AdBanner({
 
   // ─── Internal 모드 ─────────────────────────────────────────────
   if (!banner) {
-    // 배너 없을 때 — FassT 자체 프로모션
+    // 배너 없을 때 — Kinepia 자체 프로모션
     return (
       <button
         onClick={() => window.open('/pricing', '_self')}
@@ -102,7 +102,7 @@ export function AdBanner({
             <span className="text-[18px]">⚡</span>
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[13px] font-bold text-[#1A1A1A]">FassT 프리미엄 업그레이드</div>
+            <div className="text-[13px] font-bold text-[#1A1A1A]">Kinepia 프리미엄 업그레이드</div>
             <div className="text-[11px] text-[#6B6B6B]">광고 없이 모든 강의를 무제한으로</div>
           </div>
           <ExternalLink size={14} className="text-[#ADADAD] flex-shrink-0" />

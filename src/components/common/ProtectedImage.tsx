@@ -24,7 +24,7 @@ export function ProtectedImage({
   src,
   alt,
   caption,
-  watermark = 'FassT © 2026',
+  watermark = 'Kinepia © 2026',
   className = '',
   width,
   height,

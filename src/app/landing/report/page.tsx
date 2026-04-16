@@ -134,7 +134,7 @@ export default function LandingReportPage() {
               ))}
             </div>
             <div className="mt-3 text-[12px] text-[#6B6B6B] bg-white rounded-xl p-3 border border-[#FFE066]/50">
-              💡 FassT Education에서 이 부분을 집중 학습하면 빠르게 보완할 수 있습니다!
+              💡 Kinepia Education에서 이 부분을 집중 학습하면 빠르게 보완할 수 있습니다!
             </div>
           </div>
         )}

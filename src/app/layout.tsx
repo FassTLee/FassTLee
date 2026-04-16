@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'FassT',
-  description: 'Fitness + Study + Session + Training — 트레이너 전문 교육 플랫폼',
-  applicationName: 'FassT',
+  title: 'Kinepia',
+  description: '움직임의 원리를 배우는 지식 플랫폼',
+  applicationName: 'Kinepia',
 }
 
 export const viewport = {

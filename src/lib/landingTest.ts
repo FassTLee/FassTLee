@@ -106,19 +106,19 @@ export function getResultMessage(percentage: number): {
 } {
   if (percentage >= 80) return {
     title: '훌륭한 해부학 지식!',
-    subtitle: 'FassT로 더 깊이 학습해 Professional 트레이너로 성장하세요.',
+    subtitle: 'Kinepia로 더 깊이 학습해 Professional 트레이너로 성장하세요.',
     emoji: '🏆',
     color: '#639922',
   }
   if (percentage >= 60) return {
     title: '좋은 출발점!',
-    subtitle: '취약한 부분을 FassT Education으로 보완하면 실력이 크게 향상됩니다.',
+    subtitle: '취약한 부분을 Kinepia Education으로 보완하면 실력이 크게 향상됩니다.',
     emoji: '💪',
     color: '#378ADD',
   }
   return {
     title: '성장 가능성이 큽니다!',
-    subtitle: 'FassT의 체계적인 커리큘럼으로 해부학부터 차근차근 시작해보세요.',
+    subtitle: 'Kinepia의 체계적인 커리큘럼으로 해부학부터 차근차근 시작해보세요.',
     emoji: '📖',
     color: '#E24B4A',
   }

@@ -19,10 +19,10 @@ export function AppFooter({ dark = false }: AppFooterProps) {
       <div className="max-w-md mx-auto">
         {/* Brand */}
         <div className={`text-[15px] font-black mb-0.5 ${dark ? 'text-white' : 'text-[#1A1A1A]'}`}>
-          FassT
+          Kinepia
         </div>
         <div className={`text-[11px] mb-4 ${textColor}`}>
-          Fitness · Study · Session · Training
+          움직임의 원리를 배우는 지식 플랫폼
         </div>
 
         {/* Links */}
@@ -40,7 +40,7 @@ export function AppFooter({ dark = false }: AppFooterProps) {
             이용약관
           </Link>
           <a
-            href="mailto:privacy@fasst.io"
+            href="mailto:privacy@kinepia.io"
             className={`text-[12px] transition-colors ${linkColor}`}
           >
             문의
@@ -49,7 +49,7 @@ export function AppFooter({ dark = false }: AppFooterProps) {
 
         {/* Copyright + Version */}
         <div className={`flex items-center justify-between text-[10px] ${textColor}`}>
-          <span>© 2026 FassT. All rights reserved.</span>
+          <span>© 2026 Kinepia. All rights reserved.</span>
           <span>v0.1.0</span>
         </div>
       </div>

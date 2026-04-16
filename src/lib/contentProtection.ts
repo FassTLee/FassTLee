@@ -62,7 +62,7 @@ export function initContentProtection() {
  */
 export async function applyWatermark(
   imageUrl: string,
-  watermarkText: string = 'FassT © 2026'
+  watermarkText: string = 'Kinepia © 2026'
 ): Promise<string> {
   return new Promise((resolve) => {
     const img = new Image()

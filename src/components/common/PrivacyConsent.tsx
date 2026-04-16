@@ -21,7 +21,7 @@ const CONSENT_ITEMS: ConsentItem[] = [
     id: 'service',
     label: '서비스 이용약관 동의',
     required: true,
-    detail: 'FassT Education 서비스 이용을 위한 기본 약관입니다. 서비스 제공, 콘텐츠 학습, 계정 관리 등에 관한 내용을 포함합니다.',
+    detail: 'Kinepia 서비스 이용을 위한 기본 약관입니다. 서비스 제공, 콘텐츠 학습, 계정 관리 등에 관한 내용을 포함합니다.',
   },
   {
     id: 'privacy',
@@ -74,7 +74,7 @@ export function PrivacyConsent({ onAccept, onDecline, mode = 'modal' }: PrivacyC
             <h2 className="text-[18px] font-black text-[#1A1A1A]">서비스 이용 동의</h2>
           </div>
           <p className="text-[12px] text-[#6B6B6B]">
-            FassT Education 이용을 위한 약관에 동의해 주세요.
+            Kinepia 이용을 위한 약관에 동의해 주세요.
           </p>
         </div>
 

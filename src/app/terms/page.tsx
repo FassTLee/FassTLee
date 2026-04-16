@@ -3,20 +3,20 @@ import type { Metadata } from 'next'
 import { AppFooter } from '@/components/common/AppFooter'
 
 export const metadata: Metadata = {
-  title: '이용약관 | FassT',
-  description: 'FassT 서비스 이용약관',
+  title: '이용약관 | Kinepia',
+  description: 'Kinepia 서비스 이용약관',
 }
 
 const TERMS = [
   {
     num: '1',
     title: '목적',
-    body: `본 약관은 FassT(이하 "서비스")가 제공하는 트레이너 전문 교육 플랫폼 서비스의 이용 조건 및 절차, 이용자와 서비스 간의 권리·의무·책임 사항을 규정함을 목적으로 합니다.`,
+    body: `본 약관은 Kinepia(이하 "서비스")가 제공하는 트레이너 전문 교육 플랫폼 서비스의 이용 조건 및 절차, 이용자와 서비스 간의 권리·의무·책임 사항을 규정함을 목적으로 합니다.`,
   },
   {
     num: '2',
     title: '정의',
-    body: `• 서비스: FassT가 제공하는 모든 교육 콘텐츠, 게이미피케이션, 커뮤니티 기능을 포함합니다.
+    body: `• 서비스: Kinepia가 제공하는 모든 교육 콘텐츠, 게이미피케이션, 커뮤니티 기능을 포함합니다.
 • 이용자: 본 약관에 동의하고 서비스를 이용하는 자.
 • 콘텐츠: 서비스 내 강의, 레슨, 테스트, 이미지, 텍스트 등 모든 학습 자료.`,
   },
@@ -37,7 +37,7 @@ const TERMS = [
   {
     num: '5',
     title: '지적재산권',
-    body: `서비스 내 모든 콘텐츠(해부학 이미지, 강의 텍스트, 디자인 등)의 저작권은 FassT에 귀속됩니다. 이용자는 개인 학습 목적으로만 콘텐츠를 열람할 수 있으며, 무단 복제·배포·수정·상업적 이용을 금합니다.`,
+    body: `서비스 내 모든 콘텐츠(해부학 이미지, 강의 텍스트, 디자인 등)의 저작권은 Kinepia에 귀속됩니다. 이용자는 개인 학습 목적으로만 콘텐츠를 열람할 수 있으며, 무단 복제·배포·수정·상업적 이용을 금합니다.`,
   },
   {
     num: '6',
@@ -62,7 +62,7 @@ const TERMS = [
   {
     num: '9',
     title: '분쟁 해결',
-    body: `본 약관과 관련한 분쟁은 대한민국 법을 준거법으로 하며, 서울중앙지방법원을 제1심 전속 관할 법원으로 합니다. 분쟁 발생 시 먼저 이메일(privacy@fasst.io)로 문의해 주세요.`,
+    body: `본 약관과 관련한 분쟁은 대한민국 법을 준거법으로 하며, 서울중앙지방법원을 제1심 전속 관할 법원으로 합니다. 분쟁 발생 시 먼저 이메일(privacy@kinepia.io)로 문의해 주세요.`,
   },
 ]
 
@@ -76,7 +76,7 @@ export default function TermsPage() {
             href="/"
             className="text-[13px] text-white/50 hover:text-white/80 transition-colors mb-6 block"
           >
-            ← FassT 홈
+            ← Kinepia 홈
           </Link>
           <h1 className="text-[28px] font-black mb-2">이용약관</h1>
           <p className="text-[14px] text-white/60">시행일: 2026년 4월 14일</p>
@@ -110,7 +110,7 @@ export default function TermsPage() {
           <div className="bg-[#F5F5F3] rounded-2xl p-5 border border-[#E5E5E5]">
             <p className="text-[13px] text-[#6B6B6B]">
               공고일: 2026년 4월 7일 | 시행일: 2026년 4월 14일<br />
-              FassT 운영팀 · <a href="mailto:privacy@fasst.io" className="text-[#378ADD] hover:underline">privacy@fasst.io</a>
+              Kinepia 운영팀 · <a href="mailto:privacy@kinepia.io" className="text-[#378ADD] hover:underline">privacy@kinepia.io</a>
             </p>
           </div>
 

@@ -7,7 +7,7 @@ import { NextResponse } from 'next/server'
 const SCHEMA_META = {
   version: '2.0.0',
   updated: '2026-04-14',
-  app: 'FassT',
+  app: 'Kinepia',
   tables: [
     // ─── 기존 테이블 ────────────────────────────────────────────
     {
