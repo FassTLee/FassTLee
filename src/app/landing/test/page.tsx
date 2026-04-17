@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import { ChevronLeft, ChevronRight, CheckCircle2, Circle } from 'lucide-react'
 import { LANDING_QUESTIONS, evaluateTest } from '@/lib/landingTest'
 import { ImagePlaceholder } from '@/components/common'
@@ -49,12 +50,15 @@ export default function LandingTestPage() {
   }
 
   const handleGoogleLogin = () => {
-    // Mock Google login
-    setUser({
-      name: '박트레이너',
-      email: 'trainer@fitdoor.com',
-      avatar: 'P',
-    })
+    signIn('google', { callbackUrl: '/onboarding' })
+  }
+
+  const handleKakaoLogin = () => {
+    signIn('kakao', { callbackUrl: '/onboarding' })
+  }
+
+  const handleGuestStart = () => {
+    setUser({ name: '익명 사용자', email: '', avatar: '?' })
     setStep('quiz')
   }
 
@@ -109,7 +113,7 @@ export default function LandingTestPage() {
     )
   }
 
-  // ─── GOOGLE LOGIN ─────────────────────────────────────────────
+  // ─── LOGIN ────────────────────────────────────────────────────
   if (step === 'login') {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center p-6">
@@ -124,14 +128,14 @@ export default function LandingTestPage() {
           <div className="bg-white rounded-3xl p-6 border border-[#E5E5E5] shadow-sm">
             <div className="text-center mb-8">
               <div className="text-[36px] mb-3">🔑</div>
-              <h2 className="text-[20px] font-black text-[#1A1A1A] mb-2">1초 구글 로그인</h2>
+              <h2 className="text-[20px] font-black text-[#1A1A1A] mb-2">간편 로그인</h2>
               <p className="text-[13px] text-[#6B6B6B]">
                 결과를 저장하고 맞춤 추천을 받으려면<br />
-                구글 계정이 필요합니다
+                로그인이 필요합니다
               </p>
             </div>
 
-            {/* Google OAuth button */}
+            {/* Google 버튼 */}
             <button
               onClick={handleGoogleLogin}
               className="w-full flex items-center justify-center gap-3 py-4 bg-white border-2 border-[#E5E5E5] rounded-2xl text-[15px] font-semibold text-[#1A1A1A] hover:bg-[#F5F5F3] transition-colors shadow-sm mb-3"
@@ -142,7 +146,17 @@ export default function LandingTestPage() {
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
-              Google 계정으로 시작하기
+              구글로 시작하기
+            </button>
+
+            {/* 카카오 버튼 */}
+            <button
+              onClick={handleKakaoLogin}
+              className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl text-[15px] font-semibold text-[#000000] transition-opacity hover:opacity-90 mb-3"
+              style={{ backgroundColor: '#FEE500' }}
+            >
+              <span className="text-[18px] font-black leading-none">K</span>
+              카카오로 시작하기
             </button>
 
             <div className="flex items-center gap-3 my-4">
@@ -152,7 +166,7 @@ export default function LandingTestPage() {
             </div>
 
             <button
-              onClick={() => { setUser({ name: '익명 사용자', email: '', avatar: '?' }); setStep('quiz') }}
+              onClick={handleGuestStart}
               className="w-full py-3.5 border border-dashed border-[#CCCCCC] rounded-2xl text-[14px] text-[#6B6B6B]"
             >
               로그인 없이 체험하기

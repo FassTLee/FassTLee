@@ -12,8 +12,21 @@ create table if not exists profiles (
   name text,
   avatar_url text,
   role text check (role in ('trainer', 'member')) default 'trainer',
+  -- 온보딩 서베이
+  gender text,
+  age_group text,
+  occupation text,
+  occupation_custom text,
+  onboarding_completed boolean default false,
   created_at timestamptz default now()
 );
+
+-- 기존 테이블에 온보딩 컬럼 추가 (마이그레이션용)
+alter table profiles add column if not exists gender text;
+alter table profiles add column if not exists age_group text;
+alter table profiles add column if not exists occupation text;
+alter table profiles add column if not exists occupation_custom text;
+alter table profiles add column if not exists onboarding_completed boolean default false;
 
 create table if not exists learning_progress (
   id uuid primary key default gen_random_uuid(),

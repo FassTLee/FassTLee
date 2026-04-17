@@ -1,11 +1,46 @@
 import { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
+import type { OAuthConfig } from 'next-auth/providers/oauth'
 
 // ================================================================
-// NextAuth 설정 — Google OAuth 2.0
+// NextAuth 설정 — Google + Kakao OAuth
 // JWT 만료: 24시간 / Refresh: 7일
-// 최소 스코프: email + profile 만 요청
 // ================================================================
+
+// 카카오 커스텀 프로바이더 (NextAuth v4 내장 없음)
+interface KakaoProfile {
+  id: number
+  kakao_account?: {
+    email?: string
+    profile?: {
+      nickname?: string
+      profile_image_url?: string
+    }
+  }
+}
+
+const KakaoProvider: OAuthConfig<KakaoProfile> = {
+  id: 'kakao',
+  name: 'Kakao',
+  type: 'oauth',
+  authorization: {
+    url: 'https://kauth.kakao.com/oauth/authorize',
+    params: { scope: 'profile_nickname profile_image account_email' },
+  },
+  token: 'https://kauth.kakao.com/oauth/token',
+  userinfo: 'https://kapi.kakao.com/v2/user/me',
+  profile(profile: KakaoProfile) {
+    return {
+      id: String(profile.id),
+      name: profile.kakao_account?.profile?.nickname ?? null,
+      email: profile.kakao_account?.email ?? null,
+      image: profile.kakao_account?.profile?.profile_image_url ?? null,
+    }
+  },
+  clientId: process.env.KAKAO_CLIENT_ID!,
+  clientSecret: process.env.KAKAO_CLIENT_SECRET ?? '',
+  checks: ['state'],
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -14,7 +49,6 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
         params: {
-          // 최소 권한 스코프만 요청
           scope: 'openid email profile',
           prompt: 'consent',
           access_type: 'offline',
@@ -22,6 +56,7 @@ export const authOptions: NextAuthOptions = {
         },
       },
     }),
+    KakaoProvider,
   ],
 
   // JWT 전략 사용 (Supabase DB 세션 대신)
