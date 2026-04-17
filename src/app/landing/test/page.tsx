@@ -4,26 +4,54 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { ChevronLeft, ChevronRight, CheckCircle2, Circle } from 'lucide-react'
-import { LANDING_QUESTIONS, evaluateTest } from '@/lib/landingTest'
+import { LANDING_QUESTIONS, evaluateTest, type TestResult } from '@/lib/landingTest'
 import { ImagePlaceholder } from '@/components/common'
 
-type Step = 'intro' | 'login' | 'quiz' | 'submitting'
+// ================================================================
+// 랜딩 테스트 플로우: intro → quiz → save-result → /landing/report
+// ================================================================
 
-interface MockUser {
-  name: string
-  email: string
-  avatar: string
-}
+type Step = 'intro' | 'quiz' | 'save-result'
 
 const PROGRESS_LABELS = ['Q1', 'Q2', 'Q3', 'Q4', 'Q5']
+
+function getOrCreateGuestId(): string {
+  const key = 'kinepia_guest_id'
+  if (typeof window === 'undefined') return ''
+  let id = localStorage.getItem(key)
+  if (!id) {
+    id = crypto.randomUUID()
+    localStorage.setItem(key, id)
+  }
+  return id
+}
+
+async function saveGuestTestResult(guestId: string, result: TestResult) {
+  try {
+    await fetch('/api/v1/guest-test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        guest_id: guestId,
+        score: result.score,
+        total_questions: result.totalQuestions,
+        correct_answers: result.score,
+        level_result: String(result.percentage),
+        answers_json: result.answers,
+      }),
+    })
+  } catch {
+    // Supabase 미설정 시 무시
+  }
+}
 
 export default function LandingTestPage() {
   const router = useRouter()
   const [step, setStep] = useState<Step>('intro')
-  const [user, setUser] = useState<MockUser | null>(null)
   const [currentQ, setCurrentQ] = useState(0)
   const [answers, setAnswers] = useState<(number | null)[]>(Array(5).fill(null))
   const [showExplanation, setShowExplanation] = useState(false)
+  const [quizResult, setQuizResult] = useState<TestResult | null>(null)
 
   const q = LANDING_QUESTIONS[currentQ]
   const selectedAnswer = answers[currentQ]
@@ -42,32 +70,33 @@ export default function LandingTestPage() {
     if (currentQ < totalQ - 1) {
       setCurrentQ(currentQ + 1)
     } else {
-      // Submit
+      // 퀴즈 완료 → 결과 계산 → save-result 단계로
       const result = evaluateTest(answers)
-      sessionStorage.setItem('testResult', JSON.stringify({ ...result, user }))
-      router.push('/landing/report')
+      sessionStorage.setItem('testResult', JSON.stringify(result))
+
+      // 게스트 ID 생성 & 비동기 저장 (fire-and-forget)
+      const guestId = getOrCreateGuestId()
+      saveGuestTestResult(guestId, result)
+
+      setQuizResult(result)
+      setStep('save-result')
     }
   }
 
-  const handleGoogleLogin = () => {
-    signIn('google', { callbackUrl: '/onboarding' })
+  const handleLoginSave = (provider: 'google' | 'kakao') => {
+    // sessionStorage 결과는 OAuth 리다이렉트 후에도 같은 탭에서 유지됨
+    signIn(provider, { callbackUrl: '/landing/report' })
   }
 
-  const handleKakaoLogin = () => {
-    signIn('kakao', { callbackUrl: '/onboarding' })
+  const handleGuestView = () => {
+    router.push('/landing/report')
   }
 
-  const handleGuestStart = () => {
-    setUser({ name: '익명 사용자', email: '', avatar: '?' })
-    setStep('quiz')
-  }
-
-  // ─── INTRO ───────────────────────────────────────────────────
+  // ─── INTRO ──────────────────────────────────────────────────────
   if (step === 'intro') {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
-          {/* Back */}
           <button
             onClick={() => router.push('/landing')}
             className="flex items-center gap-1 text-[13px] text-[#6B6B6B] mb-6"
@@ -75,7 +104,6 @@ export default function LandingTestPage() {
             <ChevronLeft size={16} /> 랜딩으로
           </button>
 
-          {/* Card */}
           <div className="bg-white rounded-3xl p-6 border border-[#E5E5E5] shadow-sm">
             <div className="text-center mb-6">
               <div className="text-[40px] mb-3">🧠</div>
@@ -86,13 +114,12 @@ export default function LandingTestPage() {
               </p>
             </div>
 
-            {/* Test info */}
             <div className="space-y-2.5 mb-6">
               {[
                 { icon: '📝', text: '총 5문제 (이미지 선택 3 + 객관식 2)' },
                 { icon: '⏱', text: '약 3~5분 소요' },
                 { icon: '🎯', text: '취약 파트 분석 + 학습 경로 추천' },
-                { icon: '🔒', text: '구글 로그인 후 결과 저장' },
+                { icon: '💾', text: '테스트 후 로그인으로 결과 저장 가능' },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3 bg-[#F5F5F3] rounded-xl px-3 py-2.5">
                   <span className="text-[16px]">{item.icon}</span>
@@ -101,8 +128,9 @@ export default function LandingTestPage() {
               ))}
             </div>
 
+            {/* 로그인 없이 바로 시작 */}
             <button
-              onClick={() => setStep('login')}
+              onClick={() => setStep('quiz')}
               className="w-full py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold"
             >
               테스트 시작하기
@@ -113,51 +141,56 @@ export default function LandingTestPage() {
     )
   }
 
-  // ─── LOGIN ────────────────────────────────────────────────────
-  if (step === 'login') {
+  // ─── SAVE-RESULT ─────────────────────────────────────────────────
+  if (step === 'save-result' && quizResult) {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
-          <button
-            onClick={() => setStep('intro')}
-            className="flex items-center gap-1 text-[13px] text-[#6B6B6B] mb-6"
-          >
-            <ChevronLeft size={16} /> 뒤로
-          </button>
-
           <div className="bg-white rounded-3xl p-6 border border-[#E5E5E5] shadow-sm">
-            <div className="text-center mb-8">
-              <div className="text-[36px] mb-3">🔑</div>
-              <h2 className="text-[20px] font-black text-[#1A1A1A] mb-2">간편 로그인</h2>
-              <p className="text-[13px] text-[#6B6B6B]">
-                결과를 저장하고 맞춤 추천을 받으려면<br />
-                로그인이 필요합니다
-              </p>
+            {/* 헤더 */}
+            <div className="text-center mb-5">
+              <div className="text-[40px] mb-2">🎉</div>
+              <h2 className="text-[20px] font-black text-[#1A1A1A] mb-1">테스트 완료!</h2>
+              <p className="text-[14px] text-[#6B6B6B]">결과를 저장하시겠어요?</p>
             </div>
 
-            {/* Google 버튼 */}
-            <button
-              onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center gap-3 py-4 bg-white border-2 border-[#E5E5E5] rounded-2xl text-[15px] font-semibold text-[#1A1A1A] hover:bg-[#F5F5F3] transition-colors shadow-sm mb-3"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              구글로 시작하기
-            </button>
+            {/* 점수 미리보기 */}
+            <div className="bg-[#F5F5F3] rounded-2xl p-4 mb-5 text-center">
+              <div className="text-[40px] font-black text-[#1A1A1A]">
+                {quizResult.score}
+                <span className="text-[22px] font-bold text-[#ADADAD]"> / {quizResult.totalQuestions}</span>
+              </div>
+              <div className="text-[13px] text-[#6B6B6B] mt-1">{quizResult.percentage}% 정답률</div>
+            </div>
 
-            {/* 카카오 버튼 */}
-            <button
-              onClick={handleKakaoLogin}
-              className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl text-[15px] font-semibold text-[#000000] transition-opacity hover:opacity-90 mb-3"
-              style={{ backgroundColor: '#FEE500' }}
-            >
-              <span className="text-[18px] font-black leading-none">K</span>
-              카카오로 시작하기
-            </button>
+            {/* Option A — 로그인 저장 */}
+            <div className="space-y-2.5">
+              <button
+                onClick={() => handleLoginSave('google')}
+                className="w-full flex items-center justify-center gap-3 py-3.5 bg-white border-2 border-[#E5E5E5] rounded-2xl text-[14px] font-semibold text-[#1A1A1A] hover:bg-[#F5F5F3] transition-colors"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                구글로 저장하기
+              </button>
+
+              <button
+                onClick={() => handleLoginSave('kakao')}
+                className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl text-[14px] font-semibold text-[#000000] hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: '#FEE500' }}
+              >
+                <span className="text-[16px] font-black leading-none">K</span>
+                카카오로 저장하기
+              </button>
+
+              <p className="text-[11px] text-[#6B6B6B] text-center leading-relaxed">
+                로그인하면 결과가 내 계정에 저장되고<br />학습 이력을 계속 이어갈 수 있어요
+              </p>
+            </div>
 
             <div className="flex items-center gap-3 my-4">
               <div className="flex-1 h-px bg-[#E5E5E5]" />
@@ -165,16 +198,15 @@ export default function LandingTestPage() {
               <div className="flex-1 h-px bg-[#E5E5E5]" />
             </div>
 
+            {/* Option B — 비회원 결과 보기 */}
             <button
-              onClick={handleGuestStart}
-              className="w-full py-3.5 border border-dashed border-[#CCCCCC] rounded-2xl text-[14px] text-[#6B6B6B]"
+              onClick={handleGuestView}
+              className="w-full py-3.5 border border-dashed border-[#CCCCCC] rounded-2xl text-[14px] font-medium text-[#6B6B6B] hover:bg-[#F5F5F3] transition-colors"
             >
-              로그인 없이 체험하기
+              로그인 없이 결과 보기
             </button>
-
-            <p className="text-[10px] text-[#ADADAD] text-center mt-4 leading-relaxed">
-              로그인 시 이름·이메일만 수집합니다.<br />
-              개인정보는 안전하게 보호됩니다.
+            <p className="text-[10px] text-[#ADADAD] text-center mt-2">
+              이번 결과만 확인하고 싶다면
             </p>
           </div>
         </div>
@@ -182,7 +214,7 @@ export default function LandingTestPage() {
     )
   }
 
-  // ─── QUIZ ─────────────────────────────────────────────────────
+  // ─── QUIZ ────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#F5F5F3]">
       {/* Header */}
@@ -198,13 +230,9 @@ export default function LandingTestPage() {
             <div className="text-[14px] font-semibold text-[#1A1A1A]">
               {currentQ + 1} / {totalQ}
             </div>
-            {user && (
-              <div className="w-8 h-8 bg-[#E24B4A] rounded-full flex items-center justify-center text-white text-[12px] font-bold">
-                {user.avatar}
-              </div>
-            )}
+            <div className="w-8 h-8" />
           </div>
-          {/* Progress dots */}
+          {/* Progress bar */}
           <div className="flex gap-1.5">
             {PROGRESS_LABELS.map((_, i) => (
               <div
@@ -314,7 +342,7 @@ export default function LandingTestPage() {
           >
             {currentQ < totalQ - 1
               ? <><span>다음 문제</span><ChevronRight size={16} /></>
-              : <><span>결과 보기</span><ChevronRight size={16} /></>
+              : <><span>결과 저장 선택</span><ChevronRight size={16} /></>
             }
           </button>
         )}

@@ -137,8 +137,11 @@ export default function LandingPage() {
               onClick={() => router.push('/landing/test')}
               className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] hover:bg-[#CC3E3D] rounded-2xl text-[16px] font-bold text-white transition-colors shadow-lg shadow-[#E24B4A]/30"
             >
-              무료 체험 시작하기 <ChevronRight size={18} />
+              무료로 테스트 시작 <ChevronRight size={18} />
             </button>
+            <p className="text-[11px] text-white/40 text-center">
+              로그인 없이 바로 테스트 가능 · 결과 저장 시 로그인
+            </p>
 
             {/* 로그인 */}
             <div className="grid grid-cols-2 gap-2 pt-1">

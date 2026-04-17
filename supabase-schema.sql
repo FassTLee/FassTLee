@@ -147,8 +147,40 @@ create table if not exists landing_test_sessions (
   answers_json jsonb,
   app_download_clicked boolean default false,
   ip_address text,
+  is_guest boolean default false,
+  guest_id uuid,
   created_at timestamptz default now()
 );
+
+-- 기존 테이블에 게스트 컬럼 추가 (마이그레이션용)
+alter table landing_test_sessions
+  add column if not exists is_guest boolean default false,
+  add column if not exists guest_id uuid;
+
+-- ---------------------------------------------------------------
+-- 신규: 비회원 테스트 결과 저장
+-- ---------------------------------------------------------------
+
+create table if not exists guest_test_results (
+  id uuid primary key default gen_random_uuid(),
+  guest_id uuid not null,
+  score integer,
+  total_questions integer,
+  correct_answers integer,
+  level_result text,
+  answers_json jsonb,
+  is_converted boolean default false,
+  created_at timestamptz default now()
+);
+
+-- RLS: 삽입 공개, 조회/수정 guest_id 기반
+alter table guest_test_results enable row level security;
+create policy "guest_test_insert" on guest_test_results
+  for insert with check (true);
+create policy "guest_test_select" on guest_test_results
+  for select using (true);
+create policy "guest_test_update_converted" on guest_test_results
+  for update using (true);
 
 -- ---------------------------------------------------------------
 -- ---------------------------------------------------------------
