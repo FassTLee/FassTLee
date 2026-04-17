@@ -7,7 +7,7 @@ import { AppFooter } from '@/components/common/AppFooter'
 const FEATURES = [
   {
     icon: '🦴',
-    title: '기초 해부학',
+    title: 'Basic 해부학',
     desc: '근육·뼈대·관절의 기초를 탄탄히',
     color: '#378ADD',
   },
@@ -16,6 +16,12 @@ const FEATURES = [
     title: '기능 해부학',
     desc: '기시·정지·작용 마스터',
     color: '#639922',
+  },
+  {
+    icon: '🔄',
+    title: '교차증후군',
+    desc: 'Crossed Syndrome 원리와 교정',
+    color: '#F5A623',
   },
   {
     icon: '🤲',
@@ -31,6 +37,33 @@ const FEATURES = [
   },
 ]
 
+const LEARNING_PATH = [
+  {
+    step: 1,
+    title: '해부학',
+    subtitle: 'Anatomy',
+    desc: 'Basic 해부학 · 기능 해부학',
+    color: '#378ADD',
+    locked: false,
+  },
+  {
+    step: 2,
+    title: '교차증후군',
+    subtitle: 'Crossed Syndrome',
+    desc: '체형 분석 · 교정 원리',
+    color: '#F5A623',
+    locked: false,
+  },
+  {
+    step: 3,
+    title: '컨디셔닝 테크닉',
+    subtitle: 'Conditioning Technique',
+    desc: '마사지 · 스트레칭 실습',
+    color: '#E24B4A',
+    locked: true,
+  },
+]
+
 const GAMIFICATION_PREVIEW = [
   { icon: '🔥', label: '스트릭 시스템', desc: '매일 학습으로 연속 기록을 쌓으세요' },
   { icon: '⭐', label: 'XP & 레벨업', desc: '학습할수록 레벨이 올라갑니다' },
@@ -39,8 +72,7 @@ const GAMIFICATION_PREVIEW = [
 ]
 
 const STATS = [
-  { value: '4개', label: '학습 카테고리' },
-  { value: '9개', label: 'MVP 강의' },
+  { value: '5개', label: '학습 카테고리' },
   { value: '5~10분', label: '데일리 스냅' },
   { value: '무료', label: '체험 테스트' },
 ]
@@ -64,11 +96,11 @@ export default function LandingPage() {
         <div className="relative max-w-md mx-auto px-6 pt-16 pb-12">
           <div className="inline-flex items-center gap-2 bg-white/10 rounded-full px-3 py-1.5 text-[12px] font-medium mb-5">
             <Zap size={12} className="text-[#FFE066]" />
-            MVP 베타 오픈
+            베타 서비스 오픈
           </div>
           <h1 className="text-[36px] font-black leading-tight mb-4">
             트레이너를 위한<br />
-            <span className="text-[#E24B4A]">해부학 교육 플랫폼</span>
+            <span className="text-[#E24B4A]">전문 지식 플랫폼</span>
           </h1>
           <p className="text-[16px] text-white/70 leading-relaxed mb-8">
             기초 해부학부터 컨디셔닝 실습까지,<br />
@@ -77,7 +109,7 @@ export default function LandingPage() {
           </p>
 
           {/* Stats */}
-          <div className="grid grid-cols-4 gap-3 mb-8">
+          <div className="grid grid-cols-3 gap-3 mb-8">
             {STATS.map((s, i) => (
               <div key={i} className="text-center">
                 <div className="text-[18px] font-black text-white">{s.value}</div>
@@ -104,42 +136,70 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ─── Features ──────────────────────────────────────────── */}
+      {/* ─── Learning Path ─────────────────────────────────────── */}
       <section className="bg-[#F5F5F3] py-12 px-6">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
             <div className="text-[11px] font-bold text-[#E24B4A] uppercase tracking-widest mb-2">커리큘럼</div>
-            <h2 className="text-[24px] font-black text-[#1A1A1A]">4단계 학습 경로</h2>
+            <h2 className="text-[24px] font-black text-[#1A1A1A]">3단계 학습 경로</h2>
             <p className="text-[14px] text-[#6B6B6B] mt-2">기초부터 실습까지, 체계적인 잠금 해제 시스템</p>
           </div>
           <div className="space-y-3">
-            {FEATURES.map((f, i) => (
-              <div key={i} className="flex items-start gap-4 bg-white rounded-2xl p-4 border border-[#E5E5E5] shadow-sm">
+            {LEARNING_PATH.map((lp) => (
+              <div key={lp.step} className="flex items-start gap-4 bg-white rounded-2xl p-4 border border-[#E5E5E5] shadow-sm">
                 <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center text-[22px] flex-shrink-0"
-                  style={{ backgroundColor: f.color + '15' }}
+                  className="w-12 h-12 rounded-xl flex items-center justify-center text-[18px] font-black text-white flex-shrink-0"
+                  style={{ backgroundColor: lp.color }}
                 >
-                  {f.icon}
+                  {lp.step}
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
                     <span
                       className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full"
-                      style={{ backgroundColor: f.color }}
+                      style={{ backgroundColor: lp.color }}
                     >
-                      Step {i + 1}
+                      Step {lp.step}
                     </span>
-                    {i >= 2 && (
+                    {lp.locked && (
                       <span className="text-[10px] text-[#ADADAD] border border-dashed border-[#CCCCCC] px-2 py-0.5 rounded-full">
                         🔒 잠금 해제 필요
                       </span>
                     )}
                   </div>
-                  <div className="text-[15px] font-bold text-[#1A1A1A] mt-1">{f.title}</div>
-                  <div className="text-[12px] text-[#6B6B6B]">{f.desc}</div>
+                  <div className="text-[15px] font-bold text-[#1A1A1A]">{lp.title}</div>
+                  <div className="text-[11px] text-[#ADADAD] mb-0.5">{lp.subtitle}</div>
+                  <div className="text-[12px] text-[#6B6B6B]">{lp.desc}</div>
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* 5 Categories */}
+          <div className="mt-6">
+            <div className="text-[11px] font-bold text-[#6B6B6B] uppercase tracking-widest mb-3">학습 카테고리</div>
+            <div className="grid grid-cols-1 gap-2">
+              {FEATURES.map((f, i) => (
+                <div key={i} className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-[#E5E5E5]">
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-[16px] flex-shrink-0"
+                    style={{ backgroundColor: f.color + '15' }}
+                  >
+                    {f.icon}
+                  </div>
+                  <div>
+                    <div className="text-[13px] font-bold text-[#1A1A1A]">{f.title}</div>
+                    <div className="text-[11px] text-[#6B6B6B]">{f.desc}</div>
+                  </div>
+                  <div
+                    className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: f.color + '15', color: f.color }}
+                  >
+                    {i + 1}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -166,10 +226,11 @@ export default function LandingPage() {
             <div className="text-[12px] text-white/50 mb-2">레벨 구간</div>
             <div className="space-y-1.5">
               {[
-                { range: 'Lv.1~5', name: '📖 해부학 입문', color: '#378ADD' },
-                { range: 'Lv.6~10', name: '🎯 기능 해부학 탐험가', color: '#639922' },
-                { range: 'Lv.11~15', name: '🏆 컨디셔닝 전문가', color: '#9B59B6' },
-                { range: 'Lv.16+', name: '👑 마스터 트레이너', color: '#E24B4A' },
+                { range: 'Lv.1~5',   name: '📖 해부학 입문',        color: '#378ADD' },
+                { range: 'Lv.6~10',  name: '🎯 기능 해부학 탐험가', color: '#639922' },
+                { range: 'Lv.11~15', name: '🔍 체형 분석가',        color: '#F5A623' },
+                { range: 'Lv.16~20', name: '🏆 컨디셔닝 전문가',    color: '#9B59B6' },
+                { range: 'Lv.21+',   name: '👑 마스터 트레이너',    color: '#E24B4A' },
               ].map((l, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <span className="text-[11px] text-white/40 w-16 flex-shrink-0">{l.range}</span>
@@ -218,9 +279,13 @@ export default function LandingPage() {
           <h2 className="text-[26px] font-black text-white mb-3">
             지금 무료로 실력을 확인하세요
           </h2>
-          <p className="text-[14px] text-white/80 mb-7">
+          <p className="text-[14px] text-white/80 mb-3">
             5문제 테스트로 내 해부학 수준을 파악하고<br />
             맞춤형 학습 경로를 추천받으세요
+          </p>
+          <p className="text-[13px] text-white/70 mb-7 leading-relaxed">
+            테스트를 통해 본인의 수준을 확인하고<br />
+            적합한 단계부터 학습을 시작할 수 있습니다
           </p>
           <button
             onClick={() => router.push('/landing/test')}

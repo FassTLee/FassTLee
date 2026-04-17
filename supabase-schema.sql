@@ -154,22 +154,23 @@ create table if not exists subjects (
 );
 
 insert into subjects (name, phase, order_index) values
-  ('기초 해부학',      'mvp',    1),
+  ('Basic 해부학',     'mvp',    1),
   ('기능 해부학',      'mvp',    2),
-  ('컨디셔닝 마사지',  'mvp',    3),
-  ('컨디셔닝 스트레칭','mvp',    4),
-  ('생리학',           'phase2', 5),
-  ('스포츠심리학',     'phase2', 6),
-  ('스포츠사회학',     'phase2', 7),
-  ('스포츠윤리',       'phase2', 8),
-  ('운동생리학',       'phase2', 9),
-  ('운동처방학',       'phase2', 10),
-  ('영양학',           'phase2', 11),
-  ('필라테스 매트',    'phase2', 12),
-  ('필라테스 기구',    'phase2', 13),
-  ('바레',             'phase2', 14),
-  ('재활운동 CES',     'phase2', 15),
-  ('e-License',        'phase3', 16)
+  ('교차증후군',       'mvp',    3),
+  ('컨디셔닝 마사지',  'mvp',    4),
+  ('컨디셔닝 스트레칭','mvp',    5),
+  ('생리학',           'phase2', 6),
+  ('스포츠심리학',     'phase2', 7),
+  ('스포츠사회학',     'phase2', 8),
+  ('스포츠윤리',       'phase2', 9),
+  ('운동생리학',       'phase2', 10),
+  ('운동처방학',       'phase2', 11),
+  ('영양학',           'phase2', 12),
+  ('필라테스 매트',    'phase2', 13),
+  ('필라테스 기구',    'phase2', 14),
+  ('바레',             'phase2', 15),
+  ('재활운동 CES',     'phase2', 16),
+  ('e-License',        'phase3', 17)
 on conflict do nothing;
 
 -- courses 테이블에 subject_id 컬럼 추가 (category 컬럼 병존 유지 — 마이그레이션 안전)
