@@ -203,20 +203,23 @@ export default function LandingReportPage() {
           </button>
         </div>
 
-        {/* Retry + Landing */}
-        <div className="flex gap-3">
-          <button
-            onClick={() => { sessionStorage.removeItem('testResult'); router.push('/landing/test') }}
-            className="flex-1 flex items-center justify-center gap-1.5 py-3 border border-[#E5E5E5] bg-white rounded-xl text-[13px] text-[#6B6B6B]"
-          >
-            <RefreshCw size={14} /> 다시 풀기
-          </button>
-          <button
-            onClick={() => router.push('/landing')}
-            className="flex-1 py-3 border border-[#E5E5E5] bg-white rounded-xl text-[13px] text-[#6B6B6B]"
-          >
-            랜딩으로 가기
-          </button>
+        {/* ─── 테스트 재참여 유도 ───────────────────────────────── */}
+        <div className="bg-white rounded-2xl p-5 border border-[#E5E5E5]">
+          <div className="text-[13px] font-bold text-[#1A1A1A] mb-3">🔄 다시 도전해보세요</div>
+          <div className="space-y-2.5">
+            <button
+              onClick={() => { sessionStorage.removeItem('testResult'); router.push('/landing/test') }}
+              className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#1A1A1A] text-white rounded-xl text-[14px] font-bold"
+            >
+              <RefreshCw size={15} /> 다시 도전하기
+            </button>
+            <button
+              onClick={() => router.push('/landing')}
+              className="w-full flex items-center justify-center gap-2 py-3.5 border-2 border-[#E5E5E5] bg-white text-[#1A1A1A] rounded-xl text-[14px] font-semibold hover:bg-[#F5F5F3] transition-colors"
+            >
+              다른 카테고리 테스트 <ChevronRight size={15} />
+            </button>
+          </div>
         </div>
       </div>
       <AppFooter />

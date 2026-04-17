@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { ChevronRight, Zap, BookOpen, Star } from 'lucide-react'
 import { AppFooter } from '@/components/common/AppFooter'
@@ -90,6 +90,9 @@ const TESTIMONIALS = [
 
 export default function LandingPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const refParam = searchParams.get('ref')
+  const testUrl = refParam ? `/landing/test?ref=${refParam}` : '/landing/test'
 
   const handleGoogleSignIn = () => {
     signIn('google', { callbackUrl: '/onboarding' })
@@ -134,7 +137,7 @@ export default function LandingPage() {
           {/* CTA */}
           <div className="space-y-3">
             <button
-              onClick={() => router.push('/landing/test')}
+              onClick={() => router.push(testUrl)}
               className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] hover:bg-[#CC3E3D] rounded-2xl text-[16px] font-bold text-white transition-colors shadow-lg shadow-[#E24B4A]/30"
             >
               무료로 테스트 시작 <ChevronRight size={18} />
@@ -346,7 +349,7 @@ export default function LandingPage() {
             적합한 단계부터 학습을 시작할 수 있습니다
           </p>
           <button
-            onClick={() => router.push('/landing/test')}
+            onClick={() => router.push(testUrl)}
             className="w-full flex items-center justify-center gap-2 py-4 bg-white rounded-2xl text-[16px] font-bold text-[#E24B4A] shadow-lg hover:bg-gray-50 transition-colors"
           >
             <BookOpen size={18} /> 무료 테스트 시작
