@@ -16,7 +16,7 @@ type Step = 'intro' | 'quiz' | 'save-result' | 'wrong-preview'
 
 const PROGRESS_LABELS = ['Q1', 'Q2', 'Q3', 'Q4', 'Q5']
 
-const BASE_URL = 'https://fasst-rho.vercel.app'
+const BASE_URL = 'https://kinepia-rho.vercel.app'
 
 interface CompareData {
   my: { score: number; total: number; percentage: number; level: string }
