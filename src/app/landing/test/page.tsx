@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
-import { ChevronLeft, ChevronRight, CheckCircle2, Circle, Share2 } from 'lucide-react'
+import { ChevronLeft, CheckCircle2, Share2 } from 'lucide-react'
 import { LANDING_QUESTIONS, evaluateTest, type TestResult } from '@/lib/landingTest'
 import { ImagePlaceholder } from '@/components/common'
 
@@ -101,7 +101,6 @@ export default function LandingTestPage() {
   const [step, setStep] = useState<Step>('intro')
   const [currentQ, setCurrentQ] = useState(0)
   const [answers, setAnswers] = useState<(number | null)[]>(Array(5).fill(null))
-  const [showExplanation, setShowExplanation] = useState(false)
   const [quizResult, setQuizResult] = useState<TestResult | null>(null)
   const [guestId, setGuestId] = useState('')
   const [compareData, setCompareData] = useState<CompareData | null>(null)
@@ -117,38 +116,35 @@ export default function LandingTestPage() {
   const totalQ = LANDING_QUESTIONS.length
 
   const handleAnswer = (idx: number) => {
-    if (showExplanation) return
+    if (answers[currentQ] !== null) return // 이미 선택한 경우 무시
     const newAnswers = [...answers]
     newAnswers[currentQ] = idx
     setAnswers(newAnswers)
-    setShowExplanation(true)
-  }
 
-  const handleNext = async () => {
-    setShowExplanation(false)
-    if (currentQ < totalQ - 1) {
-      setCurrentQ(currentQ + 1)
-    } else {
-      // 퀴즈 완료 → 결과 계산
-      const result = evaluateTest(answers)
-      sessionStorage.setItem('testResult', JSON.stringify(result))
-      setQuizResult(result)
+    // 선택 후 400ms 뒤 자동 이동
+    setTimeout(async () => {
+      if (currentQ < totalQ - 1) {
+        setCurrentQ(currentQ + 1)
+      } else {
+        // 마지막 문제 → 결과 계산
+        const result = evaluateTest(newAnswers)
+        sessionStorage.setItem('testResult', JSON.stringify(result))
+        setQuizResult(result)
 
-      // 게스트 저장 (fire-and-forget)
-      const id = getOrCreateGuestId()
-      setGuestId(id)
-      saveGuestTestResult(id, result)
+        const id = getOrCreateGuestId()
+        setGuestId(id)
+        saveGuestTestResult(id, result)
 
-      // ref 파라미터 있으면 비교 데이터 로드
-      if (refGuestId) {
-        setCompareLoading(true)
-        const data = await fetchCompareScores(id, refGuestId)
-        setCompareData(data)
-        setCompareLoading(false)
+        if (refGuestId) {
+          setCompareLoading(true)
+          const data = await fetchCompareScores(id, refGuestId)
+          setCompareData(data)
+          setCompareLoading(false)
+        }
+
+        setStep('save-result')
       }
-
-      setStep('save-result')
-    }
+    }, 400)
   }
 
   const handleLoginSave = (provider: 'google' | 'kakao') => {
@@ -542,34 +538,27 @@ export default function LandingTestPage() {
         <div className="space-y-2.5">
           {q.options.map((opt, i) => {
             const isSelected = selectedAnswer === i
-            const isCorrect = i === q.correctIndex
-            let style = 'bg-white border-[#E5E5E5] text-[#1A1A1A]'
-            if (showExplanation) {
-              if (isCorrect) style = 'bg-[#639922]/10 border-[#639922] text-[#1A1A1A]'
-              else if (isSelected && !isCorrect) style = 'bg-[#E24B4A]/10 border-[#E24B4A] text-[#E24B4A]'
-              else style = 'bg-white border-[#E5E5E5] text-[#ADADAD] opacity-60'
-            } else if (isSelected) {
-              style = 'bg-[#1A1A1A] border-[#1A1A1A] text-white'
-            }
+            const isAnswered = selectedAnswer !== null
+
+            const style = isSelected
+              ? 'bg-[#378ADD]/10 border-[#378ADD] text-[#1A1A1A]'
+              : isAnswered
+              ? 'bg-white border-[#E5E5E5] text-[#ADADAD] opacity-50'
+              : 'bg-white border-[#E5E5E5] text-[#1A1A1A]'
 
             return (
               <button
                 key={i}
                 onClick={() => handleAnswer(i)}
-                disabled={showExplanation}
+                disabled={isAnswered}
                 className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 text-left transition-all text-[14px] font-medium ${style}`}
               >
                 <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                  showExplanation && isCorrect ? 'border-[#639922] bg-[#639922]'
-                  : showExplanation && isSelected && !isCorrect ? 'border-[#E24B4A]'
-                  : isSelected ? 'border-white bg-white'
-                  : 'border-[#CCCCCC]'
+                  isSelected ? 'border-[#378ADD] bg-[#378ADD]' : 'border-[#CCCCCC]'
                 }`}>
-                  {showExplanation && isCorrect
+                  {isSelected
                     ? <CheckCircle2 size={14} className="text-white" />
-                    : isSelected && !showExplanation
-                    ? <div className="w-2.5 h-2.5 rounded-full bg-[#1A1A1A]" />
-                    : <Circle size={14} className="opacity-0" />
+                    : <div className="w-2.5 h-2.5 rounded-full opacity-0" />
                   }
                 </div>
                 <span>{String.fromCharCode(65 + i)}. {opt}</span>
@@ -577,35 +566,6 @@ export default function LandingTestPage() {
             )
           })}
         </div>
-
-        {/* Explanation */}
-        {showExplanation && (
-          <div className={`rounded-xl p-4 border ${
-            selectedAnswer === q.correctIndex
-              ? 'bg-[#639922]/10 border-[#639922]/30'
-              : 'bg-[#E24B4A]/5 border-[#E24B4A]/20'
-          }`}>
-            <div className={`text-[13px] font-bold mb-1 ${
-              selectedAnswer === q.correctIndex ? 'text-[#639922]' : 'text-[#E24B4A]'
-            }`}>
-              {selectedAnswer === q.correctIndex ? '✅ 정답!' : '❌ 오답'}
-            </div>
-            <p className="text-[12px] text-[#1A1A1A] leading-relaxed">{q.explanation}</p>
-          </div>
-        )}
-
-        {/* Next button */}
-        {showExplanation && (
-          <button
-            onClick={handleNext}
-            className="w-full flex items-center justify-center gap-2 py-4 bg-[#1A1A1A] text-white rounded-2xl text-[15px] font-bold"
-          >
-            {currentQ < totalQ - 1
-              ? <><span>다음 문제</span><ChevronRight size={16} /></>
-              : <><span>결과 저장 선택</span><ChevronRight size={16} /></>
-            }
-          </button>
-        )}
       </div>
     </div>
   )
