@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronDown, Play, Pause, Volume2 } from 'lucide-react'
 import { LessonNavigator, NAVIGATOR_DATA, type NavigatorPosition } from '@/components/common/LessonNavigator'
 
 // ================================================================
-// 더미 데이터 (DB 연결 전)
+// 더미 슬라이드 데이터
 // ================================================================
 
 interface SlideData {
@@ -19,9 +19,6 @@ interface SlideData {
 }
 
 const DUMMY_LESSON = {
-  subject: '기능 해부학',
-  chapter: '기시·정지 이해',
-  lesson: '대퇴직근 기시·정지',
   slides: [
     {
       imageLabel: '대퇴직근 전체 위치',
@@ -78,10 +75,53 @@ const DUMMY_LESSON = {
 }
 
 // ================================================================
+// 미니 테스트 더미 문제
+// ================================================================
+
+const DUMMY_MINI_QUESTIONS = [
+  {
+    id: 1,
+    question: '대퇴직근의 기시점(Origin)은 어디인가요?',
+    options: ['전하장골극 (AIIS)', '대퇴골 소전자', '장골능 (Iliac Crest)', '슬개골 (Patella)'],
+    answer: 0,
+    explanation: '대퇴직근의 기시점은 전하장골극(Anterior Inferior Iliac Spine, AIIS)입니다.',
+  },
+  {
+    id: 2,
+    question: '대퇴직근은 어떤 근육 유형에 속하나요?',
+    options: ['Tonic 근육', 'Phasic 근육', '중립 근육', '길항근'],
+    answer: 0,
+    explanation: '대퇴직근은 Tonic 근육으로 단축 경향이 있습니다.',
+  },
+  {
+    id: 3,
+    question: '대퇴직근의 주요 기능은?',
+    options: [
+      '슬관절 신전 + 고관절 굴곡',
+      '슬관절 굴곡 + 고관절 신전',
+      '고관절 외전',
+      '슬관절 내회전',
+    ],
+    answer: 0,
+    explanation: '대퇴직근은 슬관절 신전과 고관절 굴곡을 담당합니다.',
+  },
+]
+
+const XP_BY_ATTEMPT: Record<number, number> = { 1: 30, 2: 20, 3: 10 }
+
+// ================================================================
 // 오디오 플레이어 플레이스홀더
 // ================================================================
 
-function AudioBar({ audioTime, isPlaying, onToggle }: { audioTime: string; isPlaying: boolean; onToggle: () => void }) {
+function AudioBar({
+  audioTime,
+  isPlaying,
+  onToggle,
+}: {
+  audioTime: string
+  isPlaying: boolean
+  onToggle: () => void
+}) {
   const bars = [3, 6, 9, 7, 4, 8, 5, 10, 6, 3, 7, 9, 4, 6, 8, 5, 3, 7, 6, 4]
   return (
     <div className="flex items-center gap-3 bg-[#F8F8F8] rounded-xl px-3 py-2.5">
@@ -89,12 +129,12 @@ function AudioBar({ audioTime, isPlaying, onToggle }: { audioTime: string; isPla
         onClick={onToggle}
         className="w-8 h-8 rounded-full bg-[#378ADD] flex items-center justify-center flex-shrink-0 active:opacity-80"
       >
-        {isPlaying
-          ? <Pause size={14} className="text-white" />
-          : <Play size={14} className="text-white ml-0.5" />
-        }
+        {isPlaying ? (
+          <Pause size={14} className="text-white" />
+        ) : (
+          <Play size={14} className="text-white ml-0.5" />
+        )}
       </button>
-      {/* 파형 애니메이션 */}
       <div className="flex items-center gap-[2px] flex-1 h-6">
         {bars.map((h, i) => (
           <div
@@ -103,7 +143,9 @@ function AudioBar({ audioTime, isPlaying, onToggle }: { audioTime: string; isPla
             style={{
               height: `${isPlaying ? h * 2 : 4}px`,
               backgroundColor: isPlaying ? '#378ADD' : '#CCCCCC',
-              animation: isPlaying ? `wave ${0.4 + (i % 4) * 0.1}s ease-in-out infinite alternate` : 'none',
+              animation: isPlaying
+                ? `wave ${0.4 + (i % 4) * 0.1}s ease-in-out infinite alternate`
+                : 'none',
               animationDelay: `${i * 0.05}s`,
             }}
           />
@@ -114,14 +156,18 @@ function AudioBar({ audioTime, isPlaying, onToggle }: { audioTime: string; isPla
         <span className="text-[11px] text-[#6B6B6B] font-mono">{audioTime}</span>
       </div>
       <style>{`
-        @keyframes wave {
-          from { transform: scaleY(0.4); }
-          to   { transform: scaleY(1); }
-        }
+        @keyframes wave { from { transform: scaleY(0.4); } to { transform: scaleY(1); } }
       `}</style>
     </div>
   )
 }
+
+// ================================================================
+// 타입
+// ================================================================
+
+type LessonStep = 'slide' | 'mini-test' | 'result'
+type PendingTarget = number | 'mini-test' | null
 
 // ================================================================
 // 메인 레슨 페이지
@@ -129,36 +175,83 @@ function AudioBar({ audioTime, isPlaying, onToggle }: { audioTime: string; isPla
 
 export default function LessonPage() {
   const router = useRouter()
-
-  // ── 슬라이드 상태 ────────────────────────────────────────────
-  const [slide, setSlide] = useState(0)
   const totalSlides = DUMMY_LESSON.slides.length
+
+  // ── STEP 1: 현재 레슨 이름 상태 ────────────────────────────────
+  const [currentSubject, setCurrentSubject] = useState('기능 해부학')
+  const [currentChapter, setCurrentChapter] = useState('기시·정지 이해')
+  const [currentLesson, setCurrentLesson] = useState('대퇴직근 기시·정지')
+
+  // ── 슬라이드 상태 ────────────────────────────────────────────────
+  const [slide, setSlide] = useState(0)
+  const [lessonStep, setLessonStep] = useState<LessonStep>('slide')
   const current = DUMMY_LESSON.slides[slide]
 
-  // ── 체크박스 상태 ─────────────────────────────────────────────
+  // ── 체크박스 ─────────────────────────────────────────────────────
   const [checked, setChecked] = useState<boolean[][]>(
     DUMMY_LESSON.slides.map((s) => Array(s.checkboxes.length).fill(false))
   )
 
-  // ── 모드 (manual / auto) ─────────────────────────────────────
-  const [mode, setMode] = useState<'manual' | 'auto'>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem('kinepia_lesson_mode') as 'manual' | 'auto') ?? 'manual'
-    }
-    return 'manual'
-  })
+  // ── 모드 ─────────────────────────────────────────────────────────
+  const [mode, setMode] = useState<'manual' | 'auto'>('manual')
   const [showModeDropdown, setShowModeDropdown] = useState(false)
-  const [showFirstVisitPopup, setShowFirstVisitPopup] = useState(false)
-  const [dontShowAgain, setDontShowAgain] = useState(false)
 
-  // ── 오디오 플레이스홀더 ────────────────────────────────────────
+  // ── STEP 2: 진입 팝업 ───────────────────────────────────────────
+  const [showModeSelectPopup, setShowModeSelectPopup] = useState(false)
+  const [showStartPopup, setShowStartPopup] = useState(false)
+  const [modeSelectDontShow, setModeSelectDontShow] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const savedMode = localStorage.getItem('kinepia_lesson_mode') as 'manual' | 'auto' | null
+    if (savedMode) setMode(savedMode)
+
+    const modeSet = localStorage.getItem('kinepia_lesson_mode_set')
+    const started = sessionStorage.getItem('kinepia_lesson_started')
+    if (!modeSet) {
+      setShowModeSelectPopup(true)
+    } else if (!started) {
+      setShowStartPopup(true)
+    }
+  }, [])
+
+  const handleModeChange = (m: 'manual' | 'auto') => {
+    setMode(m)
+    if (typeof window !== 'undefined') localStorage.setItem('kinepia_lesson_mode', m)
+    setShowModeDropdown(false)
+    setIsPlaying(false)
+  }
+
+  const handleModeSelectConfirm = () => {
+    if (modeSelectDontShow && typeof window !== 'undefined') {
+      localStorage.setItem('kinepia_lesson_mode_set', '1')
+    }
+    setShowModeSelectPopup(false)
+    const started = sessionStorage.getItem('kinepia_lesson_started')
+    if (!started) setShowStartPopup(true)
+  }
+
+  const handleStartLesson = () => {
+    if (typeof window !== 'undefined') sessionStorage.setItem('kinepia_lesson_started', '1')
+    setShowStartPopup(false)
+    setIsPlaying(true)
+  }
+
+  // ── 오디오 ───────────────────────────────────────────────────────
   const [isPlaying, setIsPlaying] = useState(false)
 
-  // ── 미완료 팝업 ───────────────────────────────────────────────
+  // ── 미완료 팝업 ───────────────────────────────────────────────────
   const [showIncompletePopup, setShowIncompletePopup] = useState(false)
-  const [pendingSlide, setPendingSlide] = useState<number | null>(null)
+  const [pendingTarget, setPendingTarget] = useState<PendingTarget>(null)
 
-  // ── 네비게이터 ────────────────────────────────────────────────
+  // ── 미니 테스트 상태 ─────────────────────────────────────────────
+  const [miniQIdx, setMiniQIdx] = useState(0)
+  const [miniAttempt, setMiniAttempt] = useState(0)
+  const [miniCorrectAttempt, setMiniCorrectAttempt] = useState<number | null>(null)
+  const [miniSelected, setMiniSelected] = useState<number | null>(null)
+  const [miniAnswered, setMiniAnswered] = useState(false)
+
+  // ── 네비게이터 ───────────────────────────────────────────────────
   const [showNavigator, setShowNavigator] = useState(false)
   const [navPos, setNavPos] = useState<NavigatorPosition>({
     subjectId: 'functional',
@@ -169,42 +262,55 @@ export default function LessonPage() {
   const [selChapter, setSelChapter] = useState('func-c1')
   const [selLesson, setSelLesson] = useState('func-c1-l1')
 
-  // ── 드래그/스와이프 상태 ─────────────────────────────────────
+  // ── 드래그 상태 ──────────────────────────────────────────────────
   const dragStartX = useRef<number | null>(null)
   const dragCurrentX = useRef<number>(0)
   const [dragOffset, setDragOffset] = useState(0)
   const isDragging = useRef(false)
   const slideAreaRef = useRef<HTMLDivElement>(null)
+  const checkboxRefs = useRef<(HTMLDivElement | null)[]>([])
 
-  // ── 첫 방문 팝업 ──────────────────────────────────────────────
+  // ── 자동 모드: 음성 완료 후 다음 슬라이드 ────────────────────────
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    const seen = localStorage.getItem('kinepia_lesson_mode_seen')
-    if (!seen) setShowFirstVisitPopup(true)
-  }, [])
-
-  const handleModeChange = (m: 'manual' | 'auto') => {
-    setMode(m)
-    if (typeof window !== 'undefined') localStorage.setItem('kinepia_lesson_mode', m)
-    setShowModeDropdown(false)
-    setIsPlaying(false)
-  }
-
-  // ── 슬라이드 이동 로직 ────────────────────────────────────────
-  const allChecked = checked[slide].every(Boolean)
-
-  const tryGoToSlide = useCallback((target: number) => {
-    if (target < 0 || target >= totalSlides) return
-    if (mode === 'manual' && !allChecked && target !== slide) {
-      setPendingSlide(target)
-      setShowIncompletePopup(true)
-    } else {
-      setSlide(target)
+    if (mode !== 'auto' || !isPlaying) return
+    const audioSeconds = parseInt(current.audioTime.split(':')[1] ?? '20')
+    const timer = setTimeout(() => {
       setIsPlaying(false)
-    }
-  }, [slide, totalSlides, mode, allChecked])
+      if (slide < totalSlides - 1) {
+        setSlide((s) => s + 1)
+        setTimeout(() => setIsPlaying(true), 300)
+      } else {
+        setLessonStep('mini-test')
+      }
+    }, (audioSeconds + 1) * 1000)
+    return () => clearTimeout(timer)
+  }, [mode, isPlaying, slide, current.audioTime, totalSlides])
 
-  // ── 드래그 핸들러 (마우스) ────────────────────────────────────
+  // ── 슬라이드 이동 ────────────────────────────────────────────────
+  const allChecked = checked[slide].every(Boolean)
+  const checkedCount = checked[slide].filter(Boolean).length
+  const firstUncheckedIdx = checked[slide].findIndex((v) => !v)
+
+  const tryGoTo = useCallback(
+    (target: number | 'mini-test') => {
+      const needsCheck = mode === 'manual' && !allChecked
+      if (needsCheck) {
+        setPendingTarget(target)
+        setShowIncompletePopup(true)
+      } else {
+        if (target === 'mini-test') {
+          setLessonStep('mini-test')
+          setIsPlaying(false)
+        } else if (target >= 0 && target < totalSlides) {
+          setSlide(target)
+          setIsPlaying(false)
+        }
+      }
+    },
+    [mode, allChecked, totalSlides]
+  )
+
+  // ── 드래그 핸들러 ────────────────────────────────────────────────
   const onMouseDown = (e: React.MouseEvent) => {
     dragStartX.current = e.clientX
     isDragging.current = true
@@ -221,11 +327,9 @@ export default function LessonPage() {
     const delta = dragCurrentX.current
     setDragOffset(0)
     dragStartX.current = null
-    if (delta < -50) tryGoToSlide(slide + 1)
-    else if (delta > 50) tryGoToSlide(slide - 1)
+    if (delta < -50) tryGoTo(slide === totalSlides - 1 ? 'mini-test' : slide + 1)
+    else if (delta > 50) tryGoTo(slide - 1)
   }
-
-  // ── 드래그 핸들러 (터치) ─────────────────────────────────────
   const onTouchStart = (e: React.TouchEvent) => {
     dragStartX.current = e.touches[0].clientX
     isDragging.current = true
@@ -242,37 +346,72 @@ export default function LessonPage() {
     const delta = dragCurrentX.current
     setDragOffset(0)
     dragStartX.current = null
-    if (delta < -50) tryGoToSlide(slide + 1)
-    else if (delta > 50) tryGoToSlide(slide - 1)
+    if (delta < -50) tryGoTo(slide === totalSlides - 1 ? 'mini-test' : slide + 1)
+    else if (delta > 50) tryGoTo(slide - 1)
   }
 
-  // ── 자동 모드: 음성 완료 후 다음 슬라이드 (placeholder) ───────
-  useEffect(() => {
-    if (mode !== 'auto' || !isPlaying) return
-    const audioSeconds = parseInt(current.audioTime.split(':')[1] ?? '20')
-    const timer = setTimeout(() => {
-      setIsPlaying(false)
-      if (slide < totalSlides - 1) setSlide((s) => s + 1)
-    }, (audioSeconds + 1) * 1000)
-    return () => clearTimeout(timer)
-  }, [mode, isPlaying, slide, current.audioTime, totalSlides])
+  // ── 미니 테스트 답 선택 ──────────────────────────────────────────
+  const handleMiniAnswer = (optionIdx: number) => {
+    if (miniAnswered) return
+    setMiniSelected(optionIdx)
+    setMiniAnswered(true)
+    const q = DUMMY_MINI_QUESTIONS[miniQIdx]
+    const correct = optionIdx === q.answer
 
-  const pct = Math.round(((slide + 1) / totalSlides) * 100)
+    setTimeout(() => {
+      if (correct) {
+        setMiniCorrectAttempt(miniAttempt + 1)
+        setLessonStep('result')
+      } else {
+        if (miniQIdx < DUMMY_MINI_QUESTIONS.length - 1) {
+          setMiniQIdx((i) => i + 1)
+          setMiniAttempt((a) => a + 1)
+          setMiniSelected(null)
+          setMiniAnswered(false)
+        } else {
+          setMiniCorrectAttempt(null)
+          setLessonStep('result')
+        }
+      }
+    }, 800)
+  }
 
-  const checkedCount = checked[slide].filter(Boolean).length
-  const firstUncheckedIdx = checked[slide].findIndex((v) => !v)
+  const resetMiniTest = () => {
+    setMiniQIdx(0)
+    setMiniAttempt(0)
+    setMiniCorrectAttempt(null)
+    setMiniSelected(null)
+    setMiniAnswered(false)
+    setLessonStep('mini-test')
+  }
 
-  // ── ref for scrolling to first unchecked ─────────────────────
-  const checkboxRefs = useRef<(HTMLDivElement | null)[]>([])
+  const xpEarned =
+    miniCorrectAttempt !== null ? (XP_BY_ATTEMPT[miniCorrectAttempt] ?? 10) : 5
 
-  return (
-    <div className="min-h-screen bg-[#F5F5F3] flex flex-col" style={{ maxWidth: 430, margin: '0 auto' }}>
+  // ── 진행 바 % ────────────────────────────────────────────────────
+  const pct =
+    lessonStep === 'slide'
+      ? Math.round(((slide + 1) / totalSlides) * 100)
+      : 100
 
-      {/* ════════════════════════════════════════════════════════
-          헤더
-      ════════════════════════════════════════════════════════ */}
-      <div className="bg-white border-b border-[#E5E5E5] px-4 py-3 flex items-center gap-2 sticky top-0 z-20">
-        {/* 뒤로 */}
+  // ── 헤더 우측 표시 ───────────────────────────────────────────────
+  const headerRight =
+    lessonStep === 'slide'
+      ? `${slide + 1}/${totalSlides}`
+      : lessonStep === 'mini-test'
+      ? '미니 테스트'
+      : '완료'
+
+  const subjectColor =
+    NAVIGATOR_DATA.find((s) => s.id === navPos.subjectId)?.color ?? '#378ADD'
+
+  // ================================================================
+  // ── 공통 상단 헤더 (STEP 3: sticky wrapper) ─────────────────────
+  // ================================================================
+  const StickyHeader = (
+    <div className="sticky top-0 z-20">
+      {/* 상단 헤더 */}
+      <div className="bg-white border-b border-[#E5E5E5] px-4 py-3 flex items-center gap-2">
         <button
           onClick={() => router.push('/trainer/education')}
           className="flex items-center gap-0.5 text-[13px] text-[#6B6B6B] flex-shrink-0"
@@ -280,7 +419,7 @@ export default function LessonPage() {
           <ChevronLeft size={16} /> 뒤로
         </button>
 
-        {/* 과목 제목 — 클릭 시 네비게이터 */}
+        {/* STEP 1: currentSubject 반영 */}
         <button
           onClick={() => {
             setSelSubject(navPos.subjectId)
@@ -290,11 +429,10 @@ export default function LessonPage() {
           }}
           className="flex-1 flex items-center justify-center gap-1 min-w-0"
         >
-          <span className="text-[14px] font-bold text-[#1A1A1A] truncate">{DUMMY_LESSON.subject}</span>
+          <span className="text-[14px] font-bold text-[#1A1A1A] truncate">{currentSubject}</span>
           <ChevronDown size={14} className="text-[#6B6B6B] flex-shrink-0" />
         </button>
 
-        {/* 우측: 모드 + 진행 */}
         <div className="flex items-center gap-2 flex-shrink-0 relative">
           <button
             onClick={() => setShowModeDropdown((v) => !v)}
@@ -320,23 +458,181 @@ export default function LessonPage() {
               ))}
             </div>
           )}
-          <span className="text-[11px] text-[#6B6B6B] font-medium">
-            {slide + 1}/{totalSlides}
-          </span>
+          <span className="text-[11px] text-[#6B6B6B] font-medium">{headerRight}</span>
         </div>
       </div>
 
-      {/* ── 진행 바 ─────────────────────────────────────────────── */}
+      {/* STEP 3: 서브타이틀 줄 */}
+      <div className="bg-[#F8F8F8] px-[14px] py-[6px] flex items-center gap-1.5"
+        style={{ borderBottom: '0.5px solid #E0E0E0' }}>
+        <span className="text-[11px] text-[#6B6B6B]">{currentChapter}</span>
+        <span className="text-[11px] text-[#ADADAD]">›</span>
+        <span className="text-[11px] text-[#1A1A1A] font-medium">{currentLesson}</span>
+      </div>
+
+      {/* 진행 바 */}
       <div className="h-1.5 bg-[#E5E5E5]">
         <div
           className="h-full bg-[#378ADD] transition-all duration-300"
           style={{ width: `${pct}%` }}
         />
       </div>
+    </div>
+  )
 
-      {/* ════════════════════════════════════════════════════════
-          슬라이드 영역 (드래그 가능)
-      ════════════════════════════════════════════════════════ */}
+  // ================================================================
+  // STEP 4: 미니 테스트 화면
+  // ================================================================
+  if (lessonStep === 'mini-test') {
+    const q = DUMMY_MINI_QUESTIONS[miniQIdx]
+    return (
+      <div className="min-h-screen bg-[#F5F5F3] flex flex-col" style={{ maxWidth: 430, margin: '0 auto' }}>
+        {StickyHeader}
+        <div className="flex-1 overflow-y-auto pb-6 px-4 pt-5">
+          {/* 미니 테스트 헤더 */}
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-[13px] font-black text-[#1A1A1A]">⚡ 미니 테스트</span>
+            <span className="text-[11px] text-[#6B6B6B] bg-white border border-[#E5E5E5] rounded-full px-3 py-1">
+              문제 {miniQIdx + 1} / {DUMMY_MINI_QUESTIONS.length}
+            </span>
+          </div>
+
+          {/* 진행 점 */}
+          <div className="flex gap-1.5 mb-5">
+            {DUMMY_MINI_QUESTIONS.map((_, i) => (
+              <div key={i} className={`flex-1 h-1 rounded-full ${
+                i < miniQIdx ? 'bg-[#639922]' : i === miniQIdx ? 'bg-[#378ADD]' : 'bg-[#E5E5E5]'
+              }`} />
+            ))}
+          </div>
+
+          {/* 문제 카드 */}
+          <div className="bg-white rounded-2xl border border-[#E5E5E5] p-5 mb-4">
+            <p className="text-[15px] font-bold text-[#1A1A1A] leading-snug">{q.question}</p>
+          </div>
+
+          {/* 보기 */}
+          <div className="space-y-2.5">
+            {q.options.map((opt, i) => {
+              const isSelected = miniSelected === i
+              const isCorrect = i === q.answer
+              let style = 'bg-white border-[#E5E5E5] text-[#1A1A1A]'
+              if (miniAnswered) {
+                if (isCorrect) style = 'bg-[#639922]/10 border-[#639922] text-[#1A1A1A]'
+                else if (isSelected) style = 'bg-[#E24B4A]/10 border-[#E24B4A] text-[#E24B4A]'
+                else style = 'bg-white border-[#E5E5E5] text-[#ADADAD] opacity-50'
+              } else if (isSelected) {
+                style = 'bg-[#378ADD]/10 border-[#378ADD] text-[#1A1A1A]'
+              }
+              return (
+                <button
+                  key={i}
+                  onClick={() => handleMiniAnswer(i)}
+                  disabled={miniAnswered}
+                  className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 text-left text-[14px] font-medium transition-all ${style}`}
+                >
+                  <span className="w-6 h-6 rounded-full border-2 flex items-center justify-center text-[11px] font-bold flex-shrink-0 border-current">
+                    {String.fromCharCode(9312 + i)}
+                  </span>
+                  {opt}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* 오답 시 힌트 */}
+          {miniAnswered && miniSelected !== q.answer && (
+            <div className="mt-4 bg-[#E24B4A]/5 border border-[#E24B4A]/20 rounded-xl px-4 py-3">
+              <p className="text-[12px] text-[#E24B4A] font-semibold">
+                {miniQIdx < DUMMY_MINI_QUESTIONS.length - 1
+                  ? '오답입니다. 다음 문제를 풀어보세요...'
+                  : '아쉽지만 다음 기회에 도전하세요!'}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // ================================================================
+  // STEP 4: 결과 화면
+  // ================================================================
+  if (lessonStep === 'result') {
+    const lastQ = DUMMY_MINI_QUESTIONS[miniQIdx]
+    return (
+      <div className="min-h-screen bg-[#F5F5F3] flex flex-col" style={{ maxWidth: 430, margin: '0 auto' }}>
+        {StickyHeader}
+        <div className="flex-1 overflow-y-auto pb-6 px-4 pt-6">
+          <div className="bg-white rounded-3xl border border-[#E5E5E5] p-6 text-center">
+            <div className="text-[40px] mb-2">{miniCorrectAttempt !== null ? '🎉' : '😅'}</div>
+            <h2 className="text-[20px] font-black text-[#1A1A1A] mb-1">미니 테스트 완료!</h2>
+
+            {/* XP */}
+            <div className="inline-flex items-center gap-1.5 bg-[#FFF9E6] border border-[#FFE066] rounded-full px-4 py-1.5 mt-2 mb-5">
+              <span className="text-[16px]">⭐</span>
+              <span className="text-[15px] font-black text-[#1A1A1A]">+{xpEarned} XP 획득</span>
+            </div>
+
+            {/* 정답 여부 */}
+            <div className={`rounded-2xl p-4 mb-5 text-left ${
+              miniCorrectAttempt !== null
+                ? 'bg-[#639922]/8 border border-[#639922]/20'
+                : 'bg-[#E24B4A]/5 border border-[#E24B4A]/20'
+            }`}
+              style={{ backgroundColor: miniCorrectAttempt !== null ? 'rgba(99,153,34,0.06)' : 'rgba(226,75,74,0.05)' }}
+            >
+              <div className={`text-[13px] font-bold mb-2 ${
+                miniCorrectAttempt !== null ? 'text-[#639922]' : 'text-[#E24B4A]'
+              }`}>
+                {miniCorrectAttempt !== null
+                  ? `✅ ${miniCorrectAttempt}번째 시도에서 정답!`
+                  : '❌ 아쉬워요, 다음엔 꼭 맞춰봐요'}
+              </div>
+              <p className="text-[12px] text-[#1A1A1A] leading-relaxed">{lastQ.explanation}</p>
+            </div>
+
+            {/* 시도 횟수 뱃지 */}
+            {miniCorrectAttempt !== null && (
+              <div className="flex justify-center gap-1.5 mb-5">
+                {DUMMY_MINI_QUESTIONS.slice(0, miniCorrectAttempt).map((_, i) => (
+                  <div key={i} className={`w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold ${
+                    i === miniCorrectAttempt - 1 ? 'bg-[#639922] text-white' : 'bg-[#E24B4A] text-white'
+                  }`}>
+                    {i === miniCorrectAttempt - 1 ? '✓' : '✗'}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="space-y-2.5">
+              <button
+                onClick={() => router.push('/trainer/education')}
+                className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#378ADD] text-white rounded-2xl text-[14px] font-bold"
+              >
+                다음 레슨으로 →
+              </button>
+              <button
+                onClick={resetMiniTest}
+                className="w-full py-3.5 border border-[#E5E5E5] rounded-2xl text-[13px] font-medium text-[#6B6B6B]"
+              >
+                다시 풀기
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ================================================================
+  // 슬라이드 화면 (lessonStep === 'slide')
+  // ================================================================
+  return (
+    <div className="min-h-screen bg-[#F5F5F3] flex flex-col" style={{ maxWidth: 430, margin: '0 auto' }}>
+      {StickyHeader}
+
+      {/* 슬라이드 영역 */}
       <div
         ref={slideAreaRef}
         className="flex-1 overflow-y-auto pb-24 select-none"
@@ -352,8 +648,7 @@ export default function LessonPage() {
           className="transition-transform duration-150"
           style={{ transform: `translateX(${Math.max(-80, Math.min(80, dragOffset))}px)` }}
         >
-
-          {/* ── 이미지 영역 ─────────────────────────────────────── */}
+          {/* 이미지 */}
           <div
             className="mx-4 mt-4 rounded-2xl overflow-hidden border border-[#E5E5E5]"
             style={{ backgroundColor: current.imageBg }}
@@ -363,7 +658,7 @@ export default function LessonPage() {
               <div className="text-[13px] font-semibold text-[#6B6B6B]">[{current.imageLabel}]</div>
               <div
                 className="text-[10px] font-medium px-2.5 py-1 rounded-full text-white"
-                style={{ backgroundColor: NAVIGATOR_DATA.find((s) => s.id === navPos.subjectId)?.color ?? '#378ADD' }}
+                style={{ backgroundColor: subjectColor }}
               >
                 {current.imageSub}
               </div>
@@ -371,13 +666,13 @@ export default function LessonPage() {
             </div>
           </div>
 
-          {/* ── 동기화 라벨 ─────────────────────────────────────── */}
+          {/* 동기화 라벨 */}
           <div className="mx-4 mt-2 flex items-center gap-1.5">
             <div className="w-1 h-1 rounded-full bg-[#378ADD] animate-pulse" />
             <span className="text-[10px] text-[#378ADD] font-medium">↕ 이미지 + 텍스트 + 음성 동기화</span>
           </div>
 
-          {/* ── 음성 재생 바 ─────────────────────────────────────── */}
+          {/* 오디오 바 */}
           <div className="mx-4 mt-2">
             <AudioBar
               audioTime={current.audioTime}
@@ -386,7 +681,7 @@ export default function LessonPage() {
             />
           </div>
 
-          {/* ── 텍스트 + 체크박스 ────────────────────────────────── */}
+          {/* 텍스트 + 체크박스 */}
           <div className="mx-4 mt-4 bg-white rounded-2xl border border-[#E5E5E5] p-4">
             <div className="text-[13px] font-bold text-[#1A1A1A] mb-3">{current.title}</div>
 
@@ -404,11 +699,8 @@ export default function LessonPage() {
                     }}
                     className="flex items-start gap-3 cursor-pointer group"
                   >
-                    {/* 체크박스 */}
                     <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
-                      checked[slide][i]
-                        ? 'bg-[#378ADD] border-[#378ADD]'
-                        : 'border-[#CCCCCC] group-hover:border-[#378ADD]'
+                      checked[slide][i] ? 'bg-[#378ADD] border-[#378ADD]' : 'border-[#CCCCCC] group-hover:border-[#378ADD]'
                     }`}>
                       {checked[slide][i] && (
                         <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
@@ -423,7 +715,6 @@ export default function LessonPage() {
                     </span>
                   </div>
                 ))}
-                {/* 진행 표시 */}
                 <div className="pt-1 flex items-center gap-2">
                   <div className="flex-1 h-1 bg-[#F0F0EE] rounded-full">
                     <div
@@ -435,7 +726,6 @@ export default function LessonPage() {
                 </div>
               </div>
             ) : (
-              // 자동 모드: 체크박스 없이 텍스트만
               <ul className="space-y-2">
                 {current.checkboxes.map((text, i) => (
                   <li key={i} className="flex items-start gap-2 text-[13px] text-[#1A1A1A]">
@@ -447,75 +737,62 @@ export default function LessonPage() {
             )}
           </div>
 
-          {/* ── 도트 네비게이션 ──────────────────────────────────── */}
+          {/* 도트 네비게이션 */}
           <div className="flex items-center justify-center gap-2 mt-5 mb-2">
             {DUMMY_LESSON.slides.map((_, i) => (
               <button
                 key={i}
-                onClick={() => tryGoToSlide(i)}
+                onClick={() => tryGoTo(i)}
                 className={`rounded-full transition-all ${
-                  i === slide
-                    ? 'w-4 h-2 bg-[#378ADD]'
-                    : 'w-2 h-2 bg-[#CCCCCC] hover:bg-[#ADADAD]'
+                  i === slide ? 'w-4 h-2 bg-[#378ADD]' : 'w-2 h-2 bg-[#CCCCCC] hover:bg-[#ADADAD]'
                 }`}
               />
             ))}
           </div>
-
         </div>
       </div>
 
-      {/* ════════════════════════════════════════════════════════
-          하단 푸터 (이전 / 다음)
-      ════════════════════════════════════════════════════════ */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full bg-white border-t border-[#E5E5E5] px-4 py-3 flex items-center gap-3 z-20" style={{ maxWidth: 430 }}>
+      {/* 하단 푸터 */}
+      <div
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full bg-white border-t border-[#E5E5E5] px-4 py-3 flex items-center gap-3 z-20"
+        style={{ maxWidth: 430 }}
+      >
         <button
-          onClick={() => tryGoToSlide(slide - 1)}
+          onClick={() => tryGoTo(slide - 1)}
           disabled={slide === 0}
           className="flex-1 flex items-center justify-center gap-1.5 py-3.5 border border-[#E5E5E5] rounded-2xl text-[14px] font-medium text-[#6B6B6B] disabled:opacity-30"
         >
           <ChevronLeft size={16} /> 이전
         </button>
-
-        {slide < totalSlides - 1 ? (
-          <button
-            onClick={() => tryGoToSlide(slide + 1)}
-            className="flex-[2] flex items-center justify-center gap-1.5 py-3.5 bg-[#378ADD] rounded-2xl text-[14px] font-bold text-white active:opacity-90"
-          >
-            다음 <span className="text-[16px]">›</span>
-          </button>
-        ) : (
-          <button
-            onClick={() => router.push('/trainer/education')}
-            className="flex-[2] flex items-center justify-center gap-1.5 py-3.5 bg-[#639922] rounded-2xl text-[14px] font-bold text-white active:opacity-90"
-          >
-            ✅ 레슨 완료
-          </button>
-        )}
+        <button
+          onClick={() => tryGoTo(slide < totalSlides - 1 ? slide + 1 : 'mini-test')}
+          className="flex-[2] flex items-center justify-center gap-1.5 py-3.5 bg-[#378ADD] rounded-2xl text-[14px] font-bold text-white active:opacity-90"
+        >
+          {slide < totalSlides - 1 ? '다음' : '미니 테스트'} <span className="text-[16px]">›</span>
+        </button>
       </div>
 
-      {/* ════════════════════════════════════════════════════════
-          미완료 체크박스 팝업
-      ════════════════════════════════════════════════════════ */}
+      {/* ─── 미완료 팝업 ─── */}
       {showIncompletePopup && (
         <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-40 pb-6 px-4">
           <div className="bg-white rounded-3xl p-5 w-full max-w-sm shadow-xl">
             <div className="text-center mb-4">
               <div className="text-[32px] mb-2">📋</div>
               <h3 className="text-[16px] font-black text-[#1A1A1A] mb-1">모든 내용을 확인하지 않으셨습니다</h3>
-              <p className="text-[12px] text-[#6B6B6B]">
-                {checkedCount}/{current.checkboxes.length}개 확인 완료
-              </p>
+              <p className="text-[12px] text-[#6B6B6B]">{checkedCount}/{current.checkboxes.length}개 확인 완료</p>
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => {
                   setShowIncompletePopup(false)
-                  if (pendingSlide !== null) {
-                    setSlide(pendingSlide)
+                  if (pendingTarget === 'mini-test') {
+                    setLessonStep('mini-test')
                     setIsPlaying(false)
-                    setPendingSlide(null)
+                  } else if (typeof pendingTarget === 'number') {
+                    setSlide(pendingTarget)
+                    setIsPlaying(false)
                   }
+                  setPendingTarget(null)
                 }}
                 className="flex-1 py-3 border border-[#E5E5E5] rounded-xl text-[13px] font-medium text-[#6B6B6B]"
               >
@@ -524,8 +801,7 @@ export default function LessonPage() {
               <button
                 onClick={() => {
                   setShowIncompletePopup(false)
-                  setPendingSlide(null)
-                  // 첫 번째 미체크 항목으로 스크롤
+                  setPendingTarget(null)
                   if (firstUncheckedIdx >= 0) {
                     checkboxRefs.current[firstUncheckedIdx]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
                   }
@@ -539,10 +815,8 @@ export default function LessonPage() {
         </div>
       )}
 
-      {/* ════════════════════════════════════════════════════════
-          첫 방문 모드 안내 팝업
-      ════════════════════════════════════════════════════════ */}
-      {showFirstVisitPopup && (
+      {/* ─── STEP 2: 모드 선택 팝업 ─── */}
+      {showModeSelectPopup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
           <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-xl">
             <div className="text-center mb-5">
@@ -559,23 +833,18 @@ export default function LessonPage() {
                   key={m}
                   onClick={() => handleModeChange(m)}
                   className={`w-full py-3.5 rounded-2xl text-[14px] font-bold border-2 transition-all ${
-                    mode === m
-                      ? 'bg-[#378ADD] border-[#378ADD] text-white'
-                      : 'bg-white border-[#E5E5E5] text-[#1A1A1A]'
+                    mode === m ? 'bg-[#378ADD] border-[#378ADD] text-white' : 'bg-white border-[#E5E5E5] text-[#1A1A1A]'
                   }`}
                 >
                   {m === 'manual' ? '📝 수동 모드' : '▶ 자동 모드'}
                 </button>
               ))}
             </div>
-            <div
-              onClick={() => setDontShowAgain((v) => !v)}
-              className="flex items-center gap-2 mb-4 cursor-pointer"
-            >
+            <div onClick={() => setModeSelectDontShow((v) => !v)} className="flex items-center gap-2 mb-4 cursor-pointer">
               <div className={`w-4 h-4 rounded border-2 flex items-center justify-center ${
-                dontShowAgain ? 'bg-[#378ADD] border-[#378ADD]' : 'border-[#CCCCCC]'
+                modeSelectDontShow ? 'bg-[#378ADD] border-[#378ADD]' : 'border-[#CCCCCC]'
               }`}>
-                {dontShowAgain && (
+                {modeSelectDontShow && (
                   <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
                     <path d="M1 3L3 5L7 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
@@ -584,31 +853,74 @@ export default function LessonPage() {
               <span className="text-[12px] text-[#6B6B6B]">다시 보지 않기</span>
             </div>
             <button
-              onClick={() => {
-                if (dontShowAgain && typeof window !== 'undefined') {
-                  localStorage.setItem('kinepia_lesson_mode_seen', '1')
-                }
-                setShowFirstVisitPopup(false)
-              }}
+              onClick={handleModeSelectConfirm}
               className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-2xl text-[14px] font-bold"
             >
-              시작하기
+              확인
             </button>
           </div>
         </div>
       )}
 
-      {/* ════════════════════════════════════════════════════════
-          레슨 네비게이터
-      ════════════════════════════════════════════════════════ */}
+      {/* ─── STEP 2: 시작하기 팝업 ─── */}
+      {!showModeSelectPopup && showStartPopup && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-xl">
+            <div className="text-center mb-5">
+              <div className="text-[36px] mb-2">🚀</div>
+              <h3 className="text-[18px] font-black text-[#1A1A1A] mb-1">학습을 시작할게요!</h3>
+            </div>
+            <div className="bg-[#F5F5F3] rounded-2xl p-4 mb-5 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[#ADADAD]">현재 레슨</span>
+                <span className="text-[12px] font-semibold text-[#1A1A1A]">{currentLesson}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[#ADADAD]">챕터</span>
+                <span className="text-[12px] font-semibold text-[#1A1A1A]">{currentChapter}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[#ADADAD]">예상 시간</span>
+                <span className="text-[12px] font-semibold text-[#1A1A1A]">약 12분</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-[#ADADAD]">모드</span>
+                <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full text-white ${
+                  mode === 'manual' ? 'bg-[#378ADD]' : 'bg-[#639922]'
+                }`}>
+                  {mode === 'manual' ? '📝 수동' : '▶ 자동'}
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={handleStartLesson}
+              className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-black"
+            >
+              시작하기 →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ─── STEP 1: 레슨 네비게이터 ─── */}
       <LessonNavigator
         open={showNavigator}
         current={navPos}
         onClose={() => setShowNavigator(false)}
         onNavigate={(pos) => {
+          // STEP 1: 제목 즉시 반영
+          const subject = NAVIGATOR_DATA.find((s) => s.id === pos.subjectId)
+          const chapter = subject?.chapters.find((c) => c.id === pos.chapterId)
+          const lesson = chapter?.lessons.find((l) => l.id === pos.lessonId)
+          setCurrentSubject(subject?.title ?? currentSubject)
+          setCurrentChapter(chapter?.title ?? currentChapter)
+          setCurrentLesson(lesson?.title ?? currentLesson)
+          // 슬라이드 리셋 + 체크박스 초기화
           setNavPos(pos)
           setSlide(0)
+          setLessonStep('slide')
           setIsPlaying(false)
+          setChecked(DUMMY_LESSON.slides.map((s) => Array(s.checkboxes.length).fill(false)))
         }}
         selectedSubject={selSubject}
         selectedChapter={selChapter}
@@ -618,12 +930,8 @@ export default function LessonPage() {
         onSelectLesson={setSelLesson}
       />
 
-      {/* 모드 드롭다운 외부 클릭 닫기 */}
       {showModeDropdown && (
-        <div
-          className="fixed inset-0 z-10"
-          onClick={() => setShowModeDropdown(false)}
-        />
+        <div className="fixed inset-0 z-10" onClick={() => setShowModeDropdown(false)} />
       )}
     </div>
   )
