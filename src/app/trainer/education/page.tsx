@@ -43,10 +43,6 @@ const FEED_CARDS: FeedCard[] = [
   { type: 'course', id: 'fc-02', courseId: 'af-01', subjectName: '기능 해부학', chapterName: '기시(O) & 정지(I) — 초급', color: '#639922' },
 ]
 
-// 첫 번째 강의 ID (네비게이션용)
-const FIRST_COURSE_ID = COURSES
-  .filter((c) => c.phase === 'mvp')
-  .sort((a, b) => a.orderIndex - b.orderIndex)[0]?.id ?? 'ab-01'
 
 export default function EducationPage() {
   const router = useRouter()
@@ -128,7 +124,7 @@ export default function EducationPage() {
           {/* 데일리 카드 */}
           <div className="px-3 mb-2.5">
             <button
-              onClick={() => router.push(`/trainer/education/${nextCourse.id}`)}
+              onClick={() => router.push('/trainer/education/lesson')}
               className="w-full flex items-center gap-3 px-3 py-3 bg-[#1A1A1A] rounded-xl shadow-md active:opacity-80 text-left"
             >
               <div
@@ -181,7 +177,7 @@ export default function EducationPage() {
                   return (
                     <button
                       key={card.id}
-                      onClick={() => router.push(`/trainer/education/${card.courseId}`)}
+                      onClick={() => router.push('/trainer/education/lesson')}
                       className="flex-shrink-0 w-36 bg-white rounded-xl border border-[#E5E5E5] p-2.5 text-left active:bg-[#F5F5F3]"
                     >
                       <span
@@ -244,7 +240,7 @@ export default function EducationPage() {
                   return (
                     <button
                       key={cat}
-                      onClick={() => !locked && router.push(`/trainer/education/${catCourses[0]?.id ?? ''}`)}
+                      onClick={() => !locked && router.push('/trainer/education/lesson')}
                       className={`p-3 rounded-xl border text-left ${
                         locked ? 'bg-[#F5F5F3] border-dashed border-[#CCCCCC] opacity-50' : 'bg-white border-[#E5E5E5] shadow-sm active:bg-[#F5F5F3]'
                       }`}
@@ -284,7 +280,7 @@ export default function EducationPage() {
         {/* ─── 하단 네비게이션 ──────────────────────────────────── */}
         <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-[#E5E5E5] flex items-center justify-around px-2 py-2.5">
           {[
-            { icon: '📚', label: '강의', path: `/trainer/education/${FIRST_COURSE_ID}`, active: false },
+            { icon: '📚', label: '강의', path: '/trainer/education/lesson', active: false },
             { icon: '🏠', label: '홈',   path: '/trainer/education',                     active: true  },
             { icon: '👤', label: '내 정보', path: '/trainer/profile',                    active: false },
           ].map((tab) => (
