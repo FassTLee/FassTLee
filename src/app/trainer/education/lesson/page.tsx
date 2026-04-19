@@ -84,7 +84,7 @@ const DUMMY_MINI_QUESTIONS = [
     question: '대퇴직근의 기시점(Origin)은 어디인가요?',
     options: ['전하장골극 (AIIS)', '대퇴골 소전자', '장골능 (Iliac Crest)', '슬개골 (Patella)'],
     answer: 0,
-    explanation: '대퇴직근의 기시점은 전하장골극(Anterior Inferior Iliac Spine, AIIS)입니다.',
+    explanation: '대퇴직근의 기시점은 전하장골극(AIIS)입니다.',
   },
   {
     id: 2,
@@ -105,9 +105,23 @@ const DUMMY_MINI_QUESTIONS = [
     answer: 0,
     explanation: '대퇴직근은 슬관절 신전과 고관절 굴곡을 담당합니다.',
   },
+  {
+    id: 4,
+    question: '대퇴직근 단축 시 나타나는 자세 변화는?',
+    options: ['전방 골반 경사 증가', '후방 골반 경사 증가', '측방 골반 경사', '변화 없음'],
+    answer: 0,
+    explanation: '대퇴직근 단축 시 전방 골반 경사(Anterior Pelvic Tilt)가 증가합니다.',
+  },
+  {
+    id: 5,
+    question: '대퇴직근의 정지점(Insertion)은 어디인가요?',
+    options: ['슬개골 상단', '대퇴골 소전자', '경골 조면', '비골두'],
+    answer: 0,
+    explanation: '대퇴직근의 정지점은 슬개골(Patella) 상단입니다.',
+  },
 ]
 
-const XP_BY_ATTEMPT: Record<number, number> = { 1: 30, 2: 20, 3: 10 }
+const XP_BY_ATTEMPT: Record<number, number> = { 1: 30, 2: 20, 3: 15, 4: 10, 5: 5 }
 
 // ================================================================
 // 오디오 플레이어 플레이스홀더
@@ -200,6 +214,7 @@ export default function LessonPage() {
   const [showModeSelectPopup, setShowModeSelectPopup] = useState(false)
   const [showStartPopup, setShowStartPopup] = useState(false)
   const [modeSelectDontShow, setModeSelectDontShow] = useState(false)
+  const [lessonStarted, setLessonStarted] = useState(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -212,8 +227,17 @@ export default function LessonPage() {
       setShowModeSelectPopup(true)
     } else if (!started) {
       setShowStartPopup(true)
+    } else {
+      // 같은 세션 재진입: 바로 시작
+      setLessonStarted(true)
     }
   }, [])
+
+  // FIX 1: 슬라이드 전환 시 음성 자동 재생
+  useEffect(() => {
+    if (!lessonStarted) return
+    setIsPlaying(true)
+  }, [slide, lessonStarted])
 
   const handleModeChange = (m: 'manual' | 'auto') => {
     setMode(m)
@@ -234,7 +258,7 @@ export default function LessonPage() {
   const handleStartLesson = () => {
     if (typeof window !== 'undefined') sessionStorage.setItem('kinepia_lesson_started', '1')
     setShowStartPopup(false)
-    setIsPlaying(true)
+    setLessonStarted(true) // slide-change useEffect가 setIsPlaying(true) 호출
   }
 
   // ── 오디오 ───────────────────────────────────────────────────────
@@ -277,8 +301,7 @@ export default function LessonPage() {
     const timer = setTimeout(() => {
       setIsPlaying(false)
       if (slide < totalSlides - 1) {
-        setSlide((s) => s + 1)
-        setTimeout(() => setIsPlaying(true), 300)
+        setSlide((s) => s + 1) // slide-change useEffect가 재생 재시작
       } else {
         setLessonStep('mini-test')
       }
@@ -325,6 +348,7 @@ export default function LessonPage() {
     if (!isDragging.current) return
     isDragging.current = false
     const delta = dragCurrentX.current
+    dragCurrentX.current = 0 // FIX 2: 스테일 값 초기화
     setDragOffset(0)
     dragStartX.current = null
     if (delta < -50) tryGoTo(slide === totalSlides - 1 ? 'mini-test' : slide + 1)
@@ -344,6 +368,7 @@ export default function LessonPage() {
     if (!isDragging.current) return
     isDragging.current = false
     const delta = dragCurrentX.current
+    dragCurrentX.current = 0 // FIX 2: 스테일 값 초기화
     setDragOffset(0)
     dragStartX.current = null
     if (delta < -50) tryGoTo(slide === totalSlides - 1 ? 'mini-test' : slide + 1)
@@ -490,12 +515,13 @@ export default function LessonPage() {
         {StickyHeader}
         <div className="flex-1 overflow-y-auto pb-6 px-4 pt-5">
           {/* 미니 테스트 헤더 */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-1">
             <span className="text-[13px] font-black text-[#1A1A1A]">⚡ 미니 테스트</span>
             <span className="text-[11px] text-[#6B6B6B] bg-white border border-[#E5E5E5] rounded-full px-3 py-1">
               문제 {miniQIdx + 1} / {DUMMY_MINI_QUESTIONS.length}
             </span>
           </div>
+          <p className="text-[11px] text-[#ADADAD] mb-4">정답을 맞히면 바로 완료! 최소 3문제 · 최대 5문제</p>
 
           {/* 진행 점 */}
           <div className="flex gap-1.5 mb-5">
@@ -691,7 +717,10 @@ export default function LessonPage() {
                   <div
                     key={i}
                     ref={(el) => { checkboxRefs.current[i] = el }}
-                    onClick={() => {
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation()
                       const next = [...checked]
                       next[slide] = [...next[slide]]
                       next[slide][i] = !next[slide][i]
