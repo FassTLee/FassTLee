@@ -121,7 +121,8 @@ const DUMMY_MINI_QUESTIONS = [
   },
 ]
 
-const XP_BY_ATTEMPT: Record<number, number> = { 1: 30, 2: 20, 3: 15, 4: 10, 5: 5 }
+// FIX 3: Q3 정답=30XP, Q4 정답=20XP, Q5 정답=10XP, 전부 오답=5XP
+const XP_BY_QUESTION: Record<number, number> = { 3: 30, 4: 20, 5: 10 }
 
 // ================================================================
 // 오디오 플레이어 플레이스홀더
@@ -270,7 +271,6 @@ export default function LessonPage() {
 
   // ── 미니 테스트 상태 ─────────────────────────────────────────────
   const [miniQIdx, setMiniQIdx] = useState(0)
-  const [miniAttempt, setMiniAttempt] = useState(0)
   const [miniCorrectAttempt, setMiniCorrectAttempt] = useState<number | null>(null)
   const [miniSelected, setMiniSelected] = useState<number | null>(null)
   const [miniAnswered, setMiniAnswered] = useState(false)
@@ -314,6 +314,7 @@ export default function LessonPage() {
   const checkedCount = checked[slide].filter(Boolean).length
   const firstUncheckedIdx = checked[slide].findIndex((v) => !v)
 
+  // FIX 2: 미완료 팝업은 "다음"/"미니 테스트" 버튼에서만 호출
   const tryGoTo = useCallback(
     (target: number | 'mini-test') => {
       const needsCheck = mode === 'manual' && !allChecked
@@ -325,8 +326,8 @@ export default function LessonPage() {
           setLessonStep('mini-test')
           setIsPlaying(false)
         } else if (target >= 0 && target < totalSlides) {
+          // FIX 1: setIsPlaying(false) 제거 — useEffect([slide, lessonStarted])가 자동 재생 처리
           setSlide(target)
-          setIsPlaying(false)
         }
       }
     },
@@ -348,11 +349,16 @@ export default function LessonPage() {
     if (!isDragging.current) return
     isDragging.current = false
     const delta = dragCurrentX.current
-    dragCurrentX.current = 0 // FIX 2: 스테일 값 초기화
+    dragCurrentX.current = 0
     setDragOffset(0)
     dragStartX.current = null
-    if (delta < -50) tryGoTo(slide === totalSlides - 1 ? 'mini-test' : slide + 1)
-    else if (delta > 50) tryGoTo(slide - 1)
+    // FIX 2: 드래그는 팝업 없이 자유 이동
+    if (delta < -50) {
+      if (slide === totalSlides - 1) { setLessonStep('mini-test'); setIsPlaying(false) }
+      else setSlide(slide + 1)
+    } else if (delta > 50 && slide > 0) {
+      setSlide(slide - 1)
+    }
   }
   const onTouchStart = (e: React.TouchEvent) => {
     dragStartX.current = e.touches[0].clientX
@@ -368,42 +374,51 @@ export default function LessonPage() {
     if (!isDragging.current) return
     isDragging.current = false
     const delta = dragCurrentX.current
-    dragCurrentX.current = 0 // FIX 2: 스테일 값 초기화
+    dragCurrentX.current = 0
     setDragOffset(0)
     dragStartX.current = null
-    if (delta < -50) tryGoTo(slide === totalSlides - 1 ? 'mini-test' : slide + 1)
-    else if (delta > 50) tryGoTo(slide - 1)
+    // FIX 2: 드래그는 팝업 없이 자유 이동
+    if (delta < -50) {
+      if (slide === totalSlides - 1) { setLessonStep('mini-test'); setIsPlaying(false) }
+      else setSlide(slide + 1)
+    } else if (delta > 50 && slide > 0) {
+      setSlide(slide - 1)
+    }
   }
 
-  // ── 미니 테스트 답 선택 ──────────────────────────────────────────
+  // ── 미니 테스트 답 선택 (FIX 3: 최소 3문제 의무, 오답 빨간색 없음, 0.5초 전환) ─
   const handleMiniAnswer = (optionIdx: number) => {
     if (miniAnswered) return
     setMiniSelected(optionIdx)
     setMiniAnswered(true)
-    const q = DUMMY_MINI_QUESTIONS[miniQIdx]
-    const correct = optionIdx === q.answer
+    const correct = optionIdx === DUMMY_MINI_QUESTIONS[miniQIdx].answer
 
     setTimeout(() => {
-      if (correct) {
-        setMiniCorrectAttempt(miniAttempt + 1)
-        setLessonStep('result')
+      if (miniQIdx < 2) {
+        // Q1(idx 0), Q2(idx 1): 정오답 무관하게 다음 문제로 진행
+        setMiniQIdx((i) => i + 1)
+        setMiniSelected(null)
+        setMiniAnswered(false)
       } else {
-        if (miniQIdx < DUMMY_MINI_QUESTIONS.length - 1) {
+        // Q3(idx 2) ~ Q5(idx 4): 정답이면 result, 오답이면 다음 문제 or result
+        if (correct) {
+          setMiniCorrectAttempt(miniQIdx + 1) // 3, 4, or 5
+          setLessonStep('result')
+        } else if (miniQIdx < DUMMY_MINI_QUESTIONS.length - 1) {
           setMiniQIdx((i) => i + 1)
-          setMiniAttempt((a) => a + 1)
           setMiniSelected(null)
           setMiniAnswered(false)
         } else {
+          // Q5 오답: 전부 실패
           setMiniCorrectAttempt(null)
           setLessonStep('result')
         }
       }
-    }, 800)
+    }, 500)
   }
 
   const resetMiniTest = () => {
     setMiniQIdx(0)
-    setMiniAttempt(0)
     setMiniCorrectAttempt(null)
     setMiniSelected(null)
     setMiniAnswered(false)
@@ -411,7 +426,7 @@ export default function LessonPage() {
   }
 
   const xpEarned =
-    miniCorrectAttempt !== null ? (XP_BY_ATTEMPT[miniCorrectAttempt] ?? 10) : 5
+    miniCorrectAttempt !== null ? (XP_BY_QUESTION[miniCorrectAttempt] ?? 10) : 5
 
   // ── 진행 바 % ────────────────────────────────────────────────────
   const pct =
@@ -537,18 +552,14 @@ export default function LessonPage() {
             <p className="text-[15px] font-bold text-[#1A1A1A] leading-snug">{q.question}</p>
           </div>
 
-          {/* 보기 */}
+          {/* 보기 — FIX 3: 정오답 색상 없음, 선택=파란색만 */}
           <div className="space-y-2.5">
             {q.options.map((opt, i) => {
-              const isSelected = miniSelected === i
-              const isCorrect = i === q.answer
               let style = 'bg-white border-[#E5E5E5] text-[#1A1A1A]'
-              if (miniAnswered) {
-                if (isCorrect) style = 'bg-[#639922]/10 border-[#639922] text-[#1A1A1A]'
-                else if (isSelected) style = 'bg-[#E24B4A]/10 border-[#E24B4A] text-[#E24B4A]'
-                else style = 'bg-white border-[#E5E5E5] text-[#ADADAD] opacity-50'
-              } else if (isSelected) {
+              if (miniSelected === i) {
                 style = 'bg-[#378ADD]/10 border-[#378ADD] text-[#1A1A1A]'
+              } else if (miniAnswered) {
+                style = 'bg-white border-[#E5E5E5] text-[#ADADAD] opacity-40'
               }
               return (
                 <button
@@ -565,17 +576,6 @@ export default function LessonPage() {
               )
             })}
           </div>
-
-          {/* 오답 시 힌트 */}
-          {miniAnswered && miniSelected !== q.answer && (
-            <div className="mt-4 bg-[#E24B4A]/5 border border-[#E24B4A]/20 rounded-xl px-4 py-3">
-              <p className="text-[12px] text-[#E24B4A] font-semibold">
-                {miniQIdx < DUMMY_MINI_QUESTIONS.length - 1
-                  ? '오답입니다. 다음 문제를 풀어보세요...'
-                  : '아쉽지만 다음 기회에 도전하세요!'}
-              </p>
-            </div>
-          )}
         </div>
       </div>
     )
@@ -618,18 +618,21 @@ export default function LessonPage() {
               <p className="text-[12px] text-[#1A1A1A] leading-relaxed">{lastQ.explanation}</p>
             </div>
 
-            {/* 시도 횟수 뱃지 */}
-            {miniCorrectAttempt !== null && (
-              <div className="flex justify-center gap-1.5 mb-5">
-                {DUMMY_MINI_QUESTIONS.slice(0, miniCorrectAttempt).map((_, i) => (
-                  <div key={i} className={`w-8 h-8 rounded-full flex items-center justify-center text-[12px] font-bold ${
-                    i === miniCorrectAttempt - 1 ? 'bg-[#639922] text-white' : 'bg-[#E24B4A] text-white'
+            {/* 문제 번호 뱃지 — miniCorrectAttempt = 정답 문제 번호(3·4·5) */}
+            <div className="flex justify-center gap-1.5 mb-5">
+              {DUMMY_MINI_QUESTIONS.map((_, i) => {
+                const qNum = i + 1
+                const lastQ = miniCorrectAttempt ?? DUMMY_MINI_QUESTIONS.length
+                if (qNum > lastQ) return null
+                return (
+                  <div key={i} className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold ${
+                    miniCorrectAttempt === qNum ? 'bg-[#639922] text-white' : 'bg-[#E5E5E5] text-[#6B6B6B]'
                   }`}>
-                    {i === miniCorrectAttempt - 1 ? '✓' : '✗'}
+                    {qNum}
                   </div>
-                ))}
-              </div>
-            )}
+                )
+              })}
+            </div>
 
             <div className="space-y-2.5">
               <button
@@ -766,12 +769,12 @@ export default function LessonPage() {
             )}
           </div>
 
-          {/* 도트 네비게이션 */}
+          {/* 도트 네비게이션 — FIX 2: 팝업 없이 자유 이동 */}
           <div className="flex items-center justify-center gap-2 mt-5 mb-2">
             {DUMMY_LESSON.slides.map((_, i) => (
               <button
                 key={i}
-                onClick={() => tryGoTo(i)}
+                onClick={() => { if (i !== slide) setSlide(i) }}
                 className={`rounded-full transition-all ${
                   i === slide ? 'w-4 h-2 bg-[#378ADD]' : 'w-2 h-2 bg-[#CCCCCC] hover:bg-[#ADADAD]'
                 }`}
@@ -786,8 +789,9 @@ export default function LessonPage() {
         className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full bg-white border-t border-[#E5E5E5] px-4 py-3 flex items-center gap-3 z-20"
         style={{ maxWidth: 430 }}
       >
+        {/* FIX 2: 이전 버튼은 팝업 없이 자유 이동 */}
         <button
-          onClick={() => tryGoTo(slide - 1)}
+          onClick={() => { if (slide > 0) setSlide(slide - 1) }}
           disabled={slide === 0}
           className="flex-1 flex items-center justify-center gap-1.5 py-3.5 border border-[#E5E5E5] rounded-2xl text-[14px] font-medium text-[#6B6B6B] disabled:opacity-30"
         >
@@ -818,8 +822,8 @@ export default function LessonPage() {
                     setLessonStep('mini-test')
                     setIsPlaying(false)
                   } else if (typeof pendingTarget === 'number') {
+                    // FIX 1: setIsPlaying(false) 제거 — useEffect가 자동 재생
                     setSlide(pendingTarget)
-                    setIsPlaying(false)
                   }
                   setPendingTarget(null)
                 }}
