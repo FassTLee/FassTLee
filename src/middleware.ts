@@ -120,8 +120,8 @@ export function middleware(request: NextRequest) {
     const origin = request.headers.get('origin') ?? ''
     const allowedOrigins = [
       process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000',
-      'https://fitdoor.com',
-      'https://www.fitdoor.com',
+      'https://kinepia-rho.vercel.app',
+      'http://localhost:3000',
     ]
 
     if (request.method === 'OPTIONS') {
