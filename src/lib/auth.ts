@@ -25,7 +25,7 @@ const KakaoProvider: OAuthConfig<KakaoProfile> = {
   type: 'oauth',
   authorization: {
     url: 'https://kauth.kakao.com/oauth/authorize',
-    params: { scope: 'profile_nickname profile_image account_email' },
+    params: { scope: 'profile_nickname profile_image' },
   },
   token: 'https://kauth.kakao.com/oauth/token',
   userinfo: 'https://kapi.kakao.com/v2/user/me',
@@ -33,7 +33,8 @@ const KakaoProvider: OAuthConfig<KakaoProfile> = {
     return {
       id: String(profile.id),
       name: profile.kakao_account?.profile?.nickname ?? null,
-      email: profile.kakao_account?.email ?? null,
+      // 이메일 동의항목 미사용 — kakao_id 기반 식별
+      email: profile.kakao_account?.email ?? `kakao_${profile.id}@kinepia.local`,
       image: profile.kakao_account?.profile?.profile_image_url ?? null,
     }
   },
