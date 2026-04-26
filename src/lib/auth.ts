@@ -7,7 +7,6 @@ import type { OAuthConfig } from 'next-auth/providers/oauth'
 // JWT 만료: 24시간 / Refresh: 7일
 // ================================================================
 
-// 카카오 커스텀 프로바이더 (NextAuth v4 내장 없음)
 interface KakaoProfile {
   id: number
   kakao_account?: {
@@ -15,6 +14,7 @@ interface KakaoProfile {
     profile?: {
       nickname?: string
       profile_image_url?: string
+      thumbnail_image_url?: string
     }
   }
 }
@@ -30,29 +30,29 @@ const KakaoProvider: OAuthConfig<KakaoProfile> = {
   token: 'https://kauth.kakao.com/oauth/token',
   userinfo: 'https://kapi.kakao.com/v2/user/me',
   profile(profile: KakaoProfile) {
+    const id = String(profile.id)
     return {
-      id: String(profile.id),
-      name: profile.kakao_account?.profile?.nickname ?? null,
-      // 이메일 동의항목 미사용 — kakao_id 기반 식별
-      email: profile.kakao_account?.email ?? `kakao_${profile.id}@kinepia.local`,
+      id,
+      name:  profile.kakao_account?.profile?.nickname  ?? '카카오 사용자',
+      email: profile.kakao_account?.email              ?? `kakao_${id}@kinepia.local`,
       image: profile.kakao_account?.profile?.profile_image_url ?? null,
     }
   },
-  clientId: process.env.KAKAO_CLIENT_ID!,
+  clientId:     process.env.KAKAO_CLIENT_ID!,
   clientSecret: process.env.KAKAO_CLIENT_SECRET ?? '',
-  checks: ['state'],
+  // checks 제거: 커스텀 Provider에서 state 쿠키 타이밍 이슈 방지
 }
 
 export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientId:     process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       authorization: {
         params: {
-          scope: 'openid email profile',
-          prompt: 'consent',
-          access_type: 'offline',
+          scope:         'openid email profile',
+          prompt:        'consent',
+          access_type:   'offline',
           response_type: 'code',
         },
       },
@@ -60,46 +60,46 @@ export const authOptions: NextAuthOptions = {
     KakaoProvider,
   ],
 
-  // JWT 전략 사용 (Supabase DB 세션 대신)
   session: {
     strategy: 'jwt',
-    maxAge: 24 * 60 * 60,         // 24시간
-    updateAge: 60 * 60,           // 1시간마다 갱신
+    maxAge:     24 * 60 * 60,  // 24시간
+    updateAge:       60 * 60,  // 1시간마다 갱신
   },
 
   jwt: {
-    maxAge: 24 * 60 * 60,         // Access Token: 24시간
+    maxAge: 24 * 60 * 60,
   },
 
   callbacks: {
-    // JWT 토큰 생성/갱신 시
     async jwt({ token, user, account }) {
+      // 최초 로그인: account + user 모두 존재
       if (account && user) {
         return {
           ...token,
-          googleId: account.providerAccountId,
-          accessToken: account.access_token,
-          refreshToken: account.refresh_token,
-          // Refresh Token 유효기간: 7일
-          refreshTokenExpiry: Date.now() + 7 * 24 * 60 * 60 * 1000,
+          provider:            account.provider,
+          providerAccountId:   account.providerAccountId,
+          accessToken:         account.access_token,
+          refreshToken:        account.refresh_token ?? null,
+          refreshTokenExpiry:  Date.now() + 7 * 24 * 60 * 60 * 1000,
         }
       }
-      // Access token 만료 전이면 그대로 반환
-      if (Date.now() < (token.refreshTokenExpiry as number ?? 0)) {
+
+      // 세션 갱신: refreshTokenExpiry 가 남아있으면 그대로 사용
+      const expiry = token.refreshTokenExpiry as number | undefined
+      if (!expiry || Date.now() < expiry) {
         return token
       }
-      // Refresh Token 만료 시 재로그인 요구
+
+      // 만료 → 재로그인 유도 (소셜 로그인은 자동 갱신 없음)
       return { ...token, error: 'RefreshTokenExpired' }
     },
 
-    // Session에 노출할 최소 정보만 포함
     async session({ session, token }) {
       session.user = {
-        name: session.user?.name ?? null,
+        name:  session.user?.name  ?? null,
         email: session.user?.email ?? null,
         image: session.user?.image ?? null,
       }
-      // 에러 상태 전달
       if (token.error) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ;(session as any).error = token.error
@@ -107,33 +107,34 @@ export const authOptions: NextAuthOptions = {
       return session
     },
 
-    // 리다이렉트 URL 검증
     async redirect({ url, baseUrl }) {
+      // 상대경로
       if (url.startsWith('/')) return `${baseUrl}${url}`
-      if (new URL(url).origin === baseUrl) return url
+      // 동일 origin
+      try {
+        if (new URL(url).origin === baseUrl) return url
+      } catch {
+        // URL 파싱 실패 시 baseUrl 반환
+      }
       return baseUrl
     },
   },
 
   pages: {
     signIn: '/landing',
-    error: '/landing?auth_error=1',
+    error:  '/landing?auth_error=1',
   },
 
-  // CSRF 보호 활성화
   secret: process.env.NEXTAUTH_SECRET,
 
-  // 이벤트 훅 (로그 목적)
   events: {
-    async signIn({ user }) {
-      // Production: 로그인 이벤트 기록
-      console.log('[Auth] Sign in:', user.email)
+    async signIn({ user, account }) {
+      console.log(`[Auth] signIn provider=${account?.provider} email=${user.email}`)
     },
     async signOut() {
-      console.log('[Auth] Sign out')
+      console.log('[Auth] signOut')
     },
   },
 
-  // 디버그 (개발 환경만)
-  debug: process.env.NODE_ENV === 'development',
+  debug: false,
 }
