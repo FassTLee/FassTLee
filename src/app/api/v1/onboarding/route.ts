@@ -23,13 +23,17 @@ export async function POST(req: NextRequest) {
   try {
     await supabase
       .from('profiles')
-      .update({
-        gender,
-        age_group,
-        occupation,
-        onboarding_completed: true,
-      })
-      .eq('email', session.user.email)
+      .upsert(
+        {
+          email: session.user.email,
+          name: session.user.name ?? null,
+          gender,
+          age_group,
+          occupation,
+          onboarding_completed: true,
+        },
+        { onConflict: 'email' }
+      )
 
     return NextResponse.json({ ok: true, saved: true })
   } catch (err) {

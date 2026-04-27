@@ -36,7 +36,14 @@ export async function POST(req: NextRequest) {
   }
   await supabase
     .from('profiles')
-    .update({ learning_style, style_tested_at: new Date().toISOString() })
-    .eq('email', session.user.email)
+    .upsert(
+      {
+        email: session.user.email,
+        name: session.user.name ?? null,
+        learning_style,
+        style_tested_at: new Date().toISOString(),
+      },
+      { onConflict: 'email' }
+    )
   return NextResponse.json({ ok: true, saved: true })
 }
