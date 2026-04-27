@@ -10,8 +10,9 @@ const nextConfig = {
   images: {
     domains: [
       'lh3.googleusercontent.com',   // Google 프로필 이미지
+      'k.kakaocdn.net',              // 카카오 프로필 이미지
+      't1.kakaocdn.net',             // 카카오 썸네일 이미지
     ],
-    // 외부 이미지 최적화 비활성화 (보안)
     unoptimized: false,
   },
 
@@ -79,9 +80,7 @@ const nextConfig = {
   },
 
   // ─── 실험 기능 ─────────────────────────────────────────────────
-  experimental: {
-    serverComponentsExternalPackages: ['next-auth'],
-  },
+  experimental: {},
 }
 
 export default nextConfig

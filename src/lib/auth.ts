@@ -19,6 +19,14 @@ interface KakaoProfile {
   }
 }
 
+// 런타임 env 검증 (Vercel 함수 로그에서 확인 가능)
+if (!process.env.KAKAO_CLIENT_ID) {
+  console.error('[Auth] KAKAO_CLIENT_ID is not set')
+}
+if (!process.env.KAKAO_CLIENT_SECRET) {
+  console.error('[Auth] KAKAO_CLIENT_SECRET is not set')
+}
+
 const KakaoProvider: OAuthConfig<KakaoProfile> = {
   id: 'kakao',
   name: 'Kakao',
