@@ -1,7 +1,26 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "Bash(git push:*)",
+      "Bash(vercel --prod)",
+      "Bash(npx tsc:*)",
+      "Bash(node -e \"const pkg = require\\('./node_modules/next-auth/package.json'\\); console.log\\(pkg.version\\)\")",
+      "Bash(node -e \"const t = require\\('./node_modules/next-auth/providers/oauth'\\); console.log\\(Object.keys\\(t\\)\\)\")",
+      "Bash(npm run:*)",
+      "Bash(vercel --prod --yes)",
+      "Bash(node -e \"const d = require\\('C:/Kinepia/questions/exercise_physiology.json'\\); const chapters = [...new Set\\(d.map\\(q=>q.chapter\\)\\)]; console.log\\('총 문제수:', d.length\\); console.log\\('챕터 목록:', chapters\\);\")",
+      "Bash(node scripts/insert-all-questions.mjs)",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"const d=require\\('C:/Kinepia/questions/functional_anatomy.json'\\); console.log\\(JSON.stringify\\(d[0], null, 2\\)\\)\")",
+      "Bash(git commit -m ' *)",
+      "Read(//c/Kinepia/logo/**)",
+      "Bash(node -e \"require\\('sharp'\\); console.log\\('sharp ok'\\)\")",
+      "Bash(npm install *)",
+      "Bash(node -e \"const s=require\\('sharp'\\); console.log\\('sharp', s.versions.sharp\\)\")",
+      "Bash(node --input-type=module)",
+      "Bash(git commit *)"
     ]
   }
 }

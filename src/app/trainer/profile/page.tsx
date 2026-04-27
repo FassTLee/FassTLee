@@ -1,14 +1,32 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { PhoneFrame, StatusBar, Header } from '@/components/common'
 import { useEducationStore } from '@/store/educationStore'
 import { COURSES, getLevelName, getXPForNextLevel } from '@/types/education'
-import { ChevronLeft, ChevronRight, Settings } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Settings, RefreshCw } from 'lucide-react'
+
+const STYLE_KEY = 'kinepia_learning_style'
+
+interface StyleInfo {
+  learning_style: string | null
+  style_tested_at: string | null
+}
 
 export default function ProfilePage() {
   const router = useRouter()
   const { progress, gamification } = useEducationStore()
+  const [styleInfo, setStyleInfo] = useState<StyleInfo>({ learning_style: null, style_tested_at: null })
+
+  useEffect(() => {
+    const cached = localStorage.getItem(STYLE_KEY)
+    if (cached) setStyleInfo({ learning_style: cached, style_tested_at: null })
+    fetch('/api/v1/learning-style')
+      .then((r) => r.json())
+      .then((d) => { if (d.learning_style) setStyleInfo(d) })
+      .catch(() => {})
+  }, [])
 
   const prevLevelXP = getXPForNextLevel(gamification.level - 1)
   const nextLevelXP = getXPForNextLevel(gamification.level)
@@ -76,6 +94,39 @@ export default function ProfilePage() {
                 />
               </div>
               <div className="text-[10px] text-white/30 mt-1 text-right">{pct}%</div>
+            </div>
+          </div>
+
+          {/* 학습 성향 */}
+          <div className="mx-3 mt-2.5">
+            <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">학습 성향</p>
+            <div className="bg-white rounded-xl border border-[#E5E5E5] p-3 flex items-center gap-3">
+              <div className="text-[24px]">
+                {styleInfo.learning_style === 'memorizer' ? '🧠' : styleInfo.learning_style === 'conceptualizer' ? '💡' : '❓'}
+              </div>
+              <div className="flex-1">
+                <div className="text-[13px] font-bold text-[#1A1A1A]">
+                  {styleInfo.learning_style === 'memorizer'
+                    ? '암기형'
+                    : styleInfo.learning_style === 'conceptualizer'
+                    ? '이해형'
+                    : '미측정'}
+                </div>
+                {styleInfo.style_tested_at && (
+                  <div className="text-[10px] text-[#ADADAD] mt-0.5">
+                    {new Date(styleInfo.style_tested_at).toLocaleDateString('ko-KR')} 측정
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => {
+                  localStorage.removeItem(STYLE_KEY)
+                  router.push('/onboarding/style-test')
+                }}
+                className="flex items-center gap-1 text-[11px] text-[#E24B4A] font-semibold"
+              >
+                <RefreshCw size={12} /> 재테스트
+              </button>
             </div>
           </div>
 

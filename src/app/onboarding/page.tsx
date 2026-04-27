@@ -11,7 +11,8 @@ import { ChevronRight, Check } from 'lucide-react'
 // ================================================================
 
 const ONBOARDING_KEY = 'kinepia_onboarding_done'
-const DESTINATION = '/trainer/education'
+const STYLE_KEY = 'kinepia_learning_style'
+const DESTINATION = '/onboarding/style-test'
 
 type Step = 0 | 1 | 2 | 3   // 0=loading, 1~3=질문
 
@@ -52,9 +53,10 @@ export default function OnboardingPage() {
       return
     }
 
-    // 이미 온보딩 완료 → 대시보드로
+    // 이미 온보딩 완료
     if (typeof window !== 'undefined' && localStorage.getItem(ONBOARDING_KEY)) {
-      router.replace(DESTINATION)
+      // 성향 테스트도 완료면 대시보드, 아니면 성향 테스트로
+      router.replace(localStorage.getItem(STYLE_KEY) ? '/trainer/education' : DESTINATION)
       return
     }
 
