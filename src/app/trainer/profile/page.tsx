@@ -8,6 +8,7 @@ import { COURSES, getLevelName, getXPForNextLevel } from '@/types/education'
 import { ChevronLeft, ChevronRight, Settings, RefreshCw } from 'lucide-react'
 
 const STYLE_KEY = 'kinepia_learning_style'
+const SUBJECTS_KEY = 'kinepia_selected_subjects'
 
 interface StyleInfo {
   learning_style: string | null
@@ -18,13 +19,25 @@ export default function ProfilePage() {
   const router = useRouter()
   const { progress, gamification } = useEducationStore()
   const [styleInfo, setStyleInfo] = useState<StyleInfo>({ learning_style: null, style_tested_at: null })
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([])
 
   useEffect(() => {
+    // 학습 성향
     const cached = localStorage.getItem(STYLE_KEY)
     if (cached) setStyleInfo({ learning_style: cached, style_tested_at: null })
     fetch('/api/v1/learning-style')
       .then((r) => r.json())
       .then((d) => { if (d.learning_style) setStyleInfo(d) })
+      .catch(() => {})
+
+    // 수강 과목
+    const subjectsCached = localStorage.getItem(SUBJECTS_KEY)
+    if (subjectsCached) {
+      try { setSelectedSubjects(JSON.parse(subjectsCached)) } catch { /* ignore */ }
+    }
+    fetch('/api/v1/selected-subjects')
+      .then((r) => r.json())
+      .then((d) => { if (Array.isArray(d.selected_subjects) && d.selected_subjects.length > 0) setSelectedSubjects(d.selected_subjects) })
       .catch(() => {})
   }, [])
 
@@ -127,6 +140,37 @@ export default function ProfilePage() {
               >
                 <RefreshCw size={12} /> 재테스트
               </button>
+            </div>
+          </div>
+
+          {/* 수강 과목 */}
+          <div className="mx-3 mt-2.5">
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider">수강 과목</p>
+              <button
+                onClick={() => router.push('/select-subject')}
+                className="text-[11px] text-[#E24B4A] font-semibold"
+              >
+                과목 수정
+              </button>
+            </div>
+            <div className="bg-white rounded-xl border border-[#E5E5E5] p-3">
+              {selectedSubjects.length === 0 ? (
+                <button
+                  onClick={() => router.push('/select-subject')}
+                  className="w-full text-[13px] text-[#ADADAD] py-1"
+                >
+                  과목을 선택해주세요 →
+                </button>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedSubjects.map((name) => (
+                    <span key={name} className="px-2.5 py-1 rounded-full bg-[#E24B4A]/10 text-[#E24B4A] text-[11px] font-semibold">
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

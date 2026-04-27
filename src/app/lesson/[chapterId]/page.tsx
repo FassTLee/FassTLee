@@ -10,9 +10,8 @@ const STYLE_KEY = 'kinepia_learning_style'
 
 interface Chapter {
   id: string
-  name: string
-  description: string | null
-  subject_id: string
+  title: string
+  course_id: string
 }
 
 interface Question {
@@ -45,6 +44,7 @@ export default function LessonPage() {
   const chapterId = params.chapterId as string
 
   const [chapter, setChapter] = useState<Chapter | null>(null)
+  const [courseDesc, setCourseDesc] = useState<string | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
   const [style, setStyle] = useState<'memorizer' | 'conceptualizer'>('conceptualizer')
   const [loading, setLoading] = useState(true)
@@ -59,11 +59,20 @@ export default function LessonPage() {
 
   const fetchData = async () => {
     const [{ data: ch }, { data: qs }] = await Promise.all([
-      supabase.from('chapters').select('id, name, description, subject_id').eq('id', chapterId).single(),
+      supabase.from('chapters').select('id, title, course_id').eq('id', chapterId).single(),
       supabase.from('chapter_questions').select('id, question, options, answer_index, explanation').eq('chapter_id', chapterId),
     ])
     setChapter(ch ?? null)
     setQuestions(qs ?? [])
+
+    if (ch?.course_id) {
+      const { data: course } = await supabase
+        .from('courses')
+        .select('description')
+        .eq('id', ch.course_id)
+        .single()
+      setCourseDesc(course?.description ?? null)
+    }
     setLoading(false)
   }
 
@@ -81,7 +90,6 @@ export default function LessonPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F3] flex flex-col">
-      {/* 헤더 */}
       <div className="bg-white border-b border-[#E5E5E5] px-5 pt-12 pb-4">
         <button onClick={() => router.back()} className="flex items-center gap-1 text-[13px] text-[#6B6B6B] mb-3">
           <ChevronLeft size={16} /> 뒤로
@@ -89,40 +97,34 @@ export default function LessonPage() {
         <div className="flex items-center gap-2 mb-1">
           <span
             className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-            style={
-              isMemorizer
-                ? { backgroundColor: '#378ADD20', color: '#378ADD' }
-                : { backgroundColor: '#63992220', color: '#639922' }
-            }
+            style={isMemorizer
+              ? { backgroundColor: '#378ADD20', color: '#378ADD' }
+              : { backgroundColor: '#63992220', color: '#639922' }}
           >
             {isMemorizer ? '🧠 암기형' : '💡 이해형'}
           </span>
         </div>
-        <h1 className="text-[20px] font-black text-[#1A1A1A]">{chapter?.name ?? '레슨'}</h1>
+        <h1 className="text-[20px] font-black text-[#1A1A1A]">{chapter?.title ?? '레슨'}</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-32">
         {/* 개요 */}
-        {chapter?.description && (
+        {courseDesc && (
           <div className="bg-white rounded-2xl border border-[#E5E5E5] p-4">
             <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">개요</p>
             <p className="text-[14px] text-[#1A1A1A] leading-relaxed">
-              {isMemorizer ? getTwoSentences(chapter.description) : chapter.description}
+              {isMemorizer ? getTwoSentences(courseDesc) : courseDesc}
             </p>
           </div>
         )}
 
-        {/* 암기형: 핵심 키워드 */}
+        {/* 암기형 키워드 */}
         {isMemorizer && keywords.length > 0 && (
           <div className="bg-white rounded-2xl border border-[#E5E5E5] p-4">
             <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-3">핵심 키워드</p>
             <div className="flex flex-wrap gap-2">
               {keywords.map((kw, i) => (
-                <span
-                  key={i}
-                  className="px-3 py-1.5 rounded-xl text-[13px] font-bold"
-                  style={{ backgroundColor: '#378ADD15', color: '#378ADD' }}
-                >
+                <span key={i} className="px-3 py-1.5 rounded-xl text-[13px] font-bold" style={{ backgroundColor: '#378ADD15', color: '#378ADD' }}>
                   {kw}
                 </span>
               ))}
@@ -146,9 +148,7 @@ export default function LessonPage() {
                     <p className="text-[13px] font-semibold text-[#1A1A1A] mb-2">{q.question}</p>
                     {q.explanation && (
                       <p className="text-[12px] text-[#6B6B6B] leading-relaxed">
-                        {isMemorizer && q.explanation
-                          ? getTwoSentences(q.explanation)
-                          : q.explanation}
+                        {isMemorizer ? getTwoSentences(q.explanation) : q.explanation}
                       </p>
                     )}
                   </div>
@@ -166,7 +166,6 @@ export default function LessonPage() {
         )}
       </div>
 
-      {/* 테스트 시작 버튼 */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-[#E5E5E5]">
         <button
           onClick={() => router.push(`/test/${chapterId}`)}

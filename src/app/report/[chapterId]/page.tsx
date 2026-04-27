@@ -39,24 +39,24 @@ export default function ReportPage() {
 
     const raw = localStorage.getItem(RESULT_KEY)
     if (!raw) { router.replace('/select-subject'); return }
-    const parsed: TestResult = JSON.parse(raw)
-    setResult(parsed)
+    setResult(JSON.parse(raw))
     fetchNextChapter()
   }, [status, chapterId])
 
   const fetchNextChapter = async () => {
+    // chapter → course_id → 형제 챕터 조회
     const { data: chapter } = await supabase
       .from('chapters')
-      .select('subject_id, order_num')
+      .select('course_id, order_index')
       .eq('id', chapterId)
       .single()
 
     if (chapter) {
       const { data: siblings } = await supabase
         .from('chapters')
-        .select('id, order_num')
-        .eq('subject_id', chapter.subject_id)
-        .order('order_num', { ascending: true })
+        .select('id, order_index')
+        .eq('course_id', chapter.course_id)
+        .order('order_index', { ascending: true })
 
       if (siblings) {
         const idx = siblings.findIndex((c) => c.id === chapterId)
@@ -84,7 +84,6 @@ export default function ReportPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F3] flex flex-col">
-      {/* 헤더 */}
       <div className="bg-white border-b border-[#E5E5E5] px-5 pt-12 pb-4">
         <h1 className="text-[20px] font-black text-[#1A1A1A]">테스트 결과</h1>
       </div>
@@ -99,9 +98,7 @@ export default function ReportPage() {
             {correct} / {total} 문제 정답
           </div>
           <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold ${
-            passed
-              ? 'bg-[#639922]/20 text-[#7bc629]'
-              : 'bg-[#E24B4A]/10 text-[#E24B4A]'
+            passed ? 'bg-[#639922]/20 text-[#7bc629]' : 'bg-[#E24B4A]/10 text-[#E24B4A]'
           }`}>
             {passed ? <><Check size={13} /> 통과</> : <><X size={13} /> 재도전 권장</>}
           </div>
@@ -165,10 +162,10 @@ export default function ReportPage() {
           </button>
         )}
         <button
-          onClick={() => router.push('/select-subject')}
+          onClick={() => router.push('/trainer/dashboard')}
           className="w-full py-3.5 border-2 border-[#E5E5E5] rounded-2xl text-[14px] font-semibold text-[#6B6B6B]"
         >
-          과목 목록
+          대시보드로
         </button>
       </div>
     </div>

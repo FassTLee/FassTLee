@@ -8,9 +8,9 @@ import { ChevronLeft, ChevronRight, BookOpen } from 'lucide-react'
 
 interface Chapter {
   id: string
-  name: string
-  description: string | null
-  order_num: number | null
+  title: string
+  order_index: number | null
+  course_id: string
 }
 
 interface Subject {
@@ -35,11 +35,29 @@ export default function ChaptersPage() {
   }, [status, subjectId])
 
   const fetchData = async () => {
-    const [{ data: subjectData }, { data: chapterData }] = await Promise.all([
-      supabase.from('subjects').select('id, name').eq('id', subjectId).single(),
-      supabase.from('chapters').select('id, name, description, order_num').eq('subject_id', subjectId).order('order_num', { ascending: true }),
-    ])
+    // subject 정보
+    const { data: subjectData } = await supabase
+      .from('subjects')
+      .select('id, name')
+      .eq('id', subjectId)
+      .single()
     setSubject(subjectData ?? null)
+
+    // subject → courses → chapters
+    const { data: courses } = await supabase
+      .from('courses')
+      .select('id')
+      .eq('subject_id', subjectId)
+
+    if (!courses?.length) { setLoading(false); return }
+
+    const courseIds = courses.map((c) => c.id)
+    const { data: chapterData } = await supabase
+      .from('chapters')
+      .select('id, title, order_index, course_id')
+      .in('course_id', courseIds)
+      .order('order_index', { ascending: true })
+
     setChapters(chapterData ?? [])
     setLoading(false)
   }
@@ -54,10 +72,9 @@ export default function ChaptersPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F3]">
-      {/* 헤더 */}
       <div className="bg-white border-b border-[#E5E5E5] px-5 pt-12 pb-4">
         <button onClick={() => router.back()} className="flex items-center gap-1 text-[13px] text-[#6B6B6B] mb-3">
-          <ChevronLeft size={16} /> 과목 목록
+          <ChevronLeft size={16} /> 대시보드
         </button>
         <h1 className="text-[22px] font-black text-[#1A1A1A]">{subject?.name ?? '챕터 목록'}</h1>
         <p className="text-[13px] text-[#6B6B6B] mt-1">{chapters.length}개 챕터</p>
@@ -80,10 +97,7 @@ export default function ChaptersPage() {
                 {idx + 1}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[14px] font-bold text-[#1A1A1A] truncate">{ch.name}</div>
-                {ch.description && (
-                  <div className="text-[12px] text-[#6B6B6B] mt-0.5 truncate">{ch.description}</div>
-                )}
+                <div className="text-[14px] font-bold text-[#1A1A1A] truncate">{ch.title}</div>
               </div>
               <ChevronRight size={16} className="text-[#ADADAD] flex-shrink-0" />
             </button>
