@@ -96,10 +96,10 @@ export default function StyleResultPage() {
           </div>
 
           <button
-            onClick={() => router.replace('/select-subject')}
+            onClick={() => router.replace('/select-cert')}
             className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold"
           >
-            학습 시작하기 <ChevronRight size={18} />
+            자격증 선택하기 <ChevronRight size={18} />
           </button>
         </div>
       </div>

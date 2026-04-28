@@ -7,8 +7,14 @@ import { useEducationStore } from '@/store/educationStore'
 import { COURSES, getLevelName, getXPForNextLevel } from '@/types/education'
 import { ChevronLeft, ChevronRight, Settings, RefreshCw } from 'lucide-react'
 
-const STYLE_KEY = 'kinepia_learning_style'
+const STYLE_KEY    = 'kinepia_learning_style'
 const SUBJECTS_KEY = 'kinepia_selected_subjects'
+const CERT_KEY     = 'kinepia_selected_cert'
+
+const CERT_LABELS: Record<string, string> = {
+  'health-exercise-manager': '건강운동관리사',
+  'sports-instructor':       '생활스포츠지도사',
+}
 
 interface StyleInfo {
   learning_style: string | null
@@ -20,6 +26,8 @@ export default function ProfilePage() {
   const { progress, gamification } = useEducationStore()
   const [styleInfo, setStyleInfo] = useState<StyleInfo>({ learning_style: null, style_tested_at: null })
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([])
+  const [selectedCert, setSelectedCert] = useState<string | null>(null)
+  const [requiredSubjects, setRequiredSubjects] = useState<string[]>([])
 
   useEffect(() => {
     // 학습 성향
@@ -30,14 +38,20 @@ export default function ProfilePage() {
       .then((d) => { if (d.learning_style) setStyleInfo(d) })
       .catch(() => {})
 
-    // 수강 과목
+    // 자격증 + 과목
+    const certCached = localStorage.getItem(CERT_KEY)
+    if (certCached) setSelectedCert(certCached)
     const subjectsCached = localStorage.getItem(SUBJECTS_KEY)
     if (subjectsCached) {
       try { setSelectedSubjects(JSON.parse(subjectsCached)) } catch { /* ignore */ }
     }
     fetch('/api/v1/selected-subjects')
       .then((r) => r.json())
-      .then((d) => { if (Array.isArray(d.selected_subjects) && d.selected_subjects.length > 0) setSelectedSubjects(d.selected_subjects) })
+      .then((d) => {
+        if (d.selected_cert) setSelectedCert(d.selected_cert)
+        if (Array.isArray(d.selected_subjects) && d.selected_subjects.length > 0) setSelectedSubjects(d.selected_subjects)
+        if (Array.isArray(d.required_subjects)) setRequiredSubjects(d.required_subjects)
+      })
       .catch(() => {})
   }, [])
 
@@ -143,10 +157,10 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* 수강 과목 */}
+          {/* 자격증 + 수강 과목 */}
           <div className="mx-3 mt-2.5">
             <div className="flex items-center justify-between mb-1.5">
-              <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider">수강 과목</p>
+              <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider">자격증 · 수강 과목</p>
               <button
                 onClick={() => router.push('/select-subject')}
                 className="text-[11px] text-[#E24B4A] font-semibold"
@@ -154,21 +168,38 @@ export default function ProfilePage() {
                 과목 수정
               </button>
             </div>
-            <div className="bg-white rounded-xl border border-[#E5E5E5] p-3">
+            <div className="bg-white rounded-xl border border-[#E5E5E5] p-3 space-y-2">
+              {selectedCert && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-white bg-[#1A1A1A] px-2 py-0.5 rounded-full">
+                    {CERT_LABELS[selectedCert] ?? selectedCert}
+                  </span>
+                </div>
+              )}
               {selectedSubjects.length === 0 ? (
                 <button
-                  onClick={() => router.push('/select-subject')}
+                  onClick={() => router.push('/select-cert')}
                   className="w-full text-[13px] text-[#ADADAD] py-1"
                 >
                   과목을 선택해주세요 →
                 </button>
               ) : (
                 <div className="flex flex-wrap gap-1.5">
-                  {selectedSubjects.map((name) => (
-                    <span key={name} className="px-2.5 py-1 rounded-full bg-[#E24B4A]/10 text-[#E24B4A] text-[11px] font-semibold">
-                      {name}
-                    </span>
-                  ))}
+                  {selectedSubjects.map((name) => {
+                    const isRequired = requiredSubjects.includes(name)
+                    return (
+                      <span
+                        key={name}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                          isRequired
+                            ? 'bg-[#1A1A1A]/10 text-[#1A1A1A]'
+                            : 'bg-[#E24B4A]/10 text-[#E24B4A]'
+                        }`}
+                      >
+                        {isRequired ? '🔒 ' : ''}{name}
+                      </span>
+                    )
+                  })}
                 </div>
               )}
             </div>
