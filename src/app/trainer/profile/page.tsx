@@ -14,6 +14,7 @@ const CERT_KEY     = 'kinepia_selected_cert'
 const CERT_LABELS: Record<string, string> = {
   'health-exercise-manager': '건강운동관리사',
   'sports-instructor':       '생활스포츠지도사',
+  'sports-instructor-2':     '🥈 2급 생활스포츠지도사',
 }
 
 interface StyleInfo {

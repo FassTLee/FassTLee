@@ -53,6 +53,21 @@ const CERT_CONFIG: Record<string, CertConfig> = {
       { name: '운동처방',      icon: '📋', desc: '대상별 운동 처방 기초' },
     ],
   },
+  'sports-instructor-2': {
+    label: '2급 생활스포츠지도사',
+    required: [
+      { name: '스포츠사회학', icon: '🏟️', desc: '스포츠와 사회의 관계' },
+      { name: '스포츠윤리',   icon: '⚖️', desc: '페어플레이·도덕·반도핑' },
+    ],
+    optional: [
+      { name: '스포츠교육학',  icon: '📚', desc: '교수법, 코칭 이론' },
+      { name: '스포츠심리학',  icon: '🧠', desc: '동기, 루틴, 심리기술' },
+      { name: '운동생리학',    icon: '🫀', desc: '심폐기능·에너지 대사' },
+      { name: '운동역학',      icon: '⚙️', desc: '운동의 물리적 원리' },
+      { name: '스포츠영양학',  icon: '🥗', desc: '영양소와 운동 수행' },
+      { name: '운동처방',      icon: '📋', desc: '대상별 운동 처방 기초' },
+    ],
+  },
 }
 
 interface SubjectWithDb extends SubjectDef {
