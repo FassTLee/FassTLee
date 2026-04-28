@@ -13,13 +13,14 @@ export async function GET() {
   }
   const { data } = await supabase
     .from('profiles')
-    .select('selected_subjects, selected_cert, required_subjects')
+    .select('selected_subjects, selected_cert, required_subjects, additional_subjects')
     .eq('email', session.user.email)
     .single()
   return NextResponse.json({
-    selected_subjects:  data?.selected_subjects  ?? [],
-    selected_cert:      data?.selected_cert      ?? null,
-    required_subjects:  data?.required_subjects  ?? [],
+    selected_subjects:   data?.selected_subjects   ?? [],
+    selected_cert:       data?.selected_cert       ?? null,
+    required_subjects:   data?.required_subjects   ?? [],
+    additional_subjects: data?.additional_subjects ?? [],
   })
 }
 
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   const body = await req.json()
-  const { selected_subjects, selected_cert, required_subjects } = body
+  const { selected_subjects, selected_cert, required_subjects, additional_subjects } = body
   if (!Array.isArray(selected_subjects)) {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
   }
@@ -42,8 +43,9 @@ export async function POST(req: NextRequest) {
       {
         email: session.user.email,
         selected_subjects,
-        selected_cert:     selected_cert     ?? null,
-        required_subjects: required_subjects ?? [],
+        selected_cert:       selected_cert       ?? null,
+        required_subjects:   required_subjects   ?? [],
+        additional_subjects: additional_subjects ?? [],
       },
       { onConflict: 'email' }
     )

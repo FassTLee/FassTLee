@@ -4,85 +4,128 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Check, Lock, AlertCircle, ChevronLeft } from 'lucide-react'
+import { Check, AlertCircle, ChevronLeft, Plus } from 'lucide-react'
 
-const CERT_KEY     = 'kinepia_selected_cert'
-const SUBJECTS_KEY = 'kinepia_selected_subjects'
-const MAX_OPTIONAL = 3
+const CERT_KEY       = 'kinepia_selected_cert'
+const SUBJECTS_KEY   = 'kinepia_selected_subjects'
+const ADDITIONAL_KEY = 'kinepia_additional_subjects'
 
-interface SubjectDef {
-  name: string
-  icon: string
-  desc: string
-}
+interface SubjectDef { name: string; icon: string; desc: string }
+interface SubjectWithDb extends SubjectDef { dbId: string | null; chapterCount: number }
+
+// ── 자격증 설정 ────────────────────────────────────────────────────
+type CertMode = 'all-required' | 'select-n'
 
 interface CertConfig {
   label: string
-  required: SubjectDef[]
-  optional: SubjectDef[]
+  mode: CertMode
+  subjects: SubjectDef[]
+  selectCount?: number   // select-n: 정확히 이 수만큼 선택
+  additional: SubjectDef[]
 }
 
 const CERT_CONFIG: Record<string, CertConfig> = {
   'health-exercise-manager': {
     label: '건강운동관리사',
-    required: [
-      { name: '운동생리학', icon: '🫀', desc: '심폐기능·에너지 대사·운동 적응' },
-      { name: '기능해부학', icon: '🦴', desc: '근육·뼈대·관절의 기능과 구조' },
-    ],
-    optional: [
+    mode: 'all-required',
+    subjects: [
+      { name: '운동생리학',   icon: '🫀', desc: '심폐기능·에너지 대사·운동 적응' },
       { name: '건강·체력평가', icon: '📊', desc: '체력검사, 측정 방법, 평가 기준' },
-      { name: '운동처방론',    icon: '📋', desc: 'FITT 원칙, 대상별 운동 처방' },
-      { name: '운동부하검사',  icon: '🏃', desc: '심전도, 운동부하 프로토콜' },
-      { name: '운동상해',      icon: '🩹', desc: '스포츠 손상, 응급처치, 재활' },
-      { name: '병태생리학',    icon: '🔬', desc: '질환의 발생 원리와 병태 기전' },
-      { name: '스포츠심리학',  icon: '🧠', desc: '동기, 루틴, 심리기술 훈련' },
+      { name: '운동처방론',   icon: '📋', desc: 'FITT 원칙, 대상별 운동 처방' },
+      { name: '운동부하검사', icon: '🏃', desc: '심전도, 운동부하 프로토콜' },
+      { name: '운동상해',     icon: '🩹', desc: '스포츠 손상, 응급처치, 재활' },
+      { name: '기능해부학',   icon: '🦴', desc: '근육·뼈대·관절의 기능과 구조' },
+      { name: '병태생리학',   icon: '🔬', desc: '질환의 발생 원리와 병태 기전' },
+      { name: '스포츠심리학', icon: '🧠', desc: '동기, 루틴, 심리기술 훈련' },
+    ],
+    additional: [
+      { name: '건강교육론',     icon: '🏫', desc: '건강증진 교육 이론과 실제' },
+      { name: '노인체육론',     icon: '👴', desc: '노인 대상 체육 지도 원리' },
+      { name: '스포츠교육학',   icon: '📚', desc: '교수법, 코칭 이론' },
+      { name: '스포츠사회학',   icon: '🏟️', desc: '스포츠와 사회의 관계' },
+      { name: '스포츠영양학',   icon: '🥗', desc: '영양소와 운동 수행 능력' },
+      { name: '스포츠윤리',     icon: '⚖️', desc: '페어플레이·도덕·반도핑' },
+      { name: '운동역학',       icon: '⚙️', desc: '운동의 물리적 원리' },
+      { name: '유아체육론',     icon: '👶', desc: '유아 발달과 체육 활동' },
+      { name: '장애인스포츠론', icon: '♿', desc: '장애인 스포츠 이론·실제' },
+      { name: '체육측정평가론', icon: '📏', desc: '측정 도구·통계·평가 방법' },
+      { name: '트레이닝론',     icon: '💪', desc: '훈련 원리와 프로그래밍' },
+      { name: '특수체육론',     icon: '🎯', desc: '특수 집단 체육 지도' },
+      { name: '한국체육사',     icon: '🏛️', desc: '한국 체육의 역사적 흐름' },
     ],
   },
   'sports-instructor': {
     label: '생활스포츠지도사',
-    required: [
-      { name: '스포츠사회학', icon: '🏟️', desc: '스포츠와 사회의 관계' },
+    mode: 'select-n',
+    selectCount: 5,
+    subjects: [
+      { name: '운동생리학',   icon: '🫀', desc: '심폐기능·에너지 대사' },
+      { name: '한국체육사',   icon: '🏛️', desc: '한국 체육의 역사적 흐름' },
+      { name: '스포츠교육학', icon: '📚', desc: '교수법, 코칭 이론' },
       { name: '스포츠윤리',   icon: '⚖️', desc: '페어플레이·도덕·반도핑' },
+      { name: '운동역학',     icon: '⚙️', desc: '운동의 물리적 원리' },
+      { name: '스포츠사회학', icon: '🏟️', desc: '스포츠와 사회의 관계' },
+      { name: '스포츠심리학', icon: '🧠', desc: '동기, 루틴, 심리기술' },
     ],
-    optional: [
-      { name: '스포츠교육학',  icon: '📚', desc: '교수법, 코칭 이론' },
-      { name: '스포츠심리학',  icon: '🧠', desc: '동기, 루틴, 심리기술' },
-      { name: '운동생리학',    icon: '🫀', desc: '심폐기능·에너지 대사' },
-      { name: '운동역학',      icon: '⚙️', desc: '운동의 물리적 원리' },
-      { name: '스포츠영양학',  icon: '🥗', desc: '영양소와 운동 수행' },
-      { name: '운동처방',      icon: '📋', desc: '대상별 운동 처방 기초' },
+    additional: [
+      { name: '건강·체력 평가', icon: '📊', desc: '체력검사, 측정·평가 기준' },
+      { name: '건강교육론',     icon: '🏫', desc: '건강증진 교육 이론' },
+      { name: '기능해부학',     icon: '🦴', desc: '근육·뼈대·관절 구조' },
+      { name: '노인체육론',     icon: '👴', desc: '노인 대상 체육 지도' },
+      { name: '병태생리학',     icon: '🔬', desc: '질환의 발생 원리' },
+      { name: '스포츠영양학',   icon: '🥗', desc: '영양소와 운동 수행' },
+      { name: '운동부하검사',   icon: '🏃', desc: '심전도, 부하 프로토콜' },
+      { name: '운동상해',       icon: '🩹', desc: '손상·응급처치·재활' },
+      { name: '운동처방론',     icon: '📋', desc: 'FITT 원칙, 운동 처방' },
+      { name: '유아체육론',     icon: '👶', desc: '유아 발달과 체육 활동' },
+      { name: '장애인스포츠론', icon: '♿', desc: '장애인 스포츠 이론' },
+      { name: '체육측정평가론', icon: '📏', desc: '측정 도구·통계·평가' },
+      { name: '트레이닝론',     icon: '💪', desc: '훈련 원리와 프로그래밍' },
+      { name: '특수체육론',     icon: '🎯', desc: '특수 집단 체육 지도' },
     ],
   },
   'sports-instructor-2': {
     label: '2급 생활스포츠지도사',
-    required: [
-      { name: '스포츠사회학', icon: '🏟️', desc: '스포츠와 사회의 관계' },
+    mode: 'select-n',
+    selectCount: 5,
+    subjects: [
+      { name: '운동생리학',   icon: '🫀', desc: '심폐기능·에너지 대사' },
+      { name: '한국체육사',   icon: '🏛️', desc: '한국 체육의 역사적 흐름' },
+      { name: '스포츠교육학', icon: '📚', desc: '교수법, 코칭 이론' },
       { name: '스포츠윤리',   icon: '⚖️', desc: '페어플레이·도덕·반도핑' },
+      { name: '운동역학',     icon: '⚙️', desc: '운동의 물리적 원리' },
+      { name: '스포츠사회학', icon: '🏟️', desc: '스포츠와 사회의 관계' },
+      { name: '스포츠심리학', icon: '🧠', desc: '동기, 루틴, 심리기술' },
     ],
-    optional: [
-      { name: '스포츠교육학',  icon: '📚', desc: '교수법, 코칭 이론' },
-      { name: '스포츠심리학',  icon: '🧠', desc: '동기, 루틴, 심리기술' },
-      { name: '운동생리학',    icon: '🫀', desc: '심폐기능·에너지 대사' },
-      { name: '운동역학',      icon: '⚙️', desc: '운동의 물리적 원리' },
-      { name: '스포츠영양학',  icon: '🥗', desc: '영양소와 운동 수행' },
-      { name: '운동처방',      icon: '📋', desc: '대상별 운동 처방 기초' },
+    additional: [
+      { name: '건강·체력 평가', icon: '📊', desc: '체력검사, 측정·평가 기준' },
+      { name: '건강교육론',     icon: '🏫', desc: '건강증진 교육 이론' },
+      { name: '기능해부학',     icon: '🦴', desc: '근육·뼈대·관절 구조' },
+      { name: '노인체육론',     icon: '👴', desc: '노인 대상 체육 지도' },
+      { name: '병태생리학',     icon: '🔬', desc: '질환의 발생 원리' },
+      { name: '스포츠영양학',   icon: '🥗', desc: '영양소와 운동 수행' },
+      { name: '운동부하검사',   icon: '🏃', desc: '심전도, 부하 프로토콜' },
+      { name: '운동상해',       icon: '🩹', desc: '손상·응급처치·재활' },
+      { name: '운동처방론',     icon: '📋', desc: 'FITT 원칙, 운동 처방' },
+      { name: '유아체육론',     icon: '👶', desc: '유아 발달과 체육 활동' },
+      { name: '장애인스포츠론', icon: '♿', desc: '장애인 스포츠 이론' },
+      { name: '체육측정평가론', icon: '📏', desc: '측정 도구·통계·평가' },
+      { name: '트레이닝론',     icon: '💪', desc: '훈련 원리와 프로그래밍' },
+      { name: '특수체육론',     icon: '🎯', desc: '특수 집단 체육 지도' },
     ],
   },
 }
 
-interface SubjectWithDb extends SubjectDef {
-  dbId: string | null
-  chapterCount: number
-  isRequired: boolean
-}
-
+// ── 컴포넌트 ──────────────────────────────────────────────────────
 export default function SelectSubjectPage() {
   const { status } = useSession()
   const router = useRouter()
 
   const [certId, setCertId] = useState<string | null>(null)
-  const [allSubjects, setAllSubjects] = useState<SubjectWithDb[]>([])
-  const [optionalSelected, setOptionalSelected] = useState<string[]>([])
+  const [mainWithDb, setMainWithDb] = useState<SubjectWithDb[]>([])
+  const [mainSelected, setMainSelected] = useState<string[]>([])  // select-n mode
+  const [additionalSelected, setAdditionalSelected] = useState<string[]>([])
+  const [popup, setPopup] = useState<SubjectDef | null>(null)
   const [showWarning, setShowWarning] = useState(false)
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -92,92 +135,109 @@ export default function SelectSubjectPage() {
     if (status === 'unauthenticated') { router.replace('/landing'); return }
 
     const cert = localStorage.getItem(CERT_KEY)
-    if (!cert || !CERT_CONFIG[cert]) {
-      router.replace('/select-cert')
-      return
-    }
+    if (!cert || !CERT_CONFIG[cert]) { router.replace('/select-cert'); return }
     setCertId(cert)
 
-    // 기존 선택 복원 (optional 과목만)
-    const cached = localStorage.getItem(SUBJECTS_KEY)
-    if (cached) {
+    // 기존 추가 과목 복원
+    try {
+      const cached = localStorage.getItem(ADDITIONAL_KEY)
+      if (cached) setAdditionalSelected(JSON.parse(cached))
+    } catch { /* ignore */ }
+
+    // select-n: 기존 선택 복원
+    const config = CERT_CONFIG[cert]
+    if (config.mode === 'select-n') {
       try {
-        const prev: string[] = JSON.parse(cached)
-        const reqNames = CERT_CONFIG[cert].required.map((r) => r.name)
-        setOptionalSelected(prev.filter((n) => !reqNames.includes(n)))
+        const cached = localStorage.getItem(SUBJECTS_KEY)
+        if (cached) {
+          const prev: string[] = JSON.parse(cached)
+          const certNames = config.subjects.map((s) => s.name)
+          setMainSelected(prev.filter((n) => certNames.includes(n)))
+        }
       } catch { /* ignore */ }
     }
 
-    initSubjects(cert)
+    initDb(cert)
   }, [status, router])
 
-  const initSubjects = async (cert: string) => {
+  const initDb = async (cert: string) => {
     const config = CERT_CONFIG[cert]
-    const allDefs = [...config.required, ...config.optional]
-    const names = allDefs.map((s) => s.name)
-
     const { data: dbSubjects } = await supabase
       .from('subjects')
       .select('id, name')
-      .in('name', names)
+      .in('name', config.subjects.map((s) => s.name))
 
     const withDb: SubjectWithDb[] = await Promise.all(
-      allDefs.map(async (s) => {
+      config.subjects.map(async (s) => {
         const db = dbSubjects?.find((d) => d.name === s.name) ?? null
         let chapterCount = 0
         if (db) {
-          const { data: courses } = await supabase
-            .from('courses').select('id').eq('subject_id', db.id)
+          const { data: courses } = await supabase.from('courses').select('id').eq('subject_id', db.id)
           if (courses?.length) {
             const { count } = await supabase
-              .from('chapters')
-              .select('id', { count: 'exact', head: true })
+              .from('chapters').select('id', { count: 'exact', head: true })
               .in('course_id', courses.map((c) => c.id))
             chapterCount = count ?? 0
           }
         }
-        const isRequired = config.required.some((r) => r.name === s.name)
-        return { ...s, dbId: db?.id ?? null, chapterCount, isRequired }
+        return { ...s, dbId: db?.id ?? null, chapterCount }
       })
     )
-    setAllSubjects(withDb)
+    setMainWithDb(withDb)
     setLoading(false)
   }
 
-  const toggleOptional = (name: string) => {
+  // select-n 토글
+  const toggleMain = (name: string) => {
+    if (!certId) return
+    const { selectCount = 5 } = CERT_CONFIG[certId]
     setShowWarning(false)
-    setOptionalSelected((prev) => {
+    setMainSelected((prev) => {
       if (prev.includes(name)) return prev.filter((n) => n !== name)
-      if (prev.length >= MAX_OPTIONAL) {
-        setShowWarning(true)
-        return prev
-      }
+      if (prev.length >= selectCount) { setShowWarning(true); return prev }
       return [...prev, name]
     })
   }
 
+  // 추가 과목 팝업 확인
+  const confirmAdditional = () => {
+    if (!popup) return
+    setAdditionalSelected((prev) =>
+      prev.includes(popup.name) ? prev : [...prev, popup.name]
+    )
+    setPopup(null)
+  }
+
+  // 추가 과목 팝업 취소
+  const cancelAdditional = () => setPopup(null)
+
+  // 학습 시작
   const handleStart = async () => {
     if (saving || !certId) return
     const config = CERT_CONFIG[certId]
-    const requiredNames = config.required.map((r) => r.name)
-    const combined = [...requiredNames, ...optionalSelected]
+    const certSubjectNames = config.subjects.map((s) => s.name)
+    const mainNames = config.mode === 'all-required' ? certSubjectNames : mainSelected
+    const combined = [...mainNames, ...additionalSelected.filter((n) => !mainNames.includes(n))]
 
     setSaving(true)
     localStorage.setItem(SUBJECTS_KEY, JSON.stringify(combined))
+    localStorage.setItem(ADDITIONAL_KEY, JSON.stringify(additionalSelected))
     try {
       await fetch('/api/v1/selected-subjects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          selected_subjects: combined,
-          selected_cert: certId,
-          required_subjects: requiredNames,
+          selected_subjects:  combined,
+          selected_cert:      certId,
+          required_subjects:  config.mode === 'all-required' ? certSubjectNames : [],
+          additional_subjects: additionalSelected,
         }),
       })
     } catch { /* ignore */ }
     router.replace('/trainer/dashboard')
   }
 
+  // ── 로딩 ───────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
@@ -187,9 +247,13 @@ export default function SelectSubjectPage() {
   }
 
   const config = certId ? CERT_CONFIG[certId] : null
-  const requiredSubjects = allSubjects.filter((s) => s.isRequired)
-  const optionalSubjects  = allSubjects.filter((s) => !s.isRequired)
-  const totalSelected = requiredSubjects.length + optionalSelected.length
+  if (!config) return null
+
+  const selectCount = config.selectCount ?? 5
+  const isAllRequired = config.mode === 'all-required'
+  const canStart = isAllRequired
+    ? true
+    : mainSelected.length === selectCount
 
   return (
     <div className="min-h-screen bg-[#F5F5F3] flex flex-col">
@@ -198,72 +262,57 @@ export default function SelectSubjectPage() {
         <button onClick={() => router.push('/select-cert')} className="flex items-center gap-1 text-[13px] text-[#6B6B6B] mb-3">
           <ChevronLeft size={16} /> 자격증 선택
         </button>
-        <p className="text-[10px] font-bold text-[#E24B4A] tracking-widest uppercase mb-1">
-          {config?.label}
-        </p>
+        <p className="text-[10px] font-bold text-[#E24B4A] tracking-widest uppercase mb-1">{config.label}</p>
         <h1 className="text-[22px] font-black text-[#1A1A1A]">과목 선택</h1>
-        <p className="text-[13px] text-[#6B6B6B] mt-1">
-          선택 과목 최대 {MAX_OPTIONAL}개 &nbsp;·&nbsp;
-          <span className={optionalSelected.length >= MAX_OPTIONAL ? 'text-[#E24B4A] font-bold' : 'text-[#1A1A1A] font-bold'}>
-            {optionalSelected.length}/{MAX_OPTIONAL}
-          </span>
+      </div>
+
+      {/* 안내 배너 */}
+      <div className={`mx-4 mt-3 flex items-start gap-2 rounded-xl px-3 py-2.5 ${
+        isAllRequired
+          ? 'bg-[#1A1A1A]/5 border border-[#1A1A1A]/10'
+          : 'bg-[#378ADD]/10 border border-[#378ADD]/20'
+      }`}>
+        <span className="text-[15px]">{isAllRequired ? '📌' : 'ℹ️'}</span>
+        <p className={`text-[12px] font-semibold ${isAllRequired ? 'text-[#1A1A1A]' : 'text-[#378ADD]'}`}>
+          {isAllRequired
+            ? '8개 과목 모두 필수 과목입니다'
+            : `7개 과목 중 ${selectCount}개를 선택해주세요 (현재 ${mainSelected.length}/${selectCount})`
+          }
         </p>
       </div>
 
+      {/* 경고 */}
       {showWarning && (
-        <div className="mx-4 mt-3 flex items-center gap-2 bg-[#E24B4A]/10 border border-[#E24B4A]/30 rounded-xl px-3 py-2.5">
-          <AlertCircle size={15} className="text-[#E24B4A] flex-shrink-0" />
-          <p className="text-[12px] font-semibold text-[#E24B4A]">선택 과목은 최대 {MAX_OPTIONAL}개까지 선택 가능합니다</p>
+        <div className="mx-4 mt-2 flex items-center gap-2 bg-[#E24B4A]/10 border border-[#E24B4A]/30 rounded-xl px-3 py-2.5">
+          <AlertCircle size={14} className="text-[#E24B4A] flex-shrink-0" />
+          <p className="text-[12px] font-semibold text-[#E24B4A]">최대 {selectCount}개까지 선택 가능합니다</p>
         </div>
       )}
 
       <div className="flex-1 overflow-y-auto p-4 pb-32 space-y-5">
-        {/* 필수 과목 */}
+        {/* ── 시험 과목 ── */}
         <div>
           <div className="flex items-center gap-2 mb-2 px-1">
-            <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider">필수 과목</p>
-            <span className="text-[10px] bg-[#1A1A1A] text-white px-2 py-0.5 rounded-full font-bold">
-              {requiredSubjects.length}개
+            <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider">시험 과목</p>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+              isAllRequired ? 'bg-[#1A1A1A] text-white' : 'bg-[#E5E5E5] text-[#6B6B6B]'
+            }`}>
+              {isAllRequired ? `전체 ${config.subjects.length}개 필수` : `${mainSelected.length}/${selectCount}`}
             </span>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {requiredSubjects.map((s) => (
-              <div
-                key={s.name}
-                className="relative rounded-2xl border-2 border-[#1A1A1A] bg-[#1A1A1A]/5 p-4"
-              >
-                <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-[#1A1A1A] flex items-center justify-center">
-                  <Lock size={10} className="text-white" />
-                </div>
-                <div className="text-[26px] mb-2">{s.icon}</div>
-                <div className="text-[13px] font-bold text-[#1A1A1A] leading-tight mb-1">{s.name}</div>
-                <div className="text-[10px] text-[#6B6B6B] mb-2 line-clamp-2">{s.desc}</div>
-                <div className="text-[10px] text-[#ADADAD]">
-                  {s.chapterCount > 0 ? `${s.chapterCount}개 챕터` : '준비중'}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+            {mainWithDb.map((s) => {
+              const isSelected = isAllRequired || mainSelected.includes(s.name)
+              const isDisabled = !isAllRequired && !isSelected && mainSelected.length >= selectCount
 
-        {/* 선택 과목 */}
-        <div>
-          <div className="flex items-center gap-2 mb-2 px-1">
-            <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider">선택 과목</p>
-            <span className="text-[10px] bg-[#E5E5E5] text-[#6B6B6B] px-2 py-0.5 rounded-full font-bold">
-              최대 {MAX_OPTIONAL}개
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {optionalSubjects.map((s) => {
-              const isSelected = optionalSelected.includes(s.name)
-              const isDisabled = !isSelected && optionalSelected.length >= MAX_OPTIONAL
               return (
                 <button
                   key={s.name}
-                  onClick={() => toggleOptional(s.name)}
+                  onClick={() => !isAllRequired && toggleMain(s.name)}
                   className={`relative rounded-2xl border-2 p-4 text-left transition-all ${
-                    isSelected
+                    isAllRequired
+                      ? 'border-[#1A1A1A] bg-[#1A1A1A]/5 cursor-default'
+                      : isSelected
                       ? 'border-[#E24B4A] bg-[#E24B4A]/5'
                       : isDisabled
                       ? 'border-[#E5E5E5] bg-[#F5F5F3] opacity-50'
@@ -271,7 +320,9 @@ export default function SelectSubjectPage() {
                   }`}
                 >
                   {isSelected && (
-                    <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-[#E24B4A] flex items-center justify-center">
+                    <div className={`absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center ${
+                      isAllRequired ? 'bg-[#1A1A1A]' : 'bg-[#E24B4A]'
+                    }`}>
                       <Check size={11} className="text-white" />
                     </div>
                   )}
@@ -279,25 +330,103 @@ export default function SelectSubjectPage() {
                   <div className="text-[13px] font-bold text-[#1A1A1A] leading-tight mb-1">{s.name}</div>
                   <div className="text-[10px] text-[#6B6B6B] mb-2 line-clamp-2">{s.desc}</div>
                   <div className="text-[10px] text-[#ADADAD]">
-                    {s.chapterCount > 0 ? `${s.chapterCount}개 챕터` : '준비중'}
+                    {s.chapterCount > 0 ? `${s.chapterCount}챕터` : '준비중'}
                   </div>
                 </button>
               )
             })}
           </div>
         </div>
+
+        {/* ── 추가 관심 과목 ── */}
+        {config.additional.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-1 px-1">
+              <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider">추가 관심 과목</p>
+              <span className="text-[10px] text-[#ADADAD]">국민체육진흥공단 시험과목</span>
+            </div>
+            <p className="text-[11px] text-[#ADADAD] px-1 mb-3">
+              시험 범위 외 추가 학습용 과목입니다
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              {config.additional.map((s) => {
+                const isAdded = additionalSelected.includes(s.name)
+                return (
+                  <button
+                    key={s.name}
+                    onClick={() => {
+                      if (isAdded) {
+                        setAdditionalSelected((prev) => prev.filter((n) => n !== s.name))
+                      } else {
+                        setPopup(s)
+                      }
+                    }}
+                    className={`relative rounded-2xl border-2 p-4 text-left transition-all ${
+                      isAdded
+                        ? 'border-[#639922] bg-[#63992210]'
+                        : 'border-dashed border-[#E5E5E5] bg-white active:bg-[#F5F5F3]'
+                    }`}
+                  >
+                    {isAdded ? (
+                      <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-[#639922] flex items-center justify-center">
+                        <Check size={11} className="text-white" />
+                      </div>
+                    ) : (
+                      <div className="absolute top-3 right-3 w-5 h-5 rounded-full border-2 border-[#E5E5E5] flex items-center justify-center">
+                        <Plus size={10} className="text-[#ADADAD]" />
+                      </div>
+                    )}
+                    <div className="text-[24px] mb-2">{s.icon}</div>
+                    <div className="text-[12px] font-bold text-[#1A1A1A] leading-tight mb-1">{s.name}</div>
+                    <div className="text-[10px] text-[#6B6B6B] line-clamp-2">{s.desc}</div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* 하단 버튼 */}
+      {/* ── 팝업 ── */}
+      {popup && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end p-4">
+          <div className="w-full bg-white rounded-2xl p-5 space-y-4">
+            <div className="text-[18px] text-center">{popup.icon}</div>
+            <p className="text-[14px] font-semibold text-[#1A1A1A] text-center leading-snug">
+              &ldquo;{popup.name}&rdquo;은<br />
+              {config.label} 시험과목이 아닙니다.<br />
+              추가 학습 과목으로 등록하시겠습니까?
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={cancelAdditional}
+                className="flex-1 py-3 rounded-xl border-2 border-[#E5E5E5] text-[14px] font-semibold text-[#6B6B6B]"
+              >
+                취소
+              </button>
+              <button
+                onClick={confirmAdditional}
+                className="flex-1 py-3 rounded-xl bg-[#E24B4A] text-white text-[14px] font-bold"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 하단 버튼 ── */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-[#E5E5E5]">
         <button
           onClick={handleStart}
-          disabled={totalSelected === 0 || saving}
+          disabled={!canStart || saving}
           className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] disabled:opacity-40 text-white rounded-2xl text-[16px] font-bold"
         >
           {saving
             ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            : `학습 시작 (총 ${totalSelected}과목)`
+            : isAllRequired
+            ? `학습 시작 (${config.subjects.length}과목)`
+            : `학습 시작 (${mainSelected.length + additionalSelected.length}과목)`
           }
         </button>
       </div>
