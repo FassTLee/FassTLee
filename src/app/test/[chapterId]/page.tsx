@@ -92,6 +92,17 @@ export default function TestPage() {
     if (current + 1 >= questions.length) {
       // 완료 → 결과 저장 후 리포트
       localStorage.setItem(RESULT_KEY, JSON.stringify({ chapterId, records: nextRecords }))
+      // 통계 저장 (fire and forget)
+      const subjectId = localStorage.getItem('kinepia_current_subject_id') ?? ''
+      fetch('/api/v1/test-complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chapterId,
+          subjectId,
+          records: nextRecords.map((r) => ({ questionId: r.questionId, correct: r.correct })),
+        }),
+      }).catch(() => {})
       router.replace(`/report/${chapterId}`)
     } else {
       setRecords(nextRecords)

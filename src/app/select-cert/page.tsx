@@ -58,8 +58,8 @@ export default function SelectCertPage() {
     <div className="min-h-screen bg-[#F5F5F3]">
       {/* 헤더 */}
       <div className="bg-white border-b border-[#E5E5E5] px-5 pt-12 pb-5">
-        <button onClick={() => router.push('/')} className="flex items-center gap-1 text-[13px] text-[#6B6B6B] mb-3">
-          <ChevronLeft size={16} /> 홈
+        <button onClick={() => router.push('/trainer/dashboard')} className="flex items-center gap-1 text-[13px] text-[#6B6B6B] mb-3">
+          <ChevronLeft size={16} /> 대시보드
         </button>
         <p className="text-[10px] font-bold text-[#E24B4A] tracking-widest uppercase mb-1">Kinepia</p>
         <h1 className="text-[22px] font-black text-[#1A1A1A]">자격증 선택</h1>

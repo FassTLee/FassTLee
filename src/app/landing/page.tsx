@@ -95,11 +95,11 @@ export default function LandingPage() {
   const testUrl = refParam ? `/landing/test?ref=${refParam}` : '/landing/test'
 
   const handleGoogleSignIn = () => {
-    signIn('google', { callbackUrl: '/onboarding' })
+    signIn('google', { callbackUrl: '/trainer/dashboard' })
   }
 
   const handleKakaoSignIn = () => {
-    signIn('kakao', { callbackUrl: '/onboarding' })
+    signIn('kakao', { callbackUrl: '/trainer/dashboard' })
   }
 
   return (
