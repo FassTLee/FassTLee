@@ -77,7 +77,6 @@ export default function DashboardPage() {
 
   // 공통
   const [certLabel, setCertLabel] = useState('')
-  const [certId, setCertId] = useState('')
   const [subjects, setSubjects] = useState<string[]>([])
   const [style, setStyle] = useState<string | null>(null)
   const [userName, setUserName] = useState('')
@@ -121,7 +120,7 @@ export default function DashboardPage() {
     const subs    = localStorage.getItem(SUBJECTS_KEY)
     const styleVal = localStorage.getItem(STYLE_KEY)
 
-    if (cert)   { setCertId(cert); setCertLabel(CERT_LABELS[cert] ?? cert) }
+    if (cert)   { setCertLabel(CERT_LABELS[cert] ?? cert) }
     if (styleVal) setStyle(styleVal)
     if (session?.user?.name) setUserName(session.user.name.split(' ')[0])
     if (subs) {
