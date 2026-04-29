@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { Check, X, ChevronRight } from 'lucide-react'
+import { Check, X, ChevronLeft, ChevronRight } from 'lucide-react'
 
-const RESULT_KEY = 'kinepia_test_result'
+const RESULT_KEY  = 'kinepia_test_result'
+const SUBJECT_KEY = 'kinepia_current_subject_id'
 
 interface AnswerRecord {
   questionId: string
@@ -31,6 +32,7 @@ export default function ReportPage() {
 
   const [result, setResult] = useState<TestResult | null>(null)
   const [nextChapterId, setNextChapterId] = useState<string | null>(null)
+  const [subjectId, setSubjectId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -40,6 +42,7 @@ export default function ReportPage() {
     const raw = localStorage.getItem(RESULT_KEY)
     if (!raw) { router.replace('/select-subject'); return }
     setResult(JSON.parse(raw))
+    setSubjectId(localStorage.getItem(SUBJECT_KEY))
     fetchNextChapter()
   }, [status, chapterId])
 
@@ -85,6 +88,12 @@ export default function ReportPage() {
   return (
     <div className="min-h-screen bg-[#F5F5F3] flex flex-col">
       <div className="bg-white border-b border-[#E5E5E5] px-5 pt-12 pb-4">
+        <button
+          onClick={() => subjectId ? router.push(`/chapters/${subjectId}`) : router.push('/trainer/dashboard')}
+          className="flex items-center gap-1 text-[13px] text-[#6B6B6B] mb-3"
+        >
+          <ChevronLeft size={16} /> 챕터 목록
+        </button>
         <h1 className="text-[20px] font-black text-[#1A1A1A]">테스트 결과</h1>
       </div>
 

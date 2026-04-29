@@ -7,6 +7,13 @@ import { supabase } from '@/lib/supabase'
 import { ChevronRight, Plus } from 'lucide-react'
 
 const SUBJECTS_KEY = 'kinepia_selected_subjects'
+const CERT_KEY     = 'kinepia_selected_cert'
+
+const CERT_LABELS: Record<string, string> = {
+  'health-exercise-manager': '건강운동관리사',
+  'sports-instructor-2':     '2급 생활스포츠지도사',
+  'sports-instructor':       '생활스포츠지도사',
+}
 
 const SUBJECT_META: Record<string, { icon: string; desc: string }> = {
   '운동생리학':    { icon: '🫀', desc: '심폐기능·에너지 대사' },
@@ -31,6 +38,7 @@ export default function DashboardPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [cards, setCards] = useState<SubjectCard[]>([])
+  const [certLabel, setCertLabel] = useState('건강운동관리사')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -40,6 +48,10 @@ export default function DashboardPage() {
   }, [status, router])
 
   const loadDashboard = async () => {
+    // 자격증 라벨
+    const cert = localStorage.getItem(CERT_KEY)
+    if (cert && CERT_LABELS[cert]) setCertLabel(CERT_LABELS[cert])
+
     // 선택된 과목 불러오기 (localStorage → DB 순)
     let selectedNames: string[] = []
     const cached = localStorage.getItem(SUBJECTS_KEY)
@@ -107,7 +119,7 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-[#F5F5F3]">
       {/* 헤더 */}
       <div className="bg-white border-b border-[#E5E5E5] px-5 pt-12 pb-5">
-        <p className="text-[12px] text-[#ADADAD] mb-0.5">건강운동관리사</p>
+        <p className="text-[12px] text-[#ADADAD] mb-0.5">{certLabel}</p>
         <h1 className="text-[22px] font-black text-[#1A1A1A]">{name}님의 학습</h1>
         <p className="text-[13px] text-[#6B6B6B] mt-1">{cards.length}개 과목 수강 중</p>
       </div>
@@ -134,7 +146,7 @@ export default function DashboardPage() {
                   <div className="h-full bg-[#E24B4A] rounded-full" style={{ width: '0%' }} />
                 </div>
                 <span className="text-[10px] text-[#ADADAD] flex-shrink-0">
-                  {card.chapterCount > 0 ? `${card.chapterCount}챕터` : '준비중'}
+                  {card.chapterCount > 0 ? `${card.chapterCount}챕터` : '학습 준비중'}
                 </span>
               </div>
             </div>

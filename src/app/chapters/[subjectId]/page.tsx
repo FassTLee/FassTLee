@@ -73,7 +73,7 @@ export default function ChaptersPage() {
   return (
     <div className="min-h-screen bg-[#F5F5F3]">
       <div className="bg-white border-b border-[#E5E5E5] px-5 pt-12 pb-4">
-        <button onClick={() => router.back()} className="flex items-center gap-1 text-[13px] text-[#6B6B6B] mb-3">
+        <button onClick={() => router.push('/trainer/dashboard')} className="flex items-center gap-1 text-[13px] text-[#6B6B6B] mb-3">
           <ChevronLeft size={16} /> 대시보드
         </button>
         <h1 className="text-[22px] font-black text-[#1A1A1A]">{subject?.name ?? '챕터 목록'}</h1>
@@ -84,13 +84,17 @@ export default function ChaptersPage() {
         {chapters.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <BookOpen size={40} className="text-[#ADADAD] mb-3" />
-            <p className="text-[14px] text-[#ADADAD]">등록된 챕터가 없습니다</p>
+            <p className="text-[14px] font-bold text-[#1A1A1A] mb-1">학습 콘텐츠 준비중입니다</p>
+            <p className="text-[12px] text-[#ADADAD]">곧 업데이트될 예정이에요</p>
           </div>
         ) : (
           chapters.map((ch, idx) => (
             <button
               key={ch.id}
-              onClick={() => router.push(`/lesson/${ch.id}`)}
+              onClick={() => {
+                localStorage.setItem('kinepia_current_subject_id', subjectId)
+                router.push(`/lesson/${ch.id}`)
+              }}
               className="w-full bg-white rounded-2xl border border-[#E5E5E5] p-4 text-left flex items-center gap-4 active:bg-[#F5F5F3]"
             >
               <div className="w-9 h-9 rounded-xl bg-[#E24B4A]/10 flex items-center justify-center text-[14px] font-black text-[#E24B4A] flex-shrink-0">

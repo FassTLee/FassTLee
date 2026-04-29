@@ -6,7 +6,19 @@ import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { ChevronLeft, Check, X } from 'lucide-react'
 
-const RESULT_KEY = 'kinepia_test_result'
+const RESULT_KEY  = 'kinepia_test_result'
+const CERT_KEY    = 'kinepia_selected_cert'
+const SUBJECT_KEY = 'kinepia_current_subject_id'
+
+const CERT_LABELS: Record<string, string> = {
+  'health-exercise-manager': '건강운동관리사',
+  'sports-instructor-2':     '2급 생활스포츠지도사',
+  'sports-instructor':       '생활스포츠지도사',
+}
+
+function shuffle<T>(arr: T[]): T[] {
+  return [...arr].sort(() => Math.random() - 0.5)
+}
 
 interface Question {
   id: string
@@ -38,10 +50,16 @@ export default function TestPage() {
   const [confirmed, setConfirmed] = useState(false)
   const [records, setRecords] = useState<AnswerRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [showExitConfirm, setShowExitConfirm] = useState(false)
+  const [certLabel, setCertLabel] = useState('')
+  const [subjectId, setSubjectId] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === 'loading') return
     if (status === 'unauthenticated') { router.replace('/landing'); return }
+    const cert = localStorage.getItem(CERT_KEY)
+    if (cert && CERT_LABELS[cert]) setCertLabel(CERT_LABELS[cert])
+    setSubjectId(localStorage.getItem(SUBJECT_KEY))
     fetchQuestions()
   }, [status, chapterId])
 
@@ -50,7 +68,8 @@ export default function TestPage() {
       .from('chapter_questions')
       .select('id, question, options, answer_index, explanation')
       .eq('chapter_id', chapterId)
-    setQuestions(data ?? [])
+    const raw = data ?? []
+    setQuestions(raw.length > 10 ? shuffle(raw).slice(0, 10) : raw)
     setLoading(false)
   }
 
@@ -115,11 +134,40 @@ export default function TestPage() {
 
       {/* 헤더 */}
       <div className="bg-white border-b border-[#E5E5E5] px-5 pt-10 pb-3 flex items-center gap-3">
-        <button onClick={() => router.back()} className="p-1">
+        <button onClick={() => setShowExitConfirm(true)} className="p-1">
           <ChevronLeft size={20} className="text-[#1A1A1A]" />
         </button>
-        <span className="text-[13px] text-[#ADADAD]">{current + 1} / {questions.length}</span>
+        <span className="text-[13px] text-[#ADADAD] flex-1">{current + 1} / {questions.length}</span>
+        {certLabel && (
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1A1A1A]/10 text-[#1A1A1A]">
+            {certLabel}
+          </span>
+        )}
       </div>
+
+      {/* 나가기 확인 팝업 */}
+      {showExitConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6">
+          <div className="w-full max-w-sm bg-white rounded-2xl p-6 space-y-4">
+            <h2 className="text-[17px] font-black text-[#1A1A1A] text-center">테스트를 중단하시겠습니까?</h2>
+            <p className="text-[13px] text-[#6B6B6B] text-center">진행 내용이 저장되지 않습니다.</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowExitConfirm(false)}
+                className="flex-1 py-3 rounded-xl border-2 border-[#E5E5E5] text-[14px] font-semibold text-[#1A1A1A]"
+              >
+                계속하기
+              </button>
+              <button
+                onClick={() => router.push(`/lesson/${chapterId}`)}
+                className="flex-1 py-3 rounded-xl bg-[#E24B4A] text-white text-[14px] font-bold"
+              >
+                나가기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto p-5 pb-36">
         {/* 질문 */}

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { ChevronRight, ChevronDown, Lock } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 
 const CERT_KEY = 'kinepia_selected_cert'
 
@@ -58,6 +58,9 @@ export default function SelectCertPage() {
     <div className="min-h-screen bg-[#F5F5F3]">
       {/* 헤더 */}
       <div className="bg-white border-b border-[#E5E5E5] px-5 pt-12 pb-5">
+        <button onClick={() => router.push('/')} className="flex items-center gap-1 text-[13px] text-[#6B6B6B] mb-3">
+          <ChevronLeft size={16} /> 홈
+        </button>
         <p className="text-[10px] font-bold text-[#E24B4A] tracking-widest uppercase mb-1">Kinepia</p>
         <h1 className="text-[22px] font-black text-[#1A1A1A]">자격증 선택</h1>
         <p className="text-[13px] text-[#6B6B6B] mt-1">준비 중인 자격증을 선택하세요</p>
@@ -96,7 +99,10 @@ export default function SelectCertPage() {
           >
             <div className="text-[36px] flex-shrink-0">🏅</div>
             <div className="flex-1 min-w-0">
-              <div className="text-[16px] font-black text-[#1A1A1A] mb-0.5">스포츠지도사</div>
+                <div className="flex items-center gap-2 mb-0.5">
+                <span className="text-[16px] font-black text-[#1A1A1A]">스포츠지도사</span>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E24B4A]/10 text-[#E24B4A]">Beta</span>
+              </div>
               <p className="text-[12px] text-[#6B6B6B]">생활·전문·장애인·유소년·노인</p>
             </div>
             <ChevronDown
@@ -125,7 +131,7 @@ export default function SelectCertPage() {
                   </span>
                   {sub.active
                     ? <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E24B4A]/10 text-[#E24B4A]">Beta</span>
-                    : <Lock size={13} className="text-[#ADADAD] flex-shrink-0" />
+                    : <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E5E5E5] text-[#ADADAD]">준비중</span>
                   }
                 </button>
               ))}

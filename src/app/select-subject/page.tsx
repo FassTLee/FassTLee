@@ -330,7 +330,7 @@ export default function SelectSubjectPage() {
                   <div className="text-[13px] font-bold text-[#1A1A1A] leading-tight mb-1">{s.name}</div>
                   <div className="text-[10px] text-[#6B6B6B] mb-2 line-clamp-2">{s.desc}</div>
                   <div className="text-[10px] text-[#ADADAD]">
-                    {s.chapterCount > 0 ? `${s.chapterCount}챕터` : '준비중'}
+                    {s.chapterCount > 0 ? `${s.chapterCount}챕터` : '학습 준비중'}
                   </div>
                 </button>
               )

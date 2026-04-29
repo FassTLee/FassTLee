@@ -6,7 +6,15 @@ import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { ChevronLeft, Zap, BookOpen } from 'lucide-react'
 
-const STYLE_KEY = 'kinepia_learning_style'
+const STYLE_KEY   = 'kinepia_learning_style'
+const CERT_KEY    = 'kinepia_selected_cert'
+const SUBJECT_KEY = 'kinepia_current_subject_id'
+
+const CERT_LABELS: Record<string, string> = {
+  'health-exercise-manager': '건강운동관리사',
+  'sports-instructor-2':     '2급 생활스포츠지도사',
+  'sports-instructor':       '생활스포츠지도사',
+}
 
 interface Chapter {
   id: string
@@ -47,6 +55,8 @@ export default function LessonPage() {
   const [courseDesc, setCourseDesc] = useState<string | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
   const [style, setStyle] = useState<'memorizer' | 'conceptualizer'>('conceptualizer')
+  const [certLabel, setCertLabel] = useState('')
+  const [subjectId, setSubjectId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -54,6 +64,9 @@ export default function LessonPage() {
     if (status === 'unauthenticated') { router.replace('/landing'); return }
     const saved = localStorage.getItem(STYLE_KEY) as 'memorizer' | 'conceptualizer' | null
     if (saved) setStyle(saved)
+    const cert = localStorage.getItem(CERT_KEY)
+    if (cert && CERT_LABELS[cert]) setCertLabel(CERT_LABELS[cert])
+    setSubjectId(localStorage.getItem(SUBJECT_KEY))
     fetchData()
   }, [status, chapterId])
 
@@ -91,10 +104,18 @@ export default function LessonPage() {
   return (
     <div className="min-h-screen bg-[#F5F5F3] flex flex-col">
       <div className="bg-white border-b border-[#E5E5E5] px-5 pt-12 pb-4">
-        <button onClick={() => router.back()} className="flex items-center gap-1 text-[13px] text-[#6B6B6B] mb-3">
-          <ChevronLeft size={16} /> 뒤로
+        <button
+          onClick={() => subjectId ? router.push(`/chapters/${subjectId}`) : router.back()}
+          className="flex items-center gap-1 text-[13px] text-[#6B6B6B] mb-3"
+        >
+          <ChevronLeft size={16} /> 챕터 목록
         </button>
         <div className="flex items-center gap-2 mb-1">
+          {certLabel && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1A1A1A]/10 text-[#1A1A1A]">
+              {certLabel}
+            </span>
+          )}
           <span
             className="text-[10px] font-bold px-2 py-0.5 rounded-full"
             style={isMemorizer
