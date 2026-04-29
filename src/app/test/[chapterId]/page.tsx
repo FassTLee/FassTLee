@@ -6,9 +6,8 @@ import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { ChevronLeft, Check, X } from 'lucide-react'
 
-const RESULT_KEY  = 'kinepia_test_result'
-const CERT_KEY    = 'kinepia_selected_cert'
-const SUBJECT_KEY = 'kinepia_current_subject_id'
+const RESULT_KEY = 'kinepia_test_result'
+const CERT_KEY   = 'kinepia_selected_cert'
 
 const CERT_LABELS: Record<string, string> = {
   'health-exercise-manager': '건강운동관리사',
@@ -52,14 +51,12 @@ export default function TestPage() {
   const [loading, setLoading] = useState(true)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
   const [certLabel, setCertLabel] = useState('')
-  const [subjectId, setSubjectId] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === 'loading') return
     if (status === 'unauthenticated') { router.replace('/landing'); return }
     const cert = localStorage.getItem(CERT_KEY)
     if (cert && CERT_LABELS[cert]) setCertLabel(CERT_LABELS[cert])
-    setSubjectId(localStorage.getItem(SUBJECT_KEY))
     fetchQuestions()
   }, [status, chapterId])
 
