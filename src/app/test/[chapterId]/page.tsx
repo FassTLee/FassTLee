@@ -19,6 +19,11 @@ function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5)
 }
 
+/** Remove leading numeric prefix like "1 ", "2. ", "1①" before circled numbers */
+function cleanOption(opt: string): string {
+  return opt.replace(/^\s*\d+\s*/, '').trim()
+}
+
 interface Question {
   id: string
   question: string
@@ -58,7 +63,7 @@ export default function TestPage() {
     const cert = localStorage.getItem(CERT_KEY)
     if (cert && CERT_LABELS[cert]) setCertLabel(CERT_LABELS[cert])
     fetchQuestions()
-  }, [status, chapterId])
+  }, [status, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchQuestions = async () => {
     const { data } = await supabase
@@ -90,9 +95,7 @@ export default function TestPage() {
     const nextRecords = [...records, rec]
 
     if (current + 1 >= questions.length) {
-      // 완료 → 결과 저장 후 리포트
       localStorage.setItem(RESULT_KEY, JSON.stringify({ chapterId, records: nextRecords }))
-      // 통계 저장 (fire and forget)
       const subjectId = localStorage.getItem('kinepia_current_subject_id') ?? ''
       fetch('/api/v1/test-complete', {
         method: 'POST',
@@ -135,12 +138,12 @@ export default function TestPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F3] flex flex-col">
-      {/* 프로그레스 */}
+      {/* Progress bar */}
       <div className="h-1 bg-[#E5E5E5]">
         <div className="h-full bg-[#E24B4A] transition-all duration-300" style={{ width: `${progress}%` }} />
       </div>
 
-      {/* 헤더 */}
+      {/* Header */}
       <div className="bg-white border-b border-[#E5E5E5] px-5 pt-10 pb-3 flex items-center gap-3">
         <button onClick={() => setShowExitConfirm(true)} className="p-1">
           <ChevronLeft size={20} className="text-[#1A1A1A]" />
@@ -153,7 +156,7 @@ export default function TestPage() {
         )}
       </div>
 
-      {/* 나가기 확인 팝업 */}
+      {/* Exit confirm popup */}
       {showExitConfirm && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6">
           <div className="w-full max-w-sm bg-white rounded-2xl p-6 space-y-4">
@@ -178,15 +181,18 @@ export default function TestPage() {
       )}
 
       <div className="flex-1 overflow-y-auto p-5 pb-36">
-        {/* 질문 */}
+        {/* Question */}
         <div className="mb-6">
           <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">Q{current + 1}</p>
           <p className="text-[17px] font-bold text-[#1A1A1A] leading-snug">{q.question}</p>
         </div>
 
-        {/* 보기 */}
+        {/* Options */}
         <div className="space-y-2.5">
           {q.options.map((opt, i) => {
+            const cleaned = cleanOption(opt)
+            const CIRCLE = ['①', '②', '③', '④', '⑤']
+
             let style = 'border-[#E5E5E5] bg-white text-[#1A1A1A]'
             if (confirmed) {
               if (i === q.answer_index) {
@@ -206,10 +212,10 @@ export default function TestPage() {
                 onClick={() => !confirmed && setSelected(i)}
                 className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl border-2 text-left text-[14px] font-medium transition-all ${style}`}
               >
-                <span className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center text-[11px] font-black flex-shrink-0">
-                  {i + 1}
+                <span className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center text-[13px] font-black flex-shrink-0">
+                  {CIRCLE[i] ?? i + 1}
                 </span>
-                <span className="flex-1">{opt}</span>
+                <span className="flex-1">{cleaned}</span>
                 {confirmed && i === q.answer_index && <Check size={16} className="flex-shrink-0" />}
                 {confirmed && i === selected && !isCorrect && <X size={16} className="flex-shrink-0" />}
               </button>
@@ -217,11 +223,9 @@ export default function TestPage() {
           })}
         </div>
 
-        {/* 해설 */}
+        {/* Explanation */}
         {confirmed && q.explanation && (
-          <div
-            className={`mt-4 p-4 rounded-2xl border-l-4 ${isCorrect ? 'bg-[#63992210] border-[#639922]' : 'bg-[#E24B4A10] border-[#E24B4A]'}`}
-          >
+          <div className={`mt-4 p-4 rounded-2xl border-l-4 ${isCorrect ? 'bg-[#63992210] border-[#639922]' : 'bg-[#E24B4A10] border-[#E24B4A]'}`}>
             <p className={`text-[11px] font-bold mb-1 ${isCorrect ? 'text-[#639922]' : 'text-[#E24B4A]'}`}>
               {isCorrect ? '✅ 정답!' : '❌ 오답'} — 해설
             </p>
@@ -230,7 +234,7 @@ export default function TestPage() {
         )}
       </div>
 
-      {/* 하단 버튼 */}
+      {/* Bottom button */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-[#E5E5E5]">
         {!confirmed ? (
           <button

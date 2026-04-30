@@ -37,9 +37,14 @@ const SUBJECT_META: Record<string, { icon: string; desc: string }> = {
   '스포츠사회학':  { icon: '🏟️', desc: '스포츠와 사회' },
 }
 
+const SAMPLE_VIDEOS = [
+  { title: '운동생리학 핵심 요약', channel: 'Kinepia', duration: '12분', emoji: '🫀' },
+  { title: '건강·체력평가 기출 분석', channel: 'Kinepia', duration: '15분', emoji: '📊' },
+  { title: '운동처방론 핵심 개념', channel: 'Kinepia', duration: '10분', emoji: '📋' },
+]
+
 interface ChapterStat {
   chapter_id: string
-  subject_id: string
   avg_score: number
   wrong_rate: number
   total_attempts: number
@@ -48,7 +53,6 @@ interface ChapterStat {
 
 interface QuestionStat {
   question_id: string
-  chapter_id: string
   wrong_rate: number
   total_attempts: number
 }
@@ -67,6 +71,14 @@ interface SubjectCard {
   subjectId: string | null
 }
 
+interface ActivityItem {
+  chapter_id: string
+  chapter_title: string
+  subject_name: string
+  date: string | null
+  score: number
+}
+
 // ─────────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const { data: session, status } = useSession()
@@ -75,40 +87,42 @@ export default function DashboardPage() {
   const [tab, setTab] = useState<Tab>('home')
   const [loading, setLoading] = useState(true)
 
-  // 공통
+  /* ── Common ──────────────────────────────────────────────────────── */
   const [certLabel, setCertLabel] = useState('')
-  const [subjects, setSubjects] = useState<string[]>([])
-  const [style, setStyle] = useState<string | null>(null)
-  const [userName, setUserName] = useState('')
+  const [subjects, setSubjects]   = useState<string[]>([])
+  const [style, setStyle]         = useState<string | null>(null)
+  const [_userName, setUserName]  = useState('')
 
-  // 홈
-  const [dDay, setDDay] = useState<number | null>(null)
-  const [recentStats, setRecentStats] = useState<ChapterStat[]>([])
-  const [topWrongStat, setTopWrongStat] = useState<ChapterStat | null>(null)
-  const [heartedVideo, setHeartedVideo] = useState(false)
+  /* ── Home ────────────────────────────────────────────────────────── */
+  const [dDay, setDDay]                   = useState<number | null>(null)
+  const [studyDaysSince, setStudyDaysSince] = useState<number>(0)
+  const [studiedToday, setStudiedToday]   = useState(false)
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([])
+  const [heartedVideos, setHeartedVideos] = useState<Record<string, boolean>>({})
+  const [subjectCards, setSubjectCards]   = useState<SubjectCard[]>([])
+  const [recentStats, setRecentStats]     = useState<ChapterStat[]>([])
 
-  // 강의실
-  const [subjectCards, setSubjectCards] = useState<SubjectCard[]>([])
-  const [bookmarks, setBookmarks] = useState<VideoBookmark[]>([])
+  /* ── Classroom (lazy) ────────────────────────────────────────────── */
+  const [bookmarks, setBookmarks]           = useState<VideoBookmark[]>([])
   const [classroomLoaded, setClassroomLoaded] = useState(false)
 
-  // 리포트
-  const [allChapterStats, setAllChapterStats] = useState<ChapterStat[]>([])
+  /* ── Report (lazy) ───────────────────────────────────────────────── */
+  const [allChapterStats, setAllChapterStats]   = useState<ChapterStat[]>([])
   const [allQuestionStats, setAllQuestionStats] = useState<QuestionStat[]>([])
-  const [reportLoaded, setReportLoaded] = useState(false)
+  const [reportLoaded, setReportLoaded]         = useState(false)
 
-  // 내정보
-  const [examDateInput, setExamDateInput] = useState('')
-  const [regionInput, setRegionInput] = useState('')
+  /* ── Profile ─────────────────────────────────────────────────────── */
+  const [examDateInput, setExamDateInput]   = useState('')
+  const [regionInput, setRegionInput]       = useState('')
   const [dailyHoursInput, setDailyHoursInput] = useState('')
-  const [savingProfile, setSavingProfile] = useState(false)
+  const [savingProfile, setSavingProfile]   = useState(false)
 
-  // ── 초기화 ────────────────────────────────────────────────────────
+  // ── Init ────────────────────────────────────────────────────────────
   useEffect(() => {
     if (status === 'loading') return
     if (status === 'unauthenticated') { router.replace('/landing'); return }
     initCommon()
-  }, [status, router])
+  }, [status, router]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (tab === 'classroom' && !classroomLoaded) loadClassroom()
@@ -116,18 +130,21 @@ export default function DashboardPage() {
   }, [tab]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const initCommon = async () => {
-    const cert    = localStorage.getItem(CERT_KEY)
-    const subs    = localStorage.getItem(SUBJECTS_KEY)
+    const cert     = localStorage.getItem(CERT_KEY)
+    const subs     = localStorage.getItem(SUBJECTS_KEY)
     const styleVal = localStorage.getItem(STYLE_KEY)
 
-    if (cert)   { setCertLabel(CERT_LABELS[cert] ?? cert) }
+    if (cert)     setCertLabel(CERT_LABELS[cert] ?? cert)
     if (styleVal) setStyle(styleVal)
     if (session?.user?.name) setUserName(session.user.name.split(' ')[0])
-    if (subs) {
-      try { setSubjects(JSON.parse(subs)) } catch { /* ignore */ }
-    }
 
-    // 프로필 설정 (D-Day)
+    let selectedNames: string[] = []
+    if (subs) {
+      try { selectedNames = JSON.parse(subs) } catch { /* ignore */ }
+    }
+    setSubjects(selectedNames)
+
+    // Profile settings (D-Day)
     try {
       const res  = await fetch('/api/v1/profile-settings')
       const data = await res.json()
@@ -135,53 +152,94 @@ export default function DashboardPage() {
         setExamDateInput(data.exam_target_date)
         const diff = Math.ceil((new Date(data.exam_target_date).getTime() - Date.now()) / 86400000)
         setDDay(diff)
+        // days since we started (proxy: use negative of diff if exam is in future)
+        setStudyDaysSince(Math.max(0, 365 - diff))
       }
       if (data.region)            setRegionInput(String(data.region))
       if (data.daily_study_hours) setDailyHoursInput(String(data.daily_study_hours))
     } catch { /* ignore */ }
 
-    // 홈용 최근 통계
+    // Chapter stats
     try {
-      const res  = await fetch('/api/v1/report')
-      const data = await res.json()
+      const res   = await fetch('/api/v1/report')
+      const data  = await res.json()
       const stats: ChapterStat[] = data.chapter_stats ?? []
+
       const sorted = [...stats].sort((a, b) =>
         new Date(b.last_attempt_at ?? 0).getTime() - new Date(a.last_attempt_at ?? 0).getTime()
       )
       setRecentStats(sorted.slice(0, 3))
-      const topWrong = [...stats].sort((a, b) => b.wrong_rate - a.wrong_rate).find((s) => s.wrong_rate > 0)
-      setTopWrongStat(topWrong ?? null)
+
+      // Studied today?
+      const today = new Date().toDateString()
+      setStudiedToday(sorted.some((s) => s.last_attempt_at && new Date(s.last_attempt_at).toDateString() === today))
+
+      // Recent activity with chapter + subject names (top 5)
+      const top5 = sorted.slice(0, 5)
+      if (top5.length > 0) {
+        const chIds = Array.from(new Set(top5.map((s) => s.chapter_id)))
+        const { data: chs } = await supabase
+          .from('chapters').select('id, title, course_id').in('id', chIds)
+        const courseIds = Array.from(new Set((chs ?? []).map((c) => c.course_id)))
+        const { data: courses } = await supabase
+          .from('courses').select('id, subject_id').in('id', courseIds)
+        const subjIds = Array.from(new Set((courses ?? []).map((c) => c.subject_id)))
+        const { data: subjs } = await supabase
+          .from('subjects').select('id, name').in('id', subjIds)
+
+        const subjMap: Record<string, string>  = {}
+        subjs?.forEach((s) => { subjMap[s.id] = s.name })
+        const courseMap: Record<string, string> = {}
+        courses?.forEach((c) => { courseMap[c.id] = c.subject_id })
+        const chMap: Record<string, { title: string; course_id: string }> = {}
+        chs?.forEach((c) => { chMap[c.id] = { title: c.title, course_id: c.course_id } })
+
+        setRecentActivity(
+          top5.map((s) => ({
+            chapter_id:    s.chapter_id,
+            chapter_title: chMap[s.chapter_id]?.title ?? '챕터',
+            subject_name:  subjMap[courseMap[chMap[s.chapter_id]?.course_id ?? ''] ?? ''] ?? '',
+            date:          s.last_attempt_at,
+            score:         s.avg_score,
+          }))
+        )
+      }
     } catch { /* ignore */ }
+
+    // Subject cards (needed for home + classroom)
+    if (selectedNames.length > 0) {
+      const { data: dbSubjs } = await supabase
+        .from('subjects').select('id, name').in('name', selectedNames)
+      const cards: SubjectCard[] = selectedNames.map((name) => {
+        const meta = SUBJECT_META[name] ?? { icon: '📚', desc: '' }
+        const db   = (dbSubjs ?? []).find((d: { id: string; name: string }) => d.name === name)
+        return { name, icon: meta.icon, desc: meta.desc, subjectId: db?.id ?? null }
+      })
+      setSubjectCards(cards)
+    }
 
     setLoading(false)
   }
 
   const loadClassroom = async () => {
-    let selectedNames = subjects
-    if (selectedNames.length === 0) {
+    // Refresh subject cards if not loaded yet
+    if (subjectCards.length === 0 && subjects.length === 0) {
       try {
         const res  = await fetch('/api/v1/selected-subjects')
         const data = await res.json()
-        if (Array.isArray(data.selected_subjects)) {
-          selectedNames = data.selected_subjects
-          setSubjects(selectedNames)
-          localStorage.setItem(SUBJECTS_KEY, JSON.stringify(selectedNames))
+        if (Array.isArray(data.selected_subjects) && data.selected_subjects.length > 0) {
+          const names: string[] = data.selected_subjects
+          setSubjects(names)
+          localStorage.setItem(SUBJECTS_KEY, JSON.stringify(names))
+          const { data: dbSubjs } = await supabase
+            .from('subjects').select('id, name').in('name', names)
+          setSubjectCards(names.map((name) => {
+            const meta = SUBJECT_META[name] ?? { icon: '📚', desc: '' }
+            const db   = (dbSubjs ?? []).find((d: { id: string; name: string }) => d.name === name)
+            return { name, icon: meta.icon, desc: meta.desc, subjectId: db?.id ?? null }
+          }))
         }
       } catch { /* ignore */ }
-    }
-
-    if (selectedNames.length > 0) {
-      const { data: dbSubjects } = await supabase
-        .from('subjects')
-        .select('id, name')
-        .in('name', selectedNames)
-
-      const cards: SubjectCard[] = selectedNames.map((name) => {
-        const meta = SUBJECT_META[name] ?? { icon: '📚', desc: '' }
-        const db   = (dbSubjects ?? []).find((d: { id: string; name: string }) => d.name === name)
-        return { name, icon: meta.icon, desc: meta.desc, subjectId: db?.id ?? null }
-      })
-      setSubjectCards(cards)
     }
 
     try {
@@ -203,13 +261,13 @@ export default function DashboardPage() {
     setReportLoaded(true)
   }
 
-  const handleHeartVideo = async () => {
-    if (heartedVideo) return
-    setHeartedVideo(true)
+  const handleHeartVideo = async (title: string) => {
+    if (heartedVideos[title]) return
+    setHeartedVideos((prev) => ({ ...prev, [title]: true }))
     fetch('/api/v1/video-bookmarks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ video_url: '', video_title: 'Kinepia Daily', video_thumbnail: '' }),
+      body: JSON.stringify({ video_url: '', video_title: title, video_thumbnail: '' }),
     }).catch(() => {})
   }
 
@@ -228,14 +286,15 @@ export default function DashboardPage() {
       if (examDateInput) {
         const diff = Math.ceil((new Date(examDateInput).getTime() - Date.now()) / 86400000)
         setDDay(diff)
+        setStudyDaysSince(Math.max(0, 365 - diff))
       } else {
         setDDay(null)
+        setStudyDaysSince(0)
       }
     } catch { /* ignore */ }
     setSavingProfile(false)
   }
 
-  // ── 로딩 ──────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
@@ -245,109 +304,214 @@ export default function DashboardPage() {
   }
 
   // ══════════════════════════════════════════════════════════════════
-  // 홈 탭
+  // ① HOME TAB
   // ══════════════════════════════════════════════════════════════════
   const renderHome = () => (
-    <div className="overflow-y-auto p-4 pb-24 space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
-      {/* Greeting */}
-      <div className="flex items-center justify-between pt-8">
-        <div>
-          <p className="text-[12px] text-[#ADADAD]">{certLabel || 'Kinepia'}</p>
-          <h1 className="text-[20px] font-black text-[#1A1A1A]">
-            {userName ? `${userName}님의 학습` : '오늘도 화이팅!'}
-          </h1>
-        </div>
-        {dDay !== null && (
-          <div className="bg-[#E24B4A] text-white rounded-2xl px-3 py-2 text-center min-w-[60px]">
-            <div className="text-[9px] font-bold opacity-70 uppercase">D-Day</div>
-            <div className="text-[20px] font-black leading-none">
-              {dDay > 0 ? `-${dDay}` : dDay === 0 ? '🎯' : `+${Math.abs(dDay)}`}
+    <div className="overflow-y-auto pb-24" style={{ height: 'calc(100dvh - 56px)' }}>
+
+      {/* ① D-Day */}
+      <div className="px-4 pt-10 pb-2">
+        {dDay === null ? (
+          <div className="bg-white rounded-2xl border border-[#E5E5E5] p-4 flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#E24B4A]/10 rounded-xl flex items-center justify-center text-[20px] flex-shrink-0">
+              📅
+            </div>
+            <div className="flex-1">
+              <p className="text-[13px] font-bold text-[#1A1A1A]">D-Day를 설정해 보세요</p>
+              <p className="text-[11px] text-[#ADADAD]">목표일을 설정하면 학습 계획을 도와드려요</p>
+            </div>
+            <button
+              onClick={() => setTab('profile')}
+              className="text-[12px] font-bold text-[#E24B4A] flex-shrink-0"
+            >
+              설정하기
+            </button>
+          </div>
+        ) : (
+          <div className="bg-[#1A1A1A] rounded-2xl p-4 flex items-center gap-4">
+            <div className="flex-1">
+              <p className="text-[11px] text-white/50 mb-0.5">학습 시작 이후</p>
+              <p className="text-[22px] font-black text-white">학습 D+{studyDaysSince}일</p>
+            </div>
+            <div className="bg-[#E24B4A] rounded-xl px-4 py-3 text-center flex-shrink-0">
+              <p className="text-[10px] text-white/70 font-bold mb-0.5">남은 기간</p>
+              <p className="text-[22px] font-black text-white leading-none">
+                {dDay > 0 ? `D-${dDay}` : dDay === 0 ? 'D-Day' : `D+${Math.abs(dDay)}`}
+              </p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Video card */}
-      <div className="bg-[#1A1A1A] rounded-2xl overflow-hidden">
-        <div className="flex items-center justify-center bg-gradient-to-br from-[#E24B4A]/20 to-[#1A1A1A]" style={{ aspectRatio: '16/9' }}>
-          <div className="text-center">
-            <div className="text-[48px]">🎬</div>
-            <p className="text-white/50 text-[12px] mt-1">오늘의 추천 영상</p>
+      {/* ② Daily 학습/테스트 */}
+      <div className="px-4 py-2">
+        {studiedToday && recentStats.length > 0 ? (
+          <div className="bg-[#63992210] border border-[#63992230] rounded-2xl p-4 text-center">
+            <p className="text-[16px] font-black text-[#639922]">오늘 학습 완료! 🎉</p>
+            <p className="text-[12px] text-[#639922]/70 mt-1">내일도 화이팅이에요</p>
           </div>
-        </div>
-        <div className="p-3 flex items-center justify-between">
-          <div>
-            <p className="text-[13px] font-bold text-white">Kinepia Daily</p>
-            <p className="text-[11px] text-white/50">오늘의 핵심 강의</p>
-          </div>
-          <button onClick={handleHeartVideo} className={`p-2 rounded-full transition-colors ${heartedVideo ? 'bg-[#E24B4A]/20' : 'bg-white/10 active:bg-white/20'}`}>
-            <Heart size={18} className={heartedVideo ? 'text-[#E24B4A] fill-[#E24B4A]' : 'text-white'} />
+        ) : recentStats.length > 0 ? (
+          <button
+            onClick={() => {
+              const first = subjectCards.find((c) => c.subjectId)
+              if (first?.subjectId) router.push(`/chapters/${first.subjectId}`)
+            }}
+            className="w-full bg-[#1A1A1A] text-white rounded-2xl p-4 flex items-center gap-3 active:opacity-90"
+          >
+            <span className="text-[24px]">✅</span>
+            <div className="text-left flex-1">
+              <p className="text-[15px] font-bold">테스트 시작하기</p>
+              <p className="text-[11px] text-white/50">학습 내용을 점검해보세요</p>
+            </div>
+            <ChevronRight size={18} className="text-white/50" />
           </button>
+        ) : (
+          <button
+            onClick={() => {
+              const first = subjectCards.find((c) => c.subjectId)
+              if (first?.subjectId) router.push(`/chapters/${first.subjectId}`)
+              else setTab('classroom')
+            }}
+            className="w-full bg-[#E24B4A] text-white rounded-2xl p-4 flex items-center gap-3 active:opacity-90"
+          >
+            <span className="text-[24px]">📚</span>
+            <div className="text-left flex-1">
+              <p className="text-[15px] font-bold">오늘의 학습 시작하기</p>
+              <p className="text-[11px] text-white/70">지금 바로 시작해보세요</p>
+            </div>
+            <ChevronRight size={18} className="text-white/70" />
+          </button>
+        )}
+      </div>
+
+      {/* ③ 추천 영상 swipe */}
+      <div className="py-2">
+        <p className="text-[12px] font-bold text-[#ADADAD] uppercase tracking-wider px-4 mb-2">
+          오늘의 추천 영상
+        </p>
+        <div
+          className="flex gap-3 px-4 overflow-x-auto pb-2"
+          style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
+        >
+          {SAMPLE_VIDEOS.map((vid, i) => (
+            <div
+              key={i}
+              className="flex-shrink-0 bg-[#1A1A1A] rounded-2xl overflow-hidden"
+              style={{ width: '85%', scrollSnapAlign: 'start' }}
+            >
+              <div
+                className="flex items-center justify-center bg-gradient-to-br from-[#E24B4A]/20 to-[#1A1A1A]"
+                style={{ aspectRatio: '16/9' }}
+              >
+                <div className="text-center">
+                  <div className="text-[40px]">{vid.emoji}</div>
+                </div>
+              </div>
+              <div className="p-3 flex items-center justify-between">
+                <div className="flex-1 min-w-0 mr-2">
+                  <p className="text-[13px] font-bold text-white truncate">{vid.title}</p>
+                  <p className="text-[11px] text-white/50">{vid.channel} · {vid.duration}</p>
+                </div>
+                <button
+                  onClick={() => handleHeartVideo(vid.title)}
+                  className={`p-2 rounded-full flex-shrink-0 transition-colors ${
+                    heartedVideos[vid.title] ? 'bg-[#E24B4A]/20' : 'bg-white/10 active:bg-white/20'
+                  }`}
+                >
+                  <Heart
+                    size={16}
+                    className={heartedVideos[vid.title] ? 'text-[#E24B4A] fill-[#E24B4A]' : 'text-white'}
+                  />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* D-Day 설정 유도 */}
-      {dDay === null && (
-        <button
-          onClick={() => setTab('profile')}
-          className="w-full bg-white rounded-2xl border border-[#E5E5E5] p-3 flex items-center gap-3 active:bg-[#F5F5F3]"
-        >
-          <Calendar size={18} className="text-[#E24B4A] flex-shrink-0" />
-          <div className="flex-1 text-left">
-            <p className="text-[13px] font-bold text-[#1A1A1A]">시험 D-Day를 설정해보세요</p>
-            <p className="text-[11px] text-[#ADADAD]">내정보 탭에서 목표 시험일 설정 가능</p>
+      {/* ④ 강의실 바로가기 swipe */}
+      <div className="py-2">
+        <p className="text-[12px] font-bold text-[#ADADAD] uppercase tracking-wider px-4 mb-2">
+          강의실 바로가기
+        </p>
+        {subjectCards.length === 0 ? (
+          <div className="mx-4 bg-white rounded-2xl border border-[#E5E5E5] p-6 text-center">
+            <p className="text-[13px] text-[#ADADAD] mb-3">등록된 학습이 없습니다</p>
+            <button
+              onClick={() => router.push('/select-cert')}
+              className="text-[13px] font-bold text-[#E24B4A] flex items-center gap-1 mx-auto"
+            >
+              <Plus size={14} /> 학습 추가하기
+            </button>
           </div>
-          <ChevronRight size={14} className="text-[#ADADAD]" />
-        </button>
-      )}
-
-      {/* 재도전 추천 */}
-      {topWrongStat && (
-        <div>
-          <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">🔥 재도전 추천</p>
-          <button
-            onClick={() => router.push(`/lesson/${topWrongStat.chapter_id}`)}
-            className="w-full bg-white rounded-2xl border-2 border-[#E24B4A]/20 p-4 text-left flex items-center gap-3 active:bg-[#F5F5F3]"
+        ) : (
+          <div
+            className="flex gap-3 px-4 overflow-x-auto pb-2"
+            style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
           >
-            <div className="w-10 h-10 rounded-xl bg-[#E24B4A]/10 flex items-center justify-center text-[20px]">🔥</div>
-            <div className="flex-1">
-              <p className="text-[13px] font-bold text-[#1A1A1A]">오답률 높은 챕터</p>
-              <p className="text-[11px] text-[#E24B4A] font-semibold">오답률 {topWrongStat.wrong_rate}%</p>
-            </div>
-            <ChevronRight size={14} className="text-[#ADADAD]" />
-          </button>
-        </div>
-      )}
+            {subjectCards.map((card, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  if (card.subjectId) {
+                    localStorage.setItem('kinepia_current_subject_id', card.subjectId)
+                    router.push(`/chapters/${card.subjectId}`)
+                  }
+                }}
+                disabled={!card.subjectId}
+                className="flex-shrink-0 bg-white rounded-2xl border border-[#E5E5E5] p-4 text-left active:bg-[#F5F5F3] disabled:opacity-60"
+                style={{ width: '75%', scrollSnapAlign: 'start' }}
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="text-[26px]">{card.icon}</div>
+                  <div className="min-w-0">
+                    <p className="text-[14px] font-bold text-[#1A1A1A] truncate">{card.name}</p>
+                    <p className="text-[11px] text-[#ADADAD]">{card.desc}</p>
+                  </div>
+                </div>
+                <div className="w-full h-1.5 bg-[#F0F0EE] rounded-full overflow-hidden">
+                  <div className="h-full bg-[#E24B4A] rounded-full" style={{ width: '0%' }} />
+                </div>
+                <p className="text-[10px] text-[#ADADAD] mt-1">학습 시작 전</p>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
-      {/* 최근 학습 이력 */}
-      {recentStats.length > 0 && (
-        <div>
-          <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">최근 학습 이력</p>
+      {/* ⑤ 내 학습 활동 내역 */}
+      {recentActivity.length > 0 && (
+        <div className="px-4 py-2">
+          <p className="text-[12px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">내 학습 활동 내역</p>
           <div className="space-y-2">
-            {recentStats.map((s, i) => (
-              <div key={i} className="bg-white rounded-xl border border-[#E5E5E5] p-3 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-[#F5F5F3] flex items-center justify-center text-[11px] font-black text-[#ADADAD]">{i + 1}</div>
-                <div className="flex-1">
-                  <p className="text-[12px] font-semibold text-[#1A1A1A]">챕터 학습</p>
+            {recentActivity.map((a, i) => (
+              <button
+                key={i}
+                onClick={() => router.push(`/lesson/${a.chapter_id}`)}
+                className="w-full bg-white rounded-xl border border-[#E5E5E5] p-3 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
+              >
+                <div className="w-8 h-8 rounded-lg bg-[#F5F5F3] flex items-center justify-center text-[11px] font-black text-[#ADADAD] flex-shrink-0">
+                  {i + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] font-semibold text-[#1A1A1A] truncate">
+                    {a.subject_name ? `${a.subject_name} › ${a.chapter_title}` : a.chapter_title}
+                  </p>
                   <p className="text-[10px] text-[#ADADAD]">
-                    {s.last_attempt_at ? new Date(s.last_attempt_at).toLocaleDateString('ko-KR') : '-'}
-                    {' · '}평균 {s.avg_score}점
+                    {a.date ? new Date(a.date).toLocaleDateString('ko-KR') : '-'}
                   </p>
                 </div>
-                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                  s.avg_score >= 80 ? 'bg-[#63992215] text-[#639922]'
-                  : s.avg_score >= 60 ? 'bg-[#378ADD15] text-[#378ADD]'
-                  : 'bg-[#E24B4A10] text-[#E24B4A]'
-                }`}>{s.avg_score}점</span>
-              </div>
+                <span className={`text-[12px] font-black flex-shrink-0 ${
+                  a.score >= 80 ? 'text-[#639922]' : a.score >= 60 ? 'text-[#378ADD]' : 'text-[#E24B4A]'
+                }`}>{a.score}점</span>
+              </button>
             ))}
           </div>
         </div>
       )}
 
-      {/* 첫 방문 안내 */}
-      {recentStats.length === 0 && !topWrongStat && (
-        <div className="bg-white rounded-2xl border border-[#E5E5E5] p-8 text-center">
+      {recentActivity.length === 0 && subjectCards.length === 0 && (
+        <div className="mx-4 my-2 bg-white rounded-2xl border border-[#E5E5E5] p-8 text-center">
           <div className="text-[40px] mb-3">📚</div>
           <p className="text-[15px] font-bold text-[#1A1A1A] mb-1">아직 학습 이력이 없어요</p>
           <p className="text-[12px] text-[#ADADAD] mb-5">강의실에서 과목을 선택해 학습을 시작해보세요!</p>
@@ -360,7 +524,7 @@ export default function DashboardPage() {
   )
 
   // ══════════════════════════════════════════════════════════════════
-  // 강의실 탭
+  // ② CLASSROOM TAB
   // ══════════════════════════════════════════════════════════════════
   const renderClassroom = () => (
     <div className="overflow-y-auto p-4 pb-24 space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
@@ -407,9 +571,10 @@ export default function DashboardPage() {
                     <div className="text-[15px] font-bold text-[#1A1A1A] mb-0.5">{name}</div>
                     <div className="text-[11px] text-[#6B6B6B]">{meta.desc}</div>
                   </div>
-                  {sid ? <ChevronRight size={16} className="text-[#ADADAD] flex-shrink-0" /> : (
-                    <span className="text-[10px] text-[#ADADAD]">학습 준비중</span>
-                  )}
+                  {sid
+                    ? <ChevronRight size={16} className="text-[#ADADAD] flex-shrink-0" />
+                    : <span className="text-[10px] text-[#ADADAD]">학습 준비중</span>
+                  }
                 </button>
               )
             })}
@@ -424,7 +589,7 @@ export default function DashboardPage() {
         </>
       )}
 
-      {/* 찜한 영상 */}
+      {/* Bookmarked videos */}
       {bookmarks.length > 0 && (
         <div>
           <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">찜한 영상</p>
@@ -443,13 +608,12 @@ export default function DashboardPage() {
   )
 
   // ══════════════════════════════════════════════════════════════════
-  // 리포트 탭
+  // ③ REPORT TAB
   // ══════════════════════════════════════════════════════════════════
-  const overallWrongRate = allChapterStats.length > 0
-    ? Math.round(allChapterStats.reduce((s, c) => s + c.wrong_rate, 0) / allChapterStats.length)
-    : null
-  const weakChapters        = allChapterStats.filter((s) => s.wrong_rate >= 40)
-  const topWrongQuestions   = [...allQuestionStats].sort((a, b) => b.wrong_rate - a.wrong_rate).slice(0, 5)
+  const overallWrongRate  = allChapterStats.length > 0
+    ? Math.round(allChapterStats.reduce((s, c) => s + c.wrong_rate, 0) / allChapterStats.length) : null
+  const weakChapters      = allChapterStats.filter((s) => s.wrong_rate >= 40)
+  const topWrongQuestions = [...allQuestionStats].sort((a, b) => b.wrong_rate - a.wrong_rate).slice(0, 5)
 
   const renderReport = () => (
     <div className="overflow-y-auto p-4 pb-24 space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
@@ -466,14 +630,12 @@ export default function DashboardPage() {
         </div>
       ) : (
         <>
-          {/* 전체 오답률 */}
           <div className="bg-[#1A1A1A] rounded-2xl p-5 text-white text-center">
             <p className="text-[11px] text-white/50 uppercase tracking-wider mb-2">전체 평균 오답률</p>
             <div className="text-[52px] font-black text-[#E24B4A] leading-none">{overallWrongRate}%</div>
             <p className="text-[12px] text-white/50 mt-2">{allChapterStats.length}개 챕터 완료</p>
           </div>
 
-          {/* 취약 챕터 */}
           {weakChapters.length > 0 && (
             <div>
               <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">🔥 취약 챕터 (오답률 40%↑)</p>
@@ -497,7 +659,6 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* 챕터별 성적 */}
           <div>
             <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">챕터별 성적</p>
             <div className="space-y-2">
@@ -521,7 +682,6 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* TOP 5 오답 문제 */}
           {topWrongQuestions.length > 0 && (
             <div>
               <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">가장 많이 틀린 문제 TOP 5</p>
@@ -545,7 +705,7 @@ export default function DashboardPage() {
   )
 
   // ══════════════════════════════════════════════════════════════════
-  // 내정보 탭
+  // ④ PROFILE TAB
   // ══════════════════════════════════════════════════════════════════
   const renderProfile = () => (
     <div className="overflow-y-auto p-4 pb-24 space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
@@ -553,7 +713,6 @@ export default function DashboardPage() {
         <h2 className="text-[20px] font-black text-[#1A1A1A]">내 정보</h2>
       </div>
 
-      {/* 학습 성향 */}
       <div>
         <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">학습 성향</p>
         <div className="bg-white rounded-xl border border-[#E5E5E5] p-3 flex items-center gap-3">
@@ -574,7 +733,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 자격증 · 과목 */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider">자격증 · 수강 과목</p>
@@ -596,7 +754,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 학습 설정 */}
       <div>
         <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">학습 설정</p>
         <div className="bg-white rounded-xl border border-[#E5E5E5] p-4 space-y-4">
@@ -651,7 +808,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 링크 */}
       <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-hidden">
         {[
           { label: '리더보드',        path: '/trainer/leaderboard', icon: '🏆' },
@@ -674,7 +830,7 @@ export default function DashboardPage() {
   )
 
   // ══════════════════════════════════════════════════════════════════
-  // 메인 렌더
+  // MAIN RENDER
   // ══════════════════════════════════════════════════════════════════
   const TAB_ITEMS: { id: Tab; icon: string; label: string }[] = [
     { id: 'home',      icon: '🏠', label: '홈' },
@@ -692,7 +848,7 @@ export default function DashboardPage() {
         {tab === 'profile'   && renderProfile()}
       </div>
 
-      {/* 탭 바 */}
+      {/* Tab bar */}
       <div className="bg-white border-t border-[#E5E5E5] flex items-center justify-around px-2 py-2.5 flex-shrink-0">
         {TAB_ITEMS.map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)} className="flex flex-col items-center gap-0.5 px-4">
