@@ -1,13 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import {
   ChevronRight, Plus, Heart, Flame, BarChart2,
   Check, RefreshCw, Calendar, Clock, MapPin,
 } from 'lucide-react'
+import BottomTabBar from '@/components/common/BottomTabBar'
 
 type Tab = 'home' | 'classroom' | 'report' | 'profile'
 
@@ -80,11 +81,31 @@ interface ActivityItem {
 }
 
 // ─────────────────────────────────────────────────────────────────────
+/* Wrap in Suspense so useSearchParams works in App Router */
 export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#E24B4A] border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
+  )
+}
+
+function DashboardContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const tabParam = (searchParams.get('tab') ?? 'home') as Tab
 
-  const [tab, setTab] = useState<Tab>('home')
+  const [tab, setTab] = useState<Tab>(tabParam)
+
+  /* Sync tab when URL search param changes (BottomTabBar navigation) */
+  useEffect(() => {
+    setTab(tabParam)
+  }, [tabParam])
   const [loading, setLoading] = useState(true)
 
   /* ── Common ──────────────────────────────────────────────────────── */
@@ -321,7 +342,7 @@ export default function DashboardPage() {
               <p className="text-[11px] text-[#ADADAD]">목표일을 설정하면 학습 계획을 도와드려요</p>
             </div>
             <button
-              onClick={() => setTab('profile')}
+              onClick={() => router.push('/trainer/dashboard?tab=profile')}
               className="text-[12px] font-bold text-[#E24B4A] flex-shrink-0"
             >
               설정하기
@@ -370,7 +391,7 @@ export default function DashboardPage() {
             onClick={() => {
               const first = subjectCards.find((c) => c.subjectId)
               if (first?.subjectId) router.push(`/chapters/${first.subjectId}`)
-              else setTab('classroom')
+              else router.push('/trainer/dashboard?tab=classroom')
             }}
             className="w-full bg-[#E24B4A] text-white rounded-2xl p-4 flex items-center gap-3 active:opacity-90"
           >
@@ -515,7 +536,7 @@ export default function DashboardPage() {
           <div className="text-[40px] mb-3">📚</div>
           <p className="text-[15px] font-bold text-[#1A1A1A] mb-1">아직 학습 이력이 없어요</p>
           <p className="text-[12px] text-[#ADADAD] mb-5">강의실에서 과목을 선택해 학습을 시작해보세요!</p>
-          <button onClick={() => setTab('classroom')} className="px-5 py-2.5 bg-[#E24B4A] text-white rounded-xl text-[13px] font-bold">
+          <button onClick={() => router.push('/trainer/dashboard?tab=classroom')} className="px-5 py-2.5 bg-[#E24B4A] text-white rounded-xl text-[13px] font-bold">
             강의실 바로가기
           </button>
         </div>
@@ -832,33 +853,16 @@ export default function DashboardPage() {
   // ══════════════════════════════════════════════════════════════════
   // MAIN RENDER
   // ══════════════════════════════════════════════════════════════════
-  const TAB_ITEMS: { id: Tab; icon: string; label: string }[] = [
-    { id: 'home',      icon: '🏠', label: '홈' },
-    { id: 'classroom', icon: '📚', label: '강의실' },
-    { id: 'report',    icon: '📊', label: '리포트' },
-    { id: 'profile',   icon: '👤', label: '내정보' },
-  ]
-
   return (
     <div className="bg-[#F5F5F3] flex flex-col" style={{ height: '100dvh', maxHeight: '100dvh' }}>
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden pb-16">
         {tab === 'home'      && renderHome()}
         {tab === 'classroom' && renderClassroom()}
         {tab === 'report'    && renderReport()}
         {tab === 'profile'   && renderProfile()}
       </div>
 
-      {/* Tab bar */}
-      <div className="bg-white border-t border-[#E5E5E5] flex items-center justify-around px-2 py-2.5 flex-shrink-0">
-        {TAB_ITEMS.map((t) => (
-          <button key={t.id} onClick={() => setTab(t.id)} className="flex flex-col items-center gap-0.5 px-4">
-            <span className="text-[18px]">{t.icon}</span>
-            <span className={`text-[10px] font-medium ${tab === t.id ? 'text-[#E24B4A]' : 'text-[#ADADAD]'}`}>
-              {t.label}
-            </span>
-          </button>
-        ))}
-      </div>
+      <BottomTabBar />
     </div>
   )
 }
