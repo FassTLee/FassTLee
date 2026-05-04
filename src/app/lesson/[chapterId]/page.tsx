@@ -23,6 +23,7 @@ interface Question {
   options: string[]
   answer_index: number
   explanation: string | null
+  difficulty?: string | null
 }
 
 interface Slide {
@@ -42,6 +43,17 @@ interface MiniQ {
 function getShort(text: string, n = 2): string {
   const sentences = text.match(/[^.!?。\n]+[.!?。]?/g) ?? []
   return sentences.slice(0, n).join('').trim()
+}
+
+function toSlideTitle(q: string): string {
+  const t = q.trim()
+  const m1 = t.match(/^(.+?)에\s*관한\s*설명으로\s*옳.+것은\??\s*$/)
+  if (m1) return m1[1].trim() + '이란?'
+  const m2 = t.match(/^(.+?)(?:으로|의\s*특징으로)\s*옳.+것은\??\s*$/)
+  if (m2) return m2[1].trim() + '의 특징'
+  const m3 = t.match(/^(.+?)[은는이가]\s*무엇인가\?\s*$/)
+  if (m3) return m3[1].trim() + '이란?'
+  return t.replace(/\?$/, '')
 }
 
 export default function LessonPage() {
@@ -95,7 +107,7 @@ export default function LessonPage() {
     const [{ data: ch }, { data: qs }] = await Promise.all([
       supabase.from('chapters').select('id, title, course_id').eq('id', chapterId).single(),
       supabase.from('chapter_questions')
-        .select('id, question, options, answer_index, explanation')
+        .select('id, question, options, answer_index, explanation, difficulty')
         .eq('chapter_id', chapterId),
     ])
 
@@ -155,15 +167,23 @@ export default function LessonPage() {
 
   /* ── Mini quiz trigger ─────────────────────────────── */
   const triggerMiniQuiz = () => {
-    if (questions.length < 2) {
+    const easyQs = questions.filter((q) => q.difficulty === 'easy')
+    const pool = easyQs.length > 0 ? easyQs : questions
+    if (pool.length === 0) {
       router.push(`/test/${chapterId}`)
       return
     }
-    const shuffled = [...questions].sort(() => Math.random() - 0.5)
+    const shuffled = [...pool].sort(() => Math.random() - 0.5)
     const q = shuffled[0]
-    const wrong = shuffled[1]
-    const correct    = q.options[q.answer_index]
-    const wrongOpt   = wrong.options[wrong.answer_index]
+    const correct = q.options[q.answer_index]
+    let wrongOpt: string
+    if (shuffled.length >= 2) {
+      const wrong = shuffled[1]
+      wrongOpt = wrong.options[wrong.answer_index]
+    } else {
+      const others = q.options.filter((_, i) => i !== q.answer_index)
+      wrongOpt = others.length > 0 ? others[Math.floor(Math.random() * others.length)] : correct
+    }
     const aIsCorrect = Math.random() > 0.5
     setMiniQ({
       id: q.id,
@@ -353,18 +373,9 @@ export default function LessonPage() {
         ) : (
           <>
             {/* Overview strip — first slide only */}
-            {slideIndex === 0 && (subjectName || courseDesc) && (
+            {slideIndex === 0 && subjectName && (
               <div className="bg-[#E24B4A]/5 border border-[#E24B4A]/20 rounded-2xl p-3 mb-3 flex-shrink-0">
-                {subjectName && (
-                  <p className="text-[11px] font-bold text-[#E24B4A] mb-1">{subjectName} › {chapterTitle}</p>
-                )}
-                <p className="text-[12px] text-[#6B6B6B] leading-relaxed">
-                  {courseDesc
-                    ? (isMemorizer
-                        ? getShort(courseDesc, 1)
-                        : courseDesc.substring(0, 80) + (courseDesc.length > 80 ? '...' : ''))
-                    : `${chapterTitle}의 핵심 내용을 학습합니다.`}
-                </p>
+                <p className="text-[11px] font-bold text-[#E24B4A]">{subjectName} › {chapterTitle}</p>
               </div>
             )}
 
@@ -378,7 +389,7 @@ export default function LessonPage() {
               </div>
 
               <p className="text-[15px] font-bold text-[#1A1A1A] mb-4 leading-snug flex-shrink-0">
-                {currentSlide?.question}
+                {currentSlide ? toSlideTitle(currentSlide.question) : ''}
               </p>
 
               <div className="flex-1 overflow-y-auto">

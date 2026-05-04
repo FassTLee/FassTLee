@@ -19,9 +19,12 @@ function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5)
 }
 
-/** Remove leading numeric prefix like "1 ", "2. ", "1①" before circled numbers */
+/** Remove leading numeric prefix and/or circled numbers like "1 ", "2. ", "①", "1①" */
 function cleanOption(opt: string): string {
-  return opt.replace(/^\s*\d+\s*/, '').trim()
+  return opt
+    .replace(/^\s*\d+[.)、\s]*/, '')
+    .replace(/^[①②③④⑤⑥⑦⑧⑨⑩]\s*/, '')
+    .trim()
 }
 
 interface Question {
