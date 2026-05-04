@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { ChevronLeft, Check, Zap } from 'lucide-react'
+import { ChevronLeft, ChevronRight as ArrowRight, Check, Zap } from 'lucide-react'
 
 const STYLE_KEY   = 'kinepia_learning_style'
 const CERT_KEY    = 'kinepia_selected_cert'
@@ -72,8 +72,9 @@ export default function LessonPage() {
   const [miniSelected, setMiniSelected]   = useState<0 | 1 | null>(null)
   const [miniConfirmed, setMiniConfirmed] = useState(false)
 
-  /* ── Touch swipe ────────────────────────────── */
-  const touchStartX = useRef(0)
+  /* ── Swipe (touch + mouse) ──────────────────── */
+  const dragStartX  = useRef(0)
+  const isDragging  = useRef(false)
   const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null)
 
   /* ─────────────────────────────────────────────────── */
@@ -207,9 +208,14 @@ export default function LessonPage() {
     setChecked(false)
   }
 
-  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX }
-  const onTouchEnd   = (e: React.TouchEvent) => {
-    const delta = e.changedTouches[0].clientX - touchStartX.current
+  const onDragStart = (clientX: number) => {
+    dragStartX.current = clientX
+    isDragging.current = true
+  }
+  const onDragEnd = (clientX: number) => {
+    if (!isDragging.current) return
+    isDragging.current = false
+    const delta = clientX - dragStartX.current
     if (Math.abs(delta) < 50) return
     if (delta < 0 && slideIndex < slides.length - 1) {
       setSlideIndex((si) => si + 1); setChecked(false); setAutoProgress(0)
@@ -217,6 +223,19 @@ export default function LessonPage() {
       setSlideIndex((si) => si - 1); setChecked(false); setAutoProgress(0)
     }
   }
+
+  /* touch */
+  const onTouchStart = (e: React.TouchEvent) => onDragStart(e.touches[0].clientX)
+  const onTouchEnd   = (e: React.TouchEvent) => onDragEnd(e.changedTouches[0].clientX)
+
+  /* mouse (PC) */
+  const onMouseDown  = (e: React.MouseEvent) => onDragStart(e.clientX)
+  const onMouseUp    = (e: React.MouseEvent) => onDragEnd(e.clientX)
+  const onMouseLeave = () => { isDragging.current = false }
+
+  /* arrow button helpers */
+  const goPrev = () => { if (slideIndex > 0) { setSlideIndex((si) => si - 1); setChecked(false); setAutoProgress(0) } }
+  const goNext = () => { if (slideIndex < slides.length - 1) { setSlideIndex((si) => si + 1); setChecked(false); setAutoProgress(0) } }
 
   if (loading) {
     return (
@@ -296,10 +315,33 @@ export default function LessonPage() {
 
       {/* Slide area */}
       <div
-        className="flex-1 overflow-hidden p-4 flex flex-col"
+        className="flex-1 overflow-hidden p-4 flex flex-col relative"
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
+        onMouseDown={onMouseDown}
+        onMouseUp={onMouseUp}
+        onMouseLeave={onMouseLeave}
+        style={{ touchAction: 'pan-y', userSelect: 'none' }}
       >
+        {/* Arrow buttons */}
+        {slides.length > 1 && (
+          <>
+            <button
+              onClick={goPrev}
+              disabled={slideIndex === 0}
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white border border-[#E5E5E5] flex items-center justify-center shadow-sm disabled:opacity-20 transition-opacity"
+            >
+              <ChevronLeft size={16} className="text-[#6B6B6B]" />
+            </button>
+            <button
+              onClick={goNext}
+              disabled={slideIndex === slides.length - 1}
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white border border-[#E5E5E5] flex items-center justify-center shadow-sm disabled:opacity-20 transition-opacity"
+            >
+              <ArrowRight size={16} className="text-[#6B6B6B]" />
+            </button>
+          </>
+        )}
         {slides.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <div className="text-[48px] mb-3">📚</div>
@@ -374,14 +416,14 @@ export default function LessonPage() {
               )}
             </div>
 
-            {/* Dot indicators */}
-            <div className="flex items-center justify-center gap-2 py-3 flex-shrink-0">
+            {/* Progress bars */}
+            <div className="flex items-center gap-1.5 px-1 py-3 flex-shrink-0">
               {slides.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => { setSlideIndex(i); setChecked(false); setAutoProgress(0) }}
-                  className={`rounded-full transition-all duration-200 ${
-                    i === slideIndex ? 'w-5 h-2 bg-[#E24B4A]' : 'w-2 h-2 bg-[#E5E5E5]'
+                  className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${
+                    i <= slideIndex ? 'bg-green-500' : 'bg-gray-200'
                   }`}
                 />
               ))}
