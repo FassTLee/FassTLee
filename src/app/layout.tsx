@@ -57,7 +57,17 @@ export const metadata: Metadata = {
   },
 
   // PWA
-  manifest: undefined,
+  manifest: '/manifest.json',
+
+  // iOS PWA
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Kinepia',
+    startupImage: [
+      { url: '/icon-512.png' },
+    ],
+  },
 }
 
 export const viewport = {
@@ -65,7 +75,10 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: '#1A1A1A',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)',  color: '#1A1A1A' },
+  ],
 }
 
 export default function RootLayout({
