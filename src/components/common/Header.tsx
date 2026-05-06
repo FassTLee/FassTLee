@@ -1,7 +1,8 @@
 'use client'
 
 import { ReactNode } from 'react'
-import { ChevronLeft, X } from 'lucide-react'
+import { X } from 'lucide-react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 
 interface HeaderProps {
@@ -23,7 +24,7 @@ export function Header({ title, leftAction = 'back', rightAction, onBack }: Head
     if (leftAction === 'back') {
       return (
         <button onClick={handleBack} className="w-8 h-8 flex items-center justify-center">
-          <ChevronLeft size={22} className="text-[#1A1A1A]" />
+          <Image src="/assets/icons/ui/ui-back.svg" alt="뒤로" width={22} height={22} />
         </button>
       )
     }
