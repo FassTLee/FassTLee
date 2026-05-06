@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import {
   ChevronRight, Plus, Heart, Flame, BarChart2,
-  Check, RefreshCw, Calendar, Clock, MapPin,
+  Check, RefreshCw, Calendar, Clock, MapPin, X, Trash2,
 } from 'lucide-react'
 import BottomTabBar from '@/components/common/BottomTabBar'
 
@@ -81,6 +81,21 @@ interface ActivityItem {
   score: number
 }
 
+interface DayGoal {
+  id: string
+  cert_type: string
+  exam_date: string
+}
+
+interface TodayChapter {
+  chapterId: string
+  title: string
+  subjectName: string
+  subjectId: string
+  total: number
+  completed: number
+}
+
 // ─────────────────────────────────────────────────────────────────────
 /* Wrap in Suspense so useSearchParams works in App Router */
 export default function DashboardPage() {
@@ -116,8 +131,6 @@ function DashboardContent() {
   const [_userName, setUserName]  = useState('')
 
   /* ── Home ────────────────────────────────────────────────────────── */
-  const [dDay, setDDay]                   = useState<number | null>(null)
-  const [studyDaysSince, setStudyDaysSince] = useState<number>(0)
   const [studiedToday, setStudiedToday]   = useState(false)
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([])
   const [heartedVideos, setHeartedVideos] = useState<Record<string, boolean>>({})
@@ -125,6 +138,16 @@ function DashboardContent() {
   const [recentStats, setRecentStats]     = useState<ChapterStat[]>([])
   const [playingIdx, setPlayingIdx]       = useState<number | null>(null)
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([])
+
+  /* ── D-Day goals ─────────────────────────────────────────────────── */
+  const [ddayGoals, setDdayGoals]         = useState<DayGoal[]>([])
+  const [showDDayModal, setShowDDayModal] = useState(false)
+  const [ddayNewCert, setDdayNewCert]     = useState('건강운동관리사')
+  const [ddayNewDate, setDdayNewDate]     = useState('')
+  const [savingDDay, setSavingDDay]       = useState(false)
+
+  /* ── Today chapter thumbnail ─────────────────────────────────────── */
+  const [todayChapter, setTodayChapter]   = useState<TodayChapter | null>(null)
 
   /* ── Classroom (lazy) ────────────────────────────────────────────── */
   const [bookmarks, setBookmarks]           = useState<VideoBookmark[]>([])
@@ -168,26 +191,30 @@ function DashboardContent() {
     }
     setSubjects(selectedNames)
 
-    // Profile settings (D-Day)
+    // Profile settings (region / hours)
     try {
       const res  = await fetch('/api/v1/profile-settings')
       const data = await res.json()
       if (data.exam_target_date) {
         setExamDateInput(data.exam_target_date)
-        const diff = Math.ceil((new Date(data.exam_target_date).getTime() - Date.now()) / 86400000)
-        setDDay(diff)
-        // days since we started (proxy: use negative of diff if exam is in future)
-        setStudyDaysSince(Math.max(0, 365 - diff))
       }
       if (data.region)            setRegionInput(String(data.region))
       if (data.daily_study_hours) setDailyHoursInput(String(data.daily_study_hours))
     } catch { /* ignore */ }
 
+    // D-Day goals
+    try {
+      const res  = await fetch('/api/v1/user-goals')
+      const data = await res.json()
+      setDdayGoals(data.goals ?? [])
+    } catch { /* ignore */ }
+
     // Chapter stats
+    let stats: ChapterStat[] = []
     try {
       const res   = await fetch('/api/v1/report')
       const data  = await res.json()
-      const stats: ChapterStat[] = data.chapter_stats ?? []
+      stats = data.chapter_stats ?? []
 
       const sorted = [...stats].sort((a, b) =>
         new Date(b.last_attempt_at ?? 0).getTime() - new Date(a.last_attempt_at ?? 0).getTime()
@@ -240,6 +267,37 @@ function DashboardContent() {
         return { name, icon: meta.icon, desc: meta.desc, subjectId: db?.id ?? null }
       })
       setSubjectCards(cards)
+
+      // Today chapter thumbnail: first subject with chapters
+      const firstCard = cards.find((c) => c.subjectId)
+      if (firstCard?.subjectId) {
+        try {
+          const { data: courses } = await supabase
+            .from('courses').select('id').eq('subject_id', firstCard.subjectId)
+          const cIds = (courses ?? []).map((c) => c.id)
+          if (cIds.length > 0) {
+            const { data: chaps } = await supabase
+              .from('chapters').select('id, title, order_index').in('course_id', cIds)
+            const sortedChaps = (chaps ?? []).sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+            const completedIds = new Set(
+              (stats ?? []).filter((s) => s.avg_score >= 80).map((s) => s.chapter_id)
+            )
+            const total     = sortedChaps.length
+            const completed = sortedChaps.filter((c) => completedIds.has(c.id)).length
+            const nextChap  = sortedChaps.find((c) => !completedIds.has(c.id)) ?? sortedChaps[0]
+            if (nextChap) {
+              setTodayChapter({
+                chapterId:   nextChap.id,
+                title:       nextChap.title,
+                subjectName: firstCard.name,
+                subjectId:   firstCard.subjectId,
+                total,
+                completed,
+              })
+            }
+          }
+        } catch { /* ignore */ }
+      }
     }
 
     setLoading(false)
@@ -308,6 +366,33 @@ function DashboardContent() {
     }
   }
 
+  const handleAddDDayGoal = async () => {
+    if (!ddayNewDate || savingDDay) return
+    setSavingDDay(true)
+    try {
+      const res  = await fetch('/api/v1/user-goals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cert_type: ddayNewCert, exam_date: ddayNewDate }),
+      })
+      const data = await res.json()
+      if (data.goal) setDdayGoals((prev) => [...prev, data.goal])
+      setDdayNewDate('')
+    } catch { /* ignore */ }
+    setSavingDDay(false)
+  }
+
+  const handleDeleteDDayGoal = async (id: string) => {
+    setDdayGoals((prev) => prev.filter((g) => g.id !== id))
+    try {
+      await fetch('/api/v1/user-goals', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+    } catch { /* ignore */ }
+  }
+
   const handleSaveProfile = async () => {
     setSavingProfile(true)
     try {
@@ -320,14 +405,7 @@ function DashboardContent() {
           daily_study_hours: dailyHoursInput ? parseInt(dailyHoursInput) : null,
         }),
       })
-      if (examDateInput) {
-        const diff = Math.ceil((new Date(examDateInput).getTime() - Date.now()) / 86400000)
-        setDDay(diff)
-        setStudyDaysSince(Math.max(0, 365 - diff))
-      } else {
-        setDDay(null)
-        setStudyDaysSince(0)
-      }
+      // exam_target_date는 profile 탭 표시용으로만 유지
     } catch { /* ignore */ }
     setSavingProfile(false)
   }
@@ -348,7 +426,7 @@ function DashboardContent() {
 
       {/* ① D-Day */}
       <div className="px-4 pt-10 pb-2">
-        {dDay === null ? (
+        {ddayGoals.length === 0 ? (
           <div className="bg-white rounded-2xl border border-[#E5E5E5] p-4 flex items-center gap-3">
             <div className="w-10 h-10 bg-[#E24B4A]/10 rounded-xl flex items-center justify-center text-[20px] flex-shrink-0">
               📅
@@ -358,24 +436,45 @@ function DashboardContent() {
               <p className="text-[11px] text-[#ADADAD]">목표일을 설정하면 학습 계획을 도와드려요</p>
             </div>
             <button
-              onClick={() => router.push('/trainer/dashboard?tab=profile')}
+              onClick={() => setShowDDayModal(true)}
               className="text-[12px] font-bold text-[#E24B4A] flex-shrink-0"
             >
               설정하기
             </button>
           </div>
         ) : (
-          <div className="bg-[#1A1A1A] rounded-2xl p-4 flex items-center gap-4">
-            <div className="flex-1">
-              <p className="text-[11px] text-white/50 mb-0.5">학습 시작 이후</p>
-              <p className="text-[22px] font-black text-white">학습 D+{studyDaysSince}일</p>
-            </div>
-            <div className="bg-[#E24B4A] rounded-xl px-4 py-3 text-center flex-shrink-0">
-              <p className="text-[10px] text-white/70 font-bold mb-0.5">남은 기간</p>
-              <p className="text-[22px] font-black text-white leading-none">
-                {dDay > 0 ? `D-${dDay}` : dDay === 0 ? 'D-Day' : `D+${Math.abs(dDay)}`}
-              </p>
-            </div>
+          <div className="space-y-2">
+            {ddayGoals.map((goal) => {
+              const diff = Math.ceil((new Date(goal.exam_date).getTime() - Date.now()) / 86400000)
+              return (
+                <div key={goal.id} className="bg-[#1A1A1A] rounded-2xl p-4 flex items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] text-white/50 mb-0.5 truncate">{goal.cert_type}</p>
+                    <p className="text-[13px] font-black text-white">
+                      {new Date(goal.exam_date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })}
+                    </p>
+                  </div>
+                  <div className="bg-[#E24B4A] rounded-xl px-4 py-2.5 text-center flex-shrink-0">
+                    <p className="text-[10px] text-white/70 font-bold mb-0.5">남은 기간</p>
+                    <p className="text-[20px] font-black text-white leading-none">
+                      {diff > 0 ? `D-${diff}` : diff === 0 ? 'D-Day' : `D+${Math.abs(diff)}`}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteDDayGoal(goal.id)}
+                    className="w-7 h-7 flex items-center justify-center text-white/30 hover:text-white/70 flex-shrink-0"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              )
+            })}
+            <button
+              onClick={() => setShowDDayModal(true)}
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 border border-dashed border-[#E5E5E5] rounded-2xl text-[12px] text-[#ADADAD]"
+            >
+              <Plus size={13} /> D-Day 추가
+            </button>
           </div>
         )}
       </div>
@@ -402,19 +501,47 @@ function DashboardContent() {
             </div>
             <ChevronRight size={18} className="text-white/50" />
           </button>
+        ) : todayChapter ? (
+          /* ── 오늘의 학습 썸네일 카드 ── */
+          <button
+            onClick={() => router.push(`/lesson/${todayChapter.chapterId}`)}
+            className="w-full bg-white border-2 border-[#E24B4A] rounded-2xl overflow-hidden text-left active:bg-[#FFF5F5]"
+          >
+            {/* 상단 배너 */}
+            <div className="bg-[#E24B4A] px-4 py-2 flex items-center justify-between">
+              <span className="text-[11px] font-bold text-white/80 uppercase tracking-wide">오늘의 학습</span>
+              <span className="text-[11px] text-white/60">{todayChapter.completed} / {todayChapter.total} 챕터 완료</span>
+            </div>
+            {/* 본문 */}
+            <div className="px-4 py-3 flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#E24B4A]/10 rounded-xl flex items-center justify-center text-[20px] flex-shrink-0">
+                {SUBJECT_META[todayChapter.subjectName]?.icon ?? '📚'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] text-[#ADADAD] truncate">{todayChapter.subjectName}</p>
+                <p className="text-[14px] font-black text-[#1A1A1A] leading-snug truncate">{todayChapter.title}</p>
+                <p className="text-[11px] text-[#E24B4A] font-semibold mt-0.5">지금 바로 시작하세요 →</p>
+              </div>
+            </div>
+            {/* 진행률 바 */}
+            <div className="px-4 pb-3">
+              <div className="w-full h-1.5 bg-[#F0F0EE] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#E24B4A] rounded-full transition-all"
+                  style={{ width: `${todayChapter.total > 0 ? Math.round((todayChapter.completed / todayChapter.total) * 100) : 0}%` }}
+                />
+              </div>
+            </div>
+          </button>
         ) : (
           <button
-            onClick={() => {
-              const first = subjectCards.find((c) => c.subjectId)
-              if (first?.subjectId) router.push(`/chapters/${first.subjectId}`)
-              else router.push('/trainer/dashboard?tab=classroom')
-            }}
+            onClick={() => router.push('/trainer/dashboard?tab=classroom')}
             className="w-full bg-[#E24B4A] text-white rounded-2xl p-4 flex items-center gap-3 active:opacity-90"
           >
             <span className="text-[24px]">📚</span>
             <div className="text-left flex-1">
               <p className="text-[15px] font-bold">오늘의 학습 시작하기</p>
-              <p className="text-[11px] text-white/70">지금 바로 시작해보세요</p>
+              <p className="text-[11px] text-white/70">강의실에서 과목을 선택해보세요</p>
             </div>
             <ChevronRight size={18} className="text-white/70" />
           </button>
@@ -884,6 +1011,98 @@ function DashboardContent() {
       </div>
 
       <BottomTabBar />
+
+      {/* ── D-Day 설정 모달 ── */}
+      {showDDayModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center p-4">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6 space-y-4">
+            {/* 헤더 */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-[18px] font-black text-[#1A1A1A]">D-Day 설정</h2>
+              <button onClick={() => setShowDDayModal(false)} className="w-8 h-8 flex items-center justify-center text-[#ADADAD]">
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* 등록된 목록 */}
+            {ddayGoals.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider">등록된 D-Day</p>
+                {ddayGoals.map((goal) => {
+                  const diff = Math.ceil((new Date(goal.exam_date).getTime() - Date.now()) / 86400000)
+                  return (
+                    <div key={goal.id} className="flex items-center gap-3 bg-[#F5F5F3] rounded-xl px-3 py-2.5">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-bold text-[#1A1A1A] truncate">{goal.cert_type}</p>
+                        <p className="text-[11px] text-[#6B6B6B]">
+                          {new Date(goal.exam_date).toLocaleDateString('ko-KR')}
+                          {' · '}
+                          <span className="font-bold text-[#E24B4A]">
+                            {diff > 0 ? `D-${diff}` : diff === 0 ? 'D-Day' : `D+${Math.abs(diff)}`}
+                          </span>
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteDDayGoal(goal.id)}
+                        className="text-[#ADADAD] hover:text-[#E24B4A]"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* 새 D-Day 추가 */}
+            <div className="space-y-3">
+              <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider">새 D-Day 추가</p>
+
+              {/* 자격증 선택 */}
+              <div className="grid grid-cols-2 gap-2">
+                {['건강운동관리사', '생활스포츠지도사'].map((cert) => (
+                  <button
+                    key={cert}
+                    onClick={() => setDdayNewCert(cert)}
+                    className={`py-3 rounded-xl text-[12px] font-bold border-2 transition-all ${
+                      ddayNewCert === cert
+                        ? 'bg-[#E24B4A] border-[#E24B4A] text-white'
+                        : 'bg-white border-[#E5E5E5] text-[#1A1A1A]'
+                    }`}
+                  >
+                    {cert}
+                  </button>
+                ))}
+              </div>
+
+              {/* 날짜 선택 */}
+              <div>
+                <label className="flex items-center gap-1.5 text-[11px] font-bold text-[#6B6B6B] mb-1.5">
+                  <Calendar size={12} /> 목표 시험일
+                </label>
+                <input
+                  type="date"
+                  value={ddayNewDate}
+                  onChange={(e) => setDdayNewDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="w-full px-3 py-2.5 rounded-xl border border-[#E5E5E5] text-[13px] text-[#1A1A1A] outline-none focus:border-[#E24B4A]"
+                />
+              </div>
+
+              <button
+                onClick={handleAddDDayGoal}
+                disabled={!ddayNewDate || savingDDay}
+                className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-2xl text-[14px] font-bold disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                {savingDDay
+                  ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />저장 중...</>
+                  : <><Plus size={15} /> D-Day 등록</>
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
