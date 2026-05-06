@@ -20,7 +20,9 @@
       "Bash(npm install *)",
       "Bash(node -e \"const s=require\\('sharp'\\); console.log\\('sharp', s.versions.sharp\\)\")",
       "Bash(node --input-type=module)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git revert *)",
+      "Bash(git diff *)"
     ]
   }
 }

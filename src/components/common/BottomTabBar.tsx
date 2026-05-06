@@ -26,7 +26,7 @@ function BottomTabBarInner() {
       <div className="flex items-center justify-around h-16 max-w-md mx-auto px-2">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id
-          const iconSrc = `/assets/icons/${tab.icon}_${isActive ? 'active' : 'inactive'}.svg`
+          const iconSrc = `/assets/icons/tab_${tab.icon}_${isActive ? 'active' : 'inactive'}.svg`
 
           return (
             <button

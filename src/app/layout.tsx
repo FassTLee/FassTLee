@@ -45,14 +45,14 @@ export const metadata: Metadata = {
     images: ['/og-image.png'],
   },
 
-  // 파비콘 (App Router: src/app/icon.png 자동 인식)
+  // 파비콘
   icons: {
     icon: [
-      { url: '/favicon.png', type: 'image/png', sizes: '64x64' },
-      { url: '/icon-192.png', type: 'image/png', sizes: '192x192' },
+      { url: '/assets/icons/icon_favicon_32.svg', type: 'image/svg+xml', sizes: 'any' },
+      { url: '/assets/icons/icon_192.svg',        type: 'image/svg+xml', sizes: '192x192' },
     ],
     apple: [
-      { url: '/icon-192.png', sizes: '192x192' },
+      { url: '/assets/icons/icon_192.svg', sizes: '192x192' },
     ],
   },
 
