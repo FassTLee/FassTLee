@@ -285,7 +285,7 @@ function DashboardContent() {
     setReportLoaded(true)
   }
 
-  const handleHeartVideo = async (title: string) => {
+  const _handleHeartVideo = async (title: string) => {
     if (heartedVideos[title]) return
     setHeartedVideos((prev) => ({ ...prev, [title]: true }))
     fetch('/api/v1/video-bookmarks', {
