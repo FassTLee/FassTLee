@@ -50,21 +50,26 @@ export default function ChaptersPage() {
   }, [status, subjectId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
-    const { data: subjectData } = await supabase
-      .from('subjects').select('id, name').eq('id', subjectId).single()
-    setSubject(subjectData ?? null)
+    // subjects → courses → chapters 를 nested select로 한 번에 조회
+    const { data: subjectData, error: subjectErr } = await supabase
+      .from('subjects')
+      .select('id, name, courses(id, chapters(id, title, order_index, course_id))')
+      .eq('id', subjectId)
+      .single()
 
-    const { data: courses } = await supabase
-      .from('courses').select('id').eq('subject_id', subjectId)
+    if (subjectErr || !subjectData) {
+      setLoading(false)
+      return
+    }
 
-    if (!courses?.length) { setLoading(false); return }
+    setSubject({ id: subjectData.id, name: subjectData.name })
 
-    const courseIds = courses.map((c) => c.id)
-    const { data: chapterData } = await supabase
-      .from('chapters').select('id, title, order_index, course_id')
-      .in('course_id', courseIds).order('order_index', { ascending: true })
+    type CourseRow = { id: string; chapters: Chapter[] | null }
+    const allChapters: Chapter[] = ((subjectData as { id: string; name: string; courses: CourseRow[] | null }).courses ?? [])
+      .flatMap((c) => c.chapters ?? [])
+      .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
 
-    setChapters(chapterData ?? [])
+    setChapters(allChapters)
 
     try {
       const res  = await fetch('/api/v1/report')
