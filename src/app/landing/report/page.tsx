@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { ChevronRight, RefreshCw, Download, Apple } from 'lucide-react'
 import { getResultMessage, type TestResult } from '@/lib/landingTest'
 import { LANDING_QUESTIONS } from '@/lib/landingTest'
@@ -36,9 +37,18 @@ function PairingCodeModal({ onClose }: { onClose: () => void }) {
 
 export default function LandingReportPage() {
   const router = useRouter()
+  const { status } = useSession()
   const [result, setResult] = useState<StoredResult | null>(null)
   const [showPairing, setShowPairing] = useState(false)
   const [_appDownloadClicked, setAppDownloadClicked] = useState(false)
+
+  const handleStartLearning = () => {
+    if (status === 'authenticated') {
+      router.push('/trainer/dashboard?tab=classroom')
+    } else {
+      router.push(`/sign-up?callbackUrl=${encodeURIComponent('/trainer/dashboard?tab=classroom')}`)
+    }
+  }
 
   useEffect(() => {
     const stored = sessionStorage.getItem('testResult')
@@ -193,13 +203,17 @@ export default function LandingReportPage() {
 
         {/* ─── Web Preview CTA ─────────────────────────────────── */}
         <div className="bg-white rounded-2xl p-5 border border-[#E5E5E5]">
-          <div className="text-[14px] font-bold text-[#1A1A1A] mb-2">지금 바로 웹에서 체험</div>
-          <p className="text-[12px] text-[#6B6B6B] mb-4">앱 설치 없이 Education을 먼저 경험해보세요</p>
+          <div className="text-[14px] font-bold text-[#1A1A1A] mb-2">지금 바로 웹에서 학습하기</div>
+          <p className="text-[12px] text-[#6B6B6B] mb-4">
+            {status === 'authenticated'
+              ? '대시보드에서 전체 학습 콘텐츠를 바로 시작하세요'
+              : '회원가입 후 전체 학습 콘텐츠를 무료로 시작하세요'}
+          </p>
           <button
-            onClick={() => router.push('/trainer/education')}
+            onClick={handleStartLearning}
             className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#E24B4A] text-white rounded-xl text-[14px] font-bold"
           >
-            Education 체험하기 <ChevronRight size={16} />
+            {status === 'authenticated' ? '학습 대시보드로 이동' : '회원가입 후 학습하기'} <ChevronRight size={16} />
           </button>
         </div>
 
