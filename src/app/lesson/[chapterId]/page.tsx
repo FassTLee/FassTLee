@@ -73,9 +73,9 @@ export default function LessonPage() {
   const [loading, setLoading]           = useState(true)
 
   /* ── Slide navigation ───────────────────────── */
-  const [slideIndex, setSlideIndex]   = useState(0)
-  const [slideMode, setSlideMode]     = useState<'manual' | 'auto'>('manual')
-  const [checked, setChecked]         = useState(false)
+  const [slideIndex, setSlideIndex]     = useState(0)
+  const [slideMode, setSlideMode]       = useState<'manual' | 'auto'>('manual')
+  const [checked, setChecked]           = useState(false)
   const [autoProgress, setAutoProgress] = useState(0)
 
   /* ── Mini quiz ──────────────────────────────── */
@@ -83,6 +83,11 @@ export default function LessonPage() {
   const [miniQ, setMiniQ]                 = useState<MiniQ | null>(null)
   const [miniSelected, setMiniSelected]   = useState<0 | 1 | null>(null)
   const [miniConfirmed, setMiniConfirmed] = useState(false)
+  // tracks which slide index triggered the current mini quiz
+  const pendingSlideRef = useRef(0)
+
+  /* ── Completion screen ──────────────────────── */
+  const [showComplete, setShowComplete] = useState(false)
 
   /* ── Swipe (touch + mouse) ──────────────────── */
   const dragStartX  = useRef(0)
@@ -128,7 +133,6 @@ export default function LessonPage() {
     const allQ = qs ?? []
     setQuestions(allQ)
 
-    // Build slides: each question is one slide (max 5 for conceptualizer, 3 for memorizer)
     const isM = (localStorage.getItem(STYLE_KEY) ?? 'conceptualizer') === 'memorizer'
     const maxSlides = isM ? 3 : 5
     setSlides(allQ.slice(0, maxSlides).map((q) => ({
@@ -143,36 +147,36 @@ export default function LessonPage() {
   /* ── Auto mode timer ───────────────────────────────── */
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current)
-    if (slideMode !== 'auto' || showMiniQuiz || loading) return
+    if (slideMode !== 'auto' || showMiniQuiz || showComplete || loading) return
 
     setAutoProgress(0)
     timerRef.current = setInterval(() => {
-      setAutoProgress((p) => Math.min(p + 2, 100)) // 100ms × 50 = 5 s
+      setAutoProgress((p) => Math.min(p + 2, 100))
     }, 100)
 
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
-  }, [slideMode, slideIndex, showMiniQuiz, loading])
+  }, [slideMode, slideIndex, showMiniQuiz, showComplete, loading])
 
   /* ── Advance when timer completes ─────────────────── */
   useEffect(() => {
     if (autoProgress < 100 || slideMode !== 'auto' || showMiniQuiz) return
     setAutoProgress(0)
-    if (slideIndex >= slides.length - 1) {
-      triggerMiniQuiz()
-    } else {
-      setSlideIndex((si) => si + 1)
-      setChecked(false)
-    }
+    // Always trigger mini quiz per-slide (navigation handled in handleMiniNext)
+    triggerMiniQuiz(slideIndex)
   }, [autoProgress]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── Mini quiz trigger ─────────────────────────────── */
-  const triggerMiniQuiz = () => {
+  /* ── Mini quiz trigger (called per slide) ─────────── */
+  const triggerMiniQuiz = (currentIdx: number) => {
+    pendingSlideRef.current = currentIdx
     const easyQs = questions.filter((q) => q.difficulty === 'easy')
     const pool = easyQs.length > 0 ? easyQs : questions
+
     if (pool.length === 0) {
-      router.push(`/test/${chapterId}`)
+      // No questions available — skip mini quiz, advance directly
+      advanceAfterQuiz(currentIdx)
       return
     }
+
     const shuffled = [...pool].sort(() => Math.random() - 0.5)
     const q = shuffled[0]
     const correct = q.options[q.answer_index]
@@ -192,17 +196,47 @@ export default function LessonPage() {
       options: aIsCorrect ? [correct, wrongOpt] : [wrongOpt, correct],
       answerIdx: aIsCorrect ? 0 : 1,
     })
+    setMiniSelected(null)
+    setMiniConfirmed(false)
     setShowMiniQuiz(true)
   }
 
+  /* ── After quiz dismissed: go to next slide or complete ── */
+  const advanceAfterQuiz = (fromIdx: number) => {
+    setShowMiniQuiz(false)
+    setMiniSelected(null)
+    setMiniConfirmed(false)
+    setChecked(false)
+    setAutoProgress(0)
+
+    if (fromIdx >= slides.length - 1) {
+      // Last slide done → completion screen
+      setShowComplete(true)
+    } else {
+      setSlideIndex(fromIdx + 1)
+    }
+  }
+
+  /* ── "Next" button inside mini quiz ──────────────── */
+  const handleMiniNext = () => {
+    advanceAfterQuiz(pendingSlideRef.current)
+  }
+
+  /* ── "Retry this slide" inside mini quiz ─────────── */
+  const handleMiniRetry = () => {
+    setShowMiniQuiz(false)
+    setMiniSelected(null)
+    setMiniConfirmed(false)
+    setChecked(false)
+    setAutoProgress(0)
+    // Stay on current slide
+  }
+
+  /* ── Manual: checkbox confirmed → mini quiz ──────── */
   const handleNextSlide = () => {
     if (!checked && slideMode === 'manual') return
     setChecked(false)
-    if (slideIndex >= slides.length - 1) {
-      triggerMiniQuiz()
-    } else {
-      setSlideIndex((si) => si + 1)
-    }
+    triggerMiniQuiz(slideIndex)
   }
 
   const handleMiniConfirm = () => {
@@ -244,16 +278,12 @@ export default function LessonPage() {
     }
   }
 
-  /* touch */
   const onTouchStart = (e: React.TouchEvent) => onDragStart(e.touches[0].clientX)
   const onTouchEnd   = (e: React.TouchEvent) => onDragEnd(e.changedTouches[0].clientX)
-
-  /* mouse (PC) */
   const onMouseDown  = (e: React.MouseEvent) => onDragStart(e.clientX)
   const onMouseUp    = (e: React.MouseEvent) => onDragEnd(e.clientX)
   const onMouseLeave = () => { isDragging.current = false }
 
-  /* arrow button helpers */
   const goPrev = () => { if (slideIndex > 0) { setSlideIndex((si) => si - 1); setChecked(false); setAutoProgress(0) } }
   const goNext = () => { if (slideIndex < slides.length - 1) { setSlideIndex((si) => si + 1); setChecked(false); setAutoProgress(0) } }
 
@@ -288,7 +318,6 @@ export default function LessonPage() {
             <ChevronLeft size={16} /> 챕터 목록
           </button>
 
-          {/* Manual / Auto toggle */}
           <button
             onClick={toggleMode}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold transition-colors ${
@@ -317,7 +346,6 @@ export default function LessonPage() {
           </span>
         </div>
 
-        {/* Breadcrumb */}
         {subjectName && (
           <p className="text-[11px] text-[#ADADAD] mb-0.5">{subjectName} › {chapterTitle}</p>
         )}
@@ -362,7 +390,9 @@ export default function LessonPage() {
             </button>
           </>
         )}
+
         {slides.length === 0 ? (
+          /* No slides → show chapter info, complete immediately */
           <div className="flex-1 flex flex-col items-center justify-center text-center">
             <div className="text-[48px] mb-3">📚</div>
             <p className="text-[15px] font-bold text-[#1A1A1A] mb-2">{chapterTitle}</p>
@@ -456,6 +486,7 @@ export default function LessonPage() {
       {/* Bottom button */}
       <div className="flex-shrink-0 p-4 bg-white border-t border-[#E5E5E5]">
         {slides.length === 0 ? (
+          /* No slides — go straight to test */
           <button
             onClick={() => router.push(`/test/${chapterId}`)}
             className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold"
@@ -463,36 +494,40 @@ export default function LessonPage() {
             <Zap size={18} /> 테스트 시작
           </button>
         ) : slideMode === 'manual' ? (
+          /* Manual: requires checkbox first */
           <button
             onClick={handleNextSlide}
             disabled={!checked}
             className={`w-full py-4 rounded-2xl text-[16px] font-bold transition-all ${
               checked
-                ? isLastSlide ? 'bg-[#1A1A1A] text-white' : 'bg-[#E24B4A] text-white'
+                ? 'bg-[#E24B4A] text-white'
                 : 'bg-[#E5E5E5] text-[#ADADAD]'
             }`}
           >
-            {isLastSlide ? '확인 퀴즈' : '다음 슬라이드'}
+            {isLastSlide ? '확인 퀴즈 →' : '다음 슬라이드 →'}
           </button>
         ) : (
-          <button
-            onClick={() => router.push(`/test/${chapterId}`)}
-            className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold"
-          >
-            <Zap size={18} /> 테스트 시작
-          </button>
+          /* Auto: progress bar drives flow; show neutral label */
+          <div className="w-full py-4 rounded-2xl bg-[#F5F5F3] text-[14px] text-center text-[#ADADAD] font-medium">
+            ▶️ 자동 학습 중... ({slideIndex + 1}/{slides.length})
+          </div>
         )}
       </div>
 
       {/* ══════════ Mini Quiz Panel ══════════ */}
       {showMiniQuiz && miniQ && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end">
-          {/* Backdrop */}
           <div className="absolute inset-0 bg-black/60" />
 
           <div className="relative bg-white rounded-t-3xl px-6 pt-6 pb-10 max-h-[85vh] overflow-y-auto">
-            {/* Handle */}
             <div className="w-10 h-1 bg-[#E5E5E5] rounded-full mx-auto mb-5" />
+
+            {/* Slide progress pill */}
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-[#E24B4A]/10 text-[#E24B4A]">
+                슬라이드 {pendingSlideRef.current + 1} / {slides.length} 확인 퀴즈
+              </span>
+            </div>
 
             <h2 className="text-[18px] font-black text-[#1A1A1A] mb-4">확인 퀴즈 💡</h2>
             <p className="text-[15px] font-semibold text-[#1A1A1A] mb-5 leading-snug">
@@ -544,51 +579,43 @@ export default function LessonPage() {
               })}
             </div>
 
-            {/* Result */}
+            {/* Result + navigation */}
             {miniConfirmed ? (
               <>
+                {/* Result box */}
                 <div className={`p-4 rounded-2xl mb-4 ${
-                  miniSelected === miniQ.answerIdx ? 'bg-[#63992210] border border-[#63992230]' : 'bg-[#E24B4A10] border border-[#E24B4A20]'
+                  miniSelected === miniQ.answerIdx
+                    ? 'bg-[#63992210] border border-[#63992230]'
+                    : 'bg-[#E24B4A10] border border-[#E24B4A20]'
                 }`}>
                   <p className={`text-[14px] font-bold mb-1.5 ${
                     miniSelected === miniQ.answerIdx ? 'text-[#639922]' : 'text-[#E24B4A]'
                   }`}>
-                    {miniSelected === miniQ.answerIdx ? '정확해요! ✅' : '아쉬워요!'}
+                    {miniSelected === miniQ.answerIdx ? '정확해요! ✅' : '아쉬워요! ❌'}
                   </p>
                   {miniQ.explanation && (
                     <p className="text-[12px] text-[#1A1A1A] leading-relaxed">{miniQ.explanation}</p>
                   )}
                 </div>
 
-                {miniSelected === miniQ.answerIdx ? (
+                {/* Primary: advance */}
+                <button
+                  onClick={handleMiniNext}
+                  className="w-full py-4 bg-[#1A1A1A] text-white rounded-2xl text-[15px] font-bold mb-2"
+                >
+                  {pendingSlideRef.current >= slides.length - 1
+                    ? '학습 완료 🎉'
+                    : `다음 슬라이드 (${pendingSlideRef.current + 2}/${slides.length}) →`}
+                </button>
+
+                {/* Secondary: retry this slide if wrong */}
+                {miniSelected !== miniQ.answerIdx && (
                   <button
-                    onClick={() => router.push(`/test/${chapterId}`)}
-                    className="w-full py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold"
+                    onClick={handleMiniRetry}
+                    className="w-full py-3 border-2 border-[#E5E5E5] text-[#6B6B6B] rounded-2xl text-[13px] font-semibold"
                   >
-                    테스트 시작하기
+                    이 슬라이드 다시 보기
                   </button>
-                ) : (
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => {
-                        setShowMiniQuiz(false)
-                        setSlideIndex(0)
-                        setChecked(false)
-                        setAutoProgress(0)
-                        setMiniSelected(null)
-                        setMiniConfirmed(false)
-                      }}
-                      className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-2xl text-[14px] font-bold"
-                    >
-                      다시 학습하기
-                    </button>
-                    <button
-                      onClick={() => router.push(`/test/${chapterId}`)}
-                      className="w-full py-3.5 border-2 border-[#E5E5E5] text-[#6B6B6B] rounded-2xl text-[14px] font-semibold"
-                    >
-                      그래도 계속하기
-                    </button>
-                  </div>
                 )}
               </>
             ) : (
@@ -600,6 +627,64 @@ export default function LessonPage() {
                 확인
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ══════════ 학습 완료 화면 ══════════ */}
+      {showComplete && (
+        <div className="fixed inset-0 z-50 bg-[#F5F5F3] flex flex-col items-center justify-center px-6">
+          {/* Back button */}
+          <button
+            onClick={() => subjectId ? router.push(`/chapters/${subjectId}`) : router.back()}
+            className="absolute top-12 left-5 flex items-center gap-1 text-[13px] text-[#6B6B6B]"
+          >
+            <ChevronLeft size={16} /> 챕터 목록
+          </button>
+
+          <div className="text-center w-full max-w-sm">
+            <div className="text-[72px] mb-4 animate-bounce">🎉</div>
+            <h2 className="text-[26px] font-black text-[#1A1A1A] mb-2">학습 완료!</h2>
+            <p className="text-[14px] text-[#6B6B6B] leading-relaxed mb-2">
+              {chapterTitle}
+            </p>
+            <p className="text-[13px] text-[#ADADAD] mb-10">
+              슬라이드 {slides.length}개를 모두 학습했어요.<br/>
+              이제 테스트로 실력을 확인해보세요!
+            </p>
+
+            {/* Score summary pills */}
+            <div className="flex items-center justify-center gap-3 mb-8">
+              <div className="bg-white rounded-2xl border border-[#E5E5E5] px-5 py-3 text-center">
+                <p className="text-[11px] text-[#ADADAD] mb-0.5">학습 슬라이드</p>
+                <p className="text-[20px] font-black text-[#1A1A1A]">{slides.length}개</p>
+              </div>
+              <div className="bg-white rounded-2xl border border-[#E5E5E5] px-5 py-3 text-center">
+                <p className="text-[11px] text-[#ADADAD] mb-0.5">확인 퀴즈</p>
+                <p className="text-[20px] font-black text-[#1A1A1A]">{slides.length}회</p>
+              </div>
+            </div>
+
+            {/* Primary CTA: Test */}
+            <button
+              onClick={() => router.push(`/test/${chapterId}`)}
+              className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold shadow-lg mb-3"
+            >
+              <Zap size={18} /> 테스트 시작하기
+            </button>
+
+            {/* Secondary: re-study */}
+            <button
+              onClick={() => {
+                setShowComplete(false)
+                setSlideIndex(0)
+                setChecked(false)
+                setAutoProgress(0)
+              }}
+              className="w-full py-3 text-[13px] text-[#ADADAD] font-medium"
+            >
+              처음부터 다시 학습하기
+            </button>
           </div>
         </div>
       )}
