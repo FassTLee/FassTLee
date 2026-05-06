@@ -64,7 +64,7 @@ export default function LessonPage() {
 
   const [chapterTitle, setChapterTitle] = useState('')
   const [subjectName, setSubjectName]   = useState('')
-  const [courseDesc, setCourseDesc]     = useState<string | null>(null)
+  const [_courseDesc, setCourseDesc]    = useState<string | null>(null)
   const [questions, setQuestions]       = useState<Question[]>([])
   const [slides, setSlides]             = useState<Slide[]>([])
   const [style, setStyle]               = useState<'memorizer' | 'conceptualizer'>('conceptualizer')
@@ -287,7 +287,7 @@ export default function LessonPage() {
   const goPrev = () => { if (slideIndex > 0) { setSlideIndex((si) => si - 1); setChecked(false); setAutoProgress(0) } }
   const goNext = () => { if (slideIndex < slides.length - 1) { setSlideIndex((si) => si + 1); setChecked(false); setAutoProgress(0) } }
 
-  if (loading) {
+  if (loading || slides.length === 0) {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-[#E24B4A] border-t-transparent rounded-full animate-spin" />
@@ -391,17 +391,8 @@ export default function LessonPage() {
           </>
         )}
 
-        {slides.length === 0 ? (
-          /* No slides → show chapter info, complete immediately */
-          <div className="flex-1 flex flex-col items-center justify-center text-center">
-            <div className="text-[48px] mb-3">📚</div>
-            <p className="text-[15px] font-bold text-[#1A1A1A] mb-2">{chapterTitle}</p>
-            {courseDesc && (
-              <p className="text-[13px] text-[#6B6B6B] leading-relaxed px-4">{courseDesc}</p>
-            )}
-          </div>
-        ) : (
-          <>
+        <>
+
             {/* Overview strip — first slide only */}
             {slideIndex === 0 && subjectName && (
               <div className="bg-[#E24B4A]/5 border border-[#E24B4A]/20 rounded-2xl p-3 mb-3 flex-shrink-0">
@@ -469,8 +460,7 @@ export default function LessonPage() {
                 />
               ))}
             </div>
-          </>
-        )}
+        </>
       </div>
 
       {/* Auto timer bar */}
@@ -485,15 +475,7 @@ export default function LessonPage() {
 
       {/* Bottom button */}
       <div className="flex-shrink-0 p-4 bg-white border-t border-[#E5E5E5]">
-        {slides.length === 0 ? (
-          /* No slides — go straight to test */
-          <button
-            onClick={() => router.push(`/test/${chapterId}`)}
-            className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold"
-          >
-            <Zap size={18} /> 테스트 시작
-          </button>
-        ) : slideMode === 'manual' ? (
+        {slideMode === 'manual' ? (
           /* Manual: requires checkbox first */
           <button
             onClick={handleNextSlide}
