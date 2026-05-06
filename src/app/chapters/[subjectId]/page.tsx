@@ -38,6 +38,7 @@ export default function ChaptersPage() {
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [statsMap, setStatsMap] = useState<Record<string, ChapterStat>>({})
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
   const [showLockPopup, setShowLockPopup] = useState(false)
 
   // TODO: replace with real subscription check (e.g. from profile API)
@@ -50,44 +51,111 @@ export default function ChaptersPage() {
   }, [status, subjectId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
-    // subjects → courses → chapters 를 nested select로 한 번에 조회
-    const { data: subjectData, error: subjectErr } = await supabase
-      .from('subjects')
-      .select('id, name, courses(id, chapters(id, title, order_index, course_id))')
-      .eq('id', subjectId)
-      .single()
-
-    if (subjectErr || !subjectData) {
+    const timeoutId = setTimeout(() => {
+      setFetchError('불러오는 시간이 너무 오래 걸려요. 잠시 후 다시 시도해주세요.')
       setLoading(false)
-      return
-    }
-
-    setSubject({ id: subjectData.id, name: subjectData.name })
-
-    type CourseRow = { id: string; chapters: Chapter[] | null }
-    const allChapters: Chapter[] = ((subjectData as { id: string; name: string; courses: CourseRow[] | null }).courses ?? [])
-      .flatMap((c) => c.chapters ?? [])
-      .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
-
-    setChapters(allChapters)
+    }, 15000)
 
     try {
-      const res  = await fetch('/api/v1/report')
-      const data = await res.json()
-      const map: Record<string, ChapterStat> = {}
-      for (const s of (data.chapter_stats ?? []) as ChapterStat[]) {
-        map[s.chapter_id] = s
-      }
-      setStatsMap(map)
-    } catch { /* ignore */ }
+      // Step 1: subject 정보
+      const { data: subjectData, error: subjectErr } = await supabase
+        .from('subjects')
+        .select('id, name')
+        .eq('id', subjectId)
+        .single()
 
-    setLoading(false)
+      if (subjectErr || !subjectData) {
+        clearTimeout(timeoutId)
+        setFetchError('과목 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')
+        setLoading(false)
+        return
+      }
+
+      setSubject({ id: subjectData.id, name: subjectData.name })
+
+      // Step 2: 해당 subject의 courses
+      const { data: coursesData, error: coursesErr } = await supabase
+        .from('courses')
+        .select('id')
+        .eq('subject_id', subjectId)
+
+      if (coursesErr) {
+        clearTimeout(timeoutId)
+        setFetchError('강의 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')
+        setLoading(false)
+        return
+      }
+
+      const courseIds = (coursesData ?? []).map((c) => c.id)
+
+      // Step 3: chapters
+      let allChapters: Chapter[] = []
+      if (courseIds.length > 0) {
+        const { data: chaptersData, error: chaptersErr } = await supabase
+          .from('chapters')
+          .select('id, title, order_index, course_id')
+          .in('course_id', courseIds)
+          .order('order_index', { ascending: true })
+
+        if (chaptersErr) {
+          clearTimeout(timeoutId)
+          setFetchError('챕터 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')
+          setLoading(false)
+          return
+        }
+
+        allChapters = (chaptersData ?? []).sort(
+          (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
+        )
+      }
+
+      setChapters(allChapters)
+
+      try {
+        const res  = await fetch('/api/v1/report')
+        const data = await res.json()
+        const map: Record<string, ChapterStat> = {}
+        for (const s of (data.chapter_stats ?? []) as ChapterStat[]) {
+          map[s.chapter_id] = s
+        }
+        setStatsMap(map)
+      } catch { /* ignore */ }
+
+      clearTimeout(timeoutId)
+      setLoading(false)
+    } catch {
+      clearTimeout(timeoutId)
+      setFetchError('네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.')
+      setLoading(false)
+    }
   }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-[#E24B4A] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (fetchError) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F3] flex flex-col items-center justify-center p-6 text-center">
+        <div className="text-[40px] mb-3">⚠️</div>
+        <p className="text-[15px] font-bold text-[#1A1A1A] mb-2">불러오기 실패</p>
+        <p className="text-[13px] text-[#6B6B6B] mb-6 leading-relaxed">{fetchError}</p>
+        <button
+          onClick={() => { setFetchError(null); setLoading(true); fetchData() }}
+          className="px-6 py-3 bg-[#E24B4A] text-white rounded-2xl text-[14px] font-bold"
+        >
+          다시 시도
+        </button>
+        <button
+          onClick={() => router.push('/trainer/dashboard')}
+          className="mt-3 px-6 py-3 text-[13px] text-[#6B6B6B]"
+        >
+          대시보드로 돌아가기
+        </button>
       </div>
     )
   }

@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { ChevronLeft, CheckCircle2, Share2 } from 'lucide-react'
-import { LANDING_QUESTIONS, evaluateTest, type TestResult } from '@/lib/landingTest'
+import { LANDING_QUESTIONS, type TestResult, type TestQuestion } from '@/lib/landingTest'
 import { ImagePlaceholder } from '@/components/common'
+import { supabase } from '@/lib/supabase'
 
 // ================================================================
 // 랜딩 테스트 플로우
@@ -93,6 +94,27 @@ function shareKakao(guestId: string) {
 
 // ── component ────────────────────────────────────────────────────
 
+async function fetchDBQuestions(): Promise<TestQuestion[] | null> {
+  try {
+    const { data, error } = await supabase
+      .from('chapter_questions')
+      .select('id, question, options, answer_index, explanation')
+      .limit(60)
+    if (error || !data || data.length < 5) return null
+    const shuffled = [...data].sort(() => Math.random() - 0.5).slice(0, 5)
+    return shuffled.map((q) => ({
+      id: q.id,
+      type: 'B' as const,
+      question: q.question ?? '',
+      options: Array.isArray(q.options) ? q.options : [],
+      correctIndex: q.answer_index ?? 0,
+      explanation: q.explanation ?? '',
+    }))
+  } catch {
+    return null
+  }
+}
+
 export default function LandingTestPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -105,15 +127,19 @@ export default function LandingTestPage() {
   const [guestId, setGuestId] = useState('')
   const [compareData, setCompareData] = useState<CompareData | null>(null)
   const [compareLoading, setCompareLoading] = useState(false)
+  const [activeQuestions, setActiveQuestions] = useState<TestQuestion[]>(LANDING_QUESTIONS)
 
-  // guest_id는 클라이언트 사이드에서만 생성
+  // guest_id + DB 문제 로드
   useEffect(() => {
     setGuestId(getOrCreateGuestId())
+    fetchDBQuestions().then((qs) => {
+      if (qs && qs.length === 5) setActiveQuestions(qs)
+    })
   }, [])
 
-  const q = LANDING_QUESTIONS[currentQ]
+  const q = activeQuestions[currentQ]
   const selectedAnswer = answers[currentQ]
-  const totalQ = LANDING_QUESTIONS.length
+  const totalQ = activeQuestions.length
 
   const handleAnswer = (idx: number) => {
     if (answers[currentQ] !== null) return // 이미 선택한 경우 무시
@@ -127,7 +153,19 @@ export default function LandingTestPage() {
         setCurrentQ(currentQ + 1)
       } else {
         // 마지막 문제 → 결과 계산
-        const result = evaluateTest(newAnswers)
+        let score = 0
+        const weakAreas: string[] = []
+        activeQuestions.forEach((aq, i) => {
+          if (newAnswers[i] === aq.correctIndex) { score++ }
+          else if (aq.weakArea) { weakAreas.push(aq.weakArea) }
+        })
+        const result: TestResult = {
+          score,
+          totalQuestions: activeQuestions.length,
+          answers: newAnswers.map((a) => a ?? -1),
+          weakAreas,
+          percentage: Math.round((score / activeQuestions.length) * 100),
+        }
         sessionStorage.setItem('testResult', JSON.stringify(result))
         setQuizResult(result)
 
@@ -157,9 +195,9 @@ export default function LandingTestPage() {
 
   // 오답 중 첫 번째 문제 찾기
   const firstWrongIdx = quizResult
-    ? quizResult.answers.findIndex((a, i) => a !== LANDING_QUESTIONS[i].correctIndex)
+    ? quizResult.answers.findIndex((a, i) => a !== activeQuestions[i].correctIndex)
     : -1
-  const firstWrongQ = firstWrongIdx >= 0 ? LANDING_QUESTIONS[firstWrongIdx] : null
+  const firstWrongQ = firstWrongIdx >= 0 ? activeQuestions[firstWrongIdx] : null
   const isPerfect = quizResult ? quizResult.score === quizResult.totalQuestions : false
 
   // ─── INTRO ──────────────────────────────────────────────────────

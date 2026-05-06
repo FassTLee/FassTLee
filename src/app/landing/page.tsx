@@ -129,7 +129,7 @@ export default function LandingPage() {
 
           {/* CTA */}
           <button
-            onClick={() => router.push('/select-cert')}
+            onClick={() => router.push('/landing/test')}
             className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] hover:bg-[#cc3e3d] rounded-2xl text-[16px] font-bold text-white mb-4 shadow-lg shadow-[#E24B4A]/30 transition-colors"
           >
             무료로 시작하기 <ChevronRight size={18} />
