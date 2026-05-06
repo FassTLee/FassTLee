@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -39,9 +39,10 @@ const SUBJECT_META: Record<string, { icon: string; desc: string }> = {
 }
 
 const SAMPLE_VIDEOS = [
-  { title: '운동생리학 핵심 요약', channel: 'Kinepia', duration: '12분', emoji: '🫀' },
-  { title: '건강·체력평가 기출 분석', channel: 'Kinepia', duration: '15분', emoji: '📊' },
-  { title: '운동처방론 핵심 개념', channel: 'Kinepia', duration: '10분', emoji: '📋' },
+  { src: '/videos/shorts/shorts-demo-01.mp4', title: '추천 영상 1' },
+  { src: '/videos/shorts/shorts-demo-02.mp4', title: '추천 영상 2' },
+  { src: '/videos/shorts/shorts-demo-03.mp4', title: '추천 영상 3' },
+  { src: '/videos/shorts/shorts-demo-04.mp4', title: '추천 영상 4' },
 ]
 
 interface ChapterStat {
@@ -122,6 +123,8 @@ function DashboardContent() {
   const [heartedVideos, setHeartedVideos] = useState<Record<string, boolean>>({})
   const [subjectCards, setSubjectCards]   = useState<SubjectCard[]>([])
   const [recentStats, setRecentStats]     = useState<ChapterStat[]>([])
+  const [playingIdx, setPlayingIdx]       = useState<number | null>(null)
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([])
 
   /* ── Classroom (lazy) ────────────────────────────────────────────── */
   const [bookmarks, setBookmarks]           = useState<VideoBookmark[]>([])
@@ -292,6 +295,19 @@ function DashboardContent() {
     }).catch(() => {})
   }
 
+  const handleVideoTap = (idx: number) => {
+    const vid = videoRefs.current[idx]
+    if (!vid) return
+    if (vid.paused) {
+      videoRefs.current.forEach((v, i) => { if (v && i !== idx) { v.pause() } })
+      vid.play().catch(() => {})
+      setPlayingIdx(idx)
+    } else {
+      vid.pause()
+      setPlayingIdx(null)
+    }
+  }
+
   const handleSaveProfile = async () => {
     setSavingProfile(true)
     try {
@@ -417,34 +433,39 @@ function DashboardContent() {
           {SAMPLE_VIDEOS.map((vid, i) => (
             <div
               key={i}
-              className="flex-shrink-0 bg-[#1A1A1A] rounded-2xl overflow-hidden"
-              style={{ width: '85%', scrollSnapAlign: 'start' }}
+              className="flex-shrink-0 rounded-2xl overflow-hidden bg-[#1A1A1A] relative cursor-pointer"
+              style={{ width: '52%', scrollSnapAlign: 'start', aspectRatio: '9/16' }}
+              onClick={() => handleVideoTap(i)}
             >
-              <div
-                className="flex items-center justify-center bg-gradient-to-br from-[#E24B4A]/20 to-[#1A1A1A]"
-                style={{ aspectRatio: '16/9' }}
-              >
-                <div className="text-center">
-                  <div className="text-[40px]">{vid.emoji}</div>
+              <video
+                ref={(el) => { videoRefs.current[i] = el }}
+                src={vid.src}
+                className="w-full h-full object-cover"
+                playsInline
+                preload="metadata"
+                loop
+              />
+              {/* 재생 전 오버레이 */}
+              {playingIdx !== i && (
+                <div className="absolute inset-0 flex flex-col items-end justify-between p-3 bg-gradient-to-b from-black/20 via-transparent to-black/60">
+                  <div className="w-10 h-10 rounded-full bg-[#00A651] flex items-center justify-center shadow-lg self-center mt-auto mb-auto">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                      <polygon points="6,3 20,12 6,21" />
+                    </svg>
+                  </div>
+                  <p className="text-white text-[12px] font-bold w-full text-center">{vid.title}</p>
                 </div>
-              </div>
-              <div className="p-3 flex items-center justify-between">
-                <div className="flex-1 min-w-0 mr-2">
-                  <p className="text-[13px] font-bold text-white truncate">{vid.title}</p>
-                  <p className="text-[11px] text-white/50">{vid.channel} · {vid.duration}</p>
-                </div>
-                <button
-                  onClick={() => handleHeartVideo(vid.title)}
-                  className={`p-2 rounded-full flex-shrink-0 transition-colors ${
-                    heartedVideos[vid.title] ? 'bg-[#E24B4A]/20' : 'bg-white/10 active:bg-white/20'
-                  }`}
-                >
-                  <Heart
-                    size={16}
-                    className={heartedVideos[vid.title] ? 'text-[#E24B4A] fill-[#E24B4A]' : 'text-white'}
-                  />
-                </button>
-              </div>
+              )}
+              {/* 재생 중: 제목 + 녹색 테두리 */}
+              {playingIdx === i && (
+                <>
+                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent">
+                    <p className="text-white text-[12px] font-bold truncate">{vid.title}</p>
+                    <p className="text-[#00A651] text-[10px] font-bold mt-0.5">▶ 재생 중</p>
+                  </div>
+                  <div className="absolute inset-0 rounded-2xl ring-2 ring-[#00A651] pointer-events-none" />
+                </>
+              )}
             </div>
           ))}
         </div>
