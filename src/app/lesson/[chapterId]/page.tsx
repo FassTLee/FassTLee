@@ -64,7 +64,7 @@ export default function LessonPage() {
 
   const [chapterTitle, setChapterTitle] = useState('')
   const [subjectName, setSubjectName]   = useState('')
-  const [_courseDesc, setCourseDesc]    = useState<string | null>(null)
+  const [courseDesc, setCourseDesc]     = useState<string | null>(null)
   const [questions, setQuestions]       = useState<Question[]>([])
   const [slides, setSlides]             = useState<Slide[]>([])
   const [style, setStyle]               = useState<'memorizer' | 'conceptualizer'>('conceptualizer')
@@ -392,14 +392,13 @@ export default function LessonPage() {
         )}
 
         {slides.length === 0 ? (
-          /* No slide data in DB → inform user, never fallback to test */
-          <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
-            <div className="text-[56px] mb-4">🛠️</div>
-            <p className="text-[16px] font-black text-[#1A1A1A] mb-2">학습 콘텐츠 준비 중</p>
-            <p className="text-[13px] text-[#ADADAD] leading-relaxed">
-              이 챕터의 학습 슬라이드를 준비하고 있어요.<br />
-              곧 업데이트될 예정입니다.
-            </p>
+          /* No slides → show chapter info, complete immediately */
+          <div className="flex-1 flex flex-col items-center justify-center text-center">
+            <div className="text-[48px] mb-3">📚</div>
+            <p className="text-[15px] font-bold text-[#1A1A1A] mb-2">{chapterTitle}</p>
+            {courseDesc && (
+              <p className="text-[13px] text-[#6B6B6B] leading-relaxed px-4">{courseDesc}</p>
+            )}
           </div>
         ) : (
           <>
@@ -487,10 +486,13 @@ export default function LessonPage() {
       {/* Bottom button */}
       <div className="flex-shrink-0 p-4 bg-white border-t border-[#E5E5E5]">
         {slides.length === 0 ? (
-          /* No slide data — disabled state, never navigate to test */
-          <div className="w-full py-4 rounded-2xl bg-[#F5F5F3] text-[14px] text-center text-[#ADADAD] font-medium">
-            콘텐츠 준비 중입니다
-          </div>
+          /* No slides — go straight to test */
+          <button
+            onClick={() => router.push(`/test/${chapterId}`)}
+            className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold"
+          >
+            <Zap size={18} /> 테스트 시작
+          </button>
         ) : slideMode === 'manual' ? (
           /* Manual: requires checkbox first */
           <button
