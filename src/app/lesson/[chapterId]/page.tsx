@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { ChevronLeft, ChevronRight as ArrowRight, Check, Zap } from 'lucide-react'
+import { fetchLessonData } from './actions'
 
 const STYLE_KEY   = 'kinepia_learning_style'
 const CERT_KEY    = 'kinepia_selected_cert'
@@ -111,26 +112,14 @@ export default function LessonPage() {
   }, [status, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
-    const res = await fetch(`/api/v1/lesson/${chapterId}`)
-    if (!res.ok) {
-      console.error('[fetchData] API error:', res.status)
-      setLoading(false)
-      return
-    }
-    const json = await res.json() as {
-      chapter: { id: string; title: string; course_id: string } | null
-      slides: Slide[]
-      subjectName: string
-      courseDesc: string | null
-    }
+    const data = await fetchLessonData(chapterId)
 
-    if (json.chapter) setChapterTitle(json.chapter.title)
-    if (json.subjectName) setSubjectName(json.subjectName)
-    if (json.courseDesc) setCourseDesc(json.courseDesc)
+    if (data.chapterTitle) setChapterTitle(data.chapterTitle)
+    if (data.subjectName)  setSubjectName(data.subjectName)
+    if (data.courseDesc)   setCourseDesc(data.courseDesc)
 
-    const allSlides = json.slides ?? []
+    const allSlides = data.slides ?? []
 
-    // questions 상태는 미니퀴즈용 — slides와 동일 데이터 재활용
     setQuestions(allSlides.map((s) => ({
       id:           s.id,
       question:     s.question,
