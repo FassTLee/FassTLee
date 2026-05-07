@@ -7,13 +7,9 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: { chapterId: string } },
 ) {
-  // 환경변수 존재 여부 확인
-  const hasServiceKey = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY)
-  const hasUrl = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL)
-  console.log(`[lesson API] env check — url:${hasUrl} serviceKey:${hasServiceKey}`)
-
   const { chapterId } = params
   console.log('[lesson API] chapterId:', chapterId)
+  console.log('[lesson API] env check — url:', Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL), 'serviceKey:', Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY))
 
   const [{ data: ch, error: chErr }, { data: qs, error: qsErr }] = await Promise.all([
     supabaseAdmin
@@ -27,8 +23,8 @@ export async function GET(
       .eq('chapter_id', chapterId),
   ])
 
-  console.log('[lesson API] chapters result — data:', ch?.id ?? null, 'error:', chErr?.message ?? null)
-  console.log('[lesson API] chapter_questions result — count:', qs?.length ?? 0, 'error:', qsErr?.message ?? null)
+  console.log('[lesson API] chapters —', ch?.id ?? null, chErr?.message ?? 'ok')
+  console.log('[lesson API] chapter_questions —', qs?.length ?? 0, qsErr?.message ?? 'ok')
 
   let subjectName = ''
   let courseDesc: string | null = null
@@ -51,11 +47,16 @@ export async function GET(
     }
   }
 
-  console.log('[lesson API] response — questions:', qs?.length ?? 0, 'subjectName:', subjectName)
-
   return NextResponse.json({
     chapter: ch ?? null,
-    questions: qs ?? [],
+    slides: (qs ?? []).map((q) => ({
+      id:           q.id,
+      question:     q.question,
+      explanation:  q.explanation ?? null,
+      options:      q.options,
+      answer_index: q.answer_index,
+      difficulty:   q.difficulty ?? null,
+    })),
     subjectName,
     courseDesc,
   })

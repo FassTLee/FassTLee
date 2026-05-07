@@ -29,6 +29,9 @@ interface Slide {
   id: string
   question: string
   explanation: string | null
+  options: string[]
+  answer_index: number
+  difficulty: string | null
 }
 
 interface MiniQ {
@@ -116,7 +119,7 @@ export default function LessonPage() {
     }
     const json = await res.json() as {
       chapter: { id: string; title: string; course_id: string } | null
-      questions: Question[]
+      slides: Slide[]
       subjectName: string
       courseDesc: string | null
     }
@@ -125,16 +128,21 @@ export default function LessonPage() {
     if (json.subjectName) setSubjectName(json.subjectName)
     if (json.courseDesc) setCourseDesc(json.courseDesc)
 
-    const allQ = json.questions ?? []
-    setQuestions(allQ)
+    const allSlides = json.slides ?? []
+
+    // questions 상태는 미니퀴즈용 — slides와 동일 데이터 재활용
+    setQuestions(allSlides.map((s) => ({
+      id:           s.id,
+      question:     s.question,
+      options:      s.options,
+      answer_index: s.answer_index,
+      explanation:  s.explanation,
+      difficulty:   s.difficulty,
+    })))
 
     const isM = (localStorage.getItem(STYLE_KEY) ?? 'conceptualizer') === 'memorizer'
     const maxSlides = isM ? 3 : 5
-    setSlides(allQ.slice(0, maxSlides).map((q) => ({
-      id: q.id,
-      question: q.question,
-      explanation: q.explanation,
-    })))
+    setSlides(allSlides.slice(0, maxSlides))
 
     setLoading(false)
   }
