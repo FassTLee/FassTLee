@@ -34,6 +34,7 @@ const PLANS = [
     price: '무료',
     sub: '영원히 무료',
     highlight: false,
+    comingSoon: false,
     features: [
       { text: '과목당 3챕터 무료', ok: true },
       { text: '기본 리포트 (점수 확인)', ok: true },
@@ -49,6 +50,7 @@ const PLANS = [
     price: '₩4,900',
     sub: '/월',
     highlight: true,
+    comingSoon: true,
     badge: '인기',
     features: [
       { text: '전체 챕터 무제한 학습', ok: true },
@@ -65,6 +67,7 @@ const PLANS = [
     price: '₩9,900',
     sub: '/월',
     highlight: false,
+    comingSoon: true,
     features: [
       { text: '전체 챕터 무제한 학습', ok: true },
       { text: '상세 오답 해설 리포트', ok: true },
@@ -226,19 +229,28 @@ export default function LandingPage() {
             {PLANS.map((plan, i) => (
               <div
                 key={i}
-                className={`rounded-2xl border-2 p-5 ${
-                  plan.highlight
+                className={`relative rounded-2xl border-2 p-5 transition-all ${
+                  plan.comingSoon
+                    ? 'opacity-50 blur-[1px] select-none pointer-events-none'
+                    : plan.highlight
                     ? 'bg-[#1A1A1A] border-[#E24B4A]'
                     : 'bg-white border-[#E5E5E5]'
-                }`}
+                } ${!plan.comingSoon && plan.highlight ? 'bg-[#1A1A1A]' : !plan.comingSoon ? 'bg-white' : ''}`}
               >
+                {/* Coming Soon 오버레이 뱃지 */}
+                {plan.comingSoon && (
+                  <div className="absolute top-3 right-3 z-10 bg-[#1A1A1A] text-white text-[10px] font-black px-2.5 py-1 rounded-full tracking-widest">
+                    COMING SOON
+                  </div>
+                )}
+
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className={`text-[15px] font-black ${plan.highlight ? 'text-white' : 'text-[#1A1A1A]'}`}>
                         {plan.name}
                       </span>
-                      {plan.badge && (
+                      {plan.badge && !plan.comingSoon && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E24B4A] text-white">
                           {plan.badge}
                         </span>
@@ -253,7 +265,7 @@ export default function LandingPage() {
                       </span>
                     </div>
                   </div>
-                  {plan.highlight && (
+                  {plan.highlight && !plan.comingSoon && (
                     <div className="bg-[#E24B4A]/20 rounded-xl px-3 py-1.5">
                       <p className="text-[10px] text-[#E24B4A] font-bold">1주일 무료</p>
                     </div>
@@ -285,14 +297,17 @@ export default function LandingPage() {
                 </div>
 
                 <button
-                  onClick={() => router.push('/select-cert')}
+                  onClick={() => !plan.comingSoon && router.push('/select-cert')}
+                  disabled={plan.comingSoon}
                   className={`w-full py-3 rounded-xl text-[13px] font-bold transition-colors ${
-                    plan.highlight
+                    plan.comingSoon
+                      ? 'bg-[#E5E5E5] text-[#ADADAD] cursor-not-allowed'
+                      : plan.highlight
                       ? 'bg-[#E24B4A] text-white hover:bg-[#cc3e3d]'
                       : 'bg-[#F5F5F3] text-[#1A1A1A] hover:bg-[#E5E5E5]'
                   }`}
                 >
-                  {plan.highlight ? '1주일 무료 체험' : '시작하기'}
+                  {plan.comingSoon ? 'Coming Soon' : plan.highlight ? '1주일 무료 체험' : '시작하기'}
                 </button>
               </div>
             ))}
