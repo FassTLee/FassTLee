@@ -14,7 +14,11 @@ export default async function LessonPage({
 
   const { chapterId } = params
 
-  const [{ data: ch }, { data: qs }] = await Promise.all([
+  console.log('[LessonPage] chapterId:', chapterId)
+  console.log('[LessonPage] SUPABASE_URL set:', Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL))
+  console.log('[LessonPage] SERVICE_ROLE_KEY set:', Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY))
+
+  const [{ data: ch, error: chErr }, { data: qs, error: qsErr }] = await Promise.all([
     supabaseAdmin
       .from('chapters')
       .select('id, title, course_id')
@@ -25,6 +29,9 @@ export default async function LessonPage({
       .select('id, question, options, answer_index, explanation, difficulty')
       .eq('chapter_id', chapterId),
   ])
+
+  console.log('[LessonPage] chapters — id:', ch?.id ?? null, 'error:', chErr?.message ?? null)
+  console.log('[LessonPage] chapter_questions — count:', qs?.length ?? 0, 'error:', qsErr?.message ?? null)
 
   let subjectName = ''
   if (ch?.course_id) {
