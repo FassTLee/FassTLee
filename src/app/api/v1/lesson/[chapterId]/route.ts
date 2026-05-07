@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
 export const dynamic = 'force-dynamic'
@@ -9,12 +7,6 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: { chapterId: string } },
 ) {
-  // 세션 체크 — 실패해도 데이터 조회는 계속 진행 (읽기 전용 공개 교육 데이터)
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.email) {
-    console.warn('[lesson API] no session — proceeding without auth guard')
-  }
-
   // 환경변수 존재 여부 확인
   const hasServiceKey = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY)
   const hasUrl = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL)
