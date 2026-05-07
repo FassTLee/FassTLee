@@ -212,12 +212,21 @@ export default function LessonPage() {
     }
 
     const correct = q.options[q.answer_index]
-    // 같은 문제의 오답지 중 1개 랜덤 선택
     const wrongOptions = q.options.filter((_, i) => i !== q.answer_index)
-    const wrongOpt = wrongOptions.length > 0
-      ? wrongOptions[Math.floor(Math.random() * wrongOptions.length)]
-      : q.options[(q.answer_index + 1) % q.options.length]
 
+    // options 부족 시 퀴즈 건너뛰고 다음 슬라이드로
+    if (!correct || wrongOptions.length === 0) {
+      if (fromIdx >= slides.length - 1) {
+        setShowComplete(true)
+      } else {
+        setSlideIndex(fromIdx + 1)
+        setCheckedSentences([])
+        setAutoProgress(0)
+      }
+      return
+    }
+
+    const wrongOpt = wrongOptions[Math.floor(Math.random() * wrongOptions.length)]
     const aIsCorrect = Math.random() > 0.5
     setMiniQ({
       id: q.id,
@@ -550,16 +559,19 @@ export default function LessonPage() {
               {miniQ.text}
             </p>
 
-            {/* 보기 (A/B 라벨 없이 options 원문자 그대로 표시) */}
+            {/* 보기 A / B */}
             <div className="space-y-3 mb-5">
               {([0, 1] as const).map((idx) => {
+                const label     = idx === 0 ? 'A' : 'B'
                 const isCorrect = miniConfirmed && idx === miniQ.answerIdx
                 const isWrong   = miniConfirmed && miniSelected === idx && idx !== miniQ.answerIdx
+                // 원문자(①②③④) 제거 후 표시
+                const optionText = miniQ.options[idx].replace(/^[①②③④⑤]\s*/, '').trim()
                 return (
                   <button
                     key={idx}
                     onClick={() => !miniConfirmed && setMiniSelected(idx)}
-                    className={`w-full px-5 py-4 rounded-2xl border-2 text-left transition-all ${
+                    className={`w-full flex items-start gap-3 px-4 py-4 rounded-2xl border-2 text-left transition-all ${
                       miniConfirmed
                         ? isCorrect
                           ? 'border-[#639922] bg-[#63992210]'
@@ -571,14 +583,23 @@ export default function LessonPage() {
                           : 'border-[#E5E5E5]'
                     }`}
                   >
-                    <span className={`text-[14px] font-medium leading-relaxed ${
+                    <span className={`text-[13px] font-black flex-shrink-0 w-5 ${
+                      miniConfirmed
+                        ? isCorrect ? 'text-[#639922]'
+                          : isWrong ? 'text-[#E24B4A]'
+                          : 'text-[#ADADAD]'
+                        : miniSelected === idx ? 'text-[#E24B4A]' : 'text-[#ADADAD]'
+                    }`}>
+                      {label}.
+                    </span>
+                    <span className={`flex-1 text-[14px] font-medium leading-relaxed ${
                       miniConfirmed
                         ? isCorrect ? 'text-[#639922]'
                           : isWrong ? 'text-[#E24B4A]'
                           : 'text-[#ADADAD]'
                         : 'text-[#1A1A1A]'
                     }`}>
-                      {miniQ.options[idx]}
+                      {optionText}
                     </span>
                   </button>
                 )
