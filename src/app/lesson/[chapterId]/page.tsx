@@ -45,6 +45,14 @@ function getShort(text: string, n = 2): string {
   return sentences.slice(0, n).join('').trim()
 }
 
+function splitSentences(text: string): string[] {
+  return text
+    .split(/(?<=[.。!?])\s+/)
+    .map((s) => s.replace(/[.。!?]$/, '').trim())
+    .filter((s) => s.length > 0)
+    .slice(0, 3)
+}
+
 function toSlideTitle(q: string): string {
   const t = q.trim()
   const m1 = t.match(/^(.+?)에\s*관한\s*설명으로\s*옳.+것은\??\s*$/)
@@ -73,10 +81,10 @@ export default function LessonPage() {
   const [loading, setLoading]           = useState(true)
 
   /* ── Slide navigation ───────────────────────── */
-  const [slideIndex, setSlideIndex]   = useState(0)
-  const [slideMode, setSlideMode]     = useState<'manual' | 'auto'>('manual')
-  const [checked, setChecked]         = useState(false)
-  const [autoProgress, setAutoProgress] = useState(0)
+  const [slideIndex, setSlideIndex]       = useState(0)
+  const [slideMode, setSlideMode]         = useState<'manual' | 'auto'>('manual')
+  const [checkedSentences, setCheckedSentences] = useState<boolean[]>([])
+  const [autoProgress, setAutoProgress]   = useState(0)
 
   /* ── Mini quiz ──────────────────────────────── */
   const [showMiniQuiz, setShowMiniQuiz]   = useState(false)
@@ -168,7 +176,7 @@ export default function LessonPage() {
       triggerMiniQuiz()
     } else {
       setSlideIndex((si) => si + 1)
-      setChecked(false)
+      setCheckedSentences([])
     }
   }, [autoProgress]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -203,8 +211,8 @@ export default function LessonPage() {
   }
 
   const handleNextSlide = () => {
-    if (!checked && slideMode === 'manual') return
-    setChecked(false)
+    if (!allChecked && slideMode === 'manual') return
+    setCheckedSentences([])
     if (slideIndex >= slides.length - 1) {
       triggerMiniQuiz()
     } else {
@@ -232,7 +240,7 @@ export default function LessonPage() {
     setSlideMode(next)
     localStorage.setItem(MODE_KEY, next)
     setAutoProgress(0)
-    setChecked(false)
+    setCheckedSentences([])
   }
 
   const onDragStart = (clientX: number) => {
@@ -245,9 +253,9 @@ export default function LessonPage() {
     const delta = clientX - dragStartX.current
     if (Math.abs(delta) < 50) return
     if (delta < 0 && slideIndex < slides.length - 1) {
-      setSlideIndex((si) => si + 1); setChecked(false); setAutoProgress(0)
+      setSlideIndex((si) => si + 1); setCheckedSentences([]); setAutoProgress(0)
     } else if (delta > 0 && slideIndex > 0) {
-      setSlideIndex((si) => si - 1); setChecked(false); setAutoProgress(0)
+      setSlideIndex((si) => si - 1); setCheckedSentences([]); setAutoProgress(0)
     }
   }
 
@@ -261,8 +269,8 @@ export default function LessonPage() {
   const onMouseLeave = () => { isDragging.current = false }
 
   /* arrow button helpers */
-  const goPrev = () => { if (slideIndex > 0) { setSlideIndex((si) => si - 1); setChecked(false); setAutoProgress(0) } }
-  const goNext = () => { if (slideIndex < slides.length - 1) { setSlideIndex((si) => si + 1); setChecked(false); setAutoProgress(0) } }
+  const goPrev = () => { if (slideIndex > 0) { setSlideIndex((si) => si - 1); setCheckedSentences([]); setAutoProgress(0) } }
+  const goNext = () => { if (slideIndex < slides.length - 1) { setSlideIndex((si) => si + 1); setCheckedSentences([]); setAutoProgress(0) } }
 
   if (loading) {
     return (
@@ -276,10 +284,10 @@ export default function LessonPage() {
   const currentSlide = slides[slideIndex]
   const isLastSlide  = slideIndex === slides.length - 1
 
-  const getContent = (expl: string | null) => {
-    if (!expl) return ''
-    return isMemorizer ? getShort(expl, 2) : expl
-  }
+  const sentences = currentSlide?.explanation
+    ? splitSentences(isMemorizer ? getShort(currentSlide.explanation, 4) : currentSlide.explanation)
+    : []
+  const allChecked = sentences.length === 0 || (checkedSentences.length === sentences.length && checkedSentences.every(Boolean))
 
   /* ════════════════════════════════════════════════════ */
   return (
@@ -400,12 +408,36 @@ export default function LessonPage() {
               </p>
 
               <div className="flex-1 overflow-y-auto">
-                {getContent(currentSlide?.explanation ?? null) ? (
-                  <div className="bg-[#F5F5F3] rounded-xl p-4">
-                    <p className="text-[11px] font-bold text-[#ADADAD] mb-2">💡 핵심 설명</p>
-                    <p className="text-[13px] text-[#1A1A1A] leading-relaxed">
-                      {getContent(currentSlide?.explanation ?? null)}
-                    </p>
+                {sentences.length > 0 ? (
+                  <div className="space-y-2">
+                    {sentences.map((sentence, i) => {
+                      const isChecked = checkedSentences[i] ?? false
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            if (slideMode !== 'manual') return
+                            setCheckedSentences((prev) => {
+                              const next = [...prev]
+                              next[i] = !next[i]
+                              return next
+                            })
+                          }}
+                          className={`w-full flex items-start gap-3 p-3 rounded-xl border-2 text-left transition-all ${
+                            isChecked ? 'border-[#639922] bg-[#63992210]' : 'border-[#E5E5E5] bg-[#F5F5F3]'
+                          }`}
+                        >
+                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
+                            isChecked ? 'bg-[#639922] border-[#639922]' : 'border-[#ADADAD]'
+                          }`}>
+                            {isChecked && <Check size={11} className="text-white" />}
+                          </div>
+                          <span className={`text-[13px] leading-relaxed ${isChecked ? 'text-[#639922]' : 'text-[#1A1A1A]'}`}>
+                            {sentence}
+                          </span>
+                        </button>
+                      )
+                    })}
                   </div>
                 ) : (
                   <div className="flex items-center justify-center h-16 text-[#ADADAD] text-[13px]">
@@ -413,25 +445,6 @@ export default function LessonPage() {
                   </div>
                 )}
               </div>
-
-              {/* Manual mode checkbox */}
-              {slideMode === 'manual' && (
-                <button
-                  onClick={() => setChecked((c) => !c)}
-                  className={`mt-4 flex-shrink-0 flex items-center gap-2 py-2.5 px-4 rounded-xl border-2 transition-all ${
-                    checked ? 'border-[#639922] bg-[#63992210]' : 'border-[#E5E5E5]'
-                  }`}
-                >
-                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0 ${
-                    checked ? 'bg-[#639922] border-[#639922]' : 'border-[#ADADAD]'
-                  }`}>
-                    {checked && <Check size={12} className="text-white" />}
-                  </div>
-                  <span className={`text-[13px] font-semibold ${checked ? 'text-[#639922]' : 'text-[#6B6B6B]'}`}>
-                    {checked ? '학습 완료!' : '학습 완료로 표시하기'}
-                  </span>
-                </button>
-              )}
             </div>
 
             {/* Progress bars */}
@@ -439,7 +452,7 @@ export default function LessonPage() {
               {slides.map((_, i) => (
                 <button
                   key={i}
-                  onClick={() => { setSlideIndex(i); setChecked(false); setAutoProgress(0) }}
+                  onClick={() => { setSlideIndex(i); setCheckedSentences([]); setAutoProgress(0) }}
                   className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${
                     i <= slideIndex ? 'bg-green-500' : 'bg-gray-200'
                   }`}
@@ -472,9 +485,9 @@ export default function LessonPage() {
         ) : slideMode === 'manual' ? (
           <button
             onClick={handleNextSlide}
-            disabled={!checked}
+            disabled={!allChecked}
             className={`w-full py-4 rounded-2xl text-[16px] font-bold transition-all ${
-              checked
+              allChecked
                 ? isLastSlide ? 'bg-[#1A1A1A] text-white' : 'bg-[#E24B4A] text-white'
                 : 'bg-[#E5E5E5] text-[#ADADAD]'
             }`}
@@ -580,7 +593,7 @@ export default function LessonPage() {
                       onClick={() => {
                         setShowMiniQuiz(false)
                         setSlideIndex(0)
-                        setChecked(false)
+                        setCheckedSentences([])
                         setAutoProgress(0)
                         setMiniSelected(null)
                         setMiniConfirmed(false)
