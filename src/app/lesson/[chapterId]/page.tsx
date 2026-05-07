@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import { ChevronLeft, ChevronRight as ArrowRight, Check, Zap } from 'lucide-react'
 
 const STYLE_KEY   = 'kinepia_learning_style'
@@ -109,28 +108,24 @@ export default function LessonPage() {
   }, [status, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
-    const [{ data: ch }, { data: qs }] = await Promise.all([
-      supabase.from('chapters').select('id, title, course_id').eq('id', chapterId).single(),
-      supabase.from('chapter_questions')
-        .select('id, question, options, answer_index, explanation, difficulty')
-        .eq('chapter_id', chapterId),
-    ])
-
-    if (ch) {
-      setChapterTitle(ch.title)
-      if (ch.course_id) {
-        const { data: course } = await supabase
-          .from('courses').select('id, subject_id, description').eq('id', ch.course_id).single()
-        if (course?.description) setCourseDesc(course.description)
-        if (course?.subject_id) {
-          const { data: subj } = await supabase
-            .from('subjects').select('name').eq('id', course.subject_id).single()
-          if (subj?.name) setSubjectName(subj.name)
-        }
-      }
+    const res = await fetch(`/api/v1/lesson/${chapterId}`)
+    if (!res.ok) {
+      console.error('[fetchData] API error:', res.status)
+      setLoading(false)
+      return
+    }
+    const json = await res.json() as {
+      chapter: { id: string; title: string; course_id: string } | null
+      questions: Question[]
+      subjectName: string
+      courseDesc: string | null
     }
 
-    const allQ = qs ?? []
+    if (json.chapter) setChapterTitle(json.chapter.title)
+    if (json.subjectName) setSubjectName(json.subjectName)
+    if (json.courseDesc) setCourseDesc(json.courseDesc)
+
+    const allQ = json.questions ?? []
     setQuestions(allQ)
 
     const isM = (localStorage.getItem(STYLE_KEY) ?? 'conceptualizer') === 'memorizer'
@@ -287,10 +282,26 @@ export default function LessonPage() {
   const goPrev = () => { if (slideIndex > 0) { setSlideIndex((si) => si - 1); setChecked(false); setAutoProgress(0) } }
   const goNext = () => { if (slideIndex < slides.length - 1) { setSlideIndex((si) => si + 1); setChecked(false); setAutoProgress(0) } }
 
-  if (loading || slides.length === 0) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-[#E24B4A] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (slides.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F3] flex flex-col items-center justify-center px-6 text-center">
+        <p className="text-[48px] mb-4">📭</p>
+        <h2 className="text-[20px] font-black text-[#1A1A1A] mb-2">학습 콘텐츠 없음</h2>
+        <p className="text-[14px] text-[#6B6B6B] mb-8">이 챕터에 등록된 학습 슬라이드가 없습니다.</p>
+        <button
+          onClick={() => subjectId ? router.push(`/chapters/${subjectId}`) : router.back()}
+          className="px-6 py-3 bg-[#1A1A1A] text-white rounded-2xl text-[14px] font-bold"
+        >
+          챕터 목록으로
+        </button>
       </div>
     )
   }
