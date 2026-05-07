@@ -128,6 +128,7 @@ function DashboardContent() {
   const [certLabel, setCertLabel] = useState('')
   const [subjects, setSubjects]   = useState<string[]>([])
   const [style, setStyle]         = useState<string | null>(null)
+  const [styleType, setStyleType] = useState<string | null>(null)
   const [_userName, setUserName]  = useState('')
 
   /* ── Home ────────────────────────────────────────────────────────── */
@@ -183,6 +184,8 @@ function DashboardContent() {
 
     if (cert)     setCertLabel(CERT_LABELS[cert] ?? cert)
     if (styleVal) setStyle(styleVal)
+    const styleTypeVal = localStorage.getItem('kinepia_learning_type')
+    if (styleTypeVal) setStyleType(styleTypeVal)
     if (session?.user?.name) setUserName(session.user.name.split(' ')[0])
 
     let selectedNames: string[] = []
@@ -886,15 +889,27 @@ function DashboardContent() {
         <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">학습 성향</p>
         <div className="bg-white rounded-xl border border-[#E5E5E5] p-3 flex items-center gap-3">
           <div className="text-[24px]">
-            {style === 'memorizer' ? '🧠' : style === 'conceptualizer' ? '💡' : '❓'}
+            {(styleType ?? style) === 'conceptualizer' ? '💡'
+              : (styleType ?? style) === 'memorizer'   ? '🧠'
+              : (styleType ?? style) === 'planner'     ? '📅'
+              : (styleType ?? style) === 'intensive'   ? '🔥'
+              : '❓'}
           </div>
           <div className="flex-1">
             <p className="text-[13px] font-bold text-[#1A1A1A]">
-              {style === 'memorizer' ? '암기형' : style === 'conceptualizer' ? '이해형' : '미측정'}
+              {(styleType ?? style) === 'conceptualizer' ? '이해형'
+                : (styleType ?? style) === 'memorizer'   ? '암기형'
+                : (styleType ?? style) === 'planner'     ? '계획형'
+                : (styleType ?? style) === 'intensive'   ? '강제형'
+                : '미측정'}
             </p>
           </div>
           <button
-            onClick={() => { localStorage.removeItem(STYLE_KEY); router.push('/onboarding/style-test') }}
+            onClick={() => {
+              localStorage.removeItem(STYLE_KEY)
+              localStorage.removeItem('kinepia_learning_type')
+              router.push('/onboarding/style-test')
+            }}
             className="flex items-center gap-1 text-[11px] text-[#E24B4A] font-semibold"
           >
             <RefreshCw size={12} /> 재테스트
