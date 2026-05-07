@@ -67,7 +67,7 @@ export default function LessonPage() {
 
   const [chapterTitle, setChapterTitle] = useState('')
   const [subjectName, setSubjectName]   = useState('')
-  const [courseDesc, setCourseDesc]     = useState<string | null>(null)
+  const [courseDesc, _setCourseDesc]    = useState<string | null>(null)
   const [questions, setQuestions]       = useState<Question[]>([])
   const [slides, setSlides]             = useState<Slide[]>([])
   const [style, setStyle]               = useState<'memorizer' | 'conceptualizer'>('conceptualizer')
