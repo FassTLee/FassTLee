@@ -1,14 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
-
-/**
- * Supabase 환경변수가 실제로 설정됐는지 확인
- * API 라우트에서 503 early-return 가드로 사용
- */
 export const isSupabaseConfigured =
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL) &&
   Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+
+// Fallback placeholders prevent createClient from throwing at build time
+// when env vars are absent. isSupabaseConfigured gates actual queries.
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? 'https://placeholder.supabase.co'
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? 'placeholder-anon-key'
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)

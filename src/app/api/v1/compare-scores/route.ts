@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 // ================================================================
 // GET /api/v1/compare-scores?my_guest_id=...&ref_guest_id=...
 // → 두 guest_test_results 조회 후 점수 비교 데이터 반환

@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { ChevronLeft, ChevronRight as ArrowRight, Check, Zap } from 'lucide-react'
+// Zap used in completion screen
 
 const STYLE_KEY   = 'kinepia_learning_style'
 const CERT_KEY    = 'kinepia_selected_cert'
@@ -91,6 +92,8 @@ export default function LessonPage() {
   const [miniQ, setMiniQ]                 = useState<MiniQ | null>(null)
   const [miniSelected, setMiniSelected]   = useState<0 | 1 | null>(null)
   const [miniConfirmed, setMiniConfirmed] = useState(false)
+  const [showComplete, setShowComplete]   = useState(false)
+  const pendingSlideIdxRef                = useRef(0)
 
   /* ── Swipe (touch + mouse) ──────────────────── */
   const dragStartX  = useRef(0)
@@ -172,16 +175,27 @@ export default function LessonPage() {
   useEffect(() => {
     if (autoProgress < 100 || slideMode !== 'auto' || showMiniQuiz) return
     setAutoProgress(0)
-    if (slideIndex >= slides.length - 1) {
-      triggerMiniQuiz()
-    } else {
-      setSlideIndex((si) => si + 1)
-      setCheckedSentences([])
-    }
+    triggerMiniQuiz(slideIndex)
   }, [autoProgress]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  /* ── Post-quiz navigation ──────────────────────────── */
+  const advanceFromQuiz = () => {
+    setShowMiniQuiz(false)
+    setMiniSelected(null)
+    setMiniConfirmed(false)
+    setMiniQ(null)
+    if (pendingSlideIdxRef.current >= slides.length - 1) {
+      setShowComplete(true)
+    } else {
+      setSlideIndex(pendingSlideIdxRef.current + 1)
+      setCheckedSentences([])
+      setAutoProgress(0)
+    }
+  }
+
   /* ── Mini quiz trigger ─────────────────────────────── */
-  const triggerMiniQuiz = () => {
+  const triggerMiniQuiz = (fromIdx: number) => {
+    pendingSlideIdxRef.current = fromIdx
     const easyQs = questions.filter((q) => q.difficulty === 'easy')
     const pool = easyQs.length > 0 ? easyQs : questions
     if (pool.length === 0) {
@@ -213,11 +227,7 @@ export default function LessonPage() {
   const handleNextSlide = () => {
     if (!allChecked && slideMode === 'manual') return
     setCheckedSentences([])
-    if (slideIndex >= slides.length - 1) {
-      triggerMiniQuiz()
-    } else {
-      setSlideIndex((si) => si + 1)
-    }
+    triggerMiniQuiz(slideIndex)
   }
 
   const handleMiniConfirm = () => {
@@ -282,7 +292,6 @@ export default function LessonPage() {
 
   const isMemorizer  = style === 'memorizer'
   const currentSlide = slides[slideIndex]
-  const isLastSlide  = slideIndex === slides.length - 1
 
   const sentences = currentSlide?.explanation
     ? splitSentences(isMemorizer ? getShort(currentSlide.explanation, 4) : currentSlide.explanation)
@@ -487,22 +496,39 @@ export default function LessonPage() {
             onClick={handleNextSlide}
             disabled={!allChecked}
             className={`w-full py-4 rounded-2xl text-[16px] font-bold transition-all ${
-              allChecked
-                ? isLastSlide ? 'bg-[#1A1A1A] text-white' : 'bg-[#E24B4A] text-white'
-                : 'bg-[#E5E5E5] text-[#ADADAD]'
+              allChecked ? 'bg-[#E24B4A] text-white' : 'bg-[#E5E5E5] text-[#ADADAD]'
             }`}
           >
-            {isLastSlide ? '확인 퀴즈' : '다음 슬라이드'}
+            확인 퀴즈
           </button>
         ) : (
-          <button
-            onClick={() => router.push(`/test/${chapterId}`)}
-            className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold"
-          >
-            <Zap size={18} /> 테스트 시작
-          </button>
+          <div className="w-full py-4 text-center text-[14px] text-[#6B6B6B] font-medium">
+            ▶️ 자동 학습 중... ({slideIndex + 1}/{slides.length})
+          </div>
         )}
       </div>
+
+      {/* ══════════ Completion Screen ══════════ */}
+      {showComplete && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#F5F5F3] px-6">
+          <div className="text-[72px] mb-6">🎉</div>
+          <h2 className="text-[26px] font-black text-[#1A1A1A] mb-2">학습 완료!</h2>
+          <p className="text-[15px] text-[#6B6B6B] mb-1">{chapterTitle}</p>
+          <p className="text-[13px] text-[#ADADAD] mb-10">총 {slides.length}개 슬라이드를 완료했어요</p>
+          <button
+            onClick={() => router.push(`/test/${chapterId}`)}
+            className="w-full max-w-sm flex items-center justify-center gap-2 py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold"
+          >
+            <Zap size={18} /> 테스트 시작하기
+          </button>
+          <button
+            onClick={() => { setShowComplete(false); setSlideIndex(0); setCheckedSentences([]); setAutoProgress(0) }}
+            className="mt-3 text-[13px] text-[#ADADAD] underline"
+          >
+            다시 복습하기
+          </button>
+        </div>
+      )}
 
       {/* ══════════ Mini Quiz Panel ══════════ */}
       {showMiniQuiz && miniQ && (
@@ -582,17 +608,17 @@ export default function LessonPage() {
 
                 {miniSelected === miniQ.answerIdx ? (
                   <button
-                    onClick={() => router.push(`/test/${chapterId}`)}
+                    onClick={advanceFromQuiz}
                     className="w-full py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold"
                   >
-                    테스트 시작하기
+                    {pendingSlideIdxRef.current >= slides.length - 1 ? '학습 완료 🎉' : '다음 슬라이드 →'}
                   </button>
                 ) : (
                   <div className="space-y-2">
                     <button
                       onClick={() => {
                         setShowMiniQuiz(false)
-                        setSlideIndex(0)
+                        setSlideIndex(pendingSlideIdxRef.current)
                         setCheckedSentences([])
                         setAutoProgress(0)
                         setMiniSelected(null)
@@ -603,7 +629,7 @@ export default function LessonPage() {
                       다시 학습하기
                     </button>
                     <button
-                      onClick={() => router.push(`/test/${chapterId}`)}
+                      onClick={advanceFromQuiz}
                       className="w-full py-3.5 border-2 border-[#E5E5E5] text-[#6B6B6B] rounded-2xl text-[14px] font-semibold"
                     >
                       그래도 계속하기
