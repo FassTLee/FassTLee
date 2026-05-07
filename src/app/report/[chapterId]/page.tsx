@@ -24,20 +24,16 @@ interface TestResult {
   records: AnswerRecord[]
 }
 
-// TODO: replace with real subscription check
-const isSubscribed = false
-
 export default function ReportPage() {
   const { status } = useSession()
   const router = useRouter()
   const params = useParams()
   const chapterId = params.chapterId as string
 
-  const [result, setResult] = useState<TestResult | null>(null)
+  const [result, setResult]           = useState<TestResult | null>(null)
   const [nextChapterId, setNextChapterId] = useState<string | null>(null)
-  const [subjectId, setSubjectId] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [showSubscribePopup, setShowSubscribePopup] = useState(false)
+  const [subjectId, setSubjectId]     = useState<string | null>(null)
+  const [loading, setLoading]         = useState(true)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -90,6 +86,8 @@ export default function ReportPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F3] flex flex-col">
+
+      {/* Header */}
       <div className="bg-white border-b border-[#E5E5E5] px-5 pt-12 pb-4">
         <button
           onClick={() => subjectId ? router.push(`/chapters/${subjectId}`) : router.push('/trainer/dashboard')}
@@ -101,7 +99,8 @@ export default function ReportPage() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 pb-36 space-y-4">
-        {/* Score card — always visible */}
+
+        {/* ── 점수 카드 ── */}
         <div className={`rounded-2xl p-6 text-center ${passed ? 'bg-[#1A1A1A]' : 'bg-white border border-[#E5E5E5]'}`}>
           <div className="text-[48px] font-black mb-1" style={{ color: passed ? '#fff' : '#E24B4A' }}>
             {score}점
@@ -116,19 +115,43 @@ export default function ReportPage() {
           </div>
         </div>
 
-        {/* Wrong answers — blurred for free users */}
-        {wrong.length > 0 && (
-          <div className="relative">
+        {/* ── 문항별 ○/✕ ── */}
+        <div className="bg-white rounded-2xl border border-[#E5E5E5] p-4">
+          <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-3">문항별 결과</p>
+          <div className="flex flex-wrap gap-2">
+            {result.records.map((r, i) => (
+              <div
+                key={r.questionId}
+                className={`flex flex-col items-center gap-0.5 w-10 py-1 rounded-xl ${
+                  r.correct ? 'bg-[#63992210]' : 'bg-[#E24B4A10]'
+                }`}
+              >
+                <span className="text-[10px] font-semibold text-[#ADADAD]">Q{i + 1}</span>
+                {r.correct
+                  ? <Check size={16} className="text-[#639922]" />
+                  : <X    size={16} className="text-[#E24B4A]" />
+                }
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── 오답노트 ── */}
+        {wrong.length > 0 ? (
+          <div>
             <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider px-1 mb-2">
-              오답 해설 ({wrong.length}문제)
+              오답노트 ({wrong.length}문제)
             </p>
-            <div className={`space-y-3 ${!isSubscribed ? 'blur-sm pointer-events-none select-none' : ''}`}>
+            <div className="space-y-3">
               {wrong.map((r) => (
                 <div key={r.questionId} className="bg-white rounded-2xl border border-[#E5E5E5] p-4">
+                  {/* 문제 */}
                   <div className="flex items-start gap-2 mb-3">
                     <X size={14} className="text-[#E24B4A] mt-0.5 flex-shrink-0" />
                     <p className="text-[13px] font-semibold text-[#1A1A1A]">{r.question}</p>
                   </div>
+
+                  {/* 보기 */}
                   <div className="space-y-1.5 mb-3">
                     {r.options.map((opt, oi) => (
                       <div
@@ -141,10 +164,12 @@ export default function ReportPage() {
                             : 'text-[#ADADAD]'
                         }`}
                       >
-                        {oi + 1}. {opt}
+                        {opt}
                       </div>
                     ))}
                   </div>
+
+                  {/* 해설 */}
                   {r.explanation && (
                     <div className="bg-[#F5F5F3] rounded-xl p-3">
                       <p className="text-[11px] font-bold text-[#ADADAD] mb-1">해설</p>
@@ -154,26 +179,8 @@ export default function ReportPage() {
                 </div>
               ))}
             </div>
-
-            {/* Overlay for free users */}
-            {!isSubscribed && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 pt-8">
-                <div className="text-[32px]">🔒</div>
-                <p className="text-[13px] font-bold text-[#1A1A1A] text-center">
-                  상세 분석은 구독 후 이용 가능합니다
-                </p>
-                <button
-                  onClick={() => setShowSubscribePopup(true)}
-                  className="bg-[#E24B4A] text-white px-6 py-3 rounded-2xl text-[14px] font-bold shadow-lg"
-                >
-                  전체 분석 보기
-                </button>
-              </div>
-            )}
           </div>
-        )}
-
-        {wrong.length === 0 && (
+        ) : (
           <div className="bg-[#63992210] border border-[#63992230] rounded-2xl p-5 text-center">
             <div className="text-[32px] mb-2">🎉</div>
             <p className="text-[14px] font-bold text-[#639922]">완벽해요! 모두 정답입니다</p>
@@ -198,31 +205,6 @@ export default function ReportPage() {
           대시보드로
         </button>
       </div>
-
-      {/* Subscribe popup */}
-      {showSubscribePopup && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center p-4">
-          <div className="w-full max-w-sm bg-white rounded-3xl p-6 space-y-4">
-            <div className="text-center">
-              <div className="text-[44px] mb-2">📊</div>
-              <h2 className="text-[18px] font-black text-[#1A1A1A] mb-2">전체 오답 분석</h2>
-              <p className="text-[13px] text-[#6B6B6B] leading-relaxed">
-                구독하면 모든 오답 해설과<br />
-                상세 분석 리포트를 볼 수 있어요!
-              </p>
-            </div>
-            <button className="w-full py-3.5 bg-[#E24B4A] text-white rounded-2xl text-[15px] font-bold">
-              1주일 무료 체험
-            </button>
-            <button
-              onClick={() => setShowSubscribePopup(false)}
-              className="w-full py-2.5 text-[13px] text-[#ADADAD] font-medium"
-            >
-              나중에
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
