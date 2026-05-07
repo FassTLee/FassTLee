@@ -104,12 +104,18 @@ export default function LessonPage() {
   }, [status, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
-    const [{ data: ch }, { data: qs }] = await Promise.all([
+    console.log('[fetchData] chapterId:', chapterId)
+    console.log('[fetchData] supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL?.slice(0, 30))
+
+    const [{ data: ch, error: chErr }, { data: qs, error: qsErr }] = await Promise.all([
       supabase.from('chapters').select('id, title, course_id').eq('id', chapterId).single(),
       supabase.from('chapter_questions')
         .select('id, question, options, answer_index, explanation, difficulty')
         .eq('chapter_id', chapterId),
     ])
+
+    console.log('[fetchData] chapters — id:', ch?.id ?? null, '/ error:', chErr?.message ?? null)
+    console.log('[fetchData] questions — count:', qs?.length ?? 0, '/ error:', qsErr?.message ?? null)
 
     if (ch) {
       setChapterTitle(ch.title)
@@ -128,14 +134,15 @@ export default function LessonPage() {
     const allQ = qs ?? []
     setQuestions(allQ)
 
-    // Build slides: each question is one slide (max 5 for conceptualizer, 3 for memorizer)
     const isM = (localStorage.getItem(STYLE_KEY) ?? 'conceptualizer') === 'memorizer'
     const maxSlides = isM ? 3 : 5
-    setSlides(allQ.slice(0, maxSlides).map((q) => ({
+    const built = allQ.slice(0, maxSlides).map((q) => ({
       id: q.id,
       question: q.question,
       explanation: q.explanation,
-    })))
+    }))
+    console.log('[fetchData] slides built:', built.length)
+    setSlides(built)
 
     setLoading(false)
   }
