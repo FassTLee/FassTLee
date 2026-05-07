@@ -19,11 +19,11 @@ function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5)
 }
 
-/** Remove leading numeric prefix and/or circled numbers like "1 ", "2. ", "①", "1①" */
+/** Remove leading numeric/alpha prefixes. Keeps circled numbers ①②③④⑤ intact. */
 function cleanOption(opt: string): string {
   return opt
-    .replace(/^\s*\d+[.)、\s]*/, '')
-    .replace(/^[①②③④⑤⑥⑦⑧⑨⑩]\s*/, '')
+    .replace(/^\s*\d+[.)、]\s*/, '')       // "1. " "2) " "3、"
+    .replace(/^\s*[A-Da-d][.)]\s*/, '')    // "A. " "B) " "C. " "D) "
     .trim()
 }
 
@@ -194,7 +194,6 @@ export default function TestPage() {
         <div className="space-y-2.5">
           {q.options.map((opt, i) => {
             const cleaned = cleanOption(opt)
-            const CIRCLE = ['①', '②', '③', '④', '⑤']
 
             let style = 'border-[#E5E5E5] bg-white text-[#1A1A1A]'
             if (confirmed) {
@@ -213,11 +212,8 @@ export default function TestPage() {
               <button
                 key={i}
                 onClick={() => !confirmed && setSelected(i)}
-                className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl border-2 text-left text-[14px] font-medium transition-all ${style}`}
+                className={`w-full flex items-center gap-3 px-4 py-4 rounded-2xl border-2 text-left text-[14px] font-medium transition-all ${style}`}
               >
-                <span className="w-6 h-6 rounded-full border-2 border-current flex items-center justify-center text-[13px] font-black flex-shrink-0">
-                  {CIRCLE[i] ?? i + 1}
-                </span>
                 <span className="flex-1">{cleaned}</span>
                 {confirmed && i === q.answer_index && <Check size={16} className="flex-shrink-0" />}
                 {confirmed && i === selected && !isCorrect && <X size={16} className="flex-shrink-0" />}

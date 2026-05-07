@@ -599,7 +599,7 @@ export default function LandingTestPage() {
                     : <div className="w-2.5 h-2.5 rounded-full opacity-0" />
                   }
                 </div>
-                <span>{String.fromCharCode(65 + i)}. {opt}</span>
+                <span>{opt}</span>
               </button>
             )
           })}
