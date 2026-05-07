@@ -132,7 +132,7 @@ export default function LandingPage() {
             onClick={() => router.push('/landing/test')}
             className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] hover:bg-[#cc3e3d] rounded-2xl text-[16px] font-bold text-white mb-4 shadow-lg shadow-[#E24B4A]/30 transition-colors"
           >
-            무료로 시작하기 <ChevronRight size={18} />
+            무료 테스트 시작 <ChevronRight size={18} />
           </button>
           <p className="text-[11px] text-white/40 text-center mb-4">
             로그인 없이 바로 시작 가능 · 결과 저장 시 로그인
@@ -343,7 +343,7 @@ export default function LandingPage() {
             onClick={() => router.push('/select-cert')}
             className="w-full flex items-center justify-center gap-2 py-4 bg-white rounded-2xl text-[16px] font-bold text-[#E24B4A] shadow-lg mb-3"
           >
-            무료로 시작하기 <ChevronRight size={18} />
+            무료 테스트 시작 <ChevronRight size={18} />
           </button>
           <div className="grid grid-cols-2 gap-2">
             <button

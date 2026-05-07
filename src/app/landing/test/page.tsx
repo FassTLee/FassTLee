@@ -93,6 +93,9 @@ function LandingTestContent() {
           weakAreas,
           percentage: Math.round((score / totalQ) * 100),
         }
+        // localStorage에 저장 (OAuth 리다이렉트 후에도 유지)
+        localStorage.setItem('landingTestResult', JSON.stringify(result))
+        localStorage.setItem('landingTestQuestions', JSON.stringify(activeQs))
         sessionStorage.setItem('landingTestResult', JSON.stringify(result))
 
         // guest 저장 (fire-and-forget)
