@@ -26,12 +26,17 @@ export default async function LessonPage({
       .single(),
     supabaseAdmin
       .from('chapter_questions')
-      .select('id, question, options, answer_index, explanation, difficulty')
+      .select('*')
       .eq('chapter_id', chapterId),
   ])
 
   console.log('[LessonPage] chapters — id:', ch?.id ?? null, 'error:', chErr?.message ?? null)
-  console.log('[LessonPage] chapter_questions — count:', qs?.length ?? 0, 'error:', qsErr?.message ?? null)
+  console.log('[LessonPage] chapter_questions count:', qs?.length ?? 0)
+  console.log('[LessonPage] chapter_questions error:', qsErr?.message ?? null)
+  if (qs && qs.length > 0) {
+    console.log('[LessonPage] first question keys:', Object.keys(qs[0]))
+    console.log('[LessonPage] first question id:', qs[0].id)
+  }
 
   let subjectName = ''
   if (ch?.course_id) {
