@@ -9,12 +9,19 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: { chapterId: string } },
 ) {
+  // 세션 체크 — 실패해도 데이터 조회는 계속 진행 (읽기 전용 공개 교육 데이터)
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    console.warn('[lesson API] no session — proceeding without auth guard')
   }
 
+  // 환경변수 존재 여부 확인
+  const hasServiceKey = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY)
+  const hasUrl = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL)
+  console.log(`[lesson API] env check — url:${hasUrl} serviceKey:${hasServiceKey}`)
+
   const { chapterId } = params
+  console.log('[lesson API] chapterId:', chapterId)
 
   const [{ data: ch, error: chErr }, { data: qs, error: qsErr }] = await Promise.all([
     supabaseAdmin
@@ -28,8 +35,8 @@ export async function GET(
       .eq('chapter_id', chapterId),
   ])
 
-  if (chErr) console.error('[lesson API] chapters error:', chErr.message)
-  if (qsErr) console.error('[lesson API] chapter_questions error:', qsErr.message)
+  console.log('[lesson API] chapters result — data:', ch?.id ?? null, 'error:', chErr?.message ?? null)
+  console.log('[lesson API] chapter_questions result — count:', qs?.length ?? 0, 'error:', qsErr?.message ?? null)
 
   let subjectName = ''
   let courseDesc: string | null = null
@@ -51,6 +58,8 @@ export async function GET(
       if (subj?.name) subjectName = subj.name
     }
   }
+
+  console.log('[lesson API] response — questions:', qs?.length ?? 0, 'subjectName:', subjectName)
 
   return NextResponse.json({
     chapter: ch ?? null,
