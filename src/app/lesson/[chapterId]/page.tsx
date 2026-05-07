@@ -550,17 +550,16 @@ export default function LessonPage() {
               {miniQ.text}
             </p>
 
-            {/* A / B choices */}
+            {/* 보기 (A/B 라벨 없이 options 원문자 그대로 표시) */}
             <div className="space-y-3 mb-5">
-              {(['A', 'B'] as const).map((label, i) => {
-                const idx = i as 0 | 1
+              {([0, 1] as const).map((idx) => {
                 const isCorrect = miniConfirmed && idx === miniQ.answerIdx
                 const isWrong   = miniConfirmed && miniSelected === idx && idx !== miniQ.answerIdx
                 return (
                   <button
-                    key={label}
+                    key={idx}
                     onClick={() => !miniConfirmed && setMiniSelected(idx)}
-                    className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl border-2 text-left transition-all ${
+                    className={`w-full px-5 py-4 rounded-2xl border-2 text-left transition-all ${
                       miniConfirmed
                         ? isCorrect
                           ? 'border-[#639922] bg-[#63992210]'
@@ -572,16 +571,7 @@ export default function LessonPage() {
                           : 'border-[#E5E5E5]'
                     }`}
                   >
-                    <span className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-[13px] font-black flex-shrink-0 ${
-                      miniConfirmed
-                        ? isCorrect ? 'border-[#639922] text-[#639922]'
-                          : isWrong ? 'border-[#E24B4A] text-[#E24B4A]'
-                          : 'border-[#ADADAD] text-[#ADADAD]'
-                        : miniSelected === idx ? 'border-[#E24B4A] text-[#E24B4A]' : 'border-[#ADADAD] text-[#ADADAD]'
-                    }`}>
-                      {label}
-                    </span>
-                    <span className={`flex-1 text-[14px] font-medium ${
+                    <span className={`text-[14px] font-medium leading-relaxed ${
                       miniConfirmed
                         ? isCorrect ? 'text-[#639922]'
                           : isWrong ? 'text-[#E24B4A]'
