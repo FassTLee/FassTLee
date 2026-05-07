@@ -110,7 +110,7 @@ export default function LessonPage() {
     const [{ data: ch, error: chErr }, { data: qs, error: qsErr }] = await Promise.all([
       supabase.from('chapters').select('id, title, course_id').eq('id', chapterId).single(),
       supabase.from('chapter_questions')
-        .select('id, question, options, answer_index, explanation, difficulty')
+        .select('id, question, options, answer_index, explanation')
         .eq('chapter_id', chapterId),
     ])
 
