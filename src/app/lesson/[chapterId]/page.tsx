@@ -3,8 +3,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
-import { ChevronLeft, ChevronRight as ArrowRight, Check, Zap } from 'lucide-react'
+import { ChevronLeft, ChevronRight as ArrowRight, Check } from 'lucide-react'
+import { fetchLessonData } from './actions'
 
 const STYLE_KEY   = 'kinepia_learning_style'
 const CERT_KEY    = 'kinepia_selected_cert'
@@ -30,6 +30,9 @@ interface Slide {
   id: string
   question: string
   explanation: string | null
+  options: string[]
+  answer_index: number
+  difficulty: string | null
 }
 
 interface MiniQ {
@@ -104,37 +107,23 @@ export default function LessonPage() {
   }, [status, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
-    const [{ data: ch }, { data: qs }] = await Promise.all([
-      supabase.from('chapters').select('id, title, course_id').eq('id', chapterId).single(),
-      supabase.from('chapter_questions')
-        .select('id, question, options, answer_index, explanation, difficulty')
-        .eq('chapter_id', chapterId),
-    ])
+    const data = await fetchLessonData(chapterId)
 
-    if (ch) {
-      setChapterTitle(ch.title)
-      if (ch.course_id) {
-        const { data: course } = await supabase
-          .from('courses').select('id, subject_id, description').eq('id', ch.course_id).single()
-        if (course?.description) setCourseDesc(course.description)
-        if (course?.subject_id) {
-          const { data: subj } = await supabase
-            .from('subjects').select('name').eq('id', course.subject_id).single()
-          if (subj?.name) setSubjectName(subj.name)
-        }
-      }
-    }
+    if (data.chapter?.title) setChapterTitle(data.chapter.title)
+    if (data.subjectName)    setSubjectName(data.subjectName)
 
-    const allQ = qs ?? []
+    const allQ = data.questions ?? []
     setQuestions(allQ)
 
-    // Build slides: each question is one slide (max 5 for conceptualizer, 3 for memorizer)
     const isM = (localStorage.getItem(STYLE_KEY) ?? 'conceptualizer') === 'memorizer'
     const maxSlides = isM ? 3 : 5
     setSlides(allQ.slice(0, maxSlides).map((q) => ({
-      id: q.id,
-      question: q.question,
-      explanation: q.explanation,
+      id:           q.id,
+      question:     q.question,
+      explanation:  q.explanation,
+      options:      q.options,
+      answer_index: q.answer_index,
+      difficulty:   q.difficulty,
     })))
 
     setLoading(false)
@@ -169,10 +158,7 @@ export default function LessonPage() {
   const triggerMiniQuiz = () => {
     const easyQs = questions.filter((q) => q.difficulty === 'easy')
     const pool = easyQs.length > 0 ? easyQs : questions
-    if (pool.length === 0) {
-      router.push(`/test/${chapterId}`)
-      return
-    }
+    if (pool.length === 0) return
     const shuffled = [...pool].sort(() => Math.random() - 0.5)
     const q = shuffled[0]
     const correct = q.options[q.answer_index]
@@ -455,14 +441,7 @@ export default function LessonPage() {
 
       {/* Bottom button */}
       <div className="flex-shrink-0 p-4 bg-white border-t border-[#E5E5E5]">
-        {slides.length === 0 ? (
-          <button
-            onClick={() => router.push(`/test/${chapterId}`)}
-            className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold"
-          >
-            <Zap size={18} /> 테스트 시작
-          </button>
-        ) : slideMode === 'manual' ? (
+        {slideMode === 'manual' ? (
           <button
             onClick={handleNextSlide}
             disabled={!checked}
@@ -475,12 +454,9 @@ export default function LessonPage() {
             {isLastSlide ? '확인 퀴즈' : '다음 슬라이드'}
           </button>
         ) : (
-          <button
-            onClick={() => router.push(`/test/${chapterId}`)}
-            className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold"
-          >
-            <Zap size={18} /> 테스트 시작
-          </button>
+          <div className="w-full py-4 rounded-2xl bg-[#F5F5F3] text-[14px] text-center text-[#ADADAD] font-medium">
+            ▶️ 자동 학습 중... ({slideIndex + 1}/{slides.length})
+          </div>
         )}
       </div>
 

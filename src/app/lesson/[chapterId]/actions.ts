@@ -2,20 +2,19 @@
 
 import { supabaseAdmin } from '@/lib/supabaseAdmin'
 
-export interface SlideData {
+export interface QuestionData {
   id: string
   question: string
-  explanation: string | null
   options: string[]
   answer_index: number
+  explanation: string | null
   difficulty: string | null
 }
 
 export interface LessonData {
-  chapterTitle: string
+  chapter: { title: string } | null
+  questions: QuestionData[]
   subjectName: string
-  courseDesc: string | null
-  slides: SlideData[]
 }
 
 export async function fetchLessonData(chapterId: string): Promise<LessonData> {
@@ -32,16 +31,14 @@ export async function fetchLessonData(chapterId: string): Promise<LessonData> {
   ])
 
   let subjectName = ''
-  let courseDesc: string | null = null
 
   if (ch?.course_id) {
     const { data: course } = await supabaseAdmin
       .from('courses')
-      .select('id, subject_id, description')
+      .select('subject_id')
       .eq('id', ch.course_id)
       .single()
 
-    if (course?.description) courseDesc = course.description
     if (course?.subject_id) {
       const { data: subj } = await supabaseAdmin
         .from('subjects')
@@ -53,16 +50,15 @@ export async function fetchLessonData(chapterId: string): Promise<LessonData> {
   }
 
   return {
-    chapterTitle: ch?.title ?? '',
-    subjectName,
-    courseDesc,
-    slides: (qs ?? []).map((q) => ({
+    chapter: ch ? { title: ch.title } : null,
+    questions: (qs ?? []).map((q) => ({
       id:           q.id,
       question:     q.question,
-      explanation:  q.explanation ?? null,
       options:      q.options,
       answer_index: q.answer_index,
+      explanation:  q.explanation ?? null,
       difficulty:   q.difficulty ?? null,
     })),
+    subjectName,
   }
 }
