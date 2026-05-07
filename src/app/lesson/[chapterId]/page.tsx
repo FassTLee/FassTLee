@@ -196,23 +196,28 @@ export default function LessonPage() {
   /* ── Mini quiz trigger ─────────────────────────────── */
   const triggerMiniQuiz = (fromIdx: number) => {
     pendingSlideIdxRef.current = fromIdx
-    const easyQs = questions.filter((q) => q.difficulty === 'easy')
-    const pool = easyQs.length > 0 ? easyQs : questions
-    if (pool.length === 0) {
-      router.push(`/test/${chapterId}`)
+
+    // 현재 슬라이드에 해당하는 문제 사용
+    const q = questions.find((q) => q.id === slides[fromIdx]?.id) ?? questions[fromIdx]
+    if (!q) {
+      // 문제 데이터 없으면 퀴즈 건너뛰고 바로 진행
+      if (fromIdx >= slides.length - 1) {
+        setShowComplete(true)
+      } else {
+        setSlideIndex(fromIdx + 1)
+        setCheckedSentences([])
+        setAutoProgress(0)
+      }
       return
     }
-    const shuffled = [...pool].sort(() => Math.random() - 0.5)
-    const q = shuffled[0]
+
     const correct = q.options[q.answer_index]
-    let wrongOpt: string
-    if (shuffled.length >= 2) {
-      const wrong = shuffled[1]
-      wrongOpt = wrong.options[wrong.answer_index]
-    } else {
-      const others = q.options.filter((_, i) => i !== q.answer_index)
-      wrongOpt = others.length > 0 ? others[Math.floor(Math.random() * others.length)] : correct
-    }
+    // 같은 문제의 오답지 중 1개 랜덤 선택
+    const wrongOptions = q.options.filter((_, i) => i !== q.answer_index)
+    const wrongOpt = wrongOptions.length > 0
+      ? wrongOptions[Math.floor(Math.random() * wrongOptions.length)]
+      : q.options[(q.answer_index + 1) % q.options.length]
+
     const aIsCorrect = Math.random() > 0.5
     setMiniQ({
       id: q.id,
