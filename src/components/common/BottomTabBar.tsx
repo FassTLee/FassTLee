@@ -5,10 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 
 const TABS = [
-  { label: '홈',    id: 'home',      icon: 'home'      },
-  { label: '강의실', id: 'classroom', icon: 'classroom' },
-  { label: '리포트', id: 'report',    icon: 'report'    },
-  { label: '내정보', id: 'profile',   icon: 'profile'   },
+  { label: '홈',     id: 'home',      icon: 'home'      },
+  { label: '강의실',  id: 'classroom', icon: 'classroom' },
+  { label: '모의고사', id: 'exam',      icon: 'report'    },
+  { label: '내정보',  id: 'profile',   icon: 'profile'   },
 ] as const
 
 type TabId = typeof TABS[number]['id']

@@ -5,12 +5,12 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import {
-  ChevronRight, Plus, Heart, Flame, BarChart2,
-  Check, RefreshCw, Calendar, Clock, MapPin, X, Trash2,
+  ChevronRight, Plus, Heart,
+  RefreshCw, Calendar, Clock, MapPin, X, Trash2,
 } from 'lucide-react'
 import BottomTabBar from '@/components/common/BottomTabBar'
 
-type Tab = 'home' | 'classroom' | 'report' | 'profile'
+type Tab = 'home' | 'classroom' | 'exam' | 'profile'
 
 const SUBJECTS_KEY = 'kinepia_selected_subjects'
 const CERT_KEY     = 'kinepia_selected_cert'
@@ -51,12 +51,6 @@ interface ChapterStat {
   wrong_rate: number
   total_attempts: number
   last_attempt_at: string | null
-}
-
-interface QuestionStat {
-  question_id: string
-  wrong_rate: number
-  total_attempts: number
 }
 
 interface VideoBookmark {
@@ -154,10 +148,6 @@ function DashboardContent() {
   const [bookmarks, setBookmarks]           = useState<VideoBookmark[]>([])
   const [classroomLoaded, setClassroomLoaded] = useState(false)
 
-  /* ── Report (lazy) ───────────────────────────────────────────────── */
-  const [allChapterStats, setAllChapterStats]   = useState<ChapterStat[]>([])
-  const [allQuestionStats, setAllQuestionStats] = useState<QuestionStat[]>([])
-  const [reportLoaded, setReportLoaded]         = useState(false)
 
   /* ── Profile ─────────────────────────────────────────────────────── */
   const [examDateInput, setExamDateInput]   = useState('')
@@ -174,7 +164,6 @@ function DashboardContent() {
 
   useEffect(() => {
     if (tab === 'classroom' && !classroomLoaded) loadClassroom()
-    if (tab === 'report'    && !reportLoaded)    loadReport()
   }, [tab]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const initCommon = async () => {
@@ -334,16 +323,6 @@ function DashboardContent() {
     } catch { /* ignore */ }
 
     setClassroomLoaded(true)
-  }
-
-  const loadReport = async () => {
-    try {
-      const res  = await fetch('/api/v1/report')
-      const data = await res.json()
-      setAllChapterStats(data.chapter_stats  ?? [])
-      setAllQuestionStats(data.question_stats ?? [])
-    } catch { /* ignore */ }
-    setReportLoaded(true)
   }
 
   const _handleHeartVideo = async (title: string) => {
@@ -780,104 +759,86 @@ function DashboardContent() {
   )
 
   // ══════════════════════════════════════════════════════════════════
-  // ③ REPORT TAB
   // ══════════════════════════════════════════════════════════════════
-  const overallWrongRate  = allChapterStats.length > 0
-    ? Math.round(allChapterStats.reduce((s, c) => s + c.wrong_rate, 0) / allChapterStats.length) : null
-  const weakChapters      = allChapterStats.filter((s) => s.wrong_rate >= 40)
-  const topWrongQuestions = [...allQuestionStats].sort((a, b) => b.wrong_rate - a.wrong_rate).slice(0, 5)
+  // ③ EXAM TAB
+  // ══════════════════════════════════════════════════════════════════
+  const EXAM_DATES = [
+    { date: '5/10 (토)', label: '1회차' },
+    { date: '5/17 (토)', label: '2회차' },
+    { date: '5/24 (토)', label: '3회차' },
+    { date: '5/31 (토)', label: '4회차' },
+    { date: '6/7 (토)',  label: '5회차' },
+  ]
+  const nextExam = EXAM_DATES[0]
 
-  const renderReport = () => (
+  const renderExam = () => (
     <div className="overflow-y-auto p-4 pb-24 space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
       <div className="pt-8">
-        <p className="text-[12px] text-[#ADADAD]">학습 분석</p>
-        <h2 className="text-[20px] font-black text-[#1A1A1A]">리포트</h2>
+        <p className="text-[12px] text-[#ADADAD]">시험 준비</p>
+        <h2 className="text-[20px] font-black text-[#1A1A1A]">모의고사</h2>
       </div>
 
-      {allChapterStats.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <BarChart2 size={48} className="text-[#ADADAD] mb-3" />
-          <p className="text-[15px] font-bold text-[#1A1A1A] mb-1">아직 데이터가 없어요</p>
-          <p className="text-[12px] text-[#ADADAD]">테스트를 완료하면 리포트가 생성됩니다</p>
-        </div>
-      ) : (
-        <>
-          <div className="bg-[#1A1A1A] rounded-2xl p-5 text-white text-center">
-            <p className="text-[11px] text-white/50 uppercase tracking-wider mb-2">전체 평균 오답률</p>
-            <div className="text-[52px] font-black text-[#E24B4A] leading-none">{overallWrongRate}%</div>
-            <p className="text-[12px] text-white/50 mt-2">{allChapterStats.length}개 챕터 완료</p>
-          </div>
+      {/* 다음 모의고사 */}
+      <div className="bg-[#1A1A1A] rounded-2xl p-5 text-white">
+        <p className="text-[11px] text-white/50 uppercase tracking-wider mb-1">다음 모의고사</p>
+        <div className="text-[36px] font-black text-[#E24B4A] leading-tight">{nextExam.date}</div>
+        <p className="text-[13px] text-white/70 mt-1">{nextExam.label} · 매주 토요일 오전 10:00</p>
+        <button className="mt-4 w-full py-3 bg-[#E24B4A] rounded-xl text-[14px] font-bold text-white">
+          사전 신청하기
+        </button>
+      </div>
 
-          {weakChapters.length > 0 && (
-            <div>
-              <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">🔥 취약 챕터 (오답률 40%↑)</p>
-              <div className="space-y-2">
-                {weakChapters.slice(0, 5).map((s, i) => (
-                  <div key={i} className="bg-white rounded-xl border border-[#E24B4A]/20 p-3 flex items-center gap-3">
-                    <Flame size={15} className="text-[#E24B4A] flex-shrink-0" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="text-[12px] font-semibold text-[#1A1A1A]">챕터 {i + 1}</p>
-                        <span className="text-[10px] text-[#E24B4A] font-bold">{s.wrong_rate}%</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-[#F0F0EE] rounded-full overflow-hidden">
-                        <div className="h-full bg-[#E24B4A] rounded-full" style={{ width: `${s.wrong_rate}%` }} />
-                      </div>
-                    </div>
-                    <button onClick={() => router.push(`/lesson/${s.chapter_id}`)} className="text-[11px] text-[#E24B4A] font-bold flex-shrink-0">재도전</button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div>
-            <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">챕터별 성적</p>
-            <div className="space-y-2">
-              {allChapterStats.map((s, i) => (
-                <div key={i} className="bg-white rounded-xl border border-[#E5E5E5] p-3 flex items-center gap-3">
-                  <Check size={14} className="text-[#639922] flex-shrink-0" />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <p className="text-[12px] font-semibold text-[#1A1A1A]">챕터 {i + 1}</p>
-                      {s.wrong_rate >= 40 && <Flame size={11} className="text-[#E24B4A]" />}
-                    </div>
-                    <p className="text-[10px] text-[#ADADAD]">
-                      {s.total_attempts}회 도전 · {s.last_attempt_at ? new Date(s.last_attempt_at).toLocaleDateString('ko-KR') : '-'}
-                    </p>
-                  </div>
-                  <span className={`text-[13px] font-black ${
-                    s.avg_score >= 80 ? 'text-[#639922]' : s.avg_score >= 60 ? 'text-[#378ADD]' : 'text-[#E24B4A]'
-                  }`}>{s.avg_score}점</span>
+      {/* 일정 목록 */}
+      <div>
+        <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">
+          <Calendar size={11} className="inline mr-1" />전체 일정
+        </p>
+        <div className="space-y-2">
+          {EXAM_DATES.map((e, i) => (
+            <div key={i} className={`flex items-center justify-between px-4 py-3 rounded-xl border ${
+              i === 0 ? 'border-[#E24B4A]/30 bg-[#E24B4A]/5' : 'border-[#E5E5E5] bg-white'
+            }`}>
+              <div className="flex items-center gap-3">
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black ${
+                  i === 0 ? 'bg-[#E24B4A] text-white' : 'bg-[#F5F5F3] text-[#ADADAD]'
+                }`}>{i + 1}</div>
+                <div>
+                  <p className={`text-[13px] font-bold ${i === 0 ? 'text-[#E24B4A]' : 'text-[#1A1A1A]'}`}>{e.date}</p>
+                  <p className="text-[10px] text-[#ADADAD]">{e.label}</p>
                 </div>
-              ))}
+              </div>
+              {i === 0 && <span className="text-[10px] font-bold text-[#E24B4A] bg-[#E24B4A]/10 px-2 py-0.5 rounded-full">D-예정</span>}
             </div>
-          </div>
+          ))}
+        </div>
+      </div>
 
-          {topWrongQuestions.length > 0 && (
-            <div>
-              <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">가장 많이 틀린 문제 TOP 5</p>
-              <div className="space-y-2">
-                {topWrongQuestions.map((q, i) => (
-                  <div key={i} className="bg-white rounded-xl border border-[#E5E5E5] p-3 flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-full bg-[#E24B4A]/10 flex items-center justify-center text-[12px] font-black text-[#E24B4A] flex-shrink-0">{i + 1}</div>
-                    <div className="flex-1">
-                      <p className="text-[11px] text-[#6B6B6B]">문제 ID: {q.question_id}</p>
-                      <p className="text-[11px] text-[#E24B4A] font-semibold">오답률 {q.wrong_rate}%</p>
-                    </div>
-                    <span className="text-[10px] text-[#ADADAD]">{q.total_attempts}회</span>
-                  </div>
-                ))}
+      {/* 시험 형식 안내 */}
+      <div className="bg-white rounded-2xl border border-[#E5E5E5] p-4">
+        <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-3">건강운동관리사 시험 형식</p>
+        <div className="space-y-2.5">
+          {[
+            { icon: '📝', label: '문항 수',   value: '100문항 (과목당 20문항)' },
+            { icon: '⏱️', label: '시험 시간',  value: '150분' },
+            { icon: '📚', label: '과목 수',   value: '5개 과목 선택' },
+            { icon: '✅', label: '합격 기준',  value: '과목별 40점 + 평균 60점 이상' },
+            { icon: '🗓️', label: '시험 유형',  value: '4지선다형 객관식' },
+          ].map(({ icon, label, value }) => (
+            <div key={label} className="flex items-center gap-3">
+              <span className="text-[16px] flex-shrink-0">{icon}</span>
+              <div className="flex-1 flex items-center justify-between">
+                <span className="text-[12px] text-[#6B6B6B]">{label}</span>
+                <span className="text-[12px] font-semibold text-[#1A1A1A]">{value}</span>
               </div>
             </div>
-          )}
-        </>
-      )}
+          ))}
+        </div>
+      </div>
     </div>
   )
 
   // ══════════════════════════════════════════════════════════════════
-  // ④ PROFILE TAB
+  // ⑤ PROFILE TAB
   // ══════════════════════════════════════════════════════════════════
   const renderProfile = () => (
     <div className="overflow-y-auto p-4 pb-24 space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
@@ -1021,7 +982,7 @@ function DashboardContent() {
       <div className="flex-1 overflow-hidden pb-16">
         {tab === 'home'      && renderHome()}
         {tab === 'classroom' && renderClassroom()}
-        {tab === 'report'    && renderReport()}
+        {tab === 'exam'      && renderExam()}
         {tab === 'profile'   && renderProfile()}
       </div>
 
