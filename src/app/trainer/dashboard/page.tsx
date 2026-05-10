@@ -149,6 +149,15 @@ function DashboardContent() {
   const [classroomLoaded, setClassroomLoaded] = useState(false)
 
 
+  /* ── Exam registration modal ────────────────────────────────────── */
+  const [showExamModal, setShowExamModal]   = useState(false)
+  const [examName, setExamName]             = useState('')
+  const [examPhone, setExamPhone]           = useState('')
+  const [examEmail, setExamEmail]           = useState('')
+  const [examRound, setExamRound]           = useState(1)
+  const [examSubmitting, setExamSubmitting] = useState(false)
+  const [examDone, setExamDone]             = useState(false)
+
   /* ── Profile ─────────────────────────────────────────────────────── */
   const [examDateInput, setExamDateInput]   = useState('')
   const [regionInput, setRegionInput]       = useState('')
@@ -390,6 +399,21 @@ function DashboardContent() {
       // exam_target_date는 profile 탭 표시용으로만 유지
     } catch { /* ignore */ }
     setSavingProfile(false)
+  }
+
+  const handleExamRegister = async () => {
+    if (!examName || !examPhone || examSubmitting) return
+    setExamSubmitting(true)
+    try {
+      await supabase.from('exam_registrations').insert({
+        name: examName,
+        phone: examPhone,
+        email: examEmail || null,
+        round: examRound,
+      })
+      setExamDone(true)
+    } catch { /* ignore */ }
+    setExamSubmitting(false)
   }
 
   if (loading) {
@@ -763,13 +787,14 @@ function DashboardContent() {
   // ③ EXAM TAB
   // ══════════════════════════════════════════════════════════════════
   const EXAM_DATES = [
-    { date: '5/10 (토)', label: '1회차' },
-    { date: '5/17 (토)', label: '2회차' },
-    { date: '5/24 (토)', label: '3회차' },
-    { date: '5/31 (토)', label: '4회차' },
-    { date: '6/7 (토)',  label: '5회차' },
+    { round: 1, date: '5월 9일 (토)',  dateValue: '2025-05-09' },
+    { round: 2, date: '5월 16일 (토)', dateValue: '2025-05-16' },
+    { round: 3, date: '5월 23일 (토)', dateValue: '2025-05-23' },
+    { round: 4, date: '5월 30일 (토)', dateValue: '2025-05-30' },
+    { round: 5, date: '6월 6일 (토)',  dateValue: '2025-06-06' },
   ]
-  const nextExam = EXAM_DATES[0]
+  const today = new Date()
+  const nextExam = EXAM_DATES.find((e) => new Date(e.dateValue) >= today) ?? EXAM_DATES[EXAM_DATES.length - 1]
 
   const renderExam = () => (
     <div className="overflow-y-auto p-4 pb-24 space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
@@ -782,8 +807,11 @@ function DashboardContent() {
       <div className="bg-[#1A1A1A] rounded-2xl p-5 text-white">
         <p className="text-[11px] text-white/50 uppercase tracking-wider mb-1">다음 모의고사</p>
         <div className="text-[36px] font-black text-[#E24B4A] leading-tight">{nextExam.date}</div>
-        <p className="text-[13px] text-white/70 mt-1">{nextExam.label} · 매주 토요일 오전 10:00</p>
-        <button className="mt-4 w-full py-3 bg-[#E24B4A] rounded-xl text-[14px] font-bold text-white">
+        <p className="text-[13px] text-white/70 mt-1">{nextExam.round}회차 · 매주 토요일 오전 10:00</p>
+        <button
+          onClick={() => { setExamRound(nextExam.round); setShowExamModal(true) }}
+          className="mt-4 w-full py-3 bg-[#E24B4A] rounded-xl text-[14px] font-bold text-white"
+        >
           사전 신청하기
         </button>
       </div>
@@ -794,22 +822,36 @@ function DashboardContent() {
           <Calendar size={11} className="inline mr-1" />전체 일정
         </p>
         <div className="space-y-2">
-          {EXAM_DATES.map((e, i) => (
-            <div key={i} className={`flex items-center justify-between px-4 py-3 rounded-xl border ${
-              i === 0 ? 'border-[#E24B4A]/30 bg-[#E24B4A]/5' : 'border-[#E5E5E5] bg-white'
-            }`}>
-              <div className="flex items-center gap-3">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black ${
-                  i === 0 ? 'bg-[#E24B4A] text-white' : 'bg-[#F5F5F3] text-[#ADADAD]'
-                }`}>{i + 1}</div>
-                <div>
-                  <p className={`text-[13px] font-bold ${i === 0 ? 'text-[#E24B4A]' : 'text-[#1A1A1A]'}`}>{e.date}</p>
-                  <p className="text-[10px] text-[#ADADAD]">{e.label}</p>
+          {EXAM_DATES.map((e) => {
+            const isNext = e.round === nextExam.round
+            return (
+              <div key={e.round} className={`flex items-center justify-between px-4 py-3 rounded-xl border ${
+                isNext ? 'border-[#E24B4A]/30 bg-[#E24B4A]/5' : 'border-[#E5E5E5] bg-white'
+              }`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black ${
+                    isNext ? 'bg-[#E24B4A] text-white' : 'bg-[#F5F5F3] text-[#ADADAD]'
+                  }`}>{e.round}</div>
+                  <div>
+                    <p className={`text-[13px] font-bold ${isNext ? 'text-[#E24B4A]' : 'text-[#1A1A1A]'}`}>{e.date}</p>
+                    <p className="text-[10px] text-[#ADADAD]">{e.round}회차</p>
+                  </div>
                 </div>
+                {isNext && <span className="text-[10px] font-bold text-[#E24B4A] bg-[#E24B4A]/10 px-2 py-0.5 rounded-full">D-예정</span>}
               </div>
-              {i === 0 && <span className="text-[10px] font-bold text-[#E24B4A] bg-[#E24B4A]/10 px-2 py-0.5 rounded-full">D-예정</span>}
+            )
+          })}
+          {/* 실제 시험일 */}
+          <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-[#1A1A1A]/20 bg-[#1A1A1A]/5">
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black bg-[#1A1A1A] text-white">🎯</div>
+              <div>
+                <p className="text-[13px] font-bold text-[#1A1A1A]">6월 13일 (토)</p>
+                <p className="text-[10px] text-[#ADADAD]">실제 시험일</p>
+              </div>
             </div>
-          ))}
+            <span className="text-[10px] font-bold text-[#1A1A1A] bg-[#1A1A1A]/10 px-2 py-0.5 rounded-full">실전</span>
+          </div>
         </div>
       </div>
 
@@ -987,6 +1029,124 @@ function DashboardContent() {
       </div>
 
       <BottomTabBar />
+
+      {/* ── 모의고사 사전 신청 모달 ── */}
+      {showExamModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center p-4">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6 space-y-4">
+            {/* 헤더 */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-[18px] font-black text-[#1A1A1A]">모의고사 사전 신청</h2>
+              <button
+                onClick={() => { setShowExamModal(false); setExamDone(false); setExamName(''); setExamPhone(''); setExamEmail('') }}
+                className="w-8 h-8 flex items-center justify-center text-[#ADADAD]"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {examDone ? (
+              /* 완료 상태 */
+              <div className="text-center py-6 space-y-3">
+                <div className="text-[48px]">🎉</div>
+                <p className="text-[17px] font-black text-[#1A1A1A]">신청 완료!</p>
+                <p className="text-[13px] text-[#6B6B6B] leading-relaxed">
+                  {EXAM_DATES.find((e) => e.round === examRound)?.date} {examRound}회차<br />
+                  모의고사 신청이 완료되었습니다.
+                </p>
+                <div className="bg-[#F5F5F3] rounded-2xl p-4 space-y-1.5 text-left mt-2">
+                  <p className="text-[11px] font-bold text-[#ADADAD] mb-2">문의</p>
+                  <p className="text-[12px] text-[#1A1A1A]">💬 카카오톡 채널: <span className="font-semibold">@Kinepia</span></p>
+                  <p className="text-[12px] text-[#1A1A1A]">📧 이메일: <span className="font-semibold">contact@kinepia.io</span></p>
+                </div>
+                <button
+                  onClick={() => { setShowExamModal(false); setExamDone(false); setExamName(''); setExamPhone(''); setExamEmail('') }}
+                  className="w-full py-3.5 bg-[#E24B4A] text-white rounded-2xl text-[15px] font-bold mt-2"
+                >
+                  확인
+                </button>
+              </div>
+            ) : (
+              /* 입력 폼 */
+              <>
+                {/* 회차 선택 */}
+                <div>
+                  <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">회차 선택</p>
+                  <div className="grid grid-cols-5 gap-1.5">
+                    {EXAM_DATES.map((e) => (
+                      <button
+                        key={e.round}
+                        onClick={() => setExamRound(e.round)}
+                        className={`py-2 rounded-xl text-[11px] font-bold border-2 transition-all ${
+                          examRound === e.round
+                            ? 'bg-[#E24B4A] border-[#E24B4A] text-white'
+                            : 'bg-white border-[#E5E5E5] text-[#1A1A1A]'
+                        }`}
+                      >
+                        {e.round}회
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-[#ADADAD] mt-1.5">
+                    {EXAM_DATES.find((e) => e.round === examRound)?.date} 오전 10:00
+                  </p>
+                </div>
+
+                {/* 이름 */}
+                <div>
+                  <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">이름 *</p>
+                  <input
+                    type="text"
+                    placeholder="이름을 입력해주세요"
+                    value={examName}
+                    onChange={(e) => setExamName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-[#E5E5E5] text-[14px] text-[#1A1A1A] outline-none focus:border-[#E24B4A]"
+                  />
+                </div>
+
+                {/* 연락처 */}
+                <div>
+                  <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">연락처 *</p>
+                  <input
+                    type="tel"
+                    placeholder="010-0000-0000"
+                    value={examPhone}
+                    onChange={(e) => setExamPhone(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-[#E5E5E5] text-[14px] text-[#1A1A1A] outline-none focus:border-[#E24B4A]"
+                  />
+                </div>
+
+                {/* 이메일 (선택) */}
+                <div>
+                  <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">이메일 (선택)</p>
+                  <input
+                    type="email"
+                    placeholder="example@email.com"
+                    value={examEmail}
+                    onChange={(e) => setExamEmail(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-[#E5E5E5] text-[14px] text-[#1A1A1A] outline-none focus:border-[#E24B4A]"
+                  />
+                </div>
+
+                {/* 제출 버튼 */}
+                <button
+                  onClick={handleExamRegister}
+                  disabled={!examName || !examPhone || examSubmitting}
+                  className="w-full py-4 bg-[#E24B4A] text-white rounded-2xl text-[15px] font-bold disabled:opacity-40"
+                >
+                  {examSubmitting ? '신청 중...' : '신청하기'}
+                </button>
+
+                {/* 푸터 */}
+                <div className="text-center space-y-1 pt-1">
+                  <p className="text-[11px] text-[#ADADAD]">💬 카카오톡 채널: @Kinepia</p>
+                  <p className="text-[11px] text-[#ADADAD]">📧 contact@kinepia.io</p>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── D-Day 설정 모달 ── */}
       {showDDayModal && (
