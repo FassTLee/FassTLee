@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getToken } from 'next-auth/jwt'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.email) {
+export async function GET(req: NextRequest) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+  if (!token?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const email = token.email as string
   if (!isSupabaseConfigured) {
     return NextResponse.json({ exam_target_date: null, region: null, daily_study_hours: null })
   }
@@ -17,7 +17,7 @@ export async function GET() {
   const { data } = await supabase
     .from('profiles')
     .select('exam_target_date, region, daily_study_hours')
-    .eq('email', session.user.email)
+    .eq('email', email)
     .single()
 
   return NextResponse.json({
@@ -28,10 +28,11 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.email) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+  if (!token?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const email = token.email as string
   if (!isSupabaseConfigured) return NextResponse.json({ ok: true, saved: false })
 
   const body = await req.json()
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
 
   await supabase.from('profiles').upsert(
     {
-      email:             session.user.email,
+      email,
       exam_target_date:  exam_target_date  ?? null,
       region:            region            ?? null,
       daily_study_hours: daily_study_hours ?? null,

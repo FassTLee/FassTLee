@@ -1,20 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getToken } from 'next-auth/jwt'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
-export async function GET() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.email) {
+export async function GET(req: NextRequest) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+  if (!token?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const email = token.email as string
   if (!isSupabaseConfigured) {
     return NextResponse.json({ selected_subjects: [], selected_cert: null, required_subjects: [] })
   }
   const { data } = await supabase
     .from('profiles')
     .select('selected_subjects, selected_cert, required_subjects, additional_subjects')
-    .eq('email', session.user.email)
+    .eq('email', email)
     .single()
   return NextResponse.json({
     selected_subjects:   data?.selected_subjects   ?? [],
@@ -25,10 +25,11 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.email) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+  if (!token?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const email = token.email as string
   const body = await req.json()
   const { selected_subjects, selected_cert, required_subjects, additional_subjects } = body
   if (!Array.isArray(selected_subjects)) {
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
     .from('profiles')
     .upsert(
       {
-        email: session.user.email,
+        email,
         selected_subjects,
         selected_cert:       selected_cert       ?? null,
         required_subjects:   required_subjects   ?? [],

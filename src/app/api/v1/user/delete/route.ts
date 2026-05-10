@@ -2,8 +2,7 @@
 // 개인정보보호법 준수 — 사용자 요청 시 전체 데이터 삭제
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getToken } from 'next-auth/jwt'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 const DB_UNAVAILABLE = NextResponse.json(
@@ -11,15 +10,14 @@ const DB_UNAVAILABLE = NextResponse.json(
   { status: 503 }
 )
 
-export async function DELETE(_req: NextRequest) {
+export async function DELETE(req: NextRequest) {
   if (!isSupabaseConfigured) return DB_UNAVAILABLE
 
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.email) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+  if (!token?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-
-  const email = session.user.email
+  const email = token.email as string
 
   try {
     // 1. 게이미피케이션 데이터 삭제
@@ -35,7 +33,6 @@ export async function DELETE(_req: NextRequest) {
     // 6. 프로필 삭제
     await supabase.from('profiles').delete().eq('email', email)
 
-    // 삭제 완료 로그 (개인정보 포함 금지)
     console.log('[GDPR] User data deleted at:', new Date().toISOString())
 
     return NextResponse.json({

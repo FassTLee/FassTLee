@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getToken } from 'next-auth/jwt'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 // ================================================================
@@ -9,10 +8,11 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 // ================================================================
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.email) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+  if (!token?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const email = token.email as string
 
   const { guest_id } = await req.json()
   if (!guest_id) {
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('id')
-      .eq('email', session.user.email)
+      .eq('email', email)
       .single()
 
     if (!profile) {

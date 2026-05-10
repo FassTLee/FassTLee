@@ -2,8 +2,7 @@
 // Rate limit: 분당 60회 (middleware에서 처리)
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getToken } from 'next-auth/jwt'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 const DB_UNAVAILABLE = NextResponse.json(
@@ -15,10 +14,11 @@ const DB_UNAVAILABLE = NextResponse.json(
 export async function GET(req: NextRequest) {
   if (!isSupabaseConfigured) return DB_UNAVAILABLE
 
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.email) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+  if (!token?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const email = token.email as string
 
   const { searchParams } = new URL(req.url)
   const chapter = searchParams.get('c') ?? ''
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
   const { data, error } = await supabase
     .from('learning_progress')
     .select('chapter, section, is_skipped, completed_at')
-    .eq('user_id', session.user.email)
+    .eq('user_id', email)
     .eq('chapter', chapter)
 
   if (error) {
@@ -40,10 +40,11 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!isSupabaseConfigured) return DB_UNAVAILABLE
 
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.email) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+  if (!token?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const email = token.email as string
 
   const body = await req.json().catch(() => null)
   if (!body?.chapter || !body?.section) {
@@ -53,7 +54,7 @@ export async function POST(req: NextRequest) {
   const { error } = await supabase
     .from('learning_progress')
     .upsert({
-      user_id: session.user.email,
+      user_id: email,
       chapter: body.chapter,
       section: body.section,
       is_skipped: body.is_skipped ?? false,

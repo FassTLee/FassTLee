@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getToken } from 'next-auth/jwt'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
@@ -8,10 +7,11 @@ export const dynamic = 'force-dynamic'
 interface Record { questionId: string; correct: boolean }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.email) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+  if (!token?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const email = token.email as string
   if (!isSupabaseConfigured) {
     return NextResponse.json({ ok: true, saved: false })
   }
@@ -24,11 +24,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
   }
 
-  // Get profile id
   const { data: profile } = await supabase
     .from('profiles')
     .select('id')
-    .eq('email', session.user.email)
+    .eq('email', email)
     .single()
 
   if (!profile?.id) {
