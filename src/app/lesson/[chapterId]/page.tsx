@@ -217,7 +217,7 @@ export default function LessonPage() {
     if (!q) {
       // 문제 데이터 없으면 퀴즈 건너뛰고 바로 진행
       if (fromIdx >= slides.length - 1) {
-        setShowComplete(true)
+        advanceFromQuiz()
       } else {
         setSlideIndex(fromIdx + 1)
         setCheckedSentences([])
@@ -232,7 +232,7 @@ export default function LessonPage() {
     // options 부족 시 퀴즈 건너뛰고 다음 슬라이드로
     if (!correct || wrongOptions.length === 0) {
       if (fromIdx >= slides.length - 1) {
-        setShowComplete(true)
+        advanceFromQuiz()
       } else {
         setSlideIndex(fromIdx + 1)
         setCheckedSentences([])
