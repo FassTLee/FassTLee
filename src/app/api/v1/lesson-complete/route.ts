@@ -5,8 +5,24 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
+  // ── 진단 로그 ──────────────────────────────────────────────────
+  console.log('[lesson-complete] NEXTAUTH_SECRET set:', !!process.env.NEXTAUTH_SECRET)
+  console.log('[lesson-complete] NEXTAUTH_URL:', process.env.NEXTAUTH_URL ?? '(unset)')
+
+  const cookieHeader = req.headers.get('cookie') ?? ''
+  const hasSessionCookie =
+    cookieHeader.includes('next-auth.session-token') ||
+    cookieHeader.includes('__Secure-next-auth.session-token')
+  console.log('[lesson-complete] session cookie present:', hasSessionCookie)
+
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+  console.log('[lesson-complete] token:', token
+    ? { email: token.email, sub: token.sub, exp: token.exp }
+    : null
+  )
+
   if (!token?.email) {
+    console.log('[lesson-complete] → 401 (no token or email)')
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   const email = token.email as string
