@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { ChevronLeft, ChevronRight, BookOpen, Flame, Check, Lock } from 'lucide-react'
+import { ChevronLeft, ChevronRight, BookOpen, Flame, Check, Lock, FileText } from 'lucide-react'
 
 interface Chapter {
   id: string
@@ -24,6 +24,9 @@ interface ChapterStat {
   wrong_rate: number
   total_attempts: number
   last_attempt_at: string | null
+  lesson_completed?: boolean
+  mini_quiz_correct?: number
+  mini_quiz_total?: number
 }
 
 const FREE_LIMIT = 3
@@ -193,7 +196,12 @@ export default function ChaptersPage() {
 
             if (stat) {
               if (stat.avg_score >= 80) {
-                statusLabel = '완료 ✅'
+                statusLabel = '테스트 완료 ✅'
+                statusColor = 'text-[#639922]'
+                badgeBg     = 'bg-[#63992215]'
+                badgeNode   = <Check size={16} className="text-[#639922]" />
+              } else if (stat.lesson_completed) {
+                statusLabel = '학습 완료 ✅'
                 statusColor = 'text-[#639922]'
                 badgeBg     = 'bg-[#63992215]'
                 badgeNode   = <Check size={16} className="text-[#639922]" />
@@ -206,58 +214,69 @@ export default function ChaptersPage() {
             }
 
             return (
-              <button
-                key={ch.id}
-                onClick={() => {
-                  if (isLocked) { setShowLockPopup(true); return }
-                  localStorage.setItem('kinepia_current_subject_id', subjectId)
-                  router.push(`/lesson/${ch.id}`)
-                }}
-                className="w-full bg-white rounded-2xl border border-[#E5E5E5] p-4 text-left flex items-center gap-4 active:bg-[#F5F5F3]"
-              >
-                {/* Badge */}
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                  isLocked ? 'bg-[#F5F5F3]' : badgeBg
-                }`}>
-                  {isLocked
-                    ? <Lock size={15} className="text-[#ADADAD]" />
-                    : badgeNode
-                  }
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className={`text-[14px] font-bold truncate ${isLocked ? 'text-[#ADADAD]' : 'text-[#1A1A1A]'}`}>
-                      {ch.title}
-                    </span>
-                    {isWeak && !isLocked && <Flame size={13} className="text-[#E24B4A] flex-shrink-0" />}
+              <div key={ch.id} className="w-full bg-white rounded-2xl border border-[#E5E5E5] flex items-center active:bg-[#F5F5F3]">
+                {/* 메인 영역 (클릭 → 레슨 진입) */}
+                <button
+                  onClick={() => {
+                    if (isLocked) { setShowLockPopup(true); return }
+                    localStorage.setItem('kinepia_current_subject_id', subjectId)
+                    router.push(`/lesson/${ch.id}`)
+                  }}
+                  className="flex-1 p-4 text-left flex items-center gap-4 min-w-0"
+                >
+                  {/* Badge */}
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                    isLocked ? 'bg-[#F5F5F3]' : badgeBg
+                  }`}>
+                    {isLocked
+                      ? <Lock size={15} className="text-[#ADADAD]" />
+                      : badgeNode
+                    }
                   </div>
 
-                  {isLocked ? (
-                    <span className="text-[10px] text-[#ADADAD]">🔒 구독 후 이용 가능</span>
-                  ) : stat ? (
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`text-[10px] font-bold ${statusColor}`}>{statusLabel}</span>
-                      <span className="text-[10px] text-[#ADADAD]">·</span>
-                      <span className={`text-[10px] font-bold ${
-                        stat.avg_score >= 80 ? 'text-[#639922]' : stat.avg_score >= 60 ? 'text-[#378ADD]' : 'text-[#E24B4A]'
-                      }`}>최고 {stat.avg_score}점</span>
-                      {stat.last_attempt_at && (
-                        <>
-                          <span className="text-[10px] text-[#ADADAD]">·</span>
-                          <span className="text-[10px] text-[#ADADAD]">
-                            {new Date(stat.last_attempt_at).toLocaleDateString('ko-KR')}
-                          </span>
-                        </>
-                      )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className={`text-[14px] font-bold truncate ${isLocked ? 'text-[#ADADAD]' : 'text-[#1A1A1A]'}`}>
+                        {ch.title}
+                      </span>
+                      {isWeak && !isLocked && <Flame size={13} className="text-[#E24B4A] flex-shrink-0" />}
                     </div>
-                  ) : (
-                    <span className={`text-[10px] ${statusColor}`}>{statusLabel}</span>
-                  )}
-                </div>
 
-                {!isLocked && <ChevronRight size={16} className="text-[#ADADAD] flex-shrink-0" />}
-              </button>
+                    {isLocked ? (
+                      <span className="text-[10px] text-[#ADADAD]">🔒 구독 후 이용 가능</span>
+                    ) : stat ? (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`text-[10px] font-bold ${statusColor}`}>{statusLabel}</span>
+                        {stat.avg_score > 0 && (
+                          <>
+                            <span className="text-[10px] text-[#ADADAD]">·</span>
+                            <span className={`text-[10px] font-bold ${
+                              stat.avg_score >= 80 ? 'text-[#639922]' : stat.avg_score >= 60 ? 'text-[#378ADD]' : 'text-[#E24B4A]'
+                            }`}>테스트 {stat.avg_score}점</span>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <span className={`text-[10px] ${statusColor}`}>{statusLabel}</span>
+                    )}
+                  </div>
+
+                  {!isLocked && <ChevronRight size={16} className="text-[#ADADAD] flex-shrink-0" />}
+                </button>
+
+                {/* 리포트 아이콘 (stat 있을 때만) */}
+                {!isLocked && stat && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      router.push(`/report/${ch.id}`)
+                    }}
+                    className="flex-shrink-0 px-3 py-4 border-l border-[#F5F5F3]"
+                  >
+                    <FileText size={16} className="text-[#ADADAD]" />
+                  </button>
+                )}
+              </div>
             )
           })
         )}

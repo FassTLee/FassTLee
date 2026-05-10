@@ -95,6 +95,10 @@ export default function LessonPage() {
   const [showComplete, setShowComplete]   = useState(false)
   const pendingSlideIdxRef                = useRef(0)
 
+  /* ── Mini quiz session score ────────────────── */
+  const miniCorrectRef = useRef(0)
+  const miniTotalRef   = useRef(0)
+
   /* ── Swipe (touch + mouse) ──────────────────── */
   const dragStartX  = useRef(0)
   const isDragging  = useRef(false)
@@ -185,6 +189,17 @@ export default function LessonPage() {
     setMiniConfirmed(false)
     setMiniQ(null)
     if (pendingSlideIdxRef.current >= slides.length - 1) {
+      // 학습 완료 → DB 저장 (fire-and-forget)
+      fetch('/api/v1/lesson-complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chapterId,
+          subjectId: localStorage.getItem(SUBJECT_KEY) ?? '',
+          miniQuizCorrect: miniCorrectRef.current,
+          miniQuizTotal:   miniTotalRef.current,
+        }),
+      }).catch(() => {})
       setShowComplete(true)
     } else {
       setSlideIndex(pendingSlideIdxRef.current + 1)
@@ -248,6 +263,8 @@ export default function LessonPage() {
     if (miniSelected === null || miniConfirmed || !miniQ) return
     setMiniConfirmed(true)
     const correct = miniSelected === miniQ.answerIdx
+    miniTotalRef.current   += 1
+    if (correct) miniCorrectRef.current += 1
     fetch('/api/v1/test-complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -536,7 +553,14 @@ export default function LessonPage() {
             <Zap size={18} /> 테스트 시작하기
           </button>
           <button
-            onClick={() => { setShowComplete(false); setSlideIndex(0); setCheckedSentences([]); setAutoProgress(0) }}
+            onClick={() => {
+              setShowComplete(false)
+              setSlideIndex(0)
+              setCheckedSentences([])
+              setAutoProgress(0)
+              miniCorrectRef.current = 0
+              miniTotalRef.current   = 0
+            }}
             className="mt-3 text-[13px] text-[#ADADAD] underline"
           >
             다시 복습하기
