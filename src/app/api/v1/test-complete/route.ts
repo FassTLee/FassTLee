@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getToken } from 'next-auth/jwt'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
@@ -7,21 +6,16 @@ export const dynamic = 'force-dynamic'
 interface Record { questionId: string; correct: boolean }
 
 export async function POST(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
-  if (!token?.email) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  const email = token.email as string
   if (!isSupabaseConfigured) {
     return NextResponse.json({ ok: true, saved: false })
   }
 
   const body = await req.json()
-  const { chapterId, subjectId, records } = body as {
-    chapterId: string; subjectId: string; records: Record[]
+  const { chapterId, subjectId, records, email } = body as {
+    chapterId: string; subjectId: string; records: Record[]; email: string
   }
-  if (!chapterId || !Array.isArray(records)) {
-    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
+  if (!chapterId || !email || !Array.isArray(records)) {
+    return NextResponse.json({ ok: true, saved: false })
   }
 
   const { data: profile } = await supabase
@@ -38,9 +32,7 @@ export async function POST(req: NextRequest) {
   const total = records.length
   const correctCount = records.filter((r) => r.correct).length
   const score = total > 0 ? Math.round((correctCount / total) * 100) : 0
-  const wrongRate = total > 0 ? Math.round(((total - correctCount) / total) * 100) : 0
 
-  // Get existing chapter stat
   const { data: existing } = await supabase
     .from('chapter_stats')
     .select('total_attempts, total_correct, avg_score')
@@ -56,7 +48,7 @@ export async function POST(req: NextRequest) {
   const newAvg      = Math.round((oldAvg * oldAttempts + score) / newAttempts)
   const newWrongRate = newAttempts > 0
     ? Math.round(((newAttempts * total - newCorrect) / (newAttempts * total)) * 100)
-    : wrongRate
+    : 0
 
   await supabase.from('chapter_stats').upsert(
     {
@@ -73,7 +65,6 @@ export async function POST(req: NextRequest) {
     { onConflict: 'user_id,chapter_id' }
   )
 
-  // Update question stats
   await Promise.all(
     records.map(async (r) => {
       const { data: existingQ } = await supabase

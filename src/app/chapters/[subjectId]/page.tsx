@@ -32,7 +32,7 @@ interface ChapterStat {
 const FREE_LIMIT = 3
 
 export default function ChaptersPage() {
-  const { status } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
   const params = useParams()
   const subjectId = params.subjectId as string
@@ -115,7 +115,8 @@ export default function ChaptersPage() {
       setChapters(allChapters)
 
       try {
-        const res  = await fetch('/api/v1/report')
+        const email = session?.user?.email ?? ''
+        const res  = await fetch(`/api/v1/report?email=${encodeURIComponent(email)}`)
         const data = await res.json()
         const map: Record<string, ChapterStat> = {}
         for (const s of (data.chapter_stats ?? []) as ChapterStat[]) {

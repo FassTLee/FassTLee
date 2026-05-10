@@ -213,7 +213,8 @@ function DashboardContent() {
     // Chapter stats
     let stats: ChapterStat[] = []
     try {
-      const res   = await fetch('/api/v1/report')
+      const email = session?.user?.email ?? ''
+      const res   = await fetch(`/api/v1/report?email=${encodeURIComponent(email)}`)
       const data  = await res.json()
       stats = data.chapter_stats ?? []
 

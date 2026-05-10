@@ -35,7 +35,7 @@ interface LessonStat {
 }
 
 export default function ReportPage() {
-  const { status } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
   const params = useParams()
   const chapterId = params.chapterId as string
@@ -57,17 +57,18 @@ export default function ReportPage() {
       if (parsed.chapterId === chapterId) setResult(parsed)
     }
     setSubjectId(localStorage.getItem(SUBJECT_KEY))
-    fetchAll()
+    fetchAll(session?.user?.email ?? null)
   }, [status, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fetchAll = async () => {
-    await Promise.all([fetchLessonStat(), fetchNextChapter()])
+  const fetchAll = async (email: string | null) => {
+    await Promise.all([fetchLessonStat(email), fetchNextChapter()])
     setLoading(false)
   }
 
-  const fetchLessonStat = async () => {
+  const fetchLessonStat = async (email: string | null) => {
     try {
-      const res  = await fetch('/api/v1/report')
+      const url  = email ? `/api/v1/report?email=${encodeURIComponent(email)}` : '/api/v1/report'
+      const res  = await fetch(url)
       const data = await res.json()
       const stat = (data.chapter_stats ?? []).find(
         (s: LessonStat & { chapter_id: string }) => s.chapter_id === chapterId

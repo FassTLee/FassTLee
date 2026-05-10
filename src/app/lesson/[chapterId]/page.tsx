@@ -66,7 +66,7 @@ function toSlideTitle(q: string): string {
 }
 
 export default function LessonPage() {
-  const { status } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
   const params = useParams()
   const chapterId = params.chapterId as string
@@ -198,6 +198,7 @@ export default function LessonPage() {
           subjectId: localStorage.getItem(SUBJECT_KEY) ?? '',
           miniQuizCorrect: miniCorrectRef.current,
           miniQuizTotal:   miniTotalRef.current,
+          email: session?.user?.email ?? '',
         }),
       }).catch(() => {})
       setShowComplete(true)
@@ -272,6 +273,7 @@ export default function LessonPage() {
         chapterId,
         subjectId: localStorage.getItem(SUBJECT_KEY) ?? '',
         records: [{ questionId: miniQ.id, correct }],
+        email: session?.user?.email ?? '',
       }),
     }).catch(() => {})
   }

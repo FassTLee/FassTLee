@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getToken } from 'next-auth/jwt'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
-  if (!token?.email) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const email = req.nextUrl.searchParams.get('email')
+  if (!email) {
+    return NextResponse.json({ chapter_stats: [], question_stats: [] })
   }
-  const email = token.email as string
   if (!isSupabaseConfigured) {
     return NextResponse.json({ chapter_stats: [], question_stats: [] })
   }

@@ -46,7 +46,7 @@ interface AnswerRecord {
 }
 
 export default function TestPage() {
-  const { status } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
   const params = useParams()
   const chapterId = params.chapterId as string
@@ -100,6 +100,7 @@ export default function TestPage() {
           chapterId,
           subjectId: localStorage.getItem('kinepia_current_subject_id') ?? '',
           records: nextRecords.map((r) => ({ questionId: r.questionId, correct: r.correct })),
+          email: session?.user?.email ?? '',
         }),
       }).catch(() => {})
       router.replace(`/report/${chapterId}`)
