@@ -194,7 +194,8 @@ function DashboardContent() {
 
     // Profile settings (region / hours)
     try {
-      const res  = await fetch('/api/v1/profile-settings')
+      const email = session?.user?.email ?? ''
+      const res  = await fetch(`/api/v1/profile-settings?email=${encodeURIComponent(email)}`)
       const data = await res.json()
       if (data.exam_target_date) {
         setExamDateInput(data.exam_target_date)
@@ -205,7 +206,8 @@ function DashboardContent() {
 
     // D-Day goals
     try {
-      const res  = await fetch('/api/v1/user-goals')
+      const email = session?.user?.email ?? ''
+      const res  = await fetch(`/api/v1/user-goals?email=${encodeURIComponent(email)}`)
       const data = await res.json()
       setDdayGoals(data.goals ?? [])
     } catch { /* ignore */ }
@@ -365,7 +367,7 @@ function DashboardContent() {
       const res  = await fetch('/api/v1/user-goals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cert_type: ddayNewCert, exam_date: ddayNewDate }),
+        body: JSON.stringify({ email: session?.user?.email ?? '', cert_type: ddayNewCert, exam_date: ddayNewDate }),
       })
       const data = await res.json()
       if (data.goal) setDdayGoals((prev) => [...prev, data.goal])
@@ -380,7 +382,7 @@ function DashboardContent() {
       await fetch('/api/v1/user-goals', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ email: session?.user?.email ?? '', id }),
       })
     } catch { /* ignore */ }
   }
@@ -392,6 +394,7 @@ function DashboardContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          email:             session?.user?.email ?? '',
           exam_target_date:  examDateInput  || null,
           region:            regionInput    || null,
           daily_study_hours: dailyHoursInput ? parseInt(dailyHoursInput) : null,

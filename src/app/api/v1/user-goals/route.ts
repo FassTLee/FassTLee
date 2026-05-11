@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getToken } from 'next-auth/jwt'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
-  if (!token?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const email = token.email as string
+  const email = req.nextUrl.searchParams.get('email')
+  if (!email) return NextResponse.json({ goals: [] })
   if (!isSupabaseConfigured) return NextResponse.json({ goals: [] })
 
   const { data } = await supabase
@@ -20,12 +18,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
-  if (!token?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const email = token.email as string
+  const body = await req.json()
+  const { email, cert_type, exam_date } = body
+  if (!email) return NextResponse.json({ ok: true, saved: false })
   if (!isSupabaseConfigured) return NextResponse.json({ ok: true, saved: false })
-
-  const { cert_type, exam_date } = await req.json()
   if (!cert_type || !exam_date) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
 
   const { data, error } = await supabase
@@ -39,12 +35,11 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
-  if (!token?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const email = token.email as string
+  const body = await req.json()
+  const { email, id } = body
+  if (!email) return NextResponse.json({ ok: true })
   if (!isSupabaseConfigured) return NextResponse.json({ ok: true })
 
-  const { id } = await req.json()
   await supabase
     .from('user_goals')
     .delete()

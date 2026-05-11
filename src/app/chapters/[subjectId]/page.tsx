@@ -50,8 +50,9 @@ export default function ChaptersPage() {
   useEffect(() => {
     if (status === 'loading') return
     if (status === 'unauthenticated') { router.replace('/landing'); return }
+    if (status === 'authenticated' && !session?.user?.email) return
     fetchData()
-  }, [status, subjectId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [status, session, subjectId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
     const timeoutId = setTimeout(() => {
