@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
-  if (!isSupabaseConfigured) {
+  if (!isSupabaseAdminConfigured) {
     return NextResponse.json({ ok: true, saved: false })
   }
 
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
   const now = new Date().toISOString()
 
-  const { data: existing } = await supabase
+  const { data: existing } = await supabaseAdmin
     .from('chapter_stats')
     .select('id')
     .eq('user_id', userId)
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   console.log('[lesson-complete] userId:', userId, '| chapterId:', chapterId, '| existing:', !!existing)
 
   if (existing) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('chapter_stats')
       .update({
         lesson_completed:    true,
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     console.log('[lesson-complete] UPDATE data:', data, '| error:', error)
   } else {
     try {
-      const { data, error } = await supabase.from('chapter_stats').insert({
+      const { data, error } = await supabaseAdmin.from('chapter_stats').insert({
         user_id:             userId,
         chapter_id:          chapterId,
         subject_id:          subjectId ?? '',

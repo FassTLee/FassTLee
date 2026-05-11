@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
 
 interface Record { questionId: string; correct: boolean }
 
 export async function POST(req: NextRequest) {
-  if (!isSupabaseConfigured) {
+  if (!isSupabaseAdminConfigured) {
     return NextResponse.json({ ok: true, saved: false })
   }
 
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   const correctCount = records.filter((r) => r.correct).length
   const score        = total > 0 ? Math.round((correctCount / total) * 100) : 0
 
-  const { data: existing } = await supabase
+  const { data: existing } = await supabaseAdmin
     .from('chapter_stats')
     .select('total_attempts, total_correct, avg_score')
     .eq('user_id', userId)
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     ? Math.round(((newAttempts * total - newCorrect) / (newAttempts * total)) * 100)
     : 0
 
-  await supabase.from('chapter_stats').upsert(
+  await supabaseAdmin.from('chapter_stats').upsert(
     {
       user_id:         userId,
       chapter_id:      chapterId,
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
 
   await Promise.all(
     records.map(async (r) => {
-      const { data: existingQ } = await supabase
+      const { data: existingQ } = await supabaseAdmin
         .from('question_stats')
         .select('total_attempts, total_correct')
         .eq('user_id', userId)
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
       const qCorrect  = qOldRight + (r.correct ? 1 : 0)
       const qWrongRate = Math.round(((qAttempts - qCorrect) / qAttempts) * 100)
 
-      await supabase.from('question_stats').upsert(
+      await supabaseAdmin.from('question_stats').upsert(
         {
           user_id:        userId,
           question_id:    String(r.questionId),
