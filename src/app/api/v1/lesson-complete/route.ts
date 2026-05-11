@@ -42,22 +42,26 @@ export async function POST(req: NextRequest) {
       .select()
     console.log('[lesson-complete] UPDATE data:', data, '| error:', error)
   } else {
-    const { data, error } = await supabase.from('chapter_stats').insert({
-      user_id:             userId,
-      chapter_id:          chapterId,
-      subject_id:          subjectId ?? '',
-      total_attempts:      0,
-      total_correct:       0,
-      avg_score:           0,
-      wrong_rate:          0,
-      lesson_completed:    true,
-      mini_quiz_correct:   miniQuizCorrect ?? 0,
-      mini_quiz_total:     miniQuizTotal   ?? 0,
-      lesson_completed_at: now,
-      last_attempt_at:     now,
-      updated_at:          now,
-    }).select()
-    console.log('[lesson-complete] INSERT data:', data, '| error:', error)
+    try {
+      const { data, error } = await supabase.from('chapter_stats').insert({
+        user_id:             userId,
+        chapter_id:          chapterId,
+        subject_id:          subjectId ?? '',
+        total_attempts:      0,
+        total_correct:       0,
+        avg_score:           0,
+        wrong_rate:          0,
+        lesson_completed:    true,
+        mini_quiz_correct:   miniQuizCorrect ?? 0,
+        mini_quiz_total:     miniQuizTotal   ?? 0,
+        lesson_completed_at: now,
+        last_attempt_at:     now,
+        updated_at:          now,
+      }).select()
+      console.log('[lesson-complete] INSERT data:', data, '| error:', error)
+    } catch (e) {
+      console.log('[lesson-complete] INSERT EXCEPTION:', e)
+    }
   }
 
   return NextResponse.json({ ok: true, saved: true })
