@@ -47,11 +47,35 @@ export default function ChaptersPage() {
   // TODO: replace with real subscription check (e.g. from profile API)
   const isSubscribed = false
 
+  // ── 챕터 목록 fetch (userId 불필요) ──────────────────────────────────
   useEffect(() => {
     if (status === 'loading') return
     if (status === 'unauthenticated') { router.replace('/landing'); return }
     fetchData()
-  }, [status, session, subjectId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [status, subjectId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── 통계 fetch (userId 확보되는 순간 실행) ────────────────────────────
+  useEffect(() => {
+    const userId = session?.user?.id
+    console.log('[chapters] fetchStats userId:', userId)
+    if (!userId) return
+    fetchStats(userId)
+  }, [session?.user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchStats = async (userId: string) => {
+    try {
+      const res  = await fetch(`/api/v1/report?userId=${encodeURIComponent(userId)}`)
+      const data = await res.json()
+      console.log('[chapters] chapter_stats count:', data.chapter_stats?.length, data.chapter_stats)
+      const map: Record<string, ChapterStat> = {}
+      for (const s of (data.chapter_stats ?? []) as ChapterStat[]) {
+        map[s.chapter_id] = s
+      }
+      setStatsMap(map)
+    } catch (e) {
+      console.log('[chapters] fetchStats error:', e)
+    }
+  }
 
   const fetchData = async () => {
     const timeoutId = setTimeout(() => {
@@ -113,20 +137,6 @@ export default function ChaptersPage() {
       }
 
       setChapters(allChapters)
-
-      const sessionUserId = session?.user?.id
-      if (sessionUserId) {
-        try {
-          const res  = await fetch(`/api/v1/report?userId=${encodeURIComponent(sessionUserId)}`)
-          const data = await res.json()
-          const map: Record<string, ChapterStat> = {}
-          for (const s of (data.chapter_stats ?? []) as ChapterStat[]) {
-            map[s.chapter_id] = s
-          }
-          setStatsMap(map)
-        } catch { /* ignore */ }
-      }
-
       clearTimeout(timeoutId)
       setLoading(false)
     } catch {
