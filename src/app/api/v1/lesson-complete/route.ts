@@ -16,18 +16,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, saved: false })
   }
 
-  const { data: profile } = await supabase
-    .from('profiles').select('id').eq('sub', userId).single()
-  if (!profile?.id) {
-    return NextResponse.json({ ok: true, saved: false })
-  }
-
   const now = new Date().toISOString()
 
   const { data: existing } = await supabase
     .from('chapter_stats')
     .select('id')
-    .eq('user_id', profile.id)
+    .eq('user_id', userId)
     .eq('chapter_id', chapterId)
     .maybeSingle()
 
@@ -35,17 +29,17 @@ export async function POST(req: NextRequest) {
     await supabase
       .from('chapter_stats')
       .update({
-        lesson_completed:     true,
-        mini_quiz_correct:    miniQuizCorrect ?? 0,
-        mini_quiz_total:      miniQuizTotal   ?? 0,
-        lesson_completed_at:  now,
-        updated_at:           now,
+        lesson_completed:    true,
+        mini_quiz_correct:   miniQuizCorrect ?? 0,
+        mini_quiz_total:     miniQuizTotal   ?? 0,
+        lesson_completed_at: now,
+        updated_at:          now,
       })
-      .eq('user_id', profile.id)
+      .eq('user_id', userId)
       .eq('chapter_id', chapterId)
   } else {
     await supabase.from('chapter_stats').insert({
-      user_id:             profile.id,
+      user_id:             userId,
       chapter_id:          chapterId,
       subject_id:          subjectId ?? '',
       total_attempts:      0,

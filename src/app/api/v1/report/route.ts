@@ -12,26 +12,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ chapter_stats: [], question_stats: [] })
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('sub', userId)
-    .single()
-
-  if (!profile?.id) {
-    return NextResponse.json({ chapter_stats: [], question_stats: [] })
-  }
-
   const [{ data: chapterStats }, { data: questionStats }] = await Promise.all([
     supabase
       .from('chapter_stats')
       .select('chapter_id, subject_id, avg_score, wrong_rate, total_attempts, last_attempt_at, lesson_completed, mini_quiz_correct, mini_quiz_total, lesson_completed_at')
-      .eq('user_id', profile.id)
+      .eq('user_id', userId)
       .order('last_attempt_at', { ascending: false }),
     supabase
       .from('question_stats')
       .select('question_id, chapter_id, wrong_rate, total_attempts')
-      .eq('user_id', profile.id)
+      .eq('user_id', userId)
       .order('wrong_rate', { ascending: false }),
   ])
 

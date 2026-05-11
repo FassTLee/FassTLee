@@ -18,41 +18,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, saved: false })
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('sub', userId)
-    .single()
-
-  if (!profile?.id) {
-    return NextResponse.json({ ok: true, saved: false })
-  }
-
-  const dbUserId = profile.id
-  const total = records.length
+  const total        = records.length
   const correctCount = records.filter((r) => r.correct).length
-  const score = total > 0 ? Math.round((correctCount / total) * 100) : 0
+  const score        = total > 0 ? Math.round((correctCount / total) * 100) : 0
 
   const { data: existing } = await supabase
     .from('chapter_stats')
     .select('total_attempts, total_correct, avg_score')
-    .eq('user_id', dbUserId)
+    .eq('user_id', userId)
     .eq('chapter_id', chapterId)
     .maybeSingle()
 
-  const oldAttempts = existing?.total_attempts ?? 0
-  const oldCorrect  = existing?.total_correct  ?? 0
-  const oldAvg      = existing?.avg_score      ?? 0
-  const newAttempts = oldAttempts + 1
-  const newCorrect  = oldCorrect + correctCount
-  const newAvg      = Math.round((oldAvg * oldAttempts + score) / newAttempts)
+  const oldAttempts  = existing?.total_attempts ?? 0
+  const oldCorrect   = existing?.total_correct  ?? 0
+  const oldAvg       = existing?.avg_score      ?? 0
+  const newAttempts  = oldAttempts + 1
+  const newCorrect   = oldCorrect + correctCount
+  const newAvg       = Math.round((oldAvg * oldAttempts + score) / newAttempts)
   const newWrongRate = newAttempts > 0
     ? Math.round(((newAttempts * total - newCorrect) / (newAttempts * total)) * 100)
     : 0
 
   await supabase.from('chapter_stats').upsert(
     {
-      user_id:         dbUserId,
+      user_id:         userId,
       chapter_id:      chapterId,
       subject_id:      subjectId ?? '',
       total_attempts:  newAttempts,
@@ -70,19 +59,19 @@ export async function POST(req: NextRequest) {
       const { data: existingQ } = await supabase
         .from('question_stats')
         .select('total_attempts, total_correct')
-        .eq('user_id', dbUserId)
+        .eq('user_id', userId)
         .eq('question_id', String(r.questionId))
         .maybeSingle()
 
-      const qOldAttempts = existingQ?.total_attempts ?? 0
-      const qOldCorrect  = existingQ?.total_correct  ?? 0
-      const qAttempts = qOldAttempts + 1
-      const qCorrect  = qOldCorrect + (r.correct ? 1 : 0)
+      const qOld      = existingQ?.total_attempts ?? 0
+      const qOldRight = existingQ?.total_correct  ?? 0
+      const qAttempts = qOld + 1
+      const qCorrect  = qOldRight + (r.correct ? 1 : 0)
       const qWrongRate = Math.round(((qAttempts - qCorrect) / qAttempts) * 100)
 
       await supabase.from('question_stats').upsert(
         {
-          user_id:        dbUserId,
+          user_id:        userId,
           question_id:    String(r.questionId),
           chapter_id:     chapterId,
           total_attempts: qAttempts,
