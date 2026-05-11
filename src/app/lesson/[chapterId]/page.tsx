@@ -189,7 +189,8 @@ export default function LessonPage() {
     setMiniConfirmed(false)
     setMiniQ(null)
     if (pendingSlideIdxRef.current >= slides.length - 1) {
-      // 학습 완료 → DB 저장 (fire-and-forget)
+      // 학습 완료 → DB 저장
+      console.log('[lesson-complete] 호출 시도 userId:', session?.user?.id)
       fetch('/api/v1/lesson-complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -200,7 +201,9 @@ export default function LessonPage() {
           miniQuizTotal:   miniTotalRef.current,
           userId: session?.user?.id ?? '',
         }),
-      }).catch(() => {})
+      })
+        .then((res) => console.log('[lesson-complete] 응답:', res.status))
+        .catch((err) => console.log('[lesson-complete] 오류:', err))
       setShowComplete(true)
     } else {
       setSlideIndex(pendingSlideIdxRef.current + 1)
