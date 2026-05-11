@@ -25,8 +25,10 @@ export async function POST(req: NextRequest) {
     .eq('chapter_id', chapterId)
     .maybeSingle()
 
+  console.log('[lesson-complete] userId:', userId, '| chapterId:', chapterId, '| existing:', !!existing)
+
   if (existing) {
-    await supabase
+    const { data, error } = await supabase
       .from('chapter_stats')
       .update({
         lesson_completed:    true,
@@ -37,8 +39,10 @@ export async function POST(req: NextRequest) {
       })
       .eq('user_id', userId)
       .eq('chapter_id', chapterId)
+      .select()
+    console.log('[lesson-complete] UPDATE data:', data, '| error:', error)
   } else {
-    await supabase.from('chapter_stats').insert({
+    const { data, error } = await supabase.from('chapter_stats').insert({
       user_id:             userId,
       chapter_id:          chapterId,
       subject_id:          subjectId ?? '',
@@ -52,7 +56,8 @@ export async function POST(req: NextRequest) {
       lesson_completed_at: now,
       last_attempt_at:     now,
       updated_at:          now,
-    })
+    }).select()
+    console.log('[lesson-complete] INSERT data:', data, '| error:', error)
   }
 
   return NextResponse.json({ ok: true, saved: true })
