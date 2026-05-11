@@ -50,7 +50,6 @@ export default function ChaptersPage() {
   useEffect(() => {
     if (status === 'loading') return
     if (status === 'unauthenticated') { router.replace('/landing'); return }
-    if (status === 'authenticated' && !session?.user?.email) return
     fetchData()
   }, [status, session, subjectId]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -115,16 +114,17 @@ export default function ChaptersPage() {
 
       setChapters(allChapters)
 
-      try {
-        const email = session?.user?.email ?? ''
-        const res  = await fetch(`/api/v1/report?email=${encodeURIComponent(email)}`)
-        const data = await res.json()
-        const map: Record<string, ChapterStat> = {}
-        for (const s of (data.chapter_stats ?? []) as ChapterStat[]) {
-          map[s.chapter_id] = s
-        }
-        setStatsMap(map)
-      } catch { /* ignore */ }
+      if (session?.user?.email) {
+        try {
+          const res  = await fetch(`/api/v1/report?email=${encodeURIComponent(session.user.email)}`)
+          const data = await res.json()
+          const map: Record<string, ChapterStat> = {}
+          for (const s of (data.chapter_stats ?? []) as ChapterStat[]) {
+            map[s.chapter_id] = s
+          }
+          setStatsMap(map)
+        } catch { /* ignore */ }
+      }
 
       clearTimeout(timeoutId)
       setLoading(false)
