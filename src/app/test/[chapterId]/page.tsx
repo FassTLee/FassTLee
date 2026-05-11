@@ -100,7 +100,7 @@ export default function TestPage() {
           chapterId,
           subjectId: localStorage.getItem('kinepia_current_subject_id') ?? '',
           records: nextRecords.map((r) => ({ questionId: r.questionId, correct: r.correct })),
-          email: session?.user?.email ?? '',
+          userId: session?.user?.id ?? '',
         }),
       }).catch(() => {})
       router.replace(`/report/${chapterId}`)

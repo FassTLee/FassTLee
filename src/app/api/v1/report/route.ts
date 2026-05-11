@@ -4,8 +4,8 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const email = req.nextUrl.searchParams.get('email')
-  if (!email) {
+  const userId = req.nextUrl.searchParams.get('userId')
+  if (!userId) {
     return NextResponse.json({ chapter_stats: [], question_stats: [] })
   }
   if (!isSupabaseConfigured) {
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   const { data: profile } = await supabase
     .from('profiles')
     .select('id')
-    .eq('email', email)
+    .eq('sub', userId)
     .single()
 
   if (!profile?.id) {

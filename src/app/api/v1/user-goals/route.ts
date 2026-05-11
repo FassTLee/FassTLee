@@ -3,15 +3,27 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
+async function getProfileId(userId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('sub', userId)
+    .single()
+  return data?.id ?? null
+}
+
 export async function GET(req: NextRequest) {
-  const email = req.nextUrl.searchParams.get('email')
-  if (!email) return NextResponse.json({ goals: [] })
+  const userId = req.nextUrl.searchParams.get('userId')
+  if (!userId) return NextResponse.json({ goals: [] })
   if (!isSupabaseConfigured) return NextResponse.json({ goals: [] })
+
+  const profileId = await getProfileId(userId)
+  if (!profileId) return NextResponse.json({ goals: [] })
 
   const { data } = await supabase
     .from('user_goals')
     .select('id, cert_type, exam_date')
-    .eq('email', email)
+    .eq('profile_id', profileId)
     .order('exam_date', { ascending: true })
 
   return NextResponse.json({ goals: data ?? [] })
@@ -19,14 +31,17 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { email, cert_type, exam_date } = body
-  if (!email) return NextResponse.json({ ok: true, saved: false })
+  const { userId, cert_type, exam_date } = body
+  if (!userId) return NextResponse.json({ ok: true, saved: false })
   if (!isSupabaseConfigured) return NextResponse.json({ ok: true, saved: false })
   if (!cert_type || !exam_date) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
 
+  const profileId = await getProfileId(userId)
+  if (!profileId) return NextResponse.json({ ok: true, saved: false })
+
   const { data, error } = await supabase
     .from('user_goals')
-    .insert({ email, cert_type, exam_date })
+    .insert({ profile_id: profileId, cert_type, exam_date })
     .select('id, cert_type, exam_date')
     .single()
 
@@ -36,15 +51,18 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const body = await req.json()
-  const { email, id } = body
-  if (!email) return NextResponse.json({ ok: true })
+  const { userId, id } = body
+  if (!userId) return NextResponse.json({ ok: true })
   if (!isSupabaseConfigured) return NextResponse.json({ ok: true })
+
+  const profileId = await getProfileId(userId)
+  if (!profileId) return NextResponse.json({ ok: true })
 
   await supabase
     .from('user_goals')
     .delete()
     .eq('id', id)
-    .eq('email', email)
+    .eq('profile_id', profileId)
 
   return NextResponse.json({ ok: true })
 }

@@ -194,8 +194,8 @@ function DashboardContent() {
 
     // Profile settings (region / hours)
     try {
-      const email = session?.user?.email ?? ''
-      const res  = await fetch(`/api/v1/profile-settings?email=${encodeURIComponent(email)}`)
+      const userId = session?.user?.id ?? ''
+      const res  = await fetch(`/api/v1/profile-settings?userId=${encodeURIComponent(userId)}`)
       const data = await res.json()
       if (data.exam_target_date) {
         setExamDateInput(data.exam_target_date)
@@ -206,8 +206,8 @@ function DashboardContent() {
 
     // D-Day goals
     try {
-      const email = session?.user?.email ?? ''
-      const res  = await fetch(`/api/v1/user-goals?email=${encodeURIComponent(email)}`)
+      const userId = session?.user?.id ?? ''
+      const res  = await fetch(`/api/v1/user-goals?userId=${encodeURIComponent(userId)}`)
       const data = await res.json()
       setDdayGoals(data.goals ?? [])
     } catch { /* ignore */ }
@@ -215,8 +215,8 @@ function DashboardContent() {
     // Chapter stats
     let stats: ChapterStat[] = []
     try {
-      const email = session?.user?.email ?? ''
-      const res   = await fetch(`/api/v1/report?email=${encodeURIComponent(email)}`)
+      const userId = session?.user?.id ?? ''
+      const res   = await fetch(`/api/v1/report?userId=${encodeURIComponent(userId)}`)
       const data  = await res.json()
       stats = data.chapter_stats ?? []
 
@@ -367,7 +367,7 @@ function DashboardContent() {
       const res  = await fetch('/api/v1/user-goals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: session?.user?.email ?? '', cert_type: ddayNewCert, exam_date: ddayNewDate }),
+        body: JSON.stringify({ userId: session?.user?.id ?? '', cert_type: ddayNewCert, exam_date: ddayNewDate }),
       })
       const data = await res.json()
       if (data.goal) setDdayGoals((prev) => [...prev, data.goal])
@@ -382,7 +382,7 @@ function DashboardContent() {
       await fetch('/api/v1/user-goals', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: session?.user?.email ?? '', id }),
+        body: JSON.stringify({ userId: session?.user?.id ?? '', id }),
       })
     } catch { /* ignore */ }
   }
@@ -394,7 +394,7 @@ function DashboardContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email:             session?.user?.email ?? '',
+          userId:            session?.user?.id ?? '',
           exam_target_date:  examDateInput  || null,
           region:            regionInput    || null,
           daily_study_hours: dailyHoursInput ? parseInt(dailyHoursInput) : null,

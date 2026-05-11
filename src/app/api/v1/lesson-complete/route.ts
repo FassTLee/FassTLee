@@ -9,15 +9,15 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { chapterId, subjectId, miniQuizCorrect, miniQuizTotal, email } = body as {
-    chapterId: string; subjectId: string; miniQuizCorrect: number; miniQuizTotal: number; email: string
+  const { chapterId, subjectId, miniQuizCorrect, miniQuizTotal, userId } = body as {
+    chapterId: string; subjectId: string; miniQuizCorrect: number; miniQuizTotal: number; userId: string
   }
-  if (!chapterId || !email) {
+  if (!chapterId || !userId) {
     return NextResponse.json({ ok: true, saved: false })
   }
 
   const { data: profile } = await supabase
-    .from('profiles').select('id').eq('email', email).single()
+    .from('profiles').select('id').eq('sub', userId).single()
   if (!profile?.id) {
     return NextResponse.json({ ok: true, saved: false })
   }

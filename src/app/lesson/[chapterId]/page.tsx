@@ -198,7 +198,7 @@ export default function LessonPage() {
           subjectId: localStorage.getItem(SUBJECT_KEY) ?? '',
           miniQuizCorrect: miniCorrectRef.current,
           miniQuizTotal:   miniTotalRef.current,
-          email: session?.user?.email ?? '',
+          userId: session?.user?.id ?? '',
         }),
       }).catch(() => {})
       setShowComplete(true)
@@ -273,7 +273,7 @@ export default function LessonPage() {
         chapterId,
         subjectId: localStorage.getItem(SUBJECT_KEY) ?? '',
         records: [{ questionId: miniQ.id, correct }],
-        email: session?.user?.email ?? '',
+        userId: session?.user?.id ?? '',
       }),
     }).catch(() => {})
   }

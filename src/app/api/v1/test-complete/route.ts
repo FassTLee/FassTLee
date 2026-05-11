@@ -11,24 +11,24 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { chapterId, subjectId, records, email } = body as {
-    chapterId: string; subjectId: string; records: Record[]; email: string
+  const { chapterId, subjectId, records, userId } = body as {
+    chapterId: string; subjectId: string; records: Record[]; userId: string
   }
-  if (!chapterId || !email || !Array.isArray(records)) {
+  if (!chapterId || !userId || !Array.isArray(records)) {
     return NextResponse.json({ ok: true, saved: false })
   }
 
   const { data: profile } = await supabase
     .from('profiles')
     .select('id')
-    .eq('email', email)
+    .eq('sub', userId)
     .single()
 
   if (!profile?.id) {
     return NextResponse.json({ ok: true, saved: false })
   }
 
-  const userId = profile.id
+  const dbUserId = profile.id
   const total = records.length
   const correctCount = records.filter((r) => r.correct).length
   const score = total > 0 ? Math.round((correctCount / total) * 100) : 0
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   const { data: existing } = await supabase
     .from('chapter_stats')
     .select('total_attempts, total_correct, avg_score')
-    .eq('user_id', userId)
+    .eq('user_id', dbUserId)
     .eq('chapter_id', chapterId)
     .maybeSingle()
 
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 
   await supabase.from('chapter_stats').upsert(
     {
-      user_id:         userId,
+      user_id:         dbUserId,
       chapter_id:      chapterId,
       subject_id:      subjectId ?? '',
       total_attempts:  newAttempts,
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
       const { data: existingQ } = await supabase
         .from('question_stats')
         .select('total_attempts, total_correct')
-        .eq('user_id', userId)
+        .eq('user_id', dbUserId)
         .eq('question_id', String(r.questionId))
         .maybeSingle()
 
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
 
       await supabase.from('question_stats').upsert(
         {
-          user_id:        userId,
+          user_id:        dbUserId,
           question_id:    String(r.questionId),
           chapter_id:     chapterId,
           total_attempts: qAttempts,

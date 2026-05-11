@@ -114,9 +114,10 @@ export default function ChaptersPage() {
 
       setChapters(allChapters)
 
-      if (session?.user?.email) {
+      const sessionUserId = session?.user?.id
+      if (sessionUserId) {
         try {
-          const res  = await fetch(`/api/v1/report?email=${encodeURIComponent(session.user.email)}`)
+          const res  = await fetch(`/api/v1/report?userId=${encodeURIComponent(sessionUserId)}`)
           const data = await res.json()
           const map: Record<string, ChapterStat> = {}
           for (const s of (data.chapter_stats ?? []) as ChapterStat[]) {

@@ -57,17 +57,17 @@ export default function ReportPage() {
       if (parsed.chapterId === chapterId) setResult(parsed)
     }
     setSubjectId(localStorage.getItem(SUBJECT_KEY))
-    fetchAll(session?.user?.email ?? null)
+    fetchAll(session?.user?.id ?? null)
   }, [status, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fetchAll = async (email: string | null) => {
-    await Promise.all([fetchLessonStat(email), fetchNextChapter()])
+  const fetchAll = async (userId: string | null) => {
+    await Promise.all([fetchLessonStat(userId), fetchNextChapter()])
     setLoading(false)
   }
 
-  const fetchLessonStat = async (email: string | null) => {
+  const fetchLessonStat = async (userId: string | null) => {
     try {
-      const url  = email ? `/api/v1/report?email=${encodeURIComponent(email)}` : '/api/v1/report'
+      const url  = userId ? `/api/v1/report?userId=${encodeURIComponent(userId)}` : '/api/v1/report'
       const res  = await fetch(url)
       const data = await res.json()
       const stat = (data.chapter_stats ?? []).find(

@@ -4,8 +4,8 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const email = req.nextUrl.searchParams.get('email')
-  if (!email) {
+  const userId = req.nextUrl.searchParams.get('userId')
+  if (!userId) {
     return NextResponse.json({ exam_target_date: null, region: null, daily_study_hours: null })
   }
   if (!isSupabaseConfigured) {
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   const { data } = await supabase
     .from('profiles')
     .select('exam_target_date, region, daily_study_hours')
-    .eq('email', email)
+    .eq('sub', userId)
     .single()
 
   return NextResponse.json({
@@ -27,19 +27,34 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { email, exam_target_date, region, daily_study_hours } = body
-  if (!email) return NextResponse.json({ ok: true, saved: false })
+  const { userId, exam_target_date, region, daily_study_hours } = body
+  if (!userId) return NextResponse.json({ ok: true, saved: false })
   if (!isSupabaseConfigured) return NextResponse.json({ ok: true, saved: false })
 
-  await supabase.from('profiles').upsert(
-    {
-      email,
-      exam_target_date:  exam_target_date  ?? null,
-      region:            region            ?? null,
+  // sub 기준 upsert
+  const { data: existing } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('sub', userId)
+    .maybeSingle()
+
+  if (existing?.id) {
+    await supabase
+      .from('profiles')
+      .update({
+        exam_target_date:  exam_target_date  ?? null,
+        region:            region            ?? null,
+        daily_study_hours: daily_study_hours ?? null,
+      })
+      .eq('id', existing.id)
+  } else {
+    await supabase.from('profiles').insert({
+      sub:              userId,
+      exam_target_date: exam_target_date  ?? null,
+      region:           region            ?? null,
       daily_study_hours: daily_study_hours ?? null,
-    },
-    { onConflict: 'email' }
-  )
+    })
+  }
 
   return NextResponse.json({ ok: true, saved: true })
 }
