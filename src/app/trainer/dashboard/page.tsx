@@ -9,6 +9,7 @@ import {
   RefreshCw, Calendar, Clock, MapPin, X, Trash2,
 } from 'lucide-react'
 import BottomTabBar from '@/components/common/BottomTabBar'
+import PhoneRegisterModal from '@/components/PhoneRegisterModal'
 
 type Tab = 'home' | 'classroom' | 'exam' | 'profile'
 
@@ -161,6 +162,9 @@ function DashboardContent() {
   const [examSubmitting, setExamSubmitting] = useState(false)
   const [examDone, setExamDone]             = useState(false)
 
+  /* ── Phone Modal ─────────────────────────────────────────────────── */
+  const [showPhoneModal, setShowPhoneModal] = useState(false)
+
   /* ── Profile ─────────────────────────────────────────────────────── */
   const [examDateInput, setExamDateInput]   = useState('')
   const [regionInput, setRegionInput]       = useState('')
@@ -306,6 +310,15 @@ function DashboardContent() {
         } catch { /* ignore */ }
       }
     }
+
+    // Phone 등록 여부 확인 → 미등록 + 미dismissal 시 모달 노출
+    try {
+      const phoneRes  = await fetch('/api/v1/update-phone')
+      const phoneData = await phoneRes.json()
+      if (!phoneData.registered && !sessionStorage.getItem('phone_modal_dismissed')) {
+        setShowPhoneModal(true)
+      }
+    } catch { /* ignore */ }
 
     setLoading(false)
   }
@@ -1153,6 +1166,11 @@ function DashboardContent() {
             )}
           </div>
         </div>
+      )}
+
+      {/* ── 휴대폰 번호 등록 모달 ── */}
+      {showPhoneModal && (
+        <PhoneRegisterModal onClose={() => setShowPhoneModal(false)} />
       )}
 
       {/* ── D-Day 설정 모달 ── */}

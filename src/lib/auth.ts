@@ -60,10 +60,11 @@ export const authOptions: NextAuthOptions = {
 
     async session({ session, token }) {
       session.user = {
-        id:    token.sub    ?? '',
-        name:  session.user?.name  ?? null,
-        email: session.user?.email ?? null,
-        image: session.user?.image ?? null,
+        id:       token.sub                    ?? '',
+        name:     session.user?.name           ?? null,
+        email:    session.user?.email          ?? null,
+        image:    session.user?.image          ?? null,
+        provider: (token.provider as string)   ?? null,
       }
       if (token.error) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
