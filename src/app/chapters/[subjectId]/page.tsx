@@ -27,6 +27,9 @@ interface ChapterStat {
   lesson_completed?: boolean
   mini_quiz_correct?: number
   mini_quiz_total?: number
+  latest_score?: number | null
+  best_score?: number | null
+  test_attempts?: number
 }
 
 const FREE_LIMIT = 3
@@ -208,18 +211,20 @@ export default function ChaptersPage() {
             )
 
             if (stat) {
-              if (stat.avg_score >= 80) {
-                statusLabel = '테스트 완료 ✅'
+              const testAttempts = stat.test_attempts ?? 0
+              const latestScore  = stat.latest_score  ?? 0
+              if (testAttempts >= 1 && latestScore >= 80) {
+                statusLabel = `${latestScore}점`
                 statusColor = 'text-[#639922]'
                 badgeBg     = 'bg-[#63992215]'
                 badgeNode   = <Check size={16} className="text-[#639922]" />
-              } else if (stat.lesson_completed) {
-                statusLabel = '학습 완료 ✅'
-                statusColor = 'text-[#639922]'
-                badgeBg     = 'bg-[#63992215]'
-                badgeNode   = <Check size={16} className="text-[#639922]" />
+              } else if (testAttempts >= 1) {
+                statusLabel = `${latestScore}점`
+                statusColor = latestScore >= 60 ? 'text-[#378ADD]' : 'text-[#E24B4A]'
+                badgeBg     = latestScore >= 60 ? 'bg-[#378ADD]/10' : 'bg-[#E24B4A]/10'
+                badgeNode   = <span className={`text-[13px] font-bold ${latestScore >= 60 ? 'text-[#378ADD]' : 'text-[#E24B4A]'}`}>{idx + 1}</span>
               } else {
-                statusLabel = '학습중'
+                statusLabel = '학습 중'
                 statusColor = 'text-[#378ADD]'
                 badgeBg     = 'bg-[#378ADD]/10'
                 badgeNode   = <span className="text-[#378ADD] text-[13px] font-bold">{idx + 1}</span>
@@ -257,20 +262,8 @@ export default function ChaptersPage() {
 
                     {isLocked ? (
                       <span className="text-[10px] text-[#ADADAD]">🔒 구독 후 이용 가능</span>
-                    ) : stat ? (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-[10px] font-bold ${statusColor}`}>{statusLabel}</span>
-                        {stat.avg_score > 0 && (
-                          <>
-                            <span className="text-[10px] text-[#ADADAD]">·</span>
-                            <span className={`text-[10px] font-bold ${
-                              stat.avg_score >= 80 ? 'text-[#639922]' : stat.avg_score >= 60 ? 'text-[#378ADD]' : 'text-[#E24B4A]'
-                            }`}>테스트 {stat.avg_score}점</span>
-                          </>
-                        )}
-                      </div>
                     ) : (
-                      <span className={`text-[10px] ${statusColor}`}>{statusLabel}</span>
+                      <span className={`text-[10px] font-bold ${statusColor}`}>{statusLabel}</span>
                     )}
                   </div>
 

@@ -51,6 +51,9 @@ interface ChapterStat {
   wrong_rate: number
   total_attempts: number
   last_attempt_at: string | null
+  latest_score?: number | null
+  best_score?: number | null
+  test_attempts?: number
 }
 
 interface VideoBookmark {
@@ -284,7 +287,7 @@ function DashboardContent() {
               .from('chapters').select('id, title, order_index').in('course_id', cIds)
             const sortedChaps = (chaps ?? []).sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
             const completedIds = new Set(
-              (stats ?? []).filter((s) => s.avg_score >= 80).map((s) => s.chapter_id)
+              (stats ?? []).filter((s) => (s.latest_score ?? s.avg_score) >= 80).map((s) => s.chapter_id)
             )
             const total     = sortedChaps.length
             const completed = sortedChaps.filter((c) => completedIds.has(c.id)).length

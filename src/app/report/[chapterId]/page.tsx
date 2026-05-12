@@ -32,6 +32,9 @@ interface LessonStat {
   avg_score:           number
   total_attempts:      number
   last_attempt_at:     string | null
+  latest_score?:       number | null
+  best_score?:         number | null
+  test_attempts?:      number
 }
 
 export default function ReportPage() {
@@ -195,11 +198,11 @@ export default function ReportPage() {
               {passed ? <><Check size={13} /> 통과</> : <><X size={13} /> 재도전 권장</>}
             </div>
           </div>
-        ) : lessonStat && lessonStat.total_attempts > 0 ? (
+        ) : lessonStat && (lessonStat.test_attempts ?? lessonStat.total_attempts) > 0 ? (
           <div className="bg-white rounded-2xl border border-[#E5E5E5] p-5 text-center">
-            <p className="text-[12px] text-[#ADADAD] mb-1">누적 테스트 최고 점수</p>
-            <p className="text-[40px] font-black text-[#1A1A1A]">{lessonStat.avg_score}점</p>
-            <p className="text-[12px] text-[#ADADAD] mt-1">{lessonStat.total_attempts}회 응시</p>
+            <p className="text-[12px] text-[#ADADAD] mb-1">최고 점수</p>
+            <p className="text-[40px] font-black text-[#1A1A1A]">{lessonStat.best_score ?? lessonStat.avg_score}점</p>
+            <p className="text-[12px] text-[#ADADAD] mt-1">{lessonStat.test_attempts ?? lessonStat.total_attempts}회 응시</p>
           </div>
         ) : null}
 

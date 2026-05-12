@@ -24,20 +24,25 @@ export async function POST(req: NextRequest) {
 
   const { data: existing } = await supabaseAdmin
     .from('chapter_stats')
-    .select('total_attempts, total_correct, avg_score')
+    .select('total_attempts, total_correct, avg_score, best_score, test_attempts')
     .eq('user_id', userId)
     .eq('chapter_id', chapterId)
     .maybeSingle()
 
-  const oldAttempts  = existing?.total_attempts ?? 0
-  const oldCorrect   = existing?.total_correct  ?? 0
-  const oldAvg       = existing?.avg_score      ?? 0
-  const newAttempts  = oldAttempts + 1
-  const newCorrect   = oldCorrect + correctCount
-  const newAvg       = Math.round((oldAvg * oldAttempts + score) / newAttempts)
-  const newWrongRate = newAttempts > 0
+  const oldAttempts     = existing?.total_attempts  ?? 0
+  const oldCorrect      = existing?.total_correct   ?? 0
+  const oldAvg          = existing?.avg_score       ?? 0
+  const oldBestScore    = existing?.best_score      ?? 0
+  const oldTestAttempts = existing?.test_attempts   ?? 0
+
+  const newAttempts     = oldAttempts + 1
+  const newCorrect      = oldCorrect + correctCount
+  const newAvg          = Math.round((oldAvg * oldAttempts + score) / newAttempts)
+  const newWrongRate    = newAttempts > 0
     ? Math.round(((newAttempts * total - newCorrect) / (newAttempts * total)) * 100)
     : 0
+  const newTestAttempts = oldTestAttempts + 1
+  const newBestScore    = Math.max(score, oldBestScore)
 
   await supabaseAdmin.from('chapter_stats').upsert(
     {
@@ -48,11 +53,21 @@ export async function POST(req: NextRequest) {
       total_correct:   newCorrect,
       avg_score:       newAvg,
       wrong_rate:      newWrongRate,
+      latest_score:    score,
+      best_score:      newBestScore,
+      test_attempts:   newTestAttempts,
       last_attempt_at: new Date().toISOString(),
       updated_at:      new Date().toISOString(),
     },
     { onConflict: 'user_id,chapter_id' }
   )
+
+  await supabaseAdmin.from('chapter_test_history').insert({
+    user_id:        userId,
+    chapter_id:     chapterId,
+    score:          score,
+    attempt_number: newTestAttempts,
+  })
 
   await Promise.all(
     records.map(async (r) => {
