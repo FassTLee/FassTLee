@@ -321,7 +321,7 @@ export default function LessonPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#E24B4A] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -353,7 +353,7 @@ export default function LessonPage() {
             onClick={toggleMode}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold transition-colors ${
               slideMode === 'auto'
-                ? 'bg-[#E24B4A] text-white'
+                ? 'bg-[#00A651] text-white'
                 : 'bg-[#F5F5F3] text-[#6B6B6B] border border-[#E5E5E5]'
             }`}
           >
@@ -434,15 +434,15 @@ export default function LessonPage() {
           <>
             {/* Overview strip — first slide only */}
             {slideIndex === 0 && subjectName && (
-              <div className="bg-[#E24B4A]/5 border border-[#E24B4A]/20 rounded-2xl p-3 mb-3 flex-shrink-0">
-                <p className="text-[11px] font-bold text-[#E24B4A]">{subjectName} › {chapterTitle}</p>
+              <div className="bg-[#00A651]/5 border border-[#00A651]/20 rounded-2xl p-3 mb-3 flex-shrink-0">
+                <p className="text-[11px] font-bold text-[#00A651]">{subjectName} › {chapterTitle}</p>
               </div>
             )}
 
             {/* Main slide card */}
             <div className="flex-1 bg-white rounded-2xl border border-[#E5E5E5] p-5 flex flex-col min-h-0">
               <div className="flex items-center gap-2 mb-4 flex-shrink-0">
-                <div className="w-7 h-7 rounded-lg bg-[#E24B4A]/10 flex items-center justify-center text-[12px] font-black text-[#E24B4A] flex-shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-[#00A651]/10 flex items-center justify-center text-[12px] font-black text-[#00A651] flex-shrink-0">
                   {slideIndex + 1}
                 </div>
                 <span className="text-[11px] text-[#ADADAD] font-medium">학습 내용</span>
@@ -512,7 +512,7 @@ export default function LessonPage() {
       {slideMode === 'auto' && !showMiniQuiz && slides.length > 0 && (
         <div className="h-1 bg-[#E5E5E5] flex-shrink-0">
           <div
-            className="h-full bg-[#E24B4A] transition-none"
+            className="h-full bg-[#00A651] transition-none"
             style={{ width: `${autoProgress}%` }}
           />
         </div>
@@ -523,7 +523,7 @@ export default function LessonPage() {
         {slides.length === 0 ? (
           <button
             onClick={() => router.push(`/test/${chapterId}`)}
-            className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold"
+            className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold"
           >
             <Zap size={18} /> 테스트 시작
           </button>
@@ -532,7 +532,7 @@ export default function LessonPage() {
             onClick={handleNextSlide}
             disabled={!allChecked}
             className={`w-full py-4 rounded-2xl text-[16px] font-bold transition-all ${
-              allChecked ? 'bg-[#E24B4A] text-white' : 'bg-[#E5E5E5] text-[#ADADAD]'
+              allChecked ? 'bg-[#00A651] text-white' : 'bg-[#E5E5E5] text-[#ADADAD]'
             }`}
           >
             확인 퀴즈
@@ -553,7 +553,7 @@ export default function LessonPage() {
           <p className="text-[13px] text-[#ADADAD] mb-10">총 {slides.length}개 슬라이드를 완료했어요</p>
           <button
             onClick={() => router.push(`/test/${chapterId}`)}
-            className="w-full max-w-sm flex items-center justify-center gap-2 py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold"
+            className="w-full max-w-sm flex items-center justify-center gap-2 py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold"
           >
             <Zap size={18} /> 테스트 시작하기
           </button>
@@ -608,7 +608,7 @@ export default function LessonPage() {
                             ? 'border-[#E24B4A] bg-[#E24B4A10]'
                             : 'border-[#E5E5E5] bg-[#F5F5F3] opacity-50'
                         : miniSelected === idx
-                          ? 'border-[#E24B4A] bg-[#E24B4A]/5'
+                          ? 'border-[#00A651] bg-[#00A651]/5'
                           : 'border-[#E5E5E5]'
                     }`}
                   >
@@ -617,7 +617,7 @@ export default function LessonPage() {
                         ? isCorrect ? 'text-[#639922]'
                           : isWrong ? 'text-[#E24B4A]'
                           : 'text-[#ADADAD]'
-                        : miniSelected === idx ? 'text-[#E24B4A]' : 'text-[#ADADAD]'
+                        : miniSelected === idx ? 'text-[#00A651]' : 'text-[#ADADAD]'
                     }`}>
                       {label}.
                     </span>
@@ -654,7 +654,7 @@ export default function LessonPage() {
                 {miniSelected === miniQ.answerIdx ? (
                   <button
                     onClick={advanceFromQuiz}
-                    className="w-full py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold"
+                    className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold"
                   >
                     {pendingSlideIdxRef.current >= slides.length - 1 ? '학습 완료 🎉' : '다음 슬라이드 →'}
                   </button>
@@ -686,7 +686,7 @@ export default function LessonPage() {
               <button
                 onClick={handleMiniConfirm}
                 disabled={miniSelected === null}
-                className="w-full py-4 bg-[#E24B4A] disabled:opacity-40 text-white rounded-2xl text-[15px] font-bold"
+                className="w-full py-4 bg-[#00A651] disabled:opacity-40 text-white rounded-2xl text-[15px] font-bold"
               >
                 확인
               </button>

@@ -128,7 +128,7 @@ function SurveyContent() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#E24B4A] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -161,7 +161,7 @@ function SurveyContent() {
             </p>
             <button
               onClick={() => router.replace('/landing/report')}
-              className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold"
+              className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold"
             >
               리포트 보기 <ChevronRight size={18} />
             </button>
@@ -178,14 +178,14 @@ function SurveyContent() {
   return (
     <div className="min-h-screen bg-[#F5F5F3] flex flex-col">
       <div className="h-1 bg-[#E5E5E5]">
-        <div className="h-full bg-[#E24B4A] transition-all duration-300" style={{ width: `${progress}%` }} />
+        <div className="h-full bg-[#00A651] transition-all duration-300" style={{ width: `${progress}%` }} />
       </div>
 
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             <div className="text-[12px] text-[#ADADAD] mb-2">{current + 1} / {QUESTIONS.length}</div>
-            <p className="text-[10px] font-semibold text-[#E24B4A] tracking-widest uppercase mb-2">
+            <p className="text-[10px] font-semibold text-[#00A651] tracking-widest uppercase mb-2">
               학습 유형 검사
             </p>
             <h2 className="text-[20px] font-black text-[#1A1A1A] leading-snug">{q.q}</h2>
@@ -199,7 +199,7 @@ function SurveyContent() {
                 disabled={saving || selected !== null}
                 className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 text-left text-[14px] font-semibold transition-all
                   ${selected === opt.type
-                    ? 'bg-[#E24B4A]/10 border-[#E24B4A] text-[#E24B4A]'
+                    ? 'bg-[#00A651]/10 border-[#00A651] text-[#00A651]'
                     : selected !== null
                     ? 'bg-white border-[#E5E5E5] text-[#ADADAD] opacity-50'
                     : 'bg-white border-[#E5E5E5] text-[#1A1A1A]'
@@ -215,7 +215,7 @@ function SurveyContent() {
 
           {saving && (
             <div className="mt-8 flex items-center justify-center gap-2 text-[13px] text-[#ADADAD]">
-              <div className="w-4 h-4 border-2 border-[#E24B4A] border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
               유형 분석 중...
             </div>
           )}
@@ -236,7 +236,7 @@ export default function LandingSurveyPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#E24B4A] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
       </div>
     }>
       <SurveyContent />

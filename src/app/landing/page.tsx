@@ -97,18 +97,18 @@ export default function LandingPage() {
 
       {/* ─── Hero ─────────────────────────────────────────────── */}
       <section className="relative bg-[#1A1A1A] text-white overflow-hidden">
-        <div className="absolute top-0 right-0 w-72 h-72 bg-[#E24B4A]/20 rounded-full blur-3xl -translate-y-1/3 translate-x-1/3" />
+        <div className="absolute top-0 right-0 w-72 h-72 bg-[#00A651]/20 rounded-full blur-3xl -translate-y-1/3 translate-x-1/3" />
         <div className="absolute bottom-0 left-0 w-56 h-56 bg-[#378ADD]/15 rounded-full blur-3xl translate-y-1/3 -translate-x-1/3" />
 
         <div className="relative max-w-md mx-auto px-6 pt-16 pb-12">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-[#E24B4A]/20 border border-[#E24B4A]/40 rounded-full px-3 py-1.5 text-[12px] font-bold text-[#E24B4A] mb-6">
+          <div className="inline-flex items-center gap-2 bg-[#00A651]/20 border border-[#00A651]/40 rounded-full px-3 py-1.5 text-[12px] font-bold text-[#00A651] mb-6">
             🎯 건강운동관리사 합격 특화
           </div>
 
           <h1 className="text-[34px] font-black leading-tight mb-3">
             건강운동관리사<br />
-            <span className="text-[#E24B4A]">합격의 지름길</span>
+            <span className="text-[#00A651]">합격의 지름길</span>
           </h1>
           <p className="text-[16px] text-white/70 leading-relaxed mb-8">
             성향 맞춤 학습으로 더 빠르게 합격하세요.<br />
@@ -133,7 +133,7 @@ export default function LandingPage() {
           {/* CTA */}
           <button
             onClick={() => router.push('/landing/test')}
-            className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] hover:bg-[#cc3e3d] rounded-2xl text-[16px] font-bold text-white mb-4 shadow-lg shadow-[#E24B4A]/30 transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A651] hover:bg-[#008c44] rounded-2xl text-[16px] font-bold text-white mb-4 shadow-lg shadow-[#00A651]/30 transition-colors"
           >
             무료 테스트 시작 <ChevronRight size={18} />
           </button>
@@ -171,7 +171,7 @@ export default function LandingPage() {
       <section className="bg-[#F5F5F3] py-14 px-6">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
-            <div className="text-[11px] font-bold text-[#E24B4A] uppercase tracking-widest mb-2">왜 Kinepia인가요?</div>
+            <div className="text-[11px] font-bold text-[#00A651] uppercase tracking-widest mb-2">왜 Kinepia인가요?</div>
             <h2 className="text-[24px] font-black text-[#1A1A1A]">합격을 위한 4가지 무기</h2>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -233,7 +233,7 @@ export default function LandingPage() {
                   plan.comingSoon
                     ? 'opacity-50 blur-[1px] select-none pointer-events-none'
                     : plan.highlight
-                    ? 'bg-[#1A1A1A] border-[#E24B4A]'
+                    ? 'bg-[#1A1A1A] border-[#00A651]'
                     : 'bg-white border-[#E5E5E5]'
                 } ${!plan.comingSoon && plan.highlight ? 'bg-[#1A1A1A]' : !plan.comingSoon ? 'bg-white' : ''}`}
               >
@@ -251,7 +251,7 @@ export default function LandingPage() {
                         {plan.name}
                       </span>
                       {plan.badge && !plan.comingSoon && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E24B4A] text-white">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#00A651] text-white">
                           {plan.badge}
                         </span>
                       )}
@@ -266,8 +266,8 @@ export default function LandingPage() {
                     </div>
                   </div>
                   {plan.highlight && !plan.comingSoon && (
-                    <div className="bg-[#E24B4A]/20 rounded-xl px-3 py-1.5">
-                      <p className="text-[10px] text-[#E24B4A] font-bold">1주일 무료</p>
+                    <div className="bg-[#00A651]/20 rounded-xl px-3 py-1.5">
+                      <p className="text-[10px] text-[#00A651] font-bold">1주일 무료</p>
                     </div>
                   )}
                 </div>
@@ -277,11 +277,11 @@ export default function LandingPage() {
                     <div key={j} className="flex items-center gap-2.5">
                       <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${
                         f.ok
-                          ? plan.highlight ? 'bg-[#E24B4A]/20' : 'bg-[#63992215]'
+                          ? plan.highlight ? 'bg-[#00A651]/20' : 'bg-[#63992215]'
                           : 'bg-[#F5F5F3]'
                       }`}>
                         {f.ok
-                          ? <Check size={10} className={plan.highlight ? 'text-[#E24B4A]' : 'text-[#639922]'} />
+                          ? <Check size={10} className={plan.highlight ? 'text-[#00A651]' : 'text-[#639922]'} />
                           : <span className="text-[8px] text-[#ADADAD]">✕</span>
                         }
                       </div>
@@ -303,7 +303,7 @@ export default function LandingPage() {
                     plan.comingSoon
                       ? 'bg-[#E5E5E5] text-[#ADADAD] cursor-not-allowed'
                       : plan.highlight
-                      ? 'bg-[#E24B4A] text-white hover:bg-[#cc3e3d]'
+                      ? 'bg-[#00A651] text-white hover:bg-[#008c44]'
                       : 'bg-[#F5F5F3] text-[#1A1A1A] hover:bg-[#E5E5E5]'
                   }`}
                 >
@@ -344,7 +344,7 @@ export default function LandingPage() {
       </section>
 
       {/* ─── Final CTA ────────────────────────────────────────── */}
-      <section className="bg-[#E24B4A] py-14 px-6">
+      <section className="bg-[#00A651] py-14 px-6">
         <div className="max-w-md mx-auto text-center">
           <div className="text-[40px] mb-3">🏆</div>
           <h2 className="text-[26px] font-black text-white mb-3">
@@ -356,7 +356,7 @@ export default function LandingPage() {
           </p>
           <button
             onClick={() => router.push('/select-cert')}
-            className="w-full flex items-center justify-center gap-2 py-4 bg-white rounded-2xl text-[16px] font-bold text-[#E24B4A] shadow-lg mb-3"
+            className="w-full flex items-center justify-center gap-2 py-4 bg-white rounded-2xl text-[16px] font-bold text-[#00A651] shadow-lg mb-3"
           >
             무료 테스트 시작 <ChevronRight size={18} />
           </button>

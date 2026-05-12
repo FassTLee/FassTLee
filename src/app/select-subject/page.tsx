@@ -241,7 +241,7 @@ export default function SelectSubjectPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#E24B4A] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -262,7 +262,7 @@ export default function SelectSubjectPage() {
         <button onClick={() => router.push('/select-cert')} className="flex items-center gap-1 text-[13px] text-[#6B6B6B] mb-3">
           <ChevronLeft size={16} /> 자격증 선택
         </button>
-        <p className="text-[10px] font-bold text-[#E24B4A] tracking-widest uppercase mb-1">{config.label}</p>
+        <p className="text-[10px] font-bold text-[#00A651] tracking-widest uppercase mb-1">{config.label}</p>
         <h1 className="text-[22px] font-black text-[#1A1A1A]">과목 선택</h1>
       </div>
 
@@ -283,9 +283,9 @@ export default function SelectSubjectPage() {
 
       {/* 경고 */}
       {showWarning && (
-        <div className="mx-4 mt-2 flex items-center gap-2 bg-[#E24B4A]/10 border border-[#E24B4A]/30 rounded-xl px-3 py-2.5">
-          <AlertCircle size={14} className="text-[#E24B4A] flex-shrink-0" />
-          <p className="text-[12px] font-semibold text-[#E24B4A]">최대 {selectCount}개까지 선택 가능합니다</p>
+        <div className="mx-4 mt-2 flex items-center gap-2 bg-[#00A651]/10 border border-[#00A651]/30 rounded-xl px-3 py-2.5">
+          <AlertCircle size={14} className="text-[#00A651] flex-shrink-0" />
+          <p className="text-[12px] font-semibold text-[#00A651]">최대 {selectCount}개까지 선택 가능합니다</p>
         </div>
       )}
 
@@ -313,7 +313,7 @@ export default function SelectSubjectPage() {
                     isAllRequired
                       ? 'border-[#1A1A1A] bg-[#1A1A1A]/5 cursor-default'
                       : isSelected
-                      ? 'border-[#E24B4A] bg-[#E24B4A]/5'
+                      ? 'border-[#00A651] bg-[#00A651]/5'
                       : isDisabled
                       ? 'border-[#E5E5E5] bg-[#F5F5F3] opacity-50'
                       : 'border-[#E5E5E5] bg-white active:bg-[#F5F5F3]'
@@ -321,7 +321,7 @@ export default function SelectSubjectPage() {
                 >
                   {isSelected && (
                     <div className={`absolute top-3 right-3 w-5 h-5 rounded-full flex items-center justify-center ${
-                      isAllRequired ? 'bg-[#1A1A1A]' : 'bg-[#E24B4A]'
+                      isAllRequired ? 'bg-[#1A1A1A]' : 'bg-[#00A651]'
                     }`}>
                       <Check size={11} className="text-white" />
                     </div>
@@ -406,7 +406,7 @@ export default function SelectSubjectPage() {
               </button>
               <button
                 onClick={confirmAdditional}
-                className="flex-1 py-3 rounded-xl bg-[#E24B4A] text-white text-[14px] font-bold"
+                className="flex-1 py-3 rounded-xl bg-[#00A651] text-white text-[14px] font-bold"
               >
                 확인
               </button>
@@ -420,7 +420,7 @@ export default function SelectSubjectPage() {
         <button
           onClick={handleStart}
           disabled={!canStart || saving}
-          className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] disabled:opacity-40 text-white rounded-2xl text-[16px] font-bold"
+          className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A651] disabled:opacity-40 text-white rounded-2xl text-[16px] font-bold"
         >
           {saving
             ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

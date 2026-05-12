@@ -149,7 +149,7 @@ export default function ChaptersPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#E24B4A] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -162,7 +162,7 @@ export default function ChaptersPage() {
         <p className="text-[13px] text-[#6B6B6B] mb-6 leading-relaxed">{fetchError}</p>
         <button
           onClick={() => { setFetchError(null); setLoading(true); fetchData() }}
-          className="px-6 py-3 bg-[#E24B4A] text-white rounded-2xl text-[14px] font-bold"
+          className="px-6 py-3 bg-[#00A651] text-white rounded-2xl text-[14px] font-bold"
         >
           다시 시도
         </button>
@@ -202,9 +202,9 @@ export default function ChaptersPage() {
             /* ── Status ── */
             let statusLabel = '수강 전'
             let statusColor = 'text-[#ADADAD]'
-            let badgeBg     = 'bg-[#E24B4A]/10'
+            let badgeBg     = 'bg-[#00A651]/10'
             let badgeNode: React.ReactNode = (
-              <span className="text-[#E24B4A] text-[13px] font-bold">{idx + 1}</span>
+              <span className="text-[#00A651] text-[13px] font-bold">{idx + 1}</span>
             )
 
             if (stat) {
@@ -307,12 +307,12 @@ export default function ChaptersPage() {
                 1주일 무료 체험으로 모든 챕터를 열어보세요!
               </p>
             </div>
-            <button className="w-full py-3.5 bg-[#E24B4A] text-white rounded-2xl text-[15px] font-bold">
+            <button className="w-full py-3.5 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold">
               1주일 무료 체험
             </button>
             <button
               onClick={() => setShowLockPopup(false)}
-              className="w-full py-2.5 text-[13px] text-[#ADADAD] font-medium"
+              className="w-full border-2 border-[#111111] bg-white text-[#111111] rounded-2xl py-2.5 text-[13px] font-medium"
             >
               나중에
             </button>

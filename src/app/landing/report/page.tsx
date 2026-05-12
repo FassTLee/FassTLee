@@ -113,7 +113,7 @@ export default function LandingReportPage() {
   if (!result) {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#E24B4A] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -240,7 +240,7 @@ export default function LandingReportPage() {
           </p>
           <button
             onClick={() => router.push('/trainer/dashboard')}
-            className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold"
+            className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold"
           >
             Kinepia 시작하기 <ChevronRight size={18} />
           </button>
@@ -255,9 +255,9 @@ export default function LandingReportPage() {
             sessionStorage.removeItem('testResult')
             router.push('/landing/test')
           }}
-          className="w-full flex items-center justify-center gap-2 py-3.5 border-2 border-[#E5E5E5] bg-white text-[#6B6B6B] rounded-2xl text-[14px] font-semibold"
+          className="w-full flex items-center justify-center gap-2 py-3.5 border-2 border-[#00A651] bg-white text-[#00A651] rounded-2xl text-[14px] font-semibold"
         >
-          <RefreshCw size={14} /> 테스트 다시 도전
+          <RefreshCw size={14} /> 다시 학습 &gt;
         </button>
       </div>
     </div>

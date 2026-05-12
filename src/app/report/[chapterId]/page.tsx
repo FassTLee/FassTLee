@@ -103,7 +103,7 @@ export default function ReportPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#E24B4A] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -279,14 +279,14 @@ export default function ReportPage() {
           nextChapterId ? (
             <button
               onClick={() => router.push(`/lesson/${nextChapterId}`)}
-              className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] text-white rounded-2xl text-[15px] font-bold"
+              className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold"
             >
               다음 챕터 <ChevronRight size={16} />
             </button>
           ) : (
             <button
               onClick={() => router.push(`/test/${chapterId}`)}
-              className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] text-white rounded-2xl text-[15px] font-bold"
+              className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold"
             >
               테스트 다시 도전 <ChevronRight size={16} />
             </button>
@@ -294,14 +294,14 @@ export default function ReportPage() {
         ) : (
           <button
             onClick={() => router.push(`/lesson/${chapterId}`)}
-            className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] text-white rounded-2xl text-[15px] font-bold"
+            className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold"
           >
             학습 시작하기 <ChevronRight size={16} />
           </button>
         )}
         <button
           onClick={() => router.push('/trainer/dashboard')}
-          className="w-full py-3.5 border-2 border-[#E5E5E5] rounded-2xl text-[14px] font-semibold text-[#6B6B6B]"
+          className="w-full py-3.5 border-2 border-[#111111] bg-white rounded-2xl text-[14px] font-semibold text-[#111111]"
         >
           대시보드로
         </button>

@@ -157,7 +157,7 @@ function LandingTestContent() {
             <button
               onClick={() => questionsReady && setStep('quiz')}
               disabled={!questionsReady}
-              className="w-full py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold disabled:opacity-50"
+              className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold disabled:opacity-50"
             >
               {questionsReady ? '테스트 시작하기' : '문제 불러오는 중...'}
             </button>
@@ -191,7 +191,7 @@ function LandingTestContent() {
                 <p className="text-[13px] text-[#6B6B6B] mt-1">{pct}% 정답률</p>
               </div>
               <p className="text-[13px] text-[#6B6B6B] leading-relaxed mt-3">
-                로그인하면 <span className="font-bold text-[#E24B4A]">학습 유형 검사</span>와 함께<br />
+                로그인하면 <span className="font-bold text-[#00A651]">학습 유형 검사</span>와 함께<br />
                 상세 리포트 및 대시보드를 이용할 수 있어요
               </p>
             </div>
@@ -252,7 +252,7 @@ function LandingTestContent() {
           </div>
           <div className="w-full h-1.5 bg-[#E5E5E5] rounded-full overflow-hidden">
             <div
-              className="h-full bg-[#E24B4A] rounded-full transition-all duration-300"
+              className="h-full bg-[#00A651] rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -268,7 +268,7 @@ function LandingTestContent() {
             const isSelected = selectedAnswer === i
             const isAnswered = selectedAnswer !== null
             const style = isSelected
-              ? 'bg-[#E24B4A]/10 border-[#E24B4A] text-[#1A1A1A]'
+              ? 'bg-[#00A651]/10 border-[#00A651] text-[#1A1A1A]'
               : isAnswered
               ? 'bg-white border-[#E5E5E5] text-[#ADADAD] opacity-50'
               : 'bg-white border-[#E5E5E5] text-[#1A1A1A]'
@@ -296,7 +296,7 @@ export default function LandingTestPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#E24B4A] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
       </div>
     }>
       <LandingTestContent />

@@ -96,7 +96,7 @@ export default function DashboardPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#E24B4A] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
       </div>
     }>
       <DashboardContent />
@@ -423,7 +423,7 @@ function DashboardContent() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#E24B4A] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -438,7 +438,7 @@ function DashboardContent() {
       <div className="px-4 pt-10 pb-2">
         {ddayGoals.length === 0 ? (
           <div className="bg-white rounded-2xl border border-[#E5E5E5] p-4 flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#E24B4A]/10 rounded-xl flex items-center justify-center text-[20px] flex-shrink-0">
+            <div className="w-10 h-10 bg-[#00A651]/10 rounded-xl flex items-center justify-center text-[20px] flex-shrink-0">
               📅
             </div>
             <div className="flex-1">
@@ -447,7 +447,7 @@ function DashboardContent() {
             </div>
             <button
               onClick={() => setShowDDayModal(true)}
-              className="text-[12px] font-bold text-[#E24B4A] flex-shrink-0"
+              className="text-[12px] font-bold text-[#00A651] flex-shrink-0"
             >
               설정하기
             </button>
@@ -464,7 +464,7 @@ function DashboardContent() {
                       {new Date(goal.exam_date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })}
                     </p>
                   </div>
-                  <div className="bg-[#E24B4A] rounded-xl px-4 py-2.5 text-center flex-shrink-0">
+                  <div className="bg-[#00A651] rounded-xl px-4 py-2.5 text-center flex-shrink-0">
                     <p className="text-[10px] text-white/70 font-bold mb-0.5">남은 기간</p>
                     <p className="text-[20px] font-black text-white leading-none">
                       {diff > 0 ? `D-${diff}` : diff === 0 ? 'D-Day' : `D+${Math.abs(diff)}`}
@@ -515,29 +515,29 @@ function DashboardContent() {
           /* ── 오늘의 학습 썸네일 카드 ── */
           <button
             onClick={() => router.push(`/lesson/${todayChapter.chapterId}`)}
-            className="w-full bg-white border-2 border-[#E24B4A] rounded-2xl overflow-hidden text-left active:bg-[#FFF5F5]"
+            className="w-full bg-white border-2 border-[#00A651] rounded-2xl overflow-hidden text-left active:bg-[#F0FFF6]"
           >
             {/* 상단 배너 */}
-            <div className="bg-[#E24B4A] px-4 py-2 flex items-center justify-between">
+            <div className="bg-[#00A651] px-4 py-2 flex items-center justify-between">
               <span className="text-[11px] font-bold text-white/80 uppercase tracking-wide">오늘의 학습</span>
               <span className="text-[11px] text-white/60">{todayChapter.completed} / {todayChapter.total} 챕터 완료</span>
             </div>
             {/* 본문 */}
             <div className="px-4 py-3 flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#E24B4A]/10 rounded-xl flex items-center justify-center text-[20px] flex-shrink-0">
+              <div className="w-10 h-10 bg-[#00A651]/10 rounded-xl flex items-center justify-center text-[20px] flex-shrink-0">
                 {SUBJECT_META[todayChapter.subjectName]?.icon ?? '📚'}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[11px] text-[#ADADAD] truncate">{todayChapter.subjectName}</p>
                 <p className="text-[14px] font-black text-[#1A1A1A] leading-snug truncate">{todayChapter.title}</p>
-                <p className="text-[11px] text-[#E24B4A] font-semibold mt-0.5">지금 바로 시작하세요 →</p>
+                <p className="text-[11px] text-[#00A651] font-semibold mt-0.5">지금 바로 시작하세요 →</p>
               </div>
             </div>
             {/* 진행률 바 */}
             <div className="px-4 pb-3">
               <div className="w-full h-1.5 bg-[#F0F0EE] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-[#E24B4A] rounded-full transition-all"
+                  className="h-full bg-[#00A651] rounded-full transition-all"
                   style={{ width: `${todayChapter.total > 0 ? Math.round((todayChapter.completed / todayChapter.total) * 100) : 0}%` }}
                 />
               </div>
@@ -546,7 +546,7 @@ function DashboardContent() {
         ) : (
           <button
             onClick={() => router.push('/trainer/dashboard?tab=classroom')}
-            className="w-full bg-[#E24B4A] text-white rounded-2xl p-4 flex items-center gap-3 active:opacity-90"
+            className="w-full bg-[#00A651] text-white rounded-2xl p-4 flex items-center gap-3 active:opacity-90"
           >
             <span className="text-[24px]">📚</span>
             <div className="text-left flex-1">
@@ -618,7 +618,7 @@ function DashboardContent() {
             <p className="text-[13px] text-[#ADADAD] mb-3">등록된 학습이 없습니다</p>
             <button
               onClick={() => router.push('/select-cert')}
-              className="text-[13px] font-bold text-[#E24B4A] flex items-center gap-1 mx-auto"
+              className="text-[13px] font-bold text-[#00A651] flex items-center gap-1 mx-auto"
             >
               <Plus size={14} /> 학습 추가하기
             </button>
@@ -649,7 +649,7 @@ function DashboardContent() {
                   </div>
                 </div>
                 <div className="w-full h-1.5 bg-[#F0F0EE] rounded-full overflow-hidden">
-                  <div className="h-full bg-[#E24B4A] rounded-full" style={{ width: '0%' }} />
+                  <div className="h-full bg-[#00A651] rounded-full" style={{ width: '0%' }} />
                 </div>
                 <p className="text-[10px] text-[#ADADAD] mt-1">학습 시작 전</p>
               </button>
@@ -694,7 +694,7 @@ function DashboardContent() {
           <div className="text-[40px] mb-3">📚</div>
           <p className="text-[15px] font-bold text-[#1A1A1A] mb-1">아직 학습 이력이 없어요</p>
           <p className="text-[12px] text-[#ADADAD] mb-5">강의실에서 과목을 선택해 학습을 시작해보세요!</p>
-          <button onClick={() => router.push('/trainer/dashboard?tab=classroom')} className="px-5 py-2.5 bg-[#E24B4A] text-white rounded-xl text-[13px] font-bold">
+          <button onClick={() => router.push('/trainer/dashboard?tab=classroom')} className="px-5 py-2.5 bg-[#00A651] text-white rounded-xl text-[13px] font-bold">
             강의실 바로가기
           </button>
         </div>
@@ -719,7 +719,7 @@ function DashboardContent() {
           <p className="text-[13px] text-[#ADADAD] mb-6">자격증과 과목을 선택하면<br />맞춤 강의가 제공됩니다</p>
           <button
             onClick={() => router.push('/select-cert')}
-            className="flex items-center gap-2 px-6 py-3.5 bg-[#E24B4A] text-white rounded-2xl text-[15px] font-bold"
+            className="flex items-center gap-2 px-6 py-3.5 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold"
           >
             <Plus size={18} /> 강의 추가하기
           </button>
@@ -775,7 +775,7 @@ function DashboardContent() {
           <div className="space-y-2">
             {bookmarks.map((bm) => (
               <div key={bm.id} className="bg-white rounded-xl border border-[#E5E5E5] p-3 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[#E24B4A]/10 flex items-center justify-center text-[18px]">🎬</div>
+                <div className="w-10 h-10 rounded-lg bg-[#00A651]/10 flex items-center justify-center text-[18px]">🎬</div>
                 <p className="flex-1 text-[13px] font-semibold text-[#1A1A1A] truncate">{bm.video_title || '저장된 영상'}</p>
                 <Heart size={15} className="text-[#E24B4A] fill-[#E24B4A] flex-shrink-0" />
               </div>
@@ -810,11 +810,11 @@ function DashboardContent() {
       {/* 다음 모의고사 */}
       <div className="bg-[#1A1A1A] rounded-2xl p-5 text-white">
         <p className="text-[11px] text-white/50 uppercase tracking-wider mb-1">다음 모의고사</p>
-        <div className="text-[36px] font-black text-[#E24B4A] leading-tight">{nextExam.date}</div>
+        <div className="text-[36px] font-black text-[#00A651] leading-tight">{nextExam.date}</div>
         <p className="text-[13px] text-white/70 mt-1">{nextExam.round}회차 · 매주 토요일 오전 10:00</p>
         <button
           onClick={() => { setExamRound(nextExam.round); setShowExamModal(true) }}
-          className="mt-4 w-full py-3 bg-[#E24B4A] rounded-xl text-[14px] font-bold text-white"
+          className="mt-4 w-full py-3 bg-[#00A651] rounded-xl text-[14px] font-bold text-white"
         >
           사전 신청하기
         </button>
@@ -830,18 +830,18 @@ function DashboardContent() {
             const isNext = e.round === nextExam.round
             return (
               <div key={e.round} className={`flex items-center justify-between px-4 py-3 rounded-xl border ${
-                isNext ? 'border-[#E24B4A]/30 bg-[#E24B4A]/5' : 'border-[#E5E5E5] bg-white'
+                isNext ? 'border-[#00A651]/30 bg-[#00A651]/5' : 'border-[#E5E5E5] bg-white'
               }`}>
                 <div className="flex items-center gap-3">
                   <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black ${
-                    isNext ? 'bg-[#E24B4A] text-white' : 'bg-[#F5F5F3] text-[#ADADAD]'
+                    isNext ? 'bg-[#00A651] text-white' : 'bg-[#F5F5F3] text-[#ADADAD]'
                   }`}>{e.round}</div>
                   <div>
-                    <p className={`text-[13px] font-bold ${isNext ? 'text-[#E24B4A]' : 'text-[#1A1A1A]'}`}>{e.date}</p>
+                    <p className={`text-[13px] font-bold ${isNext ? 'text-[#00A651]' : 'text-[#1A1A1A]'}`}>{e.date}</p>
                     <p className="text-[10px] text-[#ADADAD]">{e.round}회차</p>
                   </div>
                 </div>
-                {isNext && <span className="text-[10px] font-bold text-[#E24B4A] bg-[#E24B4A]/10 px-2 py-0.5 rounded-full">D-예정</span>}
+                {isNext && <span className="text-[10px] font-bold text-[#00A651] bg-[#00A651]/10 px-2 py-0.5 rounded-full">D-예정</span>}
               </div>
             )
           })}
@@ -917,7 +917,7 @@ function DashboardContent() {
               localStorage.removeItem('kinepia_learning_type')
               router.push('/onboarding/style-test')
             }}
-            className="flex items-center gap-1 text-[11px] text-[#E24B4A] font-semibold"
+            className="flex items-center gap-1 text-[11px] text-[#00A651] font-semibold"
           >
             <RefreshCw size={12} /> 재테스트
           </button>
@@ -927,7 +927,7 @@ function DashboardContent() {
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider">자격증 · 수강 과목</p>
-          <button onClick={() => router.push('/select-subject')} className="text-[11px] text-[#E24B4A] font-semibold">과목 수정</button>
+          <button onClick={() => router.push('/select-subject')} className="text-[11px] text-[#00A651] font-semibold">과목 수정</button>
         </div>
         <div className="bg-white rounded-xl border border-[#E5E5E5] p-3 space-y-2">
           {certLabel && (
@@ -936,7 +936,7 @@ function DashboardContent() {
           {subjects.length > 0 ? (
             <div className="flex flex-wrap gap-1.5">
               {subjects.map((name) => (
-                <span key={name} className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#E24B4A]/10 text-[#E24B4A]">{name}</span>
+                <span key={name} className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#00A651]/10 text-[#00A651]">{name}</span>
               ))}
             </div>
           ) : (
@@ -956,7 +956,7 @@ function DashboardContent() {
               type="date"
               value={examDateInput}
               onChange={(e) => setExamDateInput(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border border-[#E5E5E5] text-[13px] text-[#1A1A1A] outline-none focus:border-[#E24B4A]"
+              className="w-full px-3 py-2.5 rounded-xl border border-[#E5E5E5] text-[13px] text-[#1A1A1A] outline-none focus:border-[#00A651]"
             />
           </div>
           <div>
@@ -968,7 +968,7 @@ function DashboardContent() {
               placeholder="예: 서울, 부산, 대구..."
               value={regionInput}
               onChange={(e) => setRegionInput(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border border-[#E5E5E5] text-[13px] text-[#1A1A1A] outline-none focus:border-[#E24B4A]"
+              className="w-full px-3 py-2.5 rounded-xl border border-[#E5E5E5] text-[13px] text-[#1A1A1A] outline-none focus:border-[#00A651]"
             />
           </div>
           <div>
@@ -978,7 +978,7 @@ function DashboardContent() {
             <select
               value={dailyHoursInput}
               onChange={(e) => setDailyHoursInput(e.target.value)}
-              className="w-full px-3 py-2.5 rounded-xl border border-[#E5E5E5] text-[13px] text-[#1A1A1A] outline-none focus:border-[#E24B4A] bg-white"
+              className="w-full px-3 py-2.5 rounded-xl border border-[#E5E5E5] text-[13px] text-[#1A1A1A] outline-none focus:border-[#00A651] bg-white"
             >
               <option value="">선택해주세요</option>
               {[1, 2, 3, 4, 5, 6].map((h) => (
@@ -989,7 +989,7 @@ function DashboardContent() {
           <button
             onClick={handleSaveProfile}
             disabled={savingProfile}
-            className="w-full py-3 bg-[#1A1A1A] text-white rounded-xl text-[13px] font-bold disabled:opacity-40"
+            className="w-full py-3 bg-[#111111] text-white rounded-xl text-[13px] font-bold disabled:opacity-40"
           >
             {savingProfile
               ? <span className="flex items-center justify-center gap-2"><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />저장 중...</span>
@@ -1065,7 +1065,7 @@ function DashboardContent() {
                 </div>
                 <button
                   onClick={() => { setShowExamModal(false); setExamDone(false); setExamName(''); setExamPhone(''); setExamEmail('') }}
-                  className="w-full py-3.5 bg-[#E24B4A] text-white rounded-2xl text-[15px] font-bold mt-2"
+                  className="w-full py-3.5 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold mt-2"
                 >
                   확인
                 </button>
@@ -1083,7 +1083,7 @@ function DashboardContent() {
                         onClick={() => setExamRound(e.round)}
                         className={`py-2 rounded-xl text-[11px] font-bold border-2 transition-all ${
                           examRound === e.round
-                            ? 'bg-[#E24B4A] border-[#E24B4A] text-white'
+                            ? 'bg-[#00A651] border-[#00A651] text-white'
                             : 'bg-white border-[#E5E5E5] text-[#1A1A1A]'
                         }`}
                       >
@@ -1104,7 +1104,7 @@ function DashboardContent() {
                     placeholder="이름을 입력해주세요"
                     value={examName}
                     onChange={(e) => setExamName(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-[#E5E5E5] text-[14px] text-[#1A1A1A] outline-none focus:border-[#E24B4A]"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-[#E5E5E5] text-[14px] text-[#1A1A1A] outline-none focus:border-[#00A651]"
                   />
                 </div>
 
@@ -1116,7 +1116,7 @@ function DashboardContent() {
                     placeholder="010-0000-0000"
                     value={examPhone}
                     onChange={(e) => setExamPhone(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-[#E5E5E5] text-[14px] text-[#1A1A1A] outline-none focus:border-[#E24B4A]"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-[#E5E5E5] text-[14px] text-[#1A1A1A] outline-none focus:border-[#00A651]"
                   />
                 </div>
 
@@ -1128,7 +1128,7 @@ function DashboardContent() {
                     placeholder="example@email.com"
                     value={examEmail}
                     onChange={(e) => setExamEmail(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-[#E5E5E5] text-[14px] text-[#1A1A1A] outline-none focus:border-[#E24B4A]"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-[#E5E5E5] text-[14px] text-[#1A1A1A] outline-none focus:border-[#00A651]"
                   />
                 </div>
 
@@ -1136,7 +1136,7 @@ function DashboardContent() {
                 <button
                   onClick={handleExamRegister}
                   disabled={!examName || !examPhone || examSubmitting}
-                  className="w-full py-4 bg-[#E24B4A] text-white rounded-2xl text-[15px] font-bold disabled:opacity-40"
+                  className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold disabled:opacity-40"
                 >
                   {examSubmitting ? '신청 중...' : '신청하기'}
                 </button>
@@ -1177,7 +1177,7 @@ function DashboardContent() {
                         <p className="text-[11px] text-[#6B6B6B]">
                           {new Date(goal.exam_date).toLocaleDateString('ko-KR')}
                           {' · '}
-                          <span className="font-bold text-[#E24B4A]">
+                          <span className="font-bold text-[#00A651]">
                             {diff > 0 ? `D-${diff}` : diff === 0 ? 'D-Day' : `D+${Math.abs(diff)}`}
                           </span>
                         </p>
@@ -1206,7 +1206,7 @@ function DashboardContent() {
                     onClick={() => setDdayNewCert(cert)}
                     className={`py-3 rounded-xl text-[12px] font-bold border-2 transition-all ${
                       ddayNewCert === cert
-                        ? 'bg-[#E24B4A] border-[#E24B4A] text-white'
+                        ? 'bg-[#00A651] border-[#00A651] text-white'
                         : 'bg-white border-[#E5E5E5] text-[#1A1A1A]'
                     }`}
                   >
@@ -1225,14 +1225,14 @@ function DashboardContent() {
                   value={ddayNewDate}
                   onChange={(e) => setDdayNewDate(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
-                  className="w-full px-3 py-2.5 rounded-xl border border-[#E5E5E5] text-[13px] text-[#1A1A1A] outline-none focus:border-[#E24B4A]"
+                  className="w-full px-3 py-2.5 rounded-xl border border-[#E5E5E5] text-[13px] text-[#1A1A1A] outline-none focus:border-[#00A651]"
                 />
               </div>
 
               <button
                 onClick={handleAddDDayGoal}
                 disabled={!ddayNewDate || savingDDay}
-                className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-2xl text-[14px] font-bold disabled:opacity-40 flex items-center justify-center gap-2"
+                className="w-full py-3.5 bg-[#111111] text-white rounded-2xl text-[14px] font-bold disabled:opacity-40 flex items-center justify-center gap-2"
               >
                 {savingDDay
                   ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />저장 중...</>

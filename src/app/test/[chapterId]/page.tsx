@@ -114,7 +114,7 @@ export default function TestPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#E24B4A] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -123,7 +123,7 @@ export default function TestPage() {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex flex-col items-center justify-center p-6 text-center">
         <p className="text-[16px] font-bold text-[#1A1A1A] mb-2">등록된 문제가 없습니다</p>
-        <button onClick={() => router.back()} className="text-[14px] text-[#E24B4A]">← 돌아가기</button>
+        <button onClick={() => router.back()} className="text-[14px] text-[#00A651]">← 돌아가기</button>
       </div>
     )
   }
@@ -137,7 +137,7 @@ export default function TestPage() {
 
       {/* Progress bar */}
       <div className="h-1 bg-[#E5E5E5]">
-        <div className="h-full bg-[#E24B4A] transition-all duration-300" style={{ width: `${progress}%` }} />
+        <div className="h-full bg-[#00A651] transition-all duration-300" style={{ width: `${progress}%` }} />
       </div>
 
       {/* Header */}
@@ -192,7 +192,7 @@ export default function TestPage() {
               onClick={() => setSelected(i)}
               className={`w-full flex items-center px-4 py-4 rounded-2xl border-2 text-left text-[14px] font-medium transition-all ${
                 selected === i
-                  ? 'border-[#E24B4A] bg-[#E24B4A]/5 text-[#1A1A1A]'
+                  ? 'border-[#00A651] bg-[#00A651]/5 text-[#1A1A1A]'
                   : 'border-[#E5E5E5] bg-white text-[#1A1A1A]'
               }`}
             >
@@ -208,7 +208,7 @@ export default function TestPage() {
           onClick={handleNext}
           disabled={selected === null}
           className={`w-full py-4 disabled:opacity-40 text-white rounded-2xl text-[16px] font-bold ${
-            isLast ? 'bg-[#1A1A1A]' : 'bg-[#E24B4A]'
+            isLast ? 'bg-[#111111]' : 'bg-[#00A651]'
           }`}
         >
           {isLast ? '결과 보기' : '다음 문제'}

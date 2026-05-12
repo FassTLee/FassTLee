@@ -30,7 +30,7 @@ export default function SelectCertPage() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#E24B4A] border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -42,7 +42,7 @@ export default function SelectCertPage() {
         <button onClick={() => router.push('/trainer/dashboard')} className="flex items-center gap-1 text-[13px] text-[#6B6B6B] mb-3">
           <ChevronLeft size={16} /> 대시보드
         </button>
-        <p className="text-[10px] font-bold text-[#E24B4A] tracking-widest uppercase mb-1">Kinepia</p>
+        <p className="text-[10px] font-bold text-[#00A651] tracking-widest uppercase mb-1">Kinepia</p>
         <h1 className="text-[22px] font-black text-[#1A1A1A]">자격증 선택</h1>
         <p className="text-[13px] text-[#6B6B6B] mt-1">준비 중인 자격증을 선택하세요</p>
       </div>
@@ -65,7 +65,7 @@ export default function SelectCertPage() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
               <span className="text-[16px] font-black text-[#1A1A1A]">건강운동관리사</span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E24B4A]/10 text-[#E24B4A]">Beta</span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#00A651]/10 text-[#00A651]">Beta</span>
             </div>
             <p className="text-[12px] text-[#6B6B6B]">운동생리학·해부학·운동처방론 등</p>
           </div>
