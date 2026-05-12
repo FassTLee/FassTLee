@@ -134,7 +134,7 @@ export default function LandingPage() {
           {/* CTA */}
           <button
             onClick={() => router.push('/landing/test')}
-            className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A651] hover:bg-[#008c44] rounded-2xl text-[16px] font-bold text-white mb-4 shadow-lg shadow-[#00A651]/30 transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-[#00A651] hover:bg-[#00A651] hover:text-white rounded-2xl text-[16px] font-bold text-[#00A651] mb-4 transition-colors"
           >
             무료 테스트 시작 <ChevronRight size={18} />
           </button>
@@ -367,7 +367,7 @@ export default function LandingPage() {
           </p>
           <button
             onClick={() => router.push('/select-cert')}
-            className="w-full flex items-center justify-center gap-2 py-4 bg-white rounded-2xl text-[16px] font-bold text-[#00A651] shadow-lg mb-3"
+            className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-[#00A651] hover:bg-[#00A651] hover:text-white rounded-2xl text-[16px] font-bold text-[#00A651] mb-3 transition-colors"
           >
             무료 테스트 시작 <ChevronRight size={18} />
           </button>
