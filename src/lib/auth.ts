@@ -2,6 +2,7 @@ import { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import KakaoProvider from 'next-auth/providers/kakao'
 import NaverProvider from 'next-auth/providers/naver'
+import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -40,10 +41,23 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user, account }) {
       if (account && user) {
+        // email로 profiles에서 Supabase UUID 조회
+        let supabaseId: string | null = null
+        if (isSupabaseAdminConfigured && user.email) {
+          const { data: profile } = await supabaseAdmin
+            .from('profiles')
+            .select('id')
+            .eq('email', user.email)
+            .single()
+          supabaseId = profile?.id ?? null
+          console.log(`[Auth] jwt supabaseId=${supabaseId} email=${user.email}`)
+        }
+
         return {
           ...token,
           provider:           account.provider,
           providerAccountId:  account.providerAccountId,
+          supabaseId,                                 // Supabase UUID 저장
           accessToken:        account.access_token,
           refreshToken:       account.refresh_token ?? null,
           refreshTokenExpiry: Date.now() + 7 * 24 * 60 * 60 * 1000,
@@ -60,7 +74,7 @@ export const authOptions: NextAuthOptions = {
 
     async session({ session, token }) {
       session.user = {
-        id:       token.sub                    ?? '',
+        id:       (token.supabaseId as string | null) ?? token.sub ?? '',  // Supabase UUID 우선
         name:     session.user?.name           ?? null,
         email:    session.user?.email          ?? null,
         image:    session.user?.image          ?? null,

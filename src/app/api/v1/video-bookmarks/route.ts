@@ -7,24 +7,20 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(_req: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!session?.user?.id) {
+    return NextResponse.json({ bookmarks: [] })
   }
-  const email = session.user.email
+
+  const userId = session.user.id  // Supabase UUID → 중간 profiles 조회 불필요
 
   if (!isSupabaseAdminConfigured) {
     return NextResponse.json({ bookmarks: [] })
   }
 
-  const { data: profile } = await supabaseAdmin
-    .from('profiles').select('id').eq('email', email).single()
-
-  if (!profile?.id) return NextResponse.json({ bookmarks: [] })
-
   const { data } = await supabaseAdmin
     .from('video_bookmarks')
     .select('id, video_url, video_title, video_thumbnail, bookmarked_at')
-    .eq('user_id', profile.id)
+    .eq('user_id', userId)
     .order('bookmarked_at', { ascending: false })
 
   return NextResponse.json({ bookmarks: data ?? [] })
@@ -32,23 +28,19 @@ export async function GET(_req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  const email = session.user.email
+
+  const userId = session.user.id  // Supabase UUID
 
   if (!isSupabaseAdminConfigured) return NextResponse.json({ ok: true, saved: false })
-
-  const { data: profile } = await supabaseAdmin
-    .from('profiles').select('id').eq('email', email).single()
-
-  if (!profile?.id) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
 
   const body = await req.json()
   const { video_url, video_title, video_thumbnail } = body
 
   await supabaseAdmin.from('video_bookmarks').insert({
-    user_id:         profile.id,
+    user_id:         userId,
     video_url:       video_url       ?? '',
     video_title:     video_title     ?? '',
     video_thumbnail: video_thumbnail ?? '',
@@ -59,20 +51,16 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  const email = session.user.email
+
+  const userId = session.user.id  // Supabase UUID
 
   if (!isSupabaseAdminConfigured) return NextResponse.json({ ok: true })
 
-  const { data: profile } = await supabaseAdmin
-    .from('profiles').select('id').eq('email', email).single()
-
-  if (!profile?.id) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
-
   const { id } = await req.json()
-  await supabaseAdmin.from('video_bookmarks').delete().eq('id', id).eq('user_id', profile.id)
+  await supabaseAdmin.from('video_bookmarks').delete().eq('id', id).eq('user_id', userId)
 
   return NextResponse.json({ ok: true })
 }

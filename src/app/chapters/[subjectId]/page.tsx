@@ -59,15 +59,10 @@ export default function ChaptersPage() {
 
   // ── 통계 fetch (userId 확보되는 순간 실행) ────────────────────────────
   useEffect(() => {
-    const resolveAndFetch = async () => {
-      // Supabase auth UUID 우선 시도, 없으면 NextAuth session.user.id 사용
-      const { data: { user } } = await supabase.auth.getUser()
-      const userId = user?.id ?? session?.user?.id
-      console.log('[chapters] fetchStats userId:', userId, '| supabase uid:', user?.id)
-      if (!userId) return
-      fetchStats(userId)
-    }
-    if (session?.user?.id) resolveAndFetch()
+    const userId = session?.user?.id  // Supabase UUID (auth.ts jwt 콜백에서 주입)
+    console.log('[chapters] fetchStats userId:', userId)
+    if (!userId) return
+    fetchStats(userId)
   }, [session?.user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchStats = async (userId: string) => {
