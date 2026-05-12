@@ -42,6 +42,17 @@ export default function SignUpPage() {
               <span className="text-[16px] font-black leading-none">K</span>
               카카오로 계속하기
             </button>
+
+            <button
+              onClick={() => signIn('naver', { callbackUrl })}
+              className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl text-[14px] font-semibold text-white hover:opacity-90 transition-opacity"
+              style={{ backgroundColor: '#03C75A' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+                <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/>
+              </svg>
+              네이버로 계속하기
+            </button>
           </div>
 
           <p className="text-[11px] text-[#ADADAD] text-center mt-6 leading-relaxed">
