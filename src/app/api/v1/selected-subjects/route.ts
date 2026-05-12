@@ -1,21 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getToken } from 'next-auth/jwt'
-import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 
-export async function GET(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
-  if (!token?.email) {
+export const dynamic = 'force-dynamic'
+
+export async function GET(_req: NextRequest) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  const email = token.email as string
-  if (!isSupabaseConfigured) {
+  const email = session.user.email
+
+  if (!isSupabaseAdminConfigured) {
     return NextResponse.json({ selected_subjects: [], selected_cert: null, required_subjects: [] })
   }
-  const { data } = await supabase
+
+  const { data } = await supabaseAdmin
     .from('profiles')
     .select('selected_subjects, selected_cert, required_subjects, additional_subjects')
     .eq('email', email)
     .single()
+
   return NextResponse.json({
     selected_subjects:   data?.selected_subjects   ?? [],
     selected_cert:       data?.selected_cert       ?? null,
@@ -25,20 +31,23 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
-  if (!token?.email) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  const email = token.email as string
+  const email = session.user.email
+
   const body = await req.json()
   const { selected_subjects, selected_cert, required_subjects, additional_subjects } = body
   if (!Array.isArray(selected_subjects)) {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
   }
-  if (!isSupabaseConfigured) {
+
+  if (!isSupabaseAdminConfigured) {
     return NextResponse.json({ ok: true, saved: false })
   }
-  await supabase
+
+  await supabaseAdmin
     .from('profiles')
     .upsert(
       {
@@ -50,5 +59,6 @@ export async function POST(req: NextRequest) {
       },
       { onConflict: 'email' }
     )
+
   return NextResponse.json({ ok: true, saved: true })
 }
