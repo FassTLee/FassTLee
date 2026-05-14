@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signIn, useSession } from 'next-auth/react'
 import { Check, ChevronRight } from 'lucide-react'
@@ -167,12 +168,13 @@ export default function LandingPage() {
           </div>
 
           {/* CTA */}
-          <button
-            onClick={() => router.push('/landing/test')}
+          <Link
+            href="/landing/test"
+            prefetch={true}
             className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-[#FF5722] text-[#FF5722] hover:bg-[#FF5722] hover:text-white rounded-2xl text-[16px] font-bold mb-4 transition-colors"
           >
             무료 테스트 시작 <ChevronRight size={18} />
-          </button>
+          </Link>
           <p className="text-[11px] text-white/40 text-center mb-4">
             로그인 없이 바로 시작 가능 · 결과 저장 시 로그인
           </p>
@@ -181,6 +183,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={handleGoogleSignIn}
+              onMouseEnter={() => router.prefetch('/trainer/dashboard')}
               className="flex items-center justify-center gap-1.5 py-3 bg-white rounded-xl text-[12px] font-semibold text-[#1A1A1A] hover:bg-gray-50 transition-colors"
             >
               <svg width="14" height="14" viewBox="0 0 24 24">
@@ -193,6 +196,7 @@ export default function LandingPage() {
             </button>
             <button
               onClick={handleKakaoSignIn}
+              onMouseEnter={() => router.prefetch('/trainer/dashboard')}
               className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-[12px] font-semibold text-[#000]"
               style={{ backgroundColor: '#FEE500' }}
             >
@@ -201,6 +205,7 @@ export default function LandingPage() {
             </button>
             <button
               onClick={handleNaverSignIn}
+              onMouseEnter={() => router.prefetch('/trainer/dashboard')}
               className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-[12px] font-semibold text-white"
               style={{ backgroundColor: '#03C75A' }}
             >
@@ -400,15 +405,17 @@ export default function LandingPage() {
             무료로 시작하고, 필요할 때 구독하세요.<br />
             건강운동관리사 합격, Kinepia와 함께라면 가능합니다.
           </p>
-          <button
-            onClick={() => router.push('/select-cert')}
+          <Link
+            href="/landing/test"
+            prefetch={true}
             className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-[#FF5722] text-[#FF5722] hover:bg-[#FF5722] hover:text-white rounded-2xl text-[16px] font-bold mb-3 transition-colors"
           >
             무료 테스트 시작 <ChevronRight size={18} />
-          </button>
+          </Link>
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={handleGoogleSignIn}
+              onMouseEnter={() => router.prefetch('/trainer/dashboard')}
               className="flex items-center justify-center gap-1.5 py-3 bg-white/20 border border-white/30 rounded-xl text-[12px] font-semibold text-white"
             >
               <svg width="13" height="13" viewBox="0 0 24 24">
@@ -421,6 +428,7 @@ export default function LandingPage() {
             </button>
             <button
               onClick={handleKakaoSignIn}
+              onMouseEnter={() => router.prefetch('/trainer/dashboard')}
               className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-[12px] font-semibold text-[#000]"
               style={{ backgroundColor: '#FEE500' }}
             >
@@ -428,6 +436,7 @@ export default function LandingPage() {
             </button>
             <button
               onClick={handleNaverSignIn}
+              onMouseEnter={() => router.prefetch('/trainer/dashboard')}
               className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-[12px] font-semibold text-white"
               style={{ backgroundColor: '#03C75A' }}
             >

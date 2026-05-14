@@ -91,6 +91,7 @@ interface ChapterStat {
   latest_score?: number | null
   best_score?: number | null
   test_attempts?: number
+  lesson_completed?: boolean
 }
 
 interface VideoBookmark {
@@ -334,6 +335,24 @@ function DashboardContent() {
       }
     } catch (e) { console.warn('[initCommon] user-goals 실패', e) }
 
+    // ④ localStorage 폴백 — 모든 DB 조회 실패 시 마지막 안전망
+    if (!loadedExamDate) {
+      const cached = localStorage.getItem('kinepia_exam_date')
+      if (cached) {
+        console.log('[initCommon] localStorage 폴백 exam_date:', cached)
+        setProfileExamDate(cached)
+        setExamDateInput(cached)
+      }
+    }
+    if (!loadedCertType) {
+      const cachedCert = localStorage.getItem('kinepia_cert_type')
+      if (cachedCert) {
+        console.log('[initCommon] localStorage 폴백 cert_type:', cachedCert)
+        setProfileCert(cachedCert)
+        setCertTypeInput(cachedCert)
+      }
+    }
+
     // Chapter stats
     let stats: ChapterStat[] = []
     try {
@@ -462,7 +481,7 @@ function DashboardContent() {
               .from('chapters').select('id, title, order_index').in('course_id', cIds)
             const sortedChaps = (chaps ?? []).sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
             const completedIds = new Set(
-              (stats ?? []).filter((s) => (s.latest_score ?? s.avg_score) >= 80).map((s) => s.chapter_id)
+              (stats ?? []).filter((s) => s.lesson_completed === true || (s.latest_score ?? s.avg_score) >= 80).map((s) => s.chapter_id)
             )
             const total     = sortedChaps.length
             const completed = sortedChaps.filter((c) => completedIds.has(c.id)).length
@@ -576,6 +595,9 @@ function DashboardContent() {
       setProfileExamDate(ddayNewDate)
       setProfileCert(ddayNewCert)
       setExamDateInput(ddayNewDate)   // 내 정보 탭도 동기화
+      // localStorage 백업 — 재로그인 후 DB 조회 전 즉시 복원용
+      localStorage.setItem('kinepia_exam_date', ddayNewDate)
+      if (ddayNewCert) localStorage.setItem('kinepia_cert_type', ddayNewCert)
 
       setDdayNewDate('')
       setShowDDayModal(false)         // 모달 자동 닫힘
@@ -626,6 +648,10 @@ function DashboardContent() {
       })
       // 홈 D-Day 카드 실시간 반영
       setProfileExamDate(examDateInput || null)
+      // localStorage 백업 — 재로그인 후 DB 조회 전 즉시 복원용
+      if (examDateInput) localStorage.setItem('kinepia_exam_date', examDateInput)
+      else localStorage.removeItem('kinepia_exam_date')
+      if (certTypeInput) localStorage.setItem('kinepia_cert_type', certTypeInput)
       if (certTypeInput && certTypeInput !== profileCert) {
         setProfileCert(certTypeInput)
         // certKey / certLabel 동기화
@@ -1509,11 +1535,11 @@ function DashboardContent() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    isNext  ? 'text-[#00A651] bg-[#00A651]/10'
-                    : isPast ? 'text-[#ADADAD] bg-[#E5E5E5]'
-                    : 'text-[#ADADAD] bg-[#F5F5F3]'
-                  }`}>{dday}</span>
+                  {!isPast && (
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      isNext ? 'text-[#00A651] bg-[#00A651]/10' : 'text-[#ADADAD] bg-[#F5F5F3]'
+                    }`}>{dday}</span>
+                  )}
                   {isPast ? (
                     <span className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-[#E5E5E5] text-[#ADADAD]">
                       종료
