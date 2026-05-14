@@ -50,24 +50,29 @@ export default function ChaptersPage() {
   // TODO: replace with real subscription check (e.g. from profile API)
   const isSubscribed = false
 
-  // ── 챕터 목록 fetch (userId 불필요) ──────────────────────────────────
+  // ── 챕터 목록 + 통계 fetch: 페이지 진입마다 항상 실행 ─────────────────
   useEffect(() => {
     if (status === 'loading') return
     if (status === 'unauthenticated') { router.replace('/landing'); return }
     fetchData()
+    const userId = session?.user?.id
+    console.log('[chapters] fetchStats userId:', userId)
+    if (userId) fetchStats(userId)
   }, [status, subjectId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── 통계 fetch (userId 확보되는 순간 실행) ────────────────────────────
+  // userId가 늦게 확보되는 경우 추가 보장
   useEffect(() => {
-    const userId = session?.user?.id  // Supabase UUID (auth.ts jwt 콜백에서 주입)
-    console.log('[chapters] fetchStats userId:', userId)
-    if (!userId) return
+    const userId = session?.user?.id
+    if (!userId || status !== 'authenticated') return
     fetchStats(userId)
-  }, [session?.user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [session?.user?.id, status]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchStats = async (userId: string) => {
     try {
-      const res  = await fetch(`/api/v1/report?userId=${encodeURIComponent(userId)}`)
+      const res  = await fetch(
+        `/api/v1/report?userId=${encodeURIComponent(userId)}`,
+        { cache: 'no-store' }          // 매번 최신 데이터 fetch
+      )
       const data = await res.json()
       console.log('[chapters] chapter_stats count:', data.chapter_stats?.length, data.chapter_stats)
       const map: Record<string, ChapterStat> = {}
@@ -75,6 +80,7 @@ export default function ChaptersPage() {
         map[s.chapter_id] = s
       }
       setStatsMap(map)
+      console.log('[chapters] statsMap:', JSON.stringify(map))
     } catch (e) {
       console.log('[chapters] fetchStats error:', e)
     }
@@ -173,7 +179,7 @@ export default function ChaptersPage() {
           onClick={() => router.push('/trainer/dashboard')}
           className="mt-3 px-6 py-3 text-[13px] text-[#6B6B6B]"
         >
-          대시보드로 돌아가기
+          홈으로
         </button>
       </div>
     )
@@ -199,31 +205,40 @@ export default function ChaptersPage() {
         ) : (
           chapters.map((ch, idx) => {
             const stat     = statsMap[ch.id]
+            console.log('[chapters] card:', ch.id, statsMap[ch.id])
             const isLocked = !isSubscribed && idx >= FREE_LIMIT
             const isWeak   = stat && stat.wrong_rate >= 40
 
-            /* ── Status ── */
-            let statusLabel = '수강 전'
+            /* ── Status (3단계) ── */
+            let statusLabel = ''
             let statusColor = 'text-[#ADADAD]'
-            let badgeBg     = 'bg-[#00A651]/10'
+            let badgeBg     = 'bg-[#F5F5F3]'
             let badgeNode: React.ReactNode = (
-              <span className="text-[#00A651] text-[13px] font-bold">{idx + 1}</span>
+              <span className="text-[#ADADAD] text-[13px] font-bold">{idx + 1}</span>
             )
 
             if (stat) {
               const testAttempts = stat.test_attempts ?? 0
               const latestScore  = stat.latest_score  ?? 0
-              if (testAttempts >= 1 && latestScore >= 80) {
+
+              if (testAttempts >= 1) {
+                // Stage 3: 테스트 응시 완료
                 statusLabel = `${latestScore}점`
-                statusColor = 'text-[#639922]'
-                badgeBg     = 'bg-[#63992215]'
-                badgeNode   = <Check size={16} className="text-[#639922]" />
-              } else if (testAttempts >= 1) {
-                statusLabel = `${latestScore}점`
-                statusColor = latestScore >= 60 ? 'text-[#378ADD]' : 'text-[#E24B4A]'
-                badgeBg     = latestScore >= 60 ? 'bg-[#378ADD]/10' : 'bg-[#E24B4A]/10'
-                badgeNode   = <span className={`text-[13px] font-bold ${latestScore >= 60 ? 'text-[#378ADD]' : 'text-[#E24B4A]'}`}>{idx + 1}</span>
+                if (latestScore >= 80) {
+                  statusColor = 'text-[#639922]'
+                  badgeBg     = 'bg-[#63992215]'
+                  badgeNode   = <Check size={16} className="text-[#639922]" />
+                } else if (latestScore >= 60) {
+                  statusColor = 'text-[#F5A623]'
+                  badgeBg     = 'bg-[#F5A62315]'
+                  badgeNode   = <span className="text-[#F5A623] text-[13px] font-bold">{idx + 1}</span>
+                } else {
+                  statusColor = 'text-[#E24B4A]'
+                  badgeBg     = 'bg-[#E24B4A]/10'
+                  badgeNode   = <span className="text-[#E24B4A] text-[13px] font-bold">{idx + 1}</span>
+                }
               } else {
+                // Stage 2: 챕터 입장, 테스트 미완료
                 statusLabel = '학습 중'
                 statusColor = 'text-[#378ADD]'
                 badgeBg     = 'bg-[#378ADD]/10'
@@ -232,7 +247,9 @@ export default function ChaptersPage() {
             }
 
             return (
-              <div key={ch.id} className="w-full bg-white rounded-2xl border border-[#E5E5E5] flex items-center active:bg-[#F5F5F3]">
+              <div key={ch.id} className={`w-full rounded-2xl border flex items-center active:bg-[#F5F5F3] ${
+                !stat && !isLocked ? 'bg-[#FAFAFA] border-[#EBEBEB]' : 'bg-white border-[#E5E5E5]'
+              }`}>
                 {/* 메인 영역 (클릭 → 레슨 진입) */}
                 <button
                   onClick={() => {
@@ -254,7 +271,7 @@ export default function ChaptersPage() {
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className={`text-[14px] font-bold truncate ${isLocked ? 'text-[#ADADAD]' : 'text-[#1A1A1A]'}`}>
+                      <span className={`text-[14px] font-bold truncate ${isLocked || !stat ? 'text-[#ADADAD]' : 'text-[#1A1A1A]'}`}>
                         {ch.title}
                       </span>
                       {isWeak && !isLocked && <Flame size={13} className="text-[#E24B4A] flex-shrink-0" />}
@@ -270,8 +287,8 @@ export default function ChaptersPage() {
                   {!isLocked && <ChevronRight size={16} className="text-[#ADADAD] flex-shrink-0" />}
                 </button>
 
-                {/* 리포트 아이콘 (stat 있을 때만) */}
-                {!isLocked && stat && (
+                {/* 리포트 아이콘 (테스트 응시 완료 시만) */}
+                {!isLocked && stat && (stat.test_attempts ?? 0) >= 1 && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation()

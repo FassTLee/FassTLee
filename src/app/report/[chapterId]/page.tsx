@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Check, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { SignupPromptPopup } from '@/components/common/SignupPromptPopup'
 
 const RESULT_KEY  = 'kinepia_test_result'
 const SUBJECT_KEY = 'kinepia_current_subject_id'
@@ -25,16 +26,12 @@ interface TestResult {
 }
 
 interface LessonStat {
-  lesson_completed:    boolean
-  mini_quiz_correct:   number
-  mini_quiz_total:     number
-  lesson_completed_at: string | null
-  avg_score:           number
-  total_attempts:      number
-  last_attempt_at:     string | null
-  latest_score?:       number | null
-  best_score?:         number | null
-  test_attempts?:      number
+  avg_score:       number
+  total_attempts:  number
+  last_attempt_at: string | null
+  latest_score?:   number | null
+  best_score?:     number | null
+  test_attempts?:  number
 }
 
 export default function ReportPage() {
@@ -48,10 +45,15 @@ export default function ReportPage() {
   const [nextChapterId, setNextChapterId] = useState<string | null>(null)
   const [subjectId, setSubjectId]     = useState<string | null>(null)
   const [loading, setLoading]         = useState(true)
+  const [showSignupPopup, setShowSignupPopup] = useState(false)
 
   useEffect(() => {
     if (status === 'loading') return
-    if (status === 'unauthenticated') { router.replace('/landing'); return }
+
+    // 비로그인: 리다이렉트 대신 팝업 표시 후 페이지 계속 렌더
+    if (status === 'unauthenticated') {
+      setShowSignupPopup(true)
+    }
 
     const raw = localStorage.getItem(RESULT_KEY)
     // 테스트 결과가 이 챕터 것인지 확인, 없으면 null (리포트 아이콘으로 직접 접근 가능)
@@ -117,9 +119,15 @@ export default function ReportPage() {
   const score   = total > 0 ? Math.round((correct / total) * 100) : null
   const wrong   = result?.records.filter((r) => !r.correct) ?? []
   const passed  = score !== null && score >= 60
+  // 점수 색상: 80+ 초록 / 60~79 주황 / 60미만 빨강
+  const scoreColor = score === null
+    ? (passed ? '#7bc629' : '#E24B4A')
+    : score >= 80 ? (passed ? '#7bc629' : '#639922')
+    : score >= 60 ? '#F5A623'
+    : '#E24B4A'
 
-  // 데이터가 전혀 없으면 안내
-  const hasAnyData = result || lessonStat
+  // test_attempts < 1 이고 방금 테스트 결과도 없으면 접근 차단
+  const hasTestData = result !== null || (lessonStat !== null && (lessonStat.test_attempts ?? 0) >= 1)
 
   return (
     <div className="min-h-screen bg-[#F5F5F3] flex flex-col">
@@ -137,48 +145,11 @@ export default function ReportPage() {
 
       <div className="flex-1 overflow-y-auto p-4 pb-36 space-y-4">
 
-        {!hasAnyData && (
+        {!hasTestData && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="text-[40px] mb-3">📋</div>
-            <p className="text-[15px] font-bold text-[#1A1A1A] mb-2">아직 학습 기록이 없어요</p>
-            <p className="text-[13px] text-[#6B6B6B]">챕터를 학습한 뒤 여기서 결과를 확인할 수 있어요.</p>
-          </div>
-        )}
-
-        {/* ── 학습 완료 카드 ── */}
-        {lessonStat?.lesson_completed && (
-          <div className="bg-white rounded-2xl border border-[#E5E5E5] p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-7 h-7 rounded-lg bg-[#63992215] flex items-center justify-center">
-                <Check size={14} className="text-[#639922]" />
-              </div>
-              <span className="text-[14px] font-bold text-[#1A1A1A]">학습 완료</span>
-              {lessonStat.lesson_completed_at && (
-                <span className="text-[11px] text-[#ADADAD] ml-auto">
-                  {new Date(lessonStat.lesson_completed_at).toLocaleDateString('ko-KR')}
-                </span>
-              )}
-            </div>
-            {lessonStat.mini_quiz_total > 0 && (
-              <div className="flex items-center gap-3">
-                <div className="flex-1 bg-[#F5F5F3] rounded-xl px-4 py-3 text-center">
-                  <p className="text-[11px] text-[#ADADAD] mb-0.5">미니퀴즈</p>
-                  <p className="text-[20px] font-black text-[#1A1A1A]">
-                    {lessonStat.mini_quiz_correct}
-                    <span className="text-[14px] text-[#ADADAD] font-normal"> / {lessonStat.mini_quiz_total}</span>
-                  </p>
-                </div>
-                <div className="flex-1 bg-[#F5F5F3] rounded-xl px-4 py-3 text-center">
-                  <p className="text-[11px] text-[#ADADAD] mb-0.5">정답률</p>
-                  <p className="text-[20px] font-black" style={{
-                    color: lessonStat.mini_quiz_correct / lessonStat.mini_quiz_total >= 0.8
-                      ? '#639922' : '#E24B4A'
-                  }}>
-                    {Math.round((lessonStat.mini_quiz_correct / lessonStat.mini_quiz_total) * 100)}%
-                  </p>
-                </div>
-              </div>
-            )}
+            <p className="text-[15px] font-bold text-[#1A1A1A] mb-2">아직 테스트를 응시하지 않았어요</p>
+            <p className="text-[13px] text-[#6B6B6B]">챕터 학습 후 테스트를 완료하면 리포트를 확인할 수 있어요.</p>
           </div>
         )}
 
@@ -186,7 +157,7 @@ export default function ReportPage() {
         {score !== null ? (
           <div className={`rounded-2xl p-6 text-center ${passed ? 'bg-[#1A1A1A]' : 'bg-white border border-[#E5E5E5]'}`}>
             <p className={`text-[12px] font-bold mb-2 ${passed ? 'text-white/50' : 'text-[#ADADAD]'}`}>테스트 결과</p>
-            <div className="text-[48px] font-black mb-1" style={{ color: passed ? '#fff' : '#E24B4A' }}>
+            <div className="text-[48px] font-black mb-1" style={{ color: scoreColor }}>
               {score}점
             </div>
             <div className={`text-[14px] font-semibold mb-3 ${passed ? 'text-white/60' : 'text-[#ADADAD]'}`}>
@@ -205,6 +176,19 @@ export default function ReportPage() {
             <p className="text-[12px] text-[#ADADAD] mt-1">{lessonStat.test_attempts ?? lessonStat.total_attempts}회 응시</p>
           </div>
         ) : null}
+
+        {/* ── 상세 데이터 없음 안내 (이전 응시 기록 직접 접근 시) ── */}
+        {!result && hasTestData && (
+          <div className="bg-white rounded-2xl border border-[#E5E5E5] p-5 text-center">
+            <div className="text-[28px] mb-2">📂</div>
+            <p className="text-[14px] font-bold text-[#1A1A1A] mb-1">
+              이전 응시 기록의 상세 데이터가 없습니다
+            </p>
+            <p className="text-[12px] text-[#6B6B6B] leading-relaxed">
+              다음 응시부터 상세 리포트가 제공됩니다.
+            </p>
+          </div>
+        )}
 
         {/* ── 문항별 ○/✕ ── */}
         {result && result.records.length > 0 && (
@@ -303,12 +287,20 @@ export default function ReportPage() {
           </button>
         )}
         <button
-          onClick={() => router.push('/trainer/dashboard')}
+          onClick={() => router.push('/trainer/dashboard?tab=classroom')}
           className="w-full py-3.5 border-2 border-[#111111] bg-white rounded-2xl text-[14px] font-semibold text-[#111111]"
         >
-          대시보드로
+          강의실로
         </button>
       </div>
+
+      {/* 비로그인 가입 유도 팝업 (오버레이) */}
+      {showSignupPopup && (
+        <SignupPromptPopup
+          callbackUrl={`/report/${chapterId}`}
+          onClose={() => setShowSignupPopup(false)}
+        />
+      )}
     </div>
   )
 }

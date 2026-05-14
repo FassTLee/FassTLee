@@ -3,6 +3,9 @@ import GoogleProvider from 'next-auth/providers/google'
 import KakaoProvider from 'next-auth/providers/kakao'
 import NaverProvider from 'next-auth/providers/naver'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
+import { v5 as uuidv5 } from 'uuid'
+
+const UUID_NAMESPACE = '6ba7b810-9dad-11d1-80b4-00c04fd430c8'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -39,11 +42,37 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
+    async signIn({ user, account }) {
+      try {
+        console.log('[signIn callback 실행됨]', account?.provider, account?.providerAccountId)
+        const stableUUID = uuidv5(`${account?.provider}:${account?.providerAccountId}`, UUID_NAMESPACE)
+        const { error } = await supabaseAdmin
+          .from('profiles')
+          .upsert({
+            id:         stableUUID,
+            email:      user.email  ?? null,
+            name:       user.name   ?? null,
+            avatar_url: user.image  ?? null,
+            role:       'member',
+          }, { onConflict: 'id' })
+        console.log('[upsert 결과]', error)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(user as any).stableId = stableUUID
+        return true
+      } catch (e) {
+        console.error('[signIn callback 오류]', e)
+        return true
+      }
+    },
+
     async jwt({ token, user, account }) {
       if (account && user) {
-        // email로 profiles에서 Supabase UUID 조회
-        let supabaseId: string | null = null
-        if (isSupabaseAdminConfigured && user.email) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const stableId = (user as any).stableId as string | undefined
+
+        // email로 profiles에서 Supabase UUID 조회 (fallback)
+        let supabaseId: string | null = stableId ?? null
+        if (!supabaseId && isSupabaseAdminConfigured && user.email) {
           const { data: profile } = await supabaseAdmin
             .from('profiles')
             .select('id')
@@ -53,11 +82,14 @@ export const authOptions: NextAuthOptions = {
           console.log(`[Auth] jwt supabaseId=${supabaseId} email=${user.email}`)
         }
 
+        if (stableId) token.userId = stableId
+
         return {
           ...token,
           provider:           account.provider,
           providerAccountId:  account.providerAccountId,
-          supabaseId,                                 // Supabase UUID 저장
+          supabaseId,
+          userId:             stableId ?? supabaseId ?? token.sub,
           accessToken:        account.access_token,
           refreshToken:       account.refresh_token ?? null,
           refreshTokenExpiry: Date.now() + 7 * 24 * 60 * 60 * 1000,
@@ -74,7 +106,7 @@ export const authOptions: NextAuthOptions = {
 
     async session({ session, token }) {
       session.user = {
-        id:       (token.supabaseId as string | null) ?? token.sub ?? '',  // Supabase UUID 우선
+        id:       (token.userId as string | null) ?? (token.supabaseId as string | null) ?? token.sub ?? '',
         name:     session.user?.name           ?? null,
         email:    session.user?.email          ?? null,
         image:    session.user?.image          ?? null,

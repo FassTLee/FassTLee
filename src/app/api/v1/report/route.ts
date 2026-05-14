@@ -17,9 +17,10 @@ export async function GET(req: NextRequest) {
   const [{ data: chapterStats, error: chapterErr }, { data: questionStats, error: questionErr }] = await Promise.all([
     supabaseAdmin
       .from('chapter_stats')
-      .select('chapter_id, subject_id, avg_score, wrong_rate, total_attempts, last_attempt_at, lesson_completed, mini_quiz_correct, mini_quiz_total, lesson_completed_at')
+      .select('chapter_id, subject_id, avg_score, wrong_rate, total_attempts, last_attempt_at, lesson_completed, mini_quiz_correct, mini_quiz_total, lesson_completed_at, latest_score, best_score, test_attempts')
       .eq('user_id', userId)
-      .order('last_attempt_at', { ascending: false }),
+      .order('last_attempt_at', { ascending: false })
+      .limit(1000),
     supabaseAdmin
       .from('question_stats')
       .select('question_id, chapter_id, wrong_rate, total_attempts')
@@ -28,6 +29,8 @@ export async function GET(req: NextRequest) {
   ])
 
   console.log('[report] chapterStats count:', chapterStats?.length, '| error:', chapterErr)
+  console.log('[report] raw data:', JSON.stringify(chapterStats?.map(s => s.chapter_id)))
+  console.log('[report] full data:', JSON.stringify(chapterStats))
   console.log('[report] questionStats count:', questionStats?.length, '| error:', questionErr)
 
   return NextResponse.json({

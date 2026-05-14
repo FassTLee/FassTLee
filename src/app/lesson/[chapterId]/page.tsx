@@ -118,6 +118,20 @@ export default function LessonPage() {
     fetchData()
   }, [status, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── chapter-init: 첫 로드 시 chapter_stats row 생성 (없을 때만) ──────────
+  useEffect(() => {
+    const userId = session?.user?.id
+    if (!userId || !chapterId) return
+    fetch('/api/v1/chapter-init', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chapterId,
+        subjectId: localStorage.getItem(SUBJECT_KEY) ?? null,
+      }),
+    }).catch(() => {})
+  }, [session?.user?.id, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const fetchData = async () => {
     console.log('[fetchData] chapterId:', chapterId)
     console.log('[fetchData] supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL?.slice(0, 30))
@@ -269,13 +283,14 @@ export default function LessonPage() {
     const correct = miniSelected === miniQ.answerIdx
     miniTotalRef.current   += 1
     if (correct) miniCorrectRef.current += 1
-    fetch('/api/v1/test-complete', {
+    fetch('/api/v1/mini-quiz-complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chapterId,
-        subjectId: localStorage.getItem(SUBJECT_KEY) ?? '',
-        records: [{ questionId: miniQ.id, correct }],
+        subjectId:  localStorage.getItem(SUBJECT_KEY) ?? '',
+        questionId: miniQ.id,
+        correct,
         userId: session?.user?.id ?? '',
       }),
     }).catch(() => {})

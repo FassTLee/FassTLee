@@ -1,9 +1,11 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { signIn } from 'next-auth/react'
+import { signIn, useSession } from 'next-auth/react'
 import { Check, ChevronRight } from 'lucide-react'
 import { AppFooter } from '@/components/common/AppFooter'
+import { SignupPromptPopup } from '@/components/common/SignupPromptPopup'
 
 const FEATURES = [
   {
@@ -88,10 +90,43 @@ const MOCK_SCREENS = [
 
 export default function LandingPage() {
   const router = useRouter()
+  const { status } = useSession()
+  const [showSignupPopup, setShowSignupPopup] = useState(false)
 
   const handleGoogleSignIn = () => signIn('google', { callbackUrl: '/trainer/dashboard' })
   const handleKakaoSignIn  = () => signIn('kakao',  { callbackUrl: '/trainer/dashboard' })
   const handleNaverSignIn  = () => signIn('naver',  { callbackUrl: '/trainer/dashboard' })
+
+  // 이탈 감지: guest 데이터가 있고 비로그인 상태일 때
+  useEffect(() => {
+    if (status === 'loading' || status === 'authenticated') return
+
+    const hasGuestData =
+      Boolean(localStorage.getItem('kinepia_guest_id')) ||
+      Boolean(localStorage.getItem('landingTestResult'))
+
+    if (!hasGuestData) return
+
+    // 브라우저 닫기 / 새로고침 → 네이티브 "나가시겠습니까?" 다이얼로그
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    // 뒤로가기(popstate) → 커스텀 팝업
+    window.history.pushState(null, '', window.location.pathname)
+    const handlePopState = () => {
+      window.history.pushState(null, '', window.location.pathname) // 실제 뒤로가기 차단
+      setShowSignupPopup(true)
+    }
+    window.addEventListener('popstate', handlePopState)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [status]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="min-h-screen bg-white">
@@ -409,6 +444,14 @@ export default function LandingPage() {
       <div className="bg-[#1A1A1A]">
         <AppFooter dark />
       </div>
+
+      {/* 이탈 시 가입 유도 팝업 */}
+      {showSignupPopup && (
+        <SignupPromptPopup
+          callbackUrl="/landing/survey"
+          onClose={() => setShowSignupPopup(false)}
+        />
+      )}
     </div>
   )
 }

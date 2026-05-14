@@ -104,14 +104,17 @@ export function middleware(request: NextRequest) {
     return addSecurityHeaders(response)
   }
 
-  // ── Landing test IP 일 3회 제한 ────────────────────────────────
+  // ── Landing test IP 일 제한 (개발환경 비활성화) ───────────────
   if (pathname === '/landing/test') {
-    const key = `landing-test:${ip}:${new Date().toISOString().slice(0, 10)}`
-    const { allowed } = checkRateLimit(key, 3, 24 * 60 * 60_000)
+    const isDev = process.env.NODE_ENV === 'development'
+    if (!isDev) {
+      const key = `landing-test:${ip}:${new Date().toISOString().slice(0, 10)}`
+      const { allowed } = checkRateLimit(key, 20, 24 * 60 * 60_000) // 일 20회
 
-    if (!allowed) {
-      const response = NextResponse.redirect(new URL('/landing?rate_limited=1', request.url))
-      return addSecurityHeaders(response)
+      if (!allowed) {
+        const response = NextResponse.redirect(new URL('/landing?rate_limited=1', request.url))
+        return addSecurityHeaders(response)
+      }
     }
   }
 

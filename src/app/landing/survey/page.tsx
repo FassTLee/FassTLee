@@ -8,6 +8,15 @@ import Image from 'next/image'
 
 const STYLE_KEY      = 'kinepia_learning_style'
 const STYLE_TYPE_KEY = 'kinepia_learning_type'
+const GUEST_ID_KEY   = 'kinepia_guest_id'
+
+const GUEST_CLEANUP_KEYS = [
+  'kinepia_guest_id',
+  'landingTestResult',
+  'landingTestQuestions',
+  'kinepia_learning_type',
+  'kinepia_learning_style',
+]
 
 type LearningType = 'conceptualizer' | 'memorizer' | 'planner' | 'intensive'
 
@@ -88,6 +97,27 @@ function SurveyContent() {
   useEffect(() => {
     if (status === 'loading') return
     if (status === 'unauthenticated') { router.replace('/landing'); return }
+
+    // 로그인 완료 → guest 데이터 자동 병합
+    const guestId = localStorage.getItem(GUEST_ID_KEY)
+    console.log('[survey] guestId from localStorage:', guestId)
+    if (!guestId) return
+
+    fetch('/api/auth/convert-guest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ guest_id: guestId }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        console.log('[survey] convert-guest 결과:', data)
+        // 병합 성공 여부와 무관하게 localStorage 정리
+        GUEST_CLEANUP_KEYS.forEach((k) => localStorage.removeItem(k))
+        console.log('[survey] localStorage guest 키 정리 완료')
+      })
+      .catch((e) => {
+        console.log('[survey] convert-guest 오류:', e)
+      })
   }, [status, router])
 
   const handleSelect = (type: LearningType) => {
