@@ -63,10 +63,10 @@ const SUBJECT_META: Record<string, { icon: string; desc: string }> = {
 }
 
 const SAMPLE_VIDEOS = [
-  { src: '/videos/shorts/shorts_demo_01.mp4', title: '추천 영상 1' },
-  { src: '/videos/shorts/shorts_demo_02.mp4', title: '추천 영상 2' },
-  { src: '/videos/shorts/shorts_demo_03.mp4', title: '추천 영상 3' },
-  { src: '/videos/shorts/shorts_demo_04.mp4', title: '추천 영상 4' },
+  { src: '/videos/shorts/shorts-demo-01.mp4', title: '추천 영상 1' },
+  { src: '/videos/shorts/shorts-demo-02.mp4', title: '추천 영상 2' },
+  { src: '/videos/shorts/shorts-demo-03.mp4', title: '추천 영상 3' },
+  { src: '/videos/shorts/shorts-demo-04.mp4', title: '추천 영상 4' },
 ]
 
 interface ChapterStat {
@@ -165,8 +165,10 @@ function DashboardContent() {
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([])
   const [heartedVideos, setHeartedVideos] = useState<Record<string, boolean>>({})
   const [subjectCards, setSubjectCards]   = useState<SubjectCard[]>([])
-  const [recentStats, setRecentStats]     = useState<ChapterStat[]>([])
-  const [playingIdx, setPlayingIdx]       = useState<number | null>(null)
+  const [recentStats, setRecentStats]         = useState<ChapterStat[]>([])
+  const [allStats, setAllStats]               = useState<ChapterStat[]>([])
+  const [chapterSubjectMap, setChapterSubjectMap] = useState<Record<string, string>>({})
+  const [playingIdx, setPlayingIdx]           = useState<number | null>(null)
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([])
 
   /* ── D-Day goals ─────────────────────────────────────────────────── */
@@ -306,6 +308,7 @@ function DashboardContent() {
       const res   = await fetch(`/api/v1/report?userId=${encodeURIComponent(userId)}`)
       const data  = await res.json()
       stats = data.chapter_stats ?? []
+      setAllStats(stats)
 
       const sorted = [...stats].sort((a, b) =>
         new Date(b.last_attempt_at ?? 0).getTime() - new Date(a.last_attempt_at ?? 0).getTime()
@@ -333,10 +336,10 @@ function DashboardContent() {
       }
       setStreak(streakCount)
 
-      // Recent activity with chapter + subject names (top 5)
+      // 챕터 → 과목 매핑 (ALL stats 기반 — 취약 과목 분석 + recentActivity 공용)
       const top5 = sorted.slice(0, 5)
-      if (top5.length > 0) {
-        const chIds = Array.from(new Set(top5.map((s) => s.chapter_id)))
+      if (stats.length > 0) {
+        const chIds = Array.from(new Set(stats.map((s) => s.chapter_id)))
         const { data: chs } = await supabase
           .from('chapters').select('id, title, course_id').in('id', chIds)
         const courseIds = Array.from(new Set((chs ?? []).map((c) => c.course_id)))
@@ -353,6 +356,15 @@ function DashboardContent() {
         const chMap: Record<string, { title: string; course_id: string }> = {}
         chs?.forEach((c) => { chMap[c.id] = { title: c.title, course_id: c.course_id } })
 
+        // chapter_id → subject_name 전체 맵 (취약 과목 분석용)
+        const chSubMap: Record<string, string> = {}
+        chs?.forEach((c) => {
+          const subjId = courseMap[c.course_id]
+          if (subjId) chSubMap[c.id] = subjMap[subjId] ?? ''
+        })
+        setChapterSubjectMap(chSubMap)
+
+        // recentActivity: top 5만 표시
         setRecentActivity(
           top5.map((s) => ({
             chapter_id:    s.chapter_id,
@@ -635,6 +647,80 @@ function DashboardContent() {
       ? Math.ceil((new Date(profileExamDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / 86400000)
       : null
 
+    // ── 학습 활동 내역 계산 ──────────────────────────────────────────
+
+    // 캘린더: 날짜별 점수 맵
+    const actToday = new Date(); actToday.setHours(0, 0, 0, 0)
+    const studyMap: Record<string, number[]> = {}
+    allStats.forEach((s) => {
+      if (!s.last_attempt_at) return
+      const d = new Date(s.last_attempt_at)
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      if (!studyMap[key]) studyMap[key] = []
+      studyMap[key].push(s.avg_score)
+    })
+    // 그리드 시작: 4주 전 월요일
+    const todayDow = (actToday.getDay() + 6) % 7   // Mon=0 … Sun=6
+    const gridStart = new Date(actToday)
+    gridStart.setDate(actToday.getDate() - todayDow - 28)
+    const cellsNeeded = Math.round((actToday.getTime() - gridStart.getTime()) / 86400000) + 1
+    const totalCells  = Math.ceil(cellsNeeded / 7) * 7
+    const calCells = Array.from({ length: totalCells }, (_, i) => {
+      const d = new Date(gridStart)
+      d.setDate(gridStart.getDate() + i)
+      const isFuture = d > actToday
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      const scores = studyMap[key] ?? []
+      return {
+        isFuture,
+        isToday: d.getTime() === actToday.getTime(),
+        studied: scores.length > 0,
+        avgScore: scores.length > 0
+          ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0,
+      }
+    })
+    const getCellColor = (cell: typeof calCells[0]) => {
+      if (cell.isFuture) return '#FAFAFA'
+      if (!cell.studied)  return '#E5E5E5'
+      if (cell.avgScore >= 80) return '#00A651'
+      if (cell.avgScore >= 60) return '#7DBA5A'
+      return '#C4E49A'
+    }
+
+    // 주간 요약 (이번 주 7일 vs 지난 주 7일)
+    const day7ago  = new Date(actToday); day7ago.setDate(actToday.getDate() - 7)
+    const day14ago = new Date(actToday); day14ago.setDate(actToday.getDate() - 14)
+    const inRange  = (s: ChapterStat, from: Date, to: Date) => {
+      if (!s.last_attempt_at) return false
+      const d = new Date(s.last_attempt_at); d.setHours(0, 0, 0, 0)
+      return d >= from && d <= to
+    }
+    const thisWeekStats = allStats.filter((s) => inRange(s, day7ago, actToday))
+    const lastWeekStats = allStats.filter((s) => inRange(s, day14ago, new Date(day7ago.getTime() - 1)))
+    const thisWeekCount = thisWeekStats.length
+    const lastWeekCount = lastWeekStats.length
+    const thisWeekAvg   = thisWeekStats.length > 0
+      ? Math.round(thisWeekStats.reduce((a, s) => a + s.avg_score, 0) / thisWeekStats.length) : 0
+    const lastWeekAvg   = lastWeekStats.length > 0
+      ? Math.round(lastWeekStats.reduce((a, s) => a + s.avg_score, 0) / lastWeekStats.length) : 0
+
+    // 취약 과목 (avg_score < 60)
+    const subjectScoreMap: Record<string, number[]> = {}
+    allStats.forEach((s) => {
+      const subj = chapterSubjectMap[s.chapter_id]
+      if (!subj) return
+      if (!subjectScoreMap[subj]) subjectScoreMap[subj] = []
+      subjectScoreMap[subj].push(s.avg_score)
+    })
+    const weakSubjects = Object.entries(subjectScoreMap)
+      .map(([name, scores]) => ({
+        name,
+        avg: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
+      }))
+      .filter((s) => s.avg < 60)
+      .sort((a, b) => a.avg - b.avg)
+      .slice(0, 3)
+
     // 강의실 바로가기: 자격증 진도율 집계
     const displayCert = certLabel || profileCert || ''
     const aggProgress = Object.values(subjectProgress).reduce(
@@ -787,18 +873,25 @@ function DashboardContent() {
         )}
       </div>
 
-      {/* ③ 추천 영상 swipe — 중앙 85% + 좌우 peek */}
+      {/* ③ 추천 영상 — 중앙 85% + 좌우 peek 캐러셀 */}
       <div className="py-2">
         <p className="text-[12px] font-bold text-[#ADADAD] uppercase tracking-wider px-4 mb-2">
           오늘의 추천 영상
         </p>
+        {/*
+          scroll-snap-align: start + scrollPaddingLeft: 7.5%
+          → 첫 카드는 marginLeft 7.5%로 출발, 이후 카드도 좌측 7.5% 기준으로 스냅
+          → 양쪽 peek ≈ 7.5% - 5px(gap/2)
+        */}
         <div
-          className="flex overflow-x-auto pb-2"
+          className="flex overflow-x-scroll"
           style={{
             scrollSnapType: 'x mandatory',
+            scrollPaddingLeft: '7.5%',
             WebkitOverflowScrolling: 'touch',
             scrollbarWidth: 'none',
             msOverflowStyle: 'none',
+            overscrollBehaviorX: 'contain',
           } as React.CSSProperties}
         >
           {SAMPLE_VIDEOS.map((vid, i) => {
@@ -810,8 +903,10 @@ function DashboardContent() {
                 className="flex-shrink-0 rounded-2xl overflow-hidden bg-[#1A1A1A] relative cursor-pointer"
                 style={{
                   width: '85%',
-                  scrollSnapAlign: 'center',
-                  aspectRatio: '9/16',
+                  flexShrink: 0,
+                  scrollSnapAlign: 'start',
+                  /* 9:11 = 9:16 대비 약 31% 높이 축소 */
+                  aspectRatio: '9 / 11',
                   marginLeft:  isFirst ? '7.5%' : '10px',
                   marginRight: isLast  ? '7.5%' : 0,
                 }}
@@ -821,21 +916,26 @@ function DashboardContent() {
                   ref={(el) => { videoRefs.current[i] = el }}
                   src={vid.src}
                   className="w-full h-full object-cover"
-                  playsInline
-                  muted
+                  playsInline          /* iOS 인라인 재생 */
+                  muted                /* 모바일 autoplay 정책 허용 */
                   preload="metadata"
                   loop
+                  onLoadedMetadata={(e) => {
+                    /* 첫 프레임을 썸네일로 표시 */
+                    const v = e.target as HTMLVideoElement
+                    v.currentTime = 0.001
+                  }}
                 />
 
                 {/* 정지 오버레이 — 재생 버튼 + 제목 */}
                 {playingIdx !== i && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-black/20 via-transparent to-black/60">
-                    <div className="w-14 h-14 rounded-full bg-[#00A651] flex items-center justify-center shadow-lg">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-black/20 via-transparent to-black/60 pointer-events-none">
+                    <div className="w-14 h-14 rounded-full bg-[#00A651] flex items-center justify-center shadow-xl">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
                         <polygon points="7,3 21,12 7,21" />
                       </svg>
                     </div>
-                    <p className="text-white text-[13px] font-bold absolute bottom-5 left-0 right-0 text-center px-4 truncate">
+                    <p className="text-white text-[13px] font-bold absolute bottom-4 left-0 right-0 text-center px-4 truncate">
                       {vid.title}
                     </p>
                   </div>
@@ -844,7 +944,7 @@ function DashboardContent() {
                 {/* 재생 중 — 하단 정보 + 녹색 테두리 */}
                 {playingIdx === i && (
                   <>
-                    <div className="absolute bottom-0 left-0 right-0 px-4 py-4 bg-gradient-to-t from-black/70 to-transparent">
+                    <div className="absolute bottom-0 left-0 right-0 px-4 py-3.5 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
                       <p className="text-white text-[13px] font-bold truncate">{vid.title}</p>
                       <p className="text-[#00A651] text-[11px] font-bold mt-0.5">▶ 재생 중</p>
                     </div>
@@ -926,46 +1026,128 @@ function DashboardContent() {
       </div>
 
       {/* ⑤ 내 학습 활동 내역 */}
-      {recentActivity.length > 0 && (
-        <div className="px-4 py-2">
-          <p className="text-[12px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">내 학습 활동 내역</p>
-          <div className="space-y-2">
-            {recentActivity.map((a, i) => (
-              <button
-                key={i}
-                onClick={() => router.push(`/lesson/${a.chapter_id}`)}
-                className="w-full bg-white rounded-xl border border-[#E5E5E5] p-3 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
-              >
-                <div className="w-8 h-8 rounded-lg bg-[#F5F5F3] flex items-center justify-center text-[11px] font-black text-[#ADADAD] flex-shrink-0">
-                  {i + 1}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-semibold text-[#1A1A1A] truncate">
-                    {a.subject_name ? `${a.subject_name} › ${a.chapter_title}` : a.chapter_title}
-                  </p>
-                  <p className="text-[10px] text-[#ADADAD]">
-                    {a.date ? new Date(a.date).toLocaleDateString('ko-KR') : '-'}
-                  </p>
-                </div>
-                <span className={`text-[12px] font-black flex-shrink-0 ${
-                  a.score >= 80 ? 'text-[#639922]' : a.score >= 60 ? 'text-[#378ADD]' : 'text-[#E24B4A]'
-                }`}>{a.score}점</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {allStats.length > 0 ? (
+        <div className="px-4 py-2 space-y-3 pb-4">
+          <p className="text-[12px] font-bold text-[#ADADAD] uppercase tracking-wider">내 학습 활동 내역</p>
 
-      {recentActivity.length === 0 && subjectCards.length === 0 && (
+          {/* 1. 학습 캘린더 (잔디밭) */}
+          <div className="bg-white rounded-2xl border border-[#E5E5E5] p-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[13px] font-bold text-[#1A1A1A]">🌱 학습 캘린더</p>
+              <p className="text-[11px] text-[#ADADAD]">
+                {streak > 0 ? `🔥 ${streak}일 연속` : '오늘 학습해보세요'}
+              </p>
+            </div>
+            {/* 요일 헤더 */}
+            <div className="grid grid-cols-7 gap-[3px] mb-1">
+              {['월', '화', '수', '목', '금', '토', '일'].map((d) => (
+                <div key={d} className="text-center text-[9px] font-bold text-[#ADADAD]">{d}</div>
+              ))}
+            </div>
+            {/* 잔디밭 그리드 */}
+            <div className="grid grid-cols-7 gap-[3px]">
+              {calCells.map((cell, i) => (
+                <div
+                  key={i}
+                  className={`aspect-square rounded-[3px] ${cell.isToday ? 'ring-[1.5px] ring-[#1A1A1A] ring-offset-0' : ''}`}
+                  style={{ backgroundColor: getCellColor(cell) }}
+                />
+              ))}
+            </div>
+            {/* 범례 */}
+            <div className="flex items-center gap-3 mt-2.5 justify-end">
+              {([
+                { color: '#E5E5E5', label: '없음' },
+                { color: '#C4E49A', label: '~59점' },
+                { color: '#7DBA5A', label: '60~79' },
+                { color: '#00A651', label: '80점↑' },
+              ] as const).map(({ color, label }) => (
+                <div key={label} className="flex items-center gap-1">
+                  <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: color }} />
+                  <span className="text-[9px] text-[#ADADAD]">{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 2. 주간 요약 */}
+          {(thisWeekCount > 0 || lastWeekCount > 0) && (
+            <div className="grid grid-cols-2 gap-2.5">
+              {/* 이번 주 */}
+              <div className="bg-white rounded-2xl border border-[#E5E5E5] p-3.5">
+                <p className="text-[10px] font-bold text-[#ADADAD] mb-2">이번 주</p>
+                <p className="text-[24px] font-black text-[#1A1A1A] leading-none">{thisWeekCount}
+                  <span className="text-[12px] font-semibold text-[#ADADAD] ml-1">챕터</span>
+                </p>
+                {thisWeekAvg > 0 && (
+                  <p className="text-[12px] font-bold text-[#00A651] mt-1.5">평균 {thisWeekAvg}점</p>
+                )}
+                {lastWeekCount > 0 && (
+                  <p className={`text-[10px] mt-1 font-semibold ${
+                    thisWeekCount >= lastWeekCount ? 'text-[#00A651]' : 'text-[#E24B4A]'
+                  }`}>
+                    {thisWeekCount >= lastWeekCount ? '↑' : '↓'} {Math.abs(thisWeekCount - lastWeekCount)}챕터 vs 지난주
+                  </p>
+                )}
+              </div>
+              {/* 지난 주 */}
+              <div className="bg-[#F5F5F3] rounded-2xl border border-[#E5E5E5] p-3.5">
+                <p className="text-[10px] font-bold text-[#ADADAD] mb-2">지난 주</p>
+                <p className="text-[24px] font-black text-[#1A1A1A] leading-none">{lastWeekCount}
+                  <span className="text-[12px] font-semibold text-[#ADADAD] ml-1">챕터</span>
+                </p>
+                {lastWeekAvg > 0 && (
+                  <p className="text-[12px] font-semibold text-[#ADADAD] mt-1.5">평균 {lastWeekAvg}점</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 3. 취약 과목 알림 */}
+          {weakSubjects.length > 0 && (
+            <div className="bg-[#FFF8F0] rounded-2xl border border-[#F5A623]/30 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-[15px]">⚠️</span>
+                <p className="text-[13px] font-bold text-[#1A1A1A]">집중 학습이 필요한 과목</p>
+              </div>
+              <div className="space-y-2.5">
+                {weakSubjects.map(({ name, avg }) => (
+                  <div key={name} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-[14px] flex-shrink-0">{SUBJECT_META[name]?.icon ?? '📚'}</span>
+                      <span className="text-[13px] font-semibold text-[#1A1A1A] truncate">{name}</span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                      <div className="w-16 h-1.5 bg-[#F0E8DC] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#F5A623] rounded-full"
+                          style={{ width: `${avg}%` }}
+                        />
+                      </div>
+                      <span className="text-[12px] font-black text-[#F5A623] w-8 text-right">{avg}점</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-[#ADADAD] mt-3 leading-relaxed">
+                정답률 60% 미만 — 해당 과목 챕터를 다시 학습해보세요
+              </p>
+            </div>
+          )}
+        </div>
+      ) : subjectCards.length === 0 ? (
         <div className="mx-4 my-2 bg-white rounded-2xl border border-[#E5E5E5] p-8 text-center">
           <div className="text-[40px] mb-3">📚</div>
           <p className="text-[15px] font-bold text-[#1A1A1A] mb-1">아직 학습 이력이 없어요</p>
           <p className="text-[12px] text-[#ADADAD] mb-5">강의실에서 과목을 선택해 학습을 시작해보세요!</p>
-          <button onClick={() => router.push('/trainer/dashboard?tab=classroom')} className="px-5 py-2.5 bg-[#00A651] text-white rounded-xl text-[13px] font-bold">
+          <button
+            onClick={() => router.push('/trainer/dashboard?tab=classroom')}
+            className="px-5 py-2.5 bg-[#00A651] text-white rounded-xl text-[13px] font-bold"
+          >
             강의실 바로가기
           </button>
         </div>
-      )}
+      ) : null}
     </div>
     )
   }
