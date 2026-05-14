@@ -46,16 +46,40 @@ export const authOptions: NextAuthOptions = {
       try {
         console.log('[signIn callback 실행됨]', account?.provider, account?.providerAccountId)
         const stableUUID = uuidv5(`${account?.provider}:${account?.providerAccountId}`, UUID_NAMESPACE)
-        const { error } = await supabaseAdmin
+
+        // 기존 프로필 존재 여부 확인 (upsert 대신 분기 처리 — exam_date 등 학습 설정 보호)
+        const { data: existing } = await supabaseAdmin
           .from('profiles')
-          .upsert({
-            id:         stableUUID,
-            email:      user.email  ?? null,
-            name:       user.name   ?? null,
-            avatar_url: user.image  ?? null,
-            role:       'member',
-          }, { onConflict: 'id' })
-        console.log('[upsert 결과]', error)
+          .select('id')
+          .eq('id', stableUUID)
+          .maybeSingle()
+
+        if (existing) {
+          // 기존 유저: 표시용 필드(이름·이메일·아바타)만 업데이트
+          // exam_date, cert_type, 학습 설정 등은 절대 건드리지 않음
+          const { error } = await supabaseAdmin
+            .from('profiles')
+            .update({
+              email:      user.email ?? null,
+              name:       user.name  ?? null,
+              avatar_url: user.image ?? null,
+            })
+            .eq('id', stableUUID)
+          console.log('[update 결과 (기존 유저)]', error)
+        } else {
+          // 신규 유저: 최초 프로필 생성
+          const { error } = await supabaseAdmin
+            .from('profiles')
+            .insert({
+              id:         stableUUID,
+              email:      user.email ?? null,
+              name:       user.name  ?? null,
+              avatar_url: user.image ?? null,
+              role:       'member',
+            })
+          console.log('[insert 결과 (신규 유저)]', error)
+        }
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ;(user as any).stableId = stableUUID
         return true

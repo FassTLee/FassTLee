@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import {
   ChevronRight, Plus, Heart,
-  RefreshCw, Calendar, Clock, MapPin, X, Trash2, Bell,
+  Calendar, Clock, MapPin, X, Trash2, Bell,
 } from 'lucide-react'
 import BottomTabBar from '@/components/common/BottomTabBar'
 import PhoneRegisterModal from '@/components/PhoneRegisterModal'
@@ -60,6 +60,19 @@ const SUBJECT_META: Record<string, { icon: string; desc: string }> = {
   '스포츠윤리':    { icon: '⚖️', desc: '페어플레이·반도핑' },
   '운동역학':      { icon: '⚙️', desc: '운동의 물리적 원리' },
   '스포츠사회학':  { icon: '🏟️', desc: '스포츠와 사회' },
+}
+
+const STYLE_META: Record<string, { emoji: string; label: string; desc: string; color: string }> = {
+  conceptualizer: { emoji: '💡', label: '이해형',  desc: '개념을 먼저 이해하고 응용하는 스타일',        color: '#F5A623' },
+  memorizer:      { emoji: '🧠', label: '암기형',  desc: '반복과 암기로 실력을 쌓아가는 스타일',        color: '#6C63FF' },
+  planner:        { emoji: '📅', label: '계획형',  desc: '체계적인 계획으로 꾸준히 나아가는 스타일',    color: '#00A651' },
+  intensive:      { emoji: '🔥', label: '강제형',  desc: '집중 훈련으로 단기간에 성과를 내는 스타일',   color: '#E24B4A' },
+}
+
+const CERT_EXAM_DATES: Record<number, string> = {
+  2026: '2026-06-13',
+  2027: '2027-06-12',
+  2028: '2028-06-14',
 }
 
 const SAMPLE_VIDEOS = [
@@ -184,7 +197,8 @@ function DashboardContent() {
   /* ── Classroom (lazy) ────────────────────────────────────────────── */
   const [bookmarks, setBookmarks]             = useState<VideoBookmark[]>([])
   const [classroomLoaded, setClassroomLoaded] = useState(false)
-  const [classroomCertOpen, setClassroomCertOpen] = useState(true)
+  const [classroomCertOpen, setClassroomCertOpen]   = useState(true)
+  const [profileSubjectsOpen, setProfileSubjectsOpen] = useState(false)
   const [subjectProgress, setSubjectProgress] = useState<Record<string, { total: number; completed: number }>>({})
 
 
@@ -258,17 +272,17 @@ function DashboardContent() {
     if (styleTypeVal) setStyleType(styleTypeVal)
     if (session?.user?.name) setUserName(session.user.name.split(' ')[0])
 
-    // profile-me fetch (서버사이드 → RLS 우회)
+    // ① profile-me (서버사이드 세션 → RLS 우회, exam_date 1차 로드)
+    let loadedExamDate: string | null = null
+    let loadedCertType: string | null = null
     try {
       const pm = await fetch('/api/v1/profile-me', { cache: 'no-store' }).then((r) => r.json())
+      console.log('[initCommon] profile-me:', pm)
       if (pm.name)      setProfileName(pm.name)
       if (pm.avatarUrl) setProfileAvatar(pm.avatarUrl)
-      if (pm.certType)  { setProfileCert(pm.certType); setCertTypeInput(pm.certType) }
-      if (pm.examDate) {
-        setProfileExamDate(pm.examDate)
-        setExamDateInput(pm.examDate)   // 내 정보 탭 목표 시험일 동기화
-      }
-    } catch { /* ignore */ }
+      if (pm.certType)  { loadedCertType = pm.certType; setProfileCert(pm.certType); setCertTypeInput(pm.certType) }
+      if (pm.examDate)  { loadedExamDate = pm.examDate; setProfileExamDate(pm.examDate); setExamDateInput(pm.examDate) }
+    } catch (e) { console.warn('[initCommon] profile-me 실패', e) }
 
     let selectedNames: string[] = []
     if (subs) {
@@ -276,19 +290,21 @@ function DashboardContent() {
     }
     setSubjects(selectedNames)
 
-    // Profile settings (region / hours) — profile-me가 먼저 실행된 후이므로 profileExamDate로 채움
+    // ② profile-settings (userId 기반, exam_date 2차 로드 — profile-me보다 우선)
+    const userId = session?.user?.id ?? ''
     try {
-      const userId = session?.user?.id ?? ''
       const res  = await fetch(`/api/v1/profile-settings?userId=${encodeURIComponent(userId)}`, { cache: 'no-store' })
       const data = await res.json()
-      // profile-settings가 최종 우선 → D-Day 카드 즉시 반영
+      console.log('[initCommon] profile-settings:', data)
       if (data.exam_date) {
+        loadedExamDate = data.exam_date
         setExamDateInput(data.exam_date)
-        setProfileExamDate(data.exam_date)   // D-Day 카드 동기화
+        setProfileExamDate(data.exam_date)
       }
       if (data.cert_type) {
+        loadedCertType = data.cert_type
         setCertTypeInput(data.cert_type)
-        setProfileCert(data.cert_type)       // 헤더/카드 동기화
+        setProfileCert(data.cert_type)
       }
       if (data.region)            setRegionInput(String(data.region))
       if (data.daily_study_hours) setDailyHoursInput(String(data.daily_study_hours))
@@ -297,20 +313,30 @@ function DashboardContent() {
       if (data.study_time_slot)   setStudyTimeSlotInput(data.study_time_slot)
       if (data.push_enabled !== undefined && data.push_enabled !== null)
         setPushEnabled(Boolean(data.push_enabled))
-    } catch { /* ignore */ }
+    } catch (e) { console.warn('[initCommon] profile-settings 실패', e) }
 
-    // D-Day goals
+    // ③ D-Day goals — user-goals 테이블에서도 exam_date 폴백 확인
     try {
-      const userId = session?.user?.id ?? ''
       const res  = await fetch(`/api/v1/user-goals?userId=${encodeURIComponent(userId)}`)
       const data = await res.json()
-      setDdayGoals(data.goals ?? [])
-    } catch { /* ignore */ }
+      const goals: DayGoal[] = data.goals ?? []
+      setDdayGoals(goals)
+      // profile-me / profile-settings 모두 exam_date 반환 못한 경우 user-goals로 폴백
+      if (!loadedExamDate && goals.length > 0) {
+        const latest = goals[goals.length - 1]
+        console.log('[initCommon] user-goals 폴백 exam_date:', latest.exam_date)
+        setProfileExamDate(latest.exam_date)
+        setExamDateInput(latest.exam_date)
+        if (!loadedCertType && latest.cert_type) {
+          setProfileCert(latest.cert_type)
+          setCertTypeInput(latest.cert_type)
+        }
+      }
+    } catch (e) { console.warn('[initCommon] user-goals 실패', e) }
 
     // Chapter stats
     let stats: ChapterStat[] = []
     try {
-      const userId = session?.user?.id ?? ''
       const res   = await fetch(`/api/v1/report?userId=${encodeURIComponent(userId)}`)
       const data  = await res.json()
       stats = data.chapter_stats ?? []
@@ -1056,12 +1082,16 @@ function DashboardContent() {
 
           {/* 1. 학습 캘린더 (잔디밭) */}
           <div className="bg-white rounded-2xl border border-[#E5E5E5] p-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[13px] font-bold text-[#1A1A1A]">🌱 학습 캘린더</p>
+            {/* 월 + 연속일 헤더 */}
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[15px] font-black text-[#1A1A1A]">
+                {actToday.getFullYear()}년 {actToday.getMonth() + 1}월
+              </p>
               <p className="text-[11px] text-[#ADADAD]">
                 {streak > 0 ? `🔥 ${streak}일 연속` : '오늘 학습해보세요'}
               </p>
             </div>
+            <p className="text-[11px] text-[#ADADAD] mb-3">🌱 학습 캘린더</p>
             {/* 요일 헤더 */}
             <div className="grid grid-cols-7 gap-[3px] mb-1">
               {['월', '화', '수', '목', '금', '토', '일'].map((d) => (
@@ -1525,287 +1555,449 @@ function DashboardContent() {
   // ══════════════════════════════════════════════════════════════════
   // ⑤ PROFILE TAB
   // ══════════════════════════════════════════════════════════════════
-  const renderProfile = () => (
-    <div className="overflow-y-auto p-4 pb-24 space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
-      <div className="pt-8">
-        <h2 className="text-[20px] font-black text-[#1A1A1A]">내 정보</h2>
-      </div>
+  const renderProfile = () => {
+    const currentStyle   = styleType ?? style
+    const styleMeta      = currentStyle ? STYLE_META[currentStyle] : null
 
-      <div>
-        <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">학습 성향</p>
-        <div className="bg-white rounded-xl border border-[#E5E5E5] p-3 flex items-center gap-3">
-          <div className="text-[24px]">
-            {(styleType ?? style) === 'conceptualizer' ? '💡'
-              : (styleType ?? style) === 'memorizer'   ? '🧠'
-              : (styleType ?? style) === 'planner'     ? '📅'
-              : (styleType ?? style) === 'intensive'   ? '🔥'
-              : '❓'}
-          </div>
-          <div className="flex-1">
-            <p className="text-[13px] font-bold text-[#1A1A1A]">
-              {(styleType ?? style) === 'conceptualizer' ? '이해형'
-                : (styleType ?? style) === 'memorizer'   ? '암기형'
-                : (styleType ?? style) === 'planner'     ? '계획형'
-                : (styleType ?? style) === 'intensive'   ? '강제형'
-                : '미측정'}
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              localStorage.removeItem(STYLE_KEY)
-              localStorage.removeItem('kinepia_learning_type')
-              router.push('/onboarding/style-test')
-            }}
-            className="flex items-center gap-1 text-[11px] text-[#00A651] font-semibold"
-          >
-            <RefreshCw size={12} /> 재테스트
-          </button>
-        </div>
-      </div>
+    // 자격증/과목 섹션용
+    const displayCertName  = certLabel || profileCert || ''
+    const profileCertKey   = Object.entries(CERT_LABELS).find(([, v]) => v === displayCertName)?.[0] ?? ''
+    const requiredSubsP    = REQUIRED_SUBJECTS[profileCertKey] ?? []
+    const requiredInP      = subjects.filter((s) => requiredSubsP.includes(s))
+    const optionalInP      = subjects.filter((s) => !requiredSubsP.includes(s))
+    const showSubjectLabels = requiredSubsP.length > 0
 
-      <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider">자격증 · 수강 과목</p>
-          <button onClick={() => router.push('/select-subject')} className="text-[11px] text-[#00A651] font-semibold">과목 수정</button>
+    // 학습 목표 섹션용
+    const selectedCertKeyGoal  = Object.entries(CERT_LABELS).find(([, v]) => v === certTypeInput)?.[0] ?? ''
+    const goalSubjects         = selectedCertKeyGoal ? (REQUIRED_SUBJECTS[selectedCertKeyGoal] ?? []) : []
+    const isHealthExerciseGoal = selectedCertKeyGoal === 'health-exercise-manager'
+    const goalSubjectLabel     = isHealthExerciseGoal ? '필수 과목' : '선택 과목'
+    const selectedYear         = examDateInput ? new Date(examDateInput).getFullYear() : null
+
+    // 공통 과목 행 컴포넌트 (inline)
+    const SubjectRowP = ({ name, hasBorder }: { name: string; hasBorder: boolean }) => {
+      const card     = subjectCards.find((c) => c.name === name)
+      const meta     = SUBJECT_META[name] ?? { icon: '📚', desc: '' }
+      const progress = subjectProgress[name]
+      const pct      = progress && progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0
+      return (
+        <button
+          onClick={() => { if (card?.subjectId) router.push(`/chapters/${card.subjectId}`) }}
+          disabled={!card?.subjectId}
+          className={`w-full px-4 py-3 flex items-center gap-3 text-left active:bg-[#F5F5F3] disabled:opacity-60 ${hasBorder ? 'border-b border-[#F0F0EE]' : ''}`}
+        >
+          <div className="w-8 h-8 rounded-lg bg-[#F5F5F3] flex items-center justify-center text-[16px] flex-shrink-0">{meta.icon}</div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-bold text-[#1A1A1A] truncate">{name}</p>
+            <div className="flex items-center gap-2 mt-0.5">
+              {progress !== undefined ? (
+                <>
+                  <div className="flex-1 h-1 bg-[#F0F0EE] rounded-full overflow-hidden">
+                    <div className="h-full bg-[#00A651] rounded-full" style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="text-[10px] text-[#ADADAD] flex-shrink-0 font-semibold">{pct}%</span>
+                </>
+              ) : (
+                <span className="text-[10px] text-[#ADADAD]">학습 시작 전</span>
+              )}
+            </div>
+          </div>
+          {card?.subjectId
+            ? <ChevronRight size={13} className="text-[#ADADAD] flex-shrink-0" />
+            : <span className="text-[10px] text-[#ADADAD] flex-shrink-0">준비중</span>
+          }
+        </button>
+      )
+    }
+
+    return (
+      <div className="overflow-y-auto p-4 pb-24 space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
+        <div className="pt-8">
+          <h2 className="text-[20px] font-black text-[#1A1A1A]">내 정보</h2>
         </div>
-        <div className="bg-white rounded-xl border border-[#E5E5E5] p-3 space-y-2">
-          {certLabel && (
-            <span className="text-[10px] font-bold text-white bg-[#1A1A1A] px-2 py-0.5 rounded-full inline-block">{certLabel}</span>
-          )}
-          {subjects.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
-              {subjects.map((name) => (
-                <span key={name} className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#00A651]/10 text-[#00A651]">{name}</span>
-              ))}
+
+        {/* ── 학습 성향 ── */}
+        <div>
+          <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">학습 성향</p>
+          {styleMeta ? (
+            <div className="bg-white rounded-xl border border-[#E5E5E5] px-4 py-4 flex items-center gap-3">
+              <div
+                className="w-12 h-12 rounded-2xl flex items-center justify-center text-[26px] flex-shrink-0"
+                style={{ backgroundColor: `${styleMeta.color}18` }}
+              >
+                {styleMeta.emoji}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[16px] font-black text-[#1A1A1A]">{styleMeta.label}</p>
+                <p className="text-[11px] text-[#ADADAD] mt-0.5 leading-snug">{styleMeta.desc}</p>
+              </div>
+              <button
+                onClick={() => {
+                  localStorage.removeItem(STYLE_KEY)
+                  localStorage.removeItem('kinepia_learning_type')
+                  router.push('/onboarding/style-test')
+                }}
+                className="flex-shrink-0 text-[11px] text-[#6B6B6B] border border-[#E5E5E5] rounded-lg px-2.5 py-1.5 font-semibold"
+              >
+                다시 확인하기
+              </button>
             </div>
           ) : (
-            <button onClick={() => router.push('/select-cert')} className="w-full text-[13px] text-[#ADADAD] py-1">과목을 선택해주세요 →</button>
+            <button
+              onClick={() => router.push('/onboarding/style-test')}
+              className="w-full bg-white rounded-xl border-2 border-dashed border-[#E5E5E5] px-4 py-4 flex items-center gap-3 active:bg-[#F5F5F3]"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-[#F5F5F3] flex items-center justify-center text-[24px] flex-shrink-0">🧩</div>
+              <div className="flex-1 text-left">
+                <p className="text-[14px] font-bold text-[#1A1A1A]">학습 유형 분석하기</p>
+                <p className="text-[11px] text-[#ADADAD] mt-0.5">나에게 맞는 학습 방법을 찾아보세요</p>
+              </div>
+              <ChevronRight size={16} className="text-[#ADADAD] flex-shrink-0" />
+            </button>
           )}
         </div>
-      </div>
 
-      {/* ── 학습 설정 (collapsible) ── */}
-      <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-hidden">
-        {/* 헤더 — 클릭 시 펼침/접힘 */}
-        <button
-          onClick={() => setSettingsOpen((o) => !o)}
-          className="w-full px-4 py-3.5 flex items-center justify-between active:bg-[#F5F5F3]"
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-[15px]">⚙️</span>
-            <span className="text-[14px] font-bold text-[#1A1A1A]">학습 설정</span>
-            {(certTypeInput || examDateInput) && (
-              <span className="text-[10px] text-[#00A651] bg-[#00A651]/10 px-1.5 py-0.5 rounded-full font-bold">설정됨</span>
-            )}
-          </div>
-          <div className={`transition-transform duration-200 ${settingsOpen ? 'rotate-90' : ''}`}>
-            <ChevronRight size={16} className="text-[#ADADAD]" />
-          </div>
-        </button>
+        {/* ── 자격증 · 수강 과목 (드롭다운 카드) ── */}
+        <div>
+          <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">자격증 · 수강 과목</p>
+          {displayCertName ? (
+            <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-hidden">
+              {/* 자격증 헤더 */}
+              <button
+                onClick={() => setProfileSubjectsOpen((o) => !o)}
+                className="w-full px-4 py-3.5 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
+              >
+                <div className="w-9 h-9 rounded-xl bg-[#1A1A1A] flex items-center justify-center text-[18px] flex-shrink-0">
+                  {CERT_ICONS[displayCertName] ?? '🏅'}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[14px] font-black text-[#1A1A1A] truncate">{displayCertName}</p>
+                  <p className="text-[11px] text-[#ADADAD]">
+                    {subjects.length > 0 ? `${subjects.length}개 과목 수강 중` : '과목을 선택해주세요'}
+                  </p>
+                </div>
+                <div className={`transition-transform duration-200 flex-shrink-0 ${profileSubjectsOpen ? 'rotate-90' : ''}`}>
+                  <ChevronRight size={16} className="text-[#ADADAD]" />
+                </div>
+              </button>
 
-        {settingsOpen && (
-          <div className="border-t border-[#F0F0EE] divide-y divide-[#F0F0EE]">
-
-            {/* 1. 목표 자격증 */}
-            <div className="px-4 py-4">
-              <p className="text-[11px] font-bold text-[#6B6B6B] mb-2.5">목표 자격증</p>
-              <div className="flex flex-wrap gap-1.5">
-                {Object.values(CERT_LABELS).map((cert) => (
-                  <button
-                    key={cert}
-                    onClick={() => setCertTypeInput(cert)}
-                    className={`px-3 py-1.5 rounded-full text-[12px] font-bold border-2 transition-all ${
-                      certTypeInput === cert
-                        ? 'bg-[#00A651] border-[#00A651] text-white'
-                        : 'bg-white border-[#E5E5E5] text-[#6B6B6B]'
-                    }`}
-                  >
-                    {cert}
-                  </button>
-                ))}
+              {/* 드롭다운: 과목 목록 */}
+              {profileSubjectsOpen && (
+                <div className="border-t border-[#F0F0EE]">
+                  {subjects.length === 0 ? (
+                    <div className="px-4 py-5 text-center">
+                      <p className="text-[13px] text-[#ADADAD] mb-3">아직 선택한 과목이 없어요</p>
+                      <button
+                        onClick={() => router.push('/select-subject')}
+                        className="px-4 py-2 bg-[#00A651] text-white rounded-xl text-[12px] font-bold"
+                      >
+                        과목 선택하기
+                      </button>
+                    </div>
+                  ) : showSubjectLabels ? (
+                    <>
+                      {requiredInP.length > 0 && (
+                        <div>
+                          <div className="px-4 py-2 bg-[#F5F5F3] flex items-center gap-1.5">
+                            <span className="text-[10px] font-black text-[#6B6B6B] uppercase tracking-wider">필수과목</span>
+                            <span className="text-[10px] text-[#ADADAD]">· {requiredInP.length}개</span>
+                          </div>
+                          {requiredInP.map((name, idx) => (
+                            <SubjectRowP
+                              key={name}
+                              name={name}
+                              hasBorder={idx < requiredInP.length - 1 || optionalInP.length > 0}
+                            />
+                          ))}
+                        </div>
+                      )}
+                      {optionalInP.length > 0 && (
+                        <div>
+                          <div className={`px-4 py-2 bg-[#F5F5F3] flex items-center gap-1.5 ${requiredInP.length > 0 ? 'border-t border-[#F0F0EE]' : ''}`}>
+                            <span className="text-[10px] font-black text-[#6B6B6B] uppercase tracking-wider">선택과목</span>
+                            <span className="text-[10px] text-[#ADADAD]">· {optionalInP.length}개</span>
+                          </div>
+                          {optionalInP.map((name, idx) => (
+                            <SubjectRowP key={name} name={name} hasBorder={idx < optionalInP.length - 1} />
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    subjects.map((name, idx) => (
+                      <SubjectRowP key={name} name={name} hasBorder={idx < subjects.length - 1} />
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          ) : (
+            <button
+              onClick={() => router.push('/select-cert')}
+              className="w-full bg-white rounded-xl border-2 border-dashed border-[#E5E5E5] px-4 py-4 flex items-center gap-3 active:bg-[#F5F5F3]"
+            >
+              <div className="w-10 h-10 rounded-xl bg-[#F5F5F3] flex items-center justify-center flex-shrink-0">
+                <Plus size={20} className="text-[#ADADAD]" />
               </div>
-            </div>
-
-            {/* 2. 목표 시험일 */}
-            <div className="px-4 py-4">
-              <label className="text-[11px] font-bold text-[#6B6B6B] mb-2.5 flex items-center gap-1.5">
-                <Calendar size={11} /> 목표 시험일
-              </label>
-              <input
-                type="date"
-                value={examDateInput}
-                onChange={(e) => setExamDateInput(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-[#E5E5E5] text-[13px] text-[#1A1A1A] outline-none focus:border-[#00A651]"
-              />
-            </div>
-
-            {/* 3. 선택 과목 */}
-            <div className="px-4 py-4">
-              <div className="flex items-center justify-between mb-2.5">
-                <p className="text-[11px] font-bold text-[#6B6B6B]">선택 과목</p>
-                <button
-                  onClick={() => router.push('/select-subject')}
-                  className="text-[11px] text-[#00A651] font-bold"
-                >
-                  수정 →
-                </button>
+              <div className="flex-1 text-left">
+                <p className="text-[13px] font-bold text-[#1A1A1A]">자격증 추가하기</p>
+                <p className="text-[11px] text-[#ADADAD] mt-0.5">목표 자격증을 선택하세요</p>
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {subjects.length > 0 ? subjects.map((s) => (
-                  <span
-                    key={s}
-                    className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#00A651]/10 text-[#00A651]"
-                  >
-                    {s}
-                  </span>
-                )) : (
-                  <span className="text-[12px] text-[#ADADAD]">선택된 과목 없음</span>
-                )}
-              </div>
-            </div>
+              <ChevronRight size={16} className="text-[#ADADAD] flex-shrink-0" />
+            </button>
+          )}
+        </div>
 
-            {/* 4. 지역 */}
-            <div className="px-4 py-4">
-              <label className="text-[11px] font-bold text-[#6B6B6B] mb-2.5 flex items-center gap-1.5">
-                <MapPin size={11} /> 지역
-              </label>
-              <input
-                type="text"
-                placeholder="예: 서울, 부산, 대구..."
-                value={regionInput}
-                onChange={(e) => setRegionInput(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-xl border border-[#E5E5E5] text-[13px] text-[#1A1A1A] outline-none focus:border-[#00A651]"
-              />
+        {/* ── 학습 목표 (collapsible, 3단계) ── */}
+        <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-hidden">
+          <button
+            onClick={() => setSettingsOpen((o) => !o)}
+            className="w-full px-4 py-3.5 flex items-center justify-between active:bg-[#F5F5F3]"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-[15px]">🎯</span>
+              <span className="text-[14px] font-bold text-[#1A1A1A]">학습 목표</span>
+              {(certTypeInput || examDateInput) && (
+                <span className="text-[10px] text-[#00A651] bg-[#00A651]/10 px-1.5 py-0.5 rounded-full font-bold">설정됨</span>
+              )}
             </div>
-
-            {/* 5. 하루 공부 시간 */}
-            <div className="px-4 py-4">
-              <label className="text-[11px] font-bold text-[#6B6B6B] mb-2.5 flex items-center gap-1.5">
-                <Clock size={11} /> 하루 공부 시간
-              </label>
-              <div className="grid grid-cols-4 gap-1.5">
-                {['30분', '1시간', '2시간', '3시간+'].map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setStudyTimeInput(t)}
-                    className={`py-2 rounded-xl text-[11px] font-bold border-2 transition-all ${
-                      studyTimeInput === t
-                        ? 'bg-[#00A651] border-[#00A651] text-white'
-                        : 'bg-white border-[#E5E5E5] text-[#6B6B6B]'
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
+            <div className={`transition-transform duration-200 ${settingsOpen ? 'rotate-90' : ''}`}>
+              <ChevronRight size={16} className="text-[#ADADAD]" />
             </div>
+          </button>
 
-            {/* 6. 하루 공부 횟수 */}
-            <div className="px-4 py-4">
-              <p className="text-[11px] font-bold text-[#6B6B6B] mb-2.5">하루 공부 횟수</p>
-              <div className="grid grid-cols-3 gap-1.5">
-                {['1회', '2회', '3회+'].map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setStudyCountInput(c)}
-                    className={`py-2 rounded-xl text-[12px] font-bold border-2 transition-all ${
-                      studyCountInput === c
-                        ? 'bg-[#00A651] border-[#00A651] text-white'
-                        : 'bg-white border-[#E5E5E5] text-[#6B6B6B]'
-                    }`}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-            </div>
+          {settingsOpen && (
+            <div className="border-t border-[#F0F0EE] divide-y divide-[#F0F0EE]">
 
-            {/* 7. 주요 학습 시간대 */}
-            <div className="px-4 py-4">
-              <p className="text-[11px] font-bold text-[#6B6B6B] mb-2.5">주요 학습 시간대</p>
-              <div className="grid grid-cols-4 gap-1.5">
-                {[
-                  { label: '오전', emoji: '🌅' },
-                  { label: '오후', emoji: '☀️' },
-                  { label: '저녁', emoji: '🌆' },
-                  { label: '새벽', emoji: '🌙' },
-                ].map(({ label, emoji }) => (
-                  <button
-                    key={label}
-                    onClick={() => setStudyTimeSlotInput(label)}
-                    className={`py-2 rounded-xl text-[11px] font-bold border-2 transition-all flex flex-col items-center gap-0.5 ${
-                      studyTimeSlotInput === label
-                        ? 'bg-[#1A1A1A] border-[#1A1A1A] text-white'
-                        : 'bg-white border-[#E5E5E5] text-[#6B6B6B]'
-                    }`}
-                  >
-                    <span className="text-[14px]">{emoji}</span>
-                    <span>{label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 8. 학습 알림 (토글 → 자동 저장) */}
-            <div className="px-4 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <Bell size={15} className="text-[#6B6B6B]" />
-                <div>
-                  <p className="text-[13px] font-bold text-[#1A1A1A]">학습 알림</p>
-                  <p className="text-[11px] text-[#ADADAD]">공부 리마인더를 받아보세요</p>
+              {/* 1단계: 목표 자격증 */}
+              <div className="px-4 py-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-5 h-5 rounded-full bg-[#1A1A1A] text-white text-[10px] font-black flex items-center justify-center flex-shrink-0">1</span>
+                  <p className="text-[13px] font-bold text-[#1A1A1A]">목표 자격증</p>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { key: 'health-exercise-manager', label: '건강운동관리사' },
+                    { key: 'sports-instructor-2',     label: '2급 생활스포츠지도사' },
+                  ].map(({ key, label }) => (
+                    <button
+                      key={key}
+                      onClick={() => setCertTypeInput(label)}
+                      className={`px-3 py-1.5 rounded-full text-[12px] font-bold border-2 transition-all ${
+                        certTypeInput === label
+                          ? 'bg-[#00A651] border-[#00A651] text-white'
+                          : 'bg-white border-[#E5E5E5] text-[#6B6B6B]'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
               </div>
-              <button
-                onClick={() => handleTogglePush(!pushEnabled)}
-                className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${
-                  pushEnabled ? 'bg-[#00A651]' : 'bg-[#DADADA]'
-                }`}
-              >
-                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200 ${
-                  pushEnabled ? 'right-0.5' : 'left-0.5'
-                }`} />
-              </button>
-            </div>
 
-            {/* 저장 버튼 */}
-            <div className="px-4 py-4">
-              <button
-                onClick={handleSaveProfile}
-                disabled={savingProfile}
-                className="w-full py-3 bg-[#111111] text-white rounded-xl text-[13px] font-bold disabled:opacity-40"
-              >
-                {savingProfile ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
-                    저장 중...
-                  </span>
-                ) : '저장하기'}
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+              {/* 2단계: 관련 과목 표시 (certTypeInput 기반) */}
+              {certTypeInput && goalSubjects.length > 0 && (
+                <div className="px-4 py-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="w-5 h-5 rounded-full bg-[#1A1A1A] text-white text-[10px] font-black flex items-center justify-center flex-shrink-0">2</span>
+                    <p className="text-[13px] font-bold text-[#1A1A1A]">관련 과목</p>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      isHealthExerciseGoal
+                        ? 'bg-[#00A651]/10 text-[#00A651]'
+                        : 'bg-[#F5A623]/10 text-[#F5A623]'
+                    }`}>
+                      {goalSubjectLabel}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {goalSubjects.map((s) => (
+                      <span
+                        key={s}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                          isHealthExerciseGoal
+                            ? 'bg-[#00A651]/10 text-[#00A651]'
+                            : 'bg-[#F5A623]/10 text-[#F5A623]'
+                        }`}
+                      >
+                        {SUBJECT_META[s]?.icon ?? '📚'} {s}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-      <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-hidden">
-        {[
-          { label: '리더보드',        path: '/trainer/leaderboard', icon: '🏆' },
-          { label: '개인정보 설정',   path: '/settings/privacy',    icon: '🔒' },
-          { label: '개인정보처리방침', path: '/privacy',             icon: '📄' },
-          { label: '이용약관',        path: '/terms',               icon: '📋' },
-        ].map((item, idx, arr) => (
-          <button
-            key={item.label}
-            onClick={() => router.push(item.path)}
-            className={`w-full flex items-center gap-3 px-3 py-3 text-left active:bg-[#F5F5F3] ${idx < arr.length - 1 ? 'border-b border-[#F0F0EE]' : ''}`}
-          >
-            <span className="text-[16px] w-6 text-center">{item.icon}</span>
-            <span className="flex-1 text-[13px] text-[#1A1A1A]">{item.label}</span>
-            <ChevronRight size={14} className="text-[#ADADAD]" />
-          </button>
-        ))}
+              {/* 3단계: 시험 연도 */}
+              <div className="px-4 py-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="w-5 h-5 rounded-full bg-[#1A1A1A] text-white text-[10px] font-black flex items-center justify-center flex-shrink-0">3</span>
+                  <p className="text-[13px] font-bold text-[#1A1A1A]">시험 연도</p>
+                  {selectedYear && (
+                    <span className="text-[10px] text-[#ADADAD]">
+                      ({examDateInput ? new Date(examDateInput).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' }) : ''} 기준)
+                    </span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  {([2026, 2027, 2028] as const).map((year) => (
+                    <button
+                      key={year}
+                      onClick={() => setExamDateInput(CERT_EXAM_DATES[year])}
+                      className={`flex-1 py-2.5 rounded-xl text-[13px] font-bold border-2 transition-all ${
+                        selectedYear === year
+                          ? 'bg-[#1A1A1A] border-[#1A1A1A] text-white'
+                          : 'bg-white border-[#E5E5E5] text-[#6B6B6B]'
+                      }`}
+                    >
+                      {year}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 지역 */}
+              <div className="px-4 py-4">
+                <label className="text-[11px] font-bold text-[#6B6B6B] mb-2.5 flex items-center gap-1.5">
+                  <MapPin size={11} /> 지역
+                </label>
+                <input
+                  type="text"
+                  placeholder="예: 서울, 부산, 대구..."
+                  value={regionInput}
+                  onChange={(e) => setRegionInput(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-[#E5E5E5] text-[13px] text-[#1A1A1A] outline-none focus:border-[#00A651]"
+                />
+              </div>
+
+              {/* 하루 공부 시간 */}
+              <div className="px-4 py-4">
+                <label className="text-[11px] font-bold text-[#6B6B6B] mb-2.5 flex items-center gap-1.5">
+                  <Clock size={11} /> 하루 공부 시간
+                </label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {['30분', '1시간', '2시간', '3시간+'].map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => setStudyTimeInput(t)}
+                      className={`py-2 rounded-xl text-[11px] font-bold border-2 transition-all ${
+                        studyTimeInput === t
+                          ? 'bg-[#00A651] border-[#00A651] text-white'
+                          : 'bg-white border-[#E5E5E5] text-[#6B6B6B]'
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 하루 공부 횟수 */}
+              <div className="px-4 py-4">
+                <p className="text-[11px] font-bold text-[#6B6B6B] mb-2.5">하루 공부 횟수</p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {['1회', '2회', '3회+'].map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setStudyCountInput(c)}
+                      className={`py-2 rounded-xl text-[12px] font-bold border-2 transition-all ${
+                        studyCountInput === c
+                          ? 'bg-[#00A651] border-[#00A651] text-white'
+                          : 'bg-white border-[#E5E5E5] text-[#6B6B6B]'
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 주요 학습 시간대 */}
+              <div className="px-4 py-4">
+                <p className="text-[11px] font-bold text-[#6B6B6B] mb-2.5">주요 학습 시간대</p>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {[
+                    { label: '오전', emoji: '🌅' },
+                    { label: '오후', emoji: '☀️' },
+                    { label: '저녁', emoji: '🌆' },
+                    { label: '새벽', emoji: '🌙' },
+                  ].map(({ label, emoji }) => (
+                    <button
+                      key={label}
+                      onClick={() => setStudyTimeSlotInput(label)}
+                      className={`py-2 rounded-xl text-[11px] font-bold border-2 transition-all flex flex-col items-center gap-0.5 ${
+                        studyTimeSlotInput === label
+                          ? 'bg-[#1A1A1A] border-[#1A1A1A] text-white'
+                          : 'bg-white border-[#E5E5E5] text-[#6B6B6B]'
+                      }`}
+                    >
+                      <span className="text-[14px]">{emoji}</span>
+                      <span>{label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 학습 알림 */}
+              <div className="px-4 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <Bell size={15} className="text-[#6B6B6B]" />
+                  <div>
+                    <p className="text-[13px] font-bold text-[#1A1A1A]">학습 알림</p>
+                    <p className="text-[11px] text-[#ADADAD]">공부 리마인더를 받아보세요</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleTogglePush(!pushEnabled)}
+                  className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${
+                    pushEnabled ? 'bg-[#00A651]' : 'bg-[#DADADA]'
+                  }`}
+                >
+                  <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200 ${
+                    pushEnabled ? 'right-0.5' : 'left-0.5'
+                  }`} />
+                </button>
+              </div>
+
+              {/* 저장 버튼 */}
+              <div className="px-4 py-4">
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={savingProfile}
+                  className="w-full py-3 bg-[#111111] text-white rounded-xl text-[13px] font-bold disabled:opacity-40"
+                >
+                  {savingProfile ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+                      저장 중...
+                    </span>
+                  ) : '저장하기'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 기타 링크 */}
+        <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-hidden">
+          {[
+            { label: '리더보드',        path: '/trainer/leaderboard', icon: '🏆' },
+            { label: '개인정보 설정',   path: '/settings/privacy',    icon: '🔒' },
+            { label: '개인정보처리방침', path: '/privacy',             icon: '📄' },
+            { label: '이용약관',        path: '/terms',               icon: '📋' },
+          ].map((item, idx, arr) => (
+            <button
+              key={item.label}
+              onClick={() => router.push(item.path)}
+              className={`w-full flex items-center gap-3 px-3 py-3 text-left active:bg-[#F5F5F3] ${idx < arr.length - 1 ? 'border-b border-[#F0F0EE]' : ''}`}
+            >
+              <span className="text-[16px] w-6 text-center">{item.icon}</span>
+              <span className="flex-1 text-[13px] text-[#1A1A1A]">{item.label}</span>
+              <ChevronRight size={14} className="text-[#ADADAD]" />
+            </button>
+          ))}
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   // ══════════════════════════════════════════════════════════════════
   // MAIN RENDER
