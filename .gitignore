@@ -44,3 +44,6 @@ secrets/
 next-env.d.ts
 
 .vercel
+
+# Claude Code
+.claude/
