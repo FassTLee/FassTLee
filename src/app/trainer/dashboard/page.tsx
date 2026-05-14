@@ -450,7 +450,7 @@ function DashboardContent() {
             const { data: allChaps } = await supabase
               .from('chapters').select('id, course_id').in('course_id', allCourseIds)
             const completedSet = new Set(
-              stats.filter((s) => (s.latest_score ?? s.avg_score) >= 80).map((s) => s.chapter_id)
+              stats.filter((s) => s.lesson_completed === true || (s.latest_score ?? s.avg_score) >= 80).map((s) => s.chapter_id)
             )
             const progressMap: Record<string, { total: number; completed: number }> = {}
             for (const card of cards) {
