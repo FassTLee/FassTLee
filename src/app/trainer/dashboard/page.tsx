@@ -24,6 +24,12 @@ const CERT_LABELS: Record<string, string> = {
   'sports-instructor':       '생활스포츠지도사',
 }
 
+const CERT_ICONS: Record<string, string> = {
+  '건강운동관리사':       '🏋️',
+  '2급 생활스포츠지도사': '🏅',
+  '생활스포츠지도사':     '🎽',
+}
+
 // 자격증별 필수/선택 과목 구분
 const REQUIRED_SUBJECTS: Record<string, string[]> = {
   'health-exercise-manager': [
@@ -624,6 +630,16 @@ function DashboardContent() {
       ? Math.ceil((new Date(profileExamDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / 86400000)
       : null
 
+    // 강의실 바로가기: 자격증 진도율 집계
+    const displayCert = certLabel || profileCert || ''
+    const aggProgress = Object.values(subjectProgress).reduce(
+      (acc, p) => ({ total: acc.total + p.total, completed: acc.completed + p.completed }),
+      { total: 0, completed: 0 }
+    )
+    const overallPct = aggProgress.total > 0
+      ? Math.round((aggProgress.completed / aggProgress.total) * 100)
+      : 0
+
     return (
     <div className="overflow-y-auto pb-24" style={{ height: 'calc(100dvh - 56px)' }}>
 
@@ -835,54 +851,72 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* ④ 강의실 바로가기 swipe */}
+      {/* ④ 강의실 바로가기 — 자격증 카드 */}
       <div className="py-2">
         <p className="text-[12px] font-bold text-[#ADADAD] uppercase tracking-wider px-4 mb-2">
           강의실 바로가기
         </p>
-        {subjectCards.length === 0 ? (
-          <div className="mx-4 bg-white rounded-2xl border border-[#E5E5E5] p-6 text-center">
-            <p className="text-[13px] text-[#ADADAD] mb-3">등록된 학습이 없습니다</p>
+        <div
+          className="flex gap-3 px-4 overflow-x-auto pb-2"
+          style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
+        >
+          {/* 자격증 카드 */}
+          {displayCert ? (
             <button
-              onClick={() => router.push('/select-cert')}
-              className="text-[13px] font-bold text-[#00A651] flex items-center gap-1 mx-auto"
+              onClick={() => router.push('/trainer/dashboard?tab=classroom')}
+              className="flex-shrink-0 bg-[#1A1A1A] rounded-2xl p-4 text-left active:opacity-90"
+              style={{ width: '75%', scrollSnapAlign: 'start' }}
             >
-              <Plus size={14} /> 학습 추가하기
+              {/* 자격증명 + 아이콘 */}
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-[20px] flex-shrink-0">
+                  {CERT_ICONS[displayCert] ?? '🏅'}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[14px] font-black text-white truncate">{displayCert}</p>
+                  <p className="text-[11px] text-white/50">
+                    {subjects.length > 0 ? `${subjects.length}개 과목 수강 중` : '과목을 선택해주세요'}
+                  </p>
+                </div>
+              </div>
+
+              {/* 전체 진도율 */}
+              <div>
+                <div className="flex items-baseline justify-between mb-1.5">
+                  <span className="text-[11px] text-white/40">전체 진도율</span>
+                  <span className="text-[18px] font-black text-[#00A651] leading-none">{overallPct}%</span>
+                </div>
+                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#00A651] rounded-full transition-all"
+                    style={{ width: `${overallPct}%` }}
+                  />
+                </div>
+                {aggProgress.total > 0 && (
+                  <p className="text-[10px] text-white/30 mt-1.5">
+                    {aggProgress.completed} / {aggProgress.total} 챕터 완료
+                  </p>
+                )}
+              </div>
             </button>
-          </div>
-        ) : (
-          <div
-            className="flex gap-3 px-4 overflow-x-auto pb-2"
-            style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
+          ) : null}
+
+          {/* 자격증 추가하기 카드 */}
+          <button
+            onClick={() => router.push('/select-cert')}
+            className="flex-shrink-0 rounded-2xl border-2 border-dashed border-[#E5E5E5] bg-white flex flex-col items-center justify-center gap-2 active:bg-[#F5F5F3]"
+            style={{
+              width: displayCert ? '44%' : '75%',
+              scrollSnapAlign: 'start',
+              minHeight: '130px',
+            }}
           >
-            {subjectCards.map((card, i) => (
-              <button
-                key={i}
-                onClick={() => {
-                  if (card.subjectId) {
-                    localStorage.setItem('kinepia_current_subject_id', card.subjectId)
-                    router.push(`/chapters/${card.subjectId}`)
-                  }
-                }}
-                disabled={!card.subjectId}
-                className="flex-shrink-0 bg-white rounded-2xl border border-[#E5E5E5] p-4 text-left active:bg-[#F5F5F3] disabled:opacity-60"
-                style={{ width: '75%', scrollSnapAlign: 'start' }}
-              >
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="text-[26px]">{card.icon}</div>
-                  <div className="min-w-0">
-                    <p className="text-[14px] font-bold text-[#1A1A1A] truncate">{card.name}</p>
-                    <p className="text-[11px] text-[#ADADAD]">{card.desc}</p>
-                  </div>
-                </div>
-                <div className="w-full h-1.5 bg-[#F0F0EE] rounded-full overflow-hidden">
-                  <div className="h-full bg-[#00A651] rounded-full" style={{ width: '0%' }} />
-                </div>
-                <p className="text-[10px] text-[#ADADAD] mt-1">학습 시작 전</p>
-              </button>
-            ))}
-          </div>
-        )}
+            <div className="w-10 h-10 rounded-xl bg-[#F5F5F3] flex items-center justify-center">
+              <Plus size={20} className="text-[#ADADAD]" />
+            </div>
+            <p className="text-[12px] font-bold text-[#ADADAD]">자격증 추가하기</p>
+          </button>
+        </div>
       </div>
 
       {/* ⑤ 내 학습 활동 내역 */}
