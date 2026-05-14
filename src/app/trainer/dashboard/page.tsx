@@ -490,13 +490,18 @@ function DashboardContent() {
     }).catch(() => {})
   }
 
-  const handleVideoTap = (idx: number) => {
+  const handleVideoTap = async (idx: number) => {
     const vid = videoRefs.current[idx]
     if (!vid) return
     if (vid.paused) {
+      // 다른 영상 먼저 일시정지
       videoRefs.current.forEach((v, i) => { if (v && i !== idx) { v.pause() } })
-      vid.play().catch(() => {})
-      setPlayingIdx(idx)
+      try {
+        await vid.play()
+        setPlayingIdx(idx)      // play() 성공 시에만 오버레이 제거
+      } catch {
+        setPlayingIdx(null)     // 브라우저 정책으로 차단된 경우 상태 유지
+      }
     } else {
       vid.pause()
       setPlayingIdx(null)
@@ -817,6 +822,7 @@ function DashboardContent() {
                   src={vid.src}
                   className="w-full h-full object-cover"
                   playsInline
+                  muted
                   preload="metadata"
                   loop
                 />
