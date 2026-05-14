@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react'
 import { ChevronLeft, ChevronRight, LayoutGrid, Clock, X } from 'lucide-react'
 
 const TOTAL_MINUTES  = 160
-const Q_PER_SUBJECT  = 20
+const _Q_PER_SUBJECT = 20
 const PASS_TOTAL     = 96   // 60% of 160
 const SUBJECT_PASS_Q = 8    // 40% of 20
 

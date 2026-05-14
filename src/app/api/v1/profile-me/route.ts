@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
-  const userId = (session?.user as any)?.id as string | undefined
+  const userId = (session?.user as { id?: string } | undefined)?.id
 
   console.log('[profile-me] userId:', userId)
 

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { signIn } from 'next-auth/react'
 import { ChevronLeft } from 'lucide-react'
 import { LANDING_QUESTIONS, type TestResult, type TestQuestion } from '@/lib/landingTest'
 import { supabase } from '@/lib/supabase'

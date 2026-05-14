@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, Suspense } from 'react'
+import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -56,10 +57,10 @@ const SUBJECT_META: Record<string, { icon: string; desc: string }> = {
 }
 
 const SAMPLE_VIDEOS = [
-  { src: '/videos/shorts/shorts-demo-01.mp4', title: '추천 영상 1' },
-  { src: '/videos/shorts/shorts-demo-02.mp4', title: '추천 영상 2' },
-  { src: '/videos/shorts/shorts-demo-03.mp4', title: '추천 영상 3' },
-  { src: '/videos/shorts/shorts-demo-04.mp4', title: '추천 영상 4' },
+  { src: '/videos/shorts/shorts_demo_01.mp4', title: '추천 영상 1' },
+  { src: '/videos/shorts/shorts_demo_02.mp4', title: '추천 영상 2' },
+  { src: '/videos/shorts/shorts_demo_03.mp4', title: '추천 영상 3' },
+  { src: '/videos/shorts/shorts_demo_04.mp4', title: '추천 영상 4' },
 ]
 
 interface ChapterStat {
@@ -631,9 +632,11 @@ function DashboardContent() {
         {/* 아바타 + 이름 */}
         <div className="flex items-center gap-3 mb-4">
           {profileAvatar ? (
-            <img
+            <Image
               src={profileAvatar}
               alt="avatar"
+              width={44}
+              height={44}
               className="w-11 h-11 rounded-full object-cover flex-shrink-0"
             />
           ) : (
@@ -763,53 +766,72 @@ function DashboardContent() {
         )}
       </div>
 
-      {/* ③ 추천 영상 swipe */}
+      {/* ③ 추천 영상 swipe — 중앙 85% + 좌우 peek */}
       <div className="py-2">
         <p className="text-[12px] font-bold text-[#ADADAD] uppercase tracking-wider px-4 mb-2">
           오늘의 추천 영상
         </p>
         <div
-          className="flex gap-3 px-4 overflow-x-auto pb-2"
-          style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
+          className="flex overflow-x-auto pb-2"
+          style={{
+            scrollSnapType: 'x mandatory',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          } as React.CSSProperties}
         >
-          {SAMPLE_VIDEOS.map((vid, i) => (
-            <div
-              key={i}
-              className="flex-shrink-0 rounded-2xl overflow-hidden bg-[#1A1A1A] relative cursor-pointer"
-              style={{ width: '52%', scrollSnapAlign: 'start', aspectRatio: '9/16' }}
-              onClick={() => handleVideoTap(i)}
-            >
-              <video
-                ref={(el) => { videoRefs.current[i] = el }}
-                src={vid.src}
-                className="w-full h-full object-cover"
-                playsInline
-                preload="metadata"
-                loop
-              />
-              {/* 재생 전 오버레이 */}
-              {playingIdx !== i && (
-                <div className="absolute inset-0 flex flex-col items-end justify-between p-3 bg-gradient-to-b from-black/20 via-transparent to-black/60">
-                  <div className="w-10 h-10 rounded-full bg-[#00A651] flex items-center justify-center shadow-lg self-center mt-auto mb-auto">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-                      <polygon points="6,3 20,12 6,21" />
-                    </svg>
+          {SAMPLE_VIDEOS.map((vid, i) => {
+            const isFirst = i === 0
+            const isLast  = i === SAMPLE_VIDEOS.length - 1
+            return (
+              <div
+                key={i}
+                className="flex-shrink-0 rounded-2xl overflow-hidden bg-[#1A1A1A] relative cursor-pointer"
+                style={{
+                  width: '85%',
+                  scrollSnapAlign: 'center',
+                  aspectRatio: '9/16',
+                  marginLeft:  isFirst ? '7.5%' : '10px',
+                  marginRight: isLast  ? '7.5%' : 0,
+                }}
+                onClick={() => handleVideoTap(i)}
+              >
+                <video
+                  ref={(el) => { videoRefs.current[i] = el }}
+                  src={vid.src}
+                  className="w-full h-full object-cover"
+                  playsInline
+                  preload="metadata"
+                  loop
+                />
+
+                {/* 정지 오버레이 — 재생 버튼 + 제목 */}
+                {playingIdx !== i && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-black/20 via-transparent to-black/60">
+                    <div className="w-14 h-14 rounded-full bg-[#00A651] flex items-center justify-center shadow-lg">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                        <polygon points="7,3 21,12 7,21" />
+                      </svg>
+                    </div>
+                    <p className="text-white text-[13px] font-bold absolute bottom-5 left-0 right-0 text-center px-4 truncate">
+                      {vid.title}
+                    </p>
                   </div>
-                  <p className="text-white text-[12px] font-bold w-full text-center">{vid.title}</p>
-                </div>
-              )}
-              {/* 재생 중: 제목 + 녹색 테두리 */}
-              {playingIdx === i && (
-                <>
-                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 to-transparent">
-                    <p className="text-white text-[12px] font-bold truncate">{vid.title}</p>
-                    <p className="text-[#00A651] text-[10px] font-bold mt-0.5">▶ 재생 중</p>
-                  </div>
-                  <div className="absolute inset-0 rounded-2xl ring-2 ring-[#00A651] pointer-events-none" />
-                </>
-              )}
-            </div>
-          ))}
+                )}
+
+                {/* 재생 중 — 하단 정보 + 녹색 테두리 */}
+                {playingIdx === i && (
+                  <>
+                    <div className="absolute bottom-0 left-0 right-0 px-4 py-4 bg-gradient-to-t from-black/70 to-transparent">
+                      <p className="text-white text-[13px] font-bold truncate">{vid.title}</p>
+                      <p className="text-[#00A651] text-[11px] font-bold mt-0.5">▶ 재생 중</p>
+                    </div>
+                    <div className="absolute inset-0 rounded-2xl ring-2 ring-[#00A651] pointer-events-none" />
+                  </>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
 
@@ -1106,7 +1128,6 @@ function DashboardContent() {
     { round: 3, date: '5월 30일 (토)', dateValue: '2026-05-30' },
     { round: 4, date: '6월 6일 (토)',  dateValue: '2026-06-06' },
   ]
-  const REAL_EXAM_DATE = '2026-06-13'
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
