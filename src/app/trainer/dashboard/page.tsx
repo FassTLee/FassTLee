@@ -281,9 +281,15 @@ function DashboardContent() {
       const userId = session?.user?.id ?? ''
       const res  = await fetch(`/api/v1/profile-settings?userId=${encodeURIComponent(userId)}`, { cache: 'no-store' })
       const data = await res.json()
-      // exam_date는 profile-me에서 이미 setProfileExamDate에 저장됨 → examDateInput도 동기화
-      if (data.exam_date)         setExamDateInput(data.exam_date)
-      if (data.cert_type)         setCertTypeInput(data.cert_type)  // profile-settings가 최종 우선
+      // profile-settings가 최종 우선 → D-Day 카드 즉시 반영
+      if (data.exam_date) {
+        setExamDateInput(data.exam_date)
+        setProfileExamDate(data.exam_date)   // D-Day 카드 동기화
+      }
+      if (data.cert_type) {
+        setCertTypeInput(data.cert_type)
+        setProfileCert(data.cert_type)       // 헤더/카드 동기화
+      }
       if (data.region)            setRegionInput(String(data.region))
       if (data.daily_study_hours) setDailyHoursInput(String(data.daily_study_hours))
       if (data.daily_study_time)  setStudyTimeInput(data.daily_study_time)
@@ -806,35 +812,28 @@ function DashboardContent() {
 
       {/* ② Daily 학습/테스트 */}
       <div className="px-4 py-2">
-        {studiedToday && recentStats.length > 0 ? (
-          <div className="bg-[#63992210] border border-[#63992230] rounded-2xl p-4 text-center">
-            <p className="text-[16px] font-black text-[#639922]">오늘 학습 완료! 🎉</p>
-            <p className="text-[12px] text-[#639922]/70 mt-1">내일도 화이팅이에요</p>
-          </div>
-        ) : recentStats.length > 0 ? (
+        {studiedToday ? (
+          /* 학습 완료 → 테스트 버튼 */
           <button
-            onClick={() => {
-              const first = subjectCards.find((c) => c.subjectId)
-              if (first?.subjectId) router.push(`/chapters/${first.subjectId}`)
-            }}
+            onClick={() => router.push('/trainer/dashboard?tab=exam')}
             className="w-full bg-[#1A1A1A] text-white rounded-2xl p-4 flex items-center gap-3 active:opacity-90"
           >
             <span className="text-[24px]">✅</span>
             <div className="text-left flex-1">
               <p className="text-[15px] font-bold">테스트 시작하기</p>
-              <p className="text-[11px] text-white/50">학습 내용을 점검해보세요</p>
+              <p className="text-[11px] text-white/50">오늘 학습 내용을 점검해보세요</p>
             </div>
             <ChevronRight size={18} className="text-white/50" />
           </button>
         ) : todayChapter ? (
-          /* ── 오늘의 학습 썸네일 카드 ── */
+          /* ── 오늘의 학습 썸네일 카드 (학습 미완료) ── */
           <button
             onClick={() => router.push(`/lesson/${todayChapter.chapterId}`)}
             className="w-full bg-white border-2 border-[#00A651] rounded-2xl overflow-hidden text-left active:bg-[#F0FFF6]"
           >
             {/* 상단 배너 */}
             <div className="bg-[#00A651] px-4 py-2 flex items-center justify-between">
-              <span className="text-[11px] font-bold text-white/80 uppercase tracking-wide">오늘의 학습</span>
+              <span className="text-[11px] font-bold text-white/80 uppercase tracking-wide">학습 시작하기</span>
               <span className="text-[11px] text-white/60">{todayChapter.completed} / {todayChapter.total} 챕터 완료</span>
             </div>
             {/* 본문 */}
@@ -858,14 +857,31 @@ function DashboardContent() {
               </div>
             </div>
           </button>
+        ) : recentStats.length > 0 ? (
+          /* 학습 이력 있음 + 오늘 미학습 → 학습 시작하기 */
+          <button
+            onClick={() => {
+              const first = subjectCards.find((c) => c.subjectId)
+              if (first?.subjectId) router.push(`/chapters/${first.subjectId}`)
+            }}
+            className="w-full bg-[#1A1A1A] text-white rounded-2xl p-4 flex items-center gap-3 active:opacity-90"
+          >
+            <span className="text-[24px]">📖</span>
+            <div className="text-left flex-1">
+              <p className="text-[15px] font-bold">학습 시작하기</p>
+              <p className="text-[11px] text-white/50">오늘의 학습을 이어가세요</p>
+            </div>
+            <ChevronRight size={18} className="text-white/50" />
+          </button>
         ) : (
+          /* 신규 사용자 */
           <button
             onClick={() => router.push('/trainer/dashboard?tab=classroom')}
             className="w-full bg-[#00A651] text-white rounded-2xl p-4 flex items-center gap-3 active:opacity-90"
           >
             <span className="text-[24px]">📚</span>
             <div className="text-left flex-1">
-              <p className="text-[15px] font-bold">오늘의 학습 시작하기</p>
+              <p className="text-[15px] font-bold">학습 시작하기</p>
               <p className="text-[11px] text-white/70">강의실에서 과목을 선택해보세요</p>
             </div>
             <ChevronRight size={18} className="text-white/70" />
@@ -963,15 +979,21 @@ function DashboardContent() {
           강의실 바로가기
         </p>
         <div
-          className="flex gap-3 px-4 overflow-x-auto pb-2"
-          style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
+          className="flex gap-3 overflow-x-auto pb-2"
+          style={{
+            scrollSnapType: 'x mandatory',
+            scrollPaddingLeft: '1rem',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          } as React.CSSProperties}
         >
           {/* 자격증 카드 */}
           {displayCert ? (
             <button
               onClick={() => router.push('/trainer/dashboard?tab=classroom')}
               className="flex-shrink-0 bg-[#1A1A1A] rounded-2xl p-4 text-left active:opacity-90"
-              style={{ width: '75%', scrollSnapAlign: 'start' }}
+              style={{ width: '75%', scrollSnapAlign: 'start', marginLeft: '1rem' }}
             >
               {/* 자격증명 + 아이콘 */}
               <div className="flex items-center gap-2.5 mb-4">
@@ -1015,6 +1037,8 @@ function DashboardContent() {
               width: displayCert ? '44%' : '75%',
               scrollSnapAlign: 'start',
               minHeight: '130px',
+              marginLeft: displayCert ? 0 : '1rem',
+              marginRight: '1rem',
             }}
           >
             <div className="w-10 h-10 rounded-xl bg-[#F5F5F3] flex items-center justify-center">
@@ -1346,9 +1370,11 @@ function DashboardContent() {
   // ══════════════════════════════════════════════════════════════════
   const EXAM_DATES = [
     { round: 1, date: '5월 2일 (토)',  dateValue: '2026-05-02' },
-    { round: 2, date: '5월 16일 (토)', dateValue: '2026-05-16' },
-    { round: 3, date: '5월 30일 (토)', dateValue: '2026-05-30' },
-    { round: 4, date: '6월 6일 (토)',  dateValue: '2026-06-06' },
+    { round: 2, date: '5월 9일 (토)',  dateValue: '2026-05-09' },
+    { round: 3, date: '5월 16일 (토)', dateValue: '2026-05-16' },
+    { round: 4, date: '5월 23일 (토)', dateValue: '2026-05-23' },
+    { round: 5, date: '5월 30일 (토)', dateValue: '2026-05-30' },
+    { round: 6, date: '6월 6일 (토)',  dateValue: '2026-06-06' },
   ]
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -1388,9 +1414,11 @@ function DashboardContent() {
         </div>
       ) : nextExam ? (
         <div className="bg-[#1A1A1A] rounded-2xl p-5 text-white">
-          <p className="text-[11px] text-white/50 uppercase tracking-wider mb-1">다음 모의고사</p>
-          <div className="text-[36px] font-black text-[#00A651] leading-tight">{nextExam.date}</div>
-          <p className="text-[13px] text-white/70 mt-1">{nextExam.round}회차 · 매주 토요일 오전 10:00</p>
+          <p className="text-[13px] text-white/50 font-bold tracking-wider mb-2">
+            {nextExam.round}회차 모의고사
+          </p>
+          <div className="text-[43px] font-black text-[#00A651] leading-none">{nextExam.date}</div>
+          <div className="text-[43px] font-black text-white leading-none mt-0.5">10:00</div>
           <button
             onClick={() => { setExamRound(nextExam.round); setShowExamModal(true) }}
             className="mt-4 w-full py-3 bg-[#00A651] rounded-xl text-[14px] font-bold text-white"
