@@ -34,7 +34,7 @@ const CERT_ICONS: Record<string, string> = {
 const REQUIRED_SUBJECTS: Record<string, string[]> = {
   'health-exercise-manager': [
     '운동생리학', '기능해부학', '건강·체력평가', '운동처방론',
-    '운동부하검사', '운동상해', '병태생리학',
+    '운동부하검사', '운동상해', '병태생리학', '스포츠심리학',
   ],
   'sports-instructor-2': [
     '스포츠심리학', '운동생리학', '스포츠교육학', '운동역학',
