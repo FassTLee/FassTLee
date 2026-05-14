@@ -162,7 +162,7 @@ function DashboardContent() {
 
   /* ── Home ────────────────────────────────────────────────────────── */
   const [studiedToday, setStudiedToday]   = useState(false)
-  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([])
+  const [_recentActivity, setRecentActivity] = useState<ActivityItem[]>([])
   const [heartedVideos, setHeartedVideos] = useState<Record<string, boolean>>({})
   const [subjectCards, setSubjectCards]   = useState<SubjectCard[]>([])
   const [recentStats, setRecentStats]         = useState<ChapterStat[]>([])
