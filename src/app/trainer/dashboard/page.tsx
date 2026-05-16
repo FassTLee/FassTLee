@@ -990,57 +990,63 @@ function DashboardContent() {
             return (
               <div
                 key={i}
-                className="flex-shrink-0 rounded-2xl overflow-hidden bg-[#1A1A1A] relative cursor-pointer"
+                className="flex-shrink-0 cursor-pointer"
                 style={{
                   width: '85%',
                   flexShrink: 0,
                   scrollSnapAlign: 'start',
-                  /* 9:11 = 9:16 대비 약 31% 높이 축소 */
-                  aspectRatio: '9 / 11',
                   marginLeft:  isFirst ? '7.5%' : '10px',
                   marginRight: isLast  ? '7.5%' : 0,
                 }}
                 onClick={() => handleVideoTap(i)}
               >
-                <video
-                  ref={(el) => { videoRefs.current[i] = el }}
-                  src={vid.src}
-                  className="w-full h-full object-cover"
-                  playsInline          /* iOS 인라인 재생 */
-                  muted                /* 모바일 autoplay 정책 허용 */
-                  preload="metadata"
-                  loop
-                  onLoadedMetadata={(e) => {
-                    /* 첫 프레임을 썸네일로 표시 */
-                    const v = e.target as HTMLVideoElement
-                    v.currentTime = 0.001
-                  }}
-                />
+                {/* 영상 영역 */}
+                <div
+                  className="rounded-2xl overflow-hidden bg-[#1A1A1A] relative"
+                  style={{ aspectRatio: '9 / 11' }}
+                >
+                  <video
+                    ref={(el) => { videoRefs.current[i] = el }}
+                    src={vid.src}
+                    className="w-full h-full object-cover"
+                    playsInline
+                    muted
+                    preload="metadata"
+                    loop
+                    onLoadedMetadata={(e) => {
+                      const v = e.target as HTMLVideoElement
+                      v.currentTime = 0.001
+                    }}
+                  />
 
-                {/* 정지 오버레이 — 재생 버튼 + 제목 */}
-                {playingIdx !== i && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-black/20 via-transparent to-black/60 pointer-events-none">
-                    <div className="w-14 h-14 rounded-full bg-[#00A651] flex items-center justify-center shadow-xl">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
-                        <polygon points="7,3 21,12 7,21" />
-                      </svg>
+                  {/* 정지 오버레이 — 재생 버튼 */}
+                  {playingIdx !== i && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-black/20 via-transparent to-black/40 pointer-events-none">
+                      <div className="w-14 h-14 rounded-full bg-[#00A651] flex items-center justify-center shadow-xl">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
+                          <polygon points="7,3 21,12 7,21" />
+                        </svg>
+                      </div>
                     </div>
-                    <p className="text-white text-[13px] font-bold absolute bottom-4 left-0 right-0 text-center px-4 truncate">
-                      {vid.title}
-                    </p>
-                  </div>
-                )}
+                  )}
 
-                {/* 재생 중 — 하단 정보 + 녹색 테두리 */}
-                {playingIdx === i && (
-                  <>
-                    <div className="absolute bottom-0 left-0 right-0 px-4 py-3.5 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
-                      <p className="text-white text-[13px] font-bold truncate">{vid.title}</p>
-                      <p className="text-[#00A651] text-[11px] font-bold mt-0.5">▶ 재생 중</p>
-                    </div>
-                    <div className="absolute inset-0 rounded-2xl ring-2 ring-[#00A651] pointer-events-none" />
-                  </>
-                )}
+                  {/* 재생 중 — 녹색 테두리 + 인디케이터 */}
+                  {playingIdx === i && (
+                    <>
+                      <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-[#00A651] px-2.5 py-1 rounded-full pointer-events-none">
+                        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                        <span className="text-white text-[10px] font-bold">재생 중</span>
+                      </div>
+                      <div className="absolute inset-0 rounded-2xl ring-2 ring-[#00A651] pointer-events-none" />
+                    </>
+                  )}
+                </div>
+
+                {/* 카드 하단 — 제목/설명 */}
+                <div className="px-1 pt-2.5 pb-1">
+                  <p className="text-[13px] font-bold text-[#1A1A1A] truncate">{vid.title}</p>
+                  <p className="text-[11px] text-[#ADADAD] truncate mt-0.5">{vid.description}</p>
+                </div>
               </div>
             )
           })}
