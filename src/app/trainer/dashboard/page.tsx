@@ -239,6 +239,9 @@ function DashboardContent() {
   /* ── Phone Modal ─────────────────────────────────────────────────── */
   const [showPhoneModal, setShowPhoneModal] = useState(false)
 
+  /* ── 학습 유형 검사 팝업 ─────────────────────────────────────────── */
+  const [showStylePopup, setShowStylePopup] = useState(false)
+
   /* ── Profile ─────────────────────────────────────────────────────── */
   const [examDateInput, setExamDateInput]     = useState('')
   const [certTypeInput, setCertTypeInput]     = useState('')
@@ -283,6 +286,7 @@ function DashboardContent() {
       if (pm.avatarUrl) setProfileAvatar(pm.avatarUrl)
       if (pm.certType)  { loadedCertType = pm.certType; setProfileCert(pm.certType); setCertTypeInput(pm.certType) }
       if (pm.examDate)  { loadedExamDate = pm.examDate; setProfileExamDate(pm.examDate); setExamDateInput(pm.examDate) }
+      if (pm.learningStyle === null) setShowStylePopup(true)
     } catch (e) { console.warn('[initCommon] profile-me 실패', e) }
 
     let selectedNames: string[] = []
@@ -2160,6 +2164,32 @@ function DashboardContent() {
       {/* ── 휴대폰 번호 등록 모달 ── */}
       {showPhoneModal && (
         <PhoneRegisterModal onClose={() => setShowPhoneModal(false)} />
+      )}
+
+      {/* ── 학습 유형 검사 팝업 ── */}
+      {showStylePopup && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-6">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-7 text-center">
+            <div className="text-[44px] mb-4">🧠</div>
+            <h2 className="text-[18px] font-black text-[#1A1A1A] mb-2">학습 유형 분석</h2>
+            <p className="text-[14px] text-[#6B6B6B] leading-relaxed mb-6">
+              학습 유형을 분석하면<br />
+              <span className="text-[#1A1A1A] font-semibold">나에게 맞는 맞춤 학습</span>이 가능합니다
+            </p>
+            <button
+              onClick={() => { setShowStylePopup(false); router.push('/onboarding/style-test') }}
+              className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold mb-3"
+            >
+              지금 확인하기
+            </button>
+            <button
+              onClick={() => { setShowStylePopup(false); router.push('/trainer/dashboard') }}
+              className="w-full py-3 text-[13px] text-[#ADADAD]"
+            >
+              나중에 할게요
+            </button>
+          </div>
+        </div>
       )}
 
       {/* ── D-Day 설정 모달 ── */}
