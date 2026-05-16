@@ -33,6 +33,9 @@ interface Question {
   options: string[]
   answer_index: number
   explanation: string | null
+  image_url: string | null
+  reference_text: string | null
+  question_type: string | null
 }
 
 interface AnswerRecord {
@@ -70,7 +73,7 @@ export default function TestPage() {
   const fetchQuestions = async () => {
     const { data } = await supabase
       .from('chapter_questions')
-      .select('id, question, options, answer_index, explanation')
+      .select('id, question, options, answer_index, explanation, image_url, reference_text, question_type')
       .eq('chapter_id', chapterId)
     const raw = data ?? []
     setQuestions(raw.length > 10 ? shuffle(raw).slice(0, 10) : raw)
@@ -178,13 +181,34 @@ export default function TestPage() {
       )}
 
       <div className="flex-1 overflow-y-auto p-5 pb-36">
-        {/* Question */}
-        <div className="mb-6">
+        {/* 지문 */}
+        <div className="mb-4">
           <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">Q{current + 1}</p>
           <p className="text-[17px] font-bold text-[#1A1A1A] leading-snug">{q.question}</p>
         </div>
 
-        {/* Options — 선택한 보기만 하이라이트, 정답/오답 표시 없음 */}
+        {/* 보기 (reference_text) */}
+        {q.reference_text && (
+          <div className="mb-4 bg-[#F5F5F3] border border-[#E5E5E5] rounded-2xl p-4">
+            <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">보기</p>
+            <p className="text-[14px] text-[#1A1A1A] leading-relaxed whitespace-pre-line">{q.reference_text}</p>
+          </div>
+        )}
+
+        {/* 그림 (image_url) */}
+        {q.image_url && (
+          <div className="mb-4 rounded-2xl overflow-hidden border border-[#E5E5E5]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={q.image_url}
+              alt="문제 이미지"
+              className="w-full object-contain"
+              style={{ maxHeight: '260px' }}
+            />
+          </div>
+        )}
+
+        {/* 4지선다 — 선택한 보기만 하이라이트, 정답/오답 표시 없음 */}
         <div className="space-y-2.5">
           {q.options.map((opt, i) => (
             <button
