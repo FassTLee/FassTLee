@@ -52,7 +52,7 @@ const PLANS = [
     name: '스탠다드',
     price: '₩4,900',
     sub: '/월',
-    highlight: true,
+    highlight: false,
     comingSoon: true,
     badge: '인기',
     features: [
