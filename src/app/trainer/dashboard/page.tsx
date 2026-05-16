@@ -239,6 +239,9 @@ function DashboardContent() {
   /* ── Phone Modal ─────────────────────────────────────────────────── */
   const [showPhoneModal, setShowPhoneModal] = useState(false)
 
+  /* ── 학습 유형 검사 팝업 ─────────────────────────────────────────── */
+  const [showStylePopup, setShowStylePopup] = useState(false)
+
   /* ── Profile ─────────────────────────────────────────────────────── */
   const [examDateInput, setExamDateInput]     = useState('')
   const [certTypeInput, setCertTypeInput]     = useState('')
@@ -263,7 +266,6 @@ function DashboardContent() {
   }, [tab]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const initCommon = async () => {
-    // ── localStorage (동기) ──────────────────────────────────────────
     const cert     = localStorage.getItem(CERT_KEY)
     const subs     = localStorage.getItem(SUBJECTS_KEY)
     const styleVal = localStorage.getItem(STYLE_KEY)
@@ -274,83 +276,70 @@ function DashboardContent() {
     if (styleTypeVal) setStyleType(styleTypeVal)
     if (session?.user?.name) setUserName(session.user.name.split(' ')[0])
 
-    let selectedNames: string[] = []
-    if (subs) { try { selectedNames = JSON.parse(subs) } catch { /* ignore */ } }
-    setSubjects(selectedNames)
-
-    const userId = session?.user?.id ?? ''
-
-    // ── Phase 1: 독립 호출 전부 병렬 실행 ───────────────────────────
-    const [pm, ps, goalsRes, reportRes, subjsRes] = await Promise.all([
-      fetch('/api/v1/profile-me', { cache: 'no-store' })
-        .then((r) => r.json())
-        .catch((e) => { console.warn('[initCommon] profile-me 실패', e); return {} }),
-
-      fetch(`/api/v1/profile-settings?userId=${encodeURIComponent(userId)}`, { cache: 'no-store' })
-        .then((r) => r.json())
-        .catch((e) => { console.warn('[initCommon] profile-settings 실패', e); return {} }),
-
-      fetch(`/api/v1/user-goals?userId=${encodeURIComponent(userId)}`)
-        .then((r) => r.json())
-        .catch((e) => { console.warn('[initCommon] user-goals 실패', e); return {} }),
-
-      fetch(`/api/v1/report?userId=${encodeURIComponent(userId)}`)
-        .then((r) => r.json())
-        .catch(() => ({})),
-
-      selectedNames.length > 0
-        ? supabase.from('subjects').select('id, name').in('name', selectedNames)
-        : Promise.resolve({ data: [] as { id: string; name: string }[] }),
-    ])
-
-    console.log('[initCommon] profile-me:', pm)
-    console.log('[initCommon] profile-settings:', ps)
-
-    // ── profile-me 적용 ─────────────────────────────────────────────
+    // ① profile-me (서버사이드 세션 → RLS 우회, exam_date 1차 로드)
     let loadedExamDate: string | null = null
     let loadedCertType: string | null = null
+    try {
+      const pm = await fetch('/api/v1/profile-me', { cache: 'no-store' }).then((r) => r.json())
+      console.log('[initCommon] profile-me:', pm)
+      if (pm.name)      setProfileName(pm.name)
+      if (pm.avatarUrl) setProfileAvatar(pm.avatarUrl)
+      if (pm.certType)  { loadedCertType = pm.certType; setProfileCert(pm.certType); setCertTypeInput(pm.certType) }
+      if (pm.examDate)  { loadedExamDate = pm.examDate; setProfileExamDate(pm.examDate); setExamDateInput(pm.examDate) }
+      if (pm.learningStyle === null) setShowStylePopup(true)
+    } catch (e) { console.warn('[initCommon] profile-me 실패', e) }
 
-    if (pm.name)      setProfileName(pm.name)
-    if (pm.avatarUrl) setProfileAvatar(pm.avatarUrl)
-    if (pm.certType)  { loadedCertType = pm.certType; setProfileCert(pm.certType); setCertTypeInput(pm.certType) }
-    if (pm.examDate)  { loadedExamDate = pm.examDate; setProfileExamDate(pm.examDate); setExamDateInput(pm.examDate) }
-
-    // ── profile-settings 적용 (exam_date / cert_type 우선) ──────────
-    if (ps.exam_date) {
-      loadedExamDate = ps.exam_date
-      setExamDateInput(ps.exam_date)
-      setProfileExamDate(ps.exam_date)
+    let selectedNames: string[] = []
+    if (subs) {
+      try { selectedNames = JSON.parse(subs) } catch { /* ignore */ }
     }
-    if (ps.cert_type) {
-      loadedCertType = ps.cert_type
-      setCertTypeInput(ps.cert_type)
-      setProfileCert(ps.cert_type)
-    }
-    if (ps.region)            setRegionInput(String(ps.region))
-    if (ps.daily_study_hours) setDailyHoursInput(String(ps.daily_study_hours))
-    if (ps.daily_study_time)  setStudyTimeInput(ps.daily_study_time)
-    if (ps.daily_study_count) setStudyCountInput(ps.daily_study_count)
-    if (ps.study_time_slot)   setStudyTimeSlotInput(ps.study_time_slot)
-    if (ps.push_enabled !== undefined && ps.push_enabled !== null)
-      setPushEnabled(Boolean(ps.push_enabled))
+    setSubjects(selectedNames)
 
-    // ── user-goals 적용 (exam_date 폴백) ────────────────────────────
-    const goals: DayGoal[] = goalsRes.goals ?? []
-    setDdayGoals(goals)
-    if (!loadedExamDate && goals.length > 0) {
-      const latest = goals[goals.length - 1]
-      console.log('[initCommon] user-goals 폴백 exam_date:', latest.exam_date)
-      setProfileExamDate(latest.exam_date)
-      setExamDateInput(latest.exam_date)
-      loadedExamDate = latest.exam_date
-      if (!loadedCertType && latest.cert_type) {
-        setProfileCert(latest.cert_type)
-        setCertTypeInput(latest.cert_type)
-        loadedCertType = latest.cert_type
+    // ② profile-settings (userId 기반, exam_date 2차 로드 — profile-me보다 우선)
+    const userId = session?.user?.id ?? ''
+    try {
+      const res  = await fetch(`/api/v1/profile-settings?userId=${encodeURIComponent(userId)}`, { cache: 'no-store' })
+      const data = await res.json()
+      console.log('[initCommon] profile-settings:', data)
+      if (data.exam_date) {
+        loadedExamDate = data.exam_date
+        setExamDateInput(data.exam_date)
+        setProfileExamDate(data.exam_date)
       }
-    }
+      if (data.cert_type) {
+        loadedCertType = data.cert_type
+        setCertTypeInput(data.cert_type)
+        setProfileCert(data.cert_type)
+      }
+      if (data.region)            setRegionInput(String(data.region))
+      if (data.daily_study_hours) setDailyHoursInput(String(data.daily_study_hours))
+      if (data.daily_study_time)  setStudyTimeInput(data.daily_study_time)
+      if (data.daily_study_count) setStudyCountInput(data.daily_study_count)
+      if (data.study_time_slot)   setStudyTimeSlotInput(data.study_time_slot)
+      if (data.push_enabled !== undefined && data.push_enabled !== null)
+        setPushEnabled(Boolean(data.push_enabled))
+    } catch (e) { console.warn('[initCommon] profile-settings 실패', e) }
 
-    // ── localStorage 최종 폴백 ───────────────────────────────────────
+    // ③ D-Day goals — user-goals 테이블에서도 exam_date 폴백 확인
+    try {
+      const res  = await fetch(`/api/v1/user-goals?userId=${encodeURIComponent(userId)}`)
+      const data = await res.json()
+      const goals: DayGoal[] = data.goals ?? []
+      setDdayGoals(goals)
+      // profile-me / profile-settings 모두 exam_date 반환 못한 경우 user-goals로 폴백
+      if (!loadedExamDate && goals.length > 0) {
+        const latest = goals[goals.length - 1]
+        console.log('[initCommon] user-goals 폴백 exam_date:', latest.exam_date)
+        setProfileExamDate(latest.exam_date)
+        setExamDateInput(latest.exam_date)
+        if (!loadedCertType && latest.cert_type) {
+          setProfileCert(latest.cert_type)
+          setCertTypeInput(latest.cert_type)
+        }
+      }
+    } catch (e) { console.warn('[initCommon] user-goals 실패', e) }
+
+    // ④ localStorage 폴백 — 모든 DB 조회 실패 시 마지막 안전망
     if (!loadedExamDate) {
       const cached = localStorage.getItem('kinepia_exam_date')
       if (cached) {
@@ -368,125 +357,139 @@ function DashboardContent() {
       }
     }
 
-    // ── report / stats 처리 ─────────────────────────────────────────
-    const stats: ChapterStat[] = reportRes.chapter_stats ?? []
-    setAllStats(stats)
+    // Chapter stats
+    let stats: ChapterStat[] = []
+    try {
+      const res   = await fetch(`/api/v1/report?userId=${encodeURIComponent(userId)}`)
+      const data  = await res.json()
+      stats = data.chapter_stats ?? []
+      setAllStats(stats)
 
-    const sorted = [...stats].sort((a, b) =>
-      new Date(b.last_attempt_at ?? 0).getTime() - new Date(a.last_attempt_at ?? 0).getTime()
-    )
-    setRecentStats(sorted.slice(0, 3))
+      const sorted = [...stats].sort((a, b) =>
+        new Date(b.last_attempt_at ?? 0).getTime() - new Date(a.last_attempt_at ?? 0).getTime()
+      )
+      setRecentStats(sorted.slice(0, 3))
 
-    const today = new Date().toDateString()
-    setStudiedToday(sorted.some((s) => s.last_attempt_at && new Date(s.last_attempt_at).toDateString() === today))
+      // Studied today?
+      const today = new Date().toDateString()
+      setStudiedToday(sorted.some((s) => s.last_attempt_at && new Date(s.last_attempt_at).toDateString() === today))
 
-    const uniqueDates = Array.from(
-      new Set(stats.filter((s) => s.last_attempt_at).map((s) => new Date(s.last_attempt_at!).toDateString()))
-    ).sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
-    let streakCount = 0
-    const todayDate = new Date(); todayDate.setHours(0, 0, 0, 0)
-    for (let i = 0; i < uniqueDates.length; i++) {
-      const d = new Date(uniqueDates[i]); d.setHours(0, 0, 0, 0)
-      const diffDays = Math.round((todayDate.getTime() - d.getTime()) / 86400000)
-      if (diffDays === i || diffDays === i + 1) { streakCount++ } else break
-    }
-    setStreak(streakCount)
+      // 연속 학습일(streak) 계산
+      const uniqueDates = Array.from(
+        new Set(
+          stats
+            .filter((s) => s.last_attempt_at)
+            .map((s) => new Date(s.last_attempt_at!).toDateString())
+        )
+      ).sort((a, b) => new Date(b).getTime() - new Date(a).getTime())
+      let streakCount = 0
+      const todayDate = new Date(); todayDate.setHours(0,0,0,0)
+      for (let i = 0; i < uniqueDates.length; i++) {
+        const d = new Date(uniqueDates[i]); d.setHours(0,0,0,0)
+        const diffDays = Math.round((todayDate.getTime() - d.getTime()) / 86400000)
+        if (diffDays === i || diffDays === i + 1) { streakCount++ } else break
+      }
+      setStreak(streakCount)
 
-    // ── subject cards 처리 (Phase 1에서 미리 가져온 DB 결과 사용) ───
-    const dbSubjs = (subjsRes as { data: { id: string; name: string }[] | null }).data ?? []
-    const cards: SubjectCard[] = selectedNames.map((name) => {
-      const meta = SUBJECT_META[name] ?? { icon: '📚', desc: '' }
-      const db   = dbSubjs.find((d) => d.name === name)
-      return { name, icon: meta.icon, desc: meta.desc, subjectId: db?.id ?? null }
-    })
-    setSubjectCards(cards)
+      // 챕터 → 과목 매핑 (ALL stats 기반 — 취약 과목 분석 + recentActivity 공용)
+      const top5 = sorted.slice(0, 5)
+      if (stats.length > 0) {
+        const chIds = Array.from(new Set(stats.map((s) => s.chapter_id)))
+        const { data: chs } = await supabase
+          .from('chapters').select('id, title, course_id').in('id', chIds)
+        const courseIds = Array.from(new Set((chs ?? []).map((c) => c.course_id)))
+        const { data: courses } = await supabase
+          .from('courses').select('id, subject_id').in('id', courseIds)
+        const subjIds = Array.from(new Set((courses ?? []).map((c) => c.subject_id)))
+        const { data: subjs } = await supabase
+          .from('subjects').select('id, name').in('id', subjIds)
 
-    // ── Phase 2: 독립 Supabase 체인 2개 병렬 실행 ───────────────────
-    const top5 = sorted.slice(0, 5)
-    await Promise.all([
+        const subjMap: Record<string, string>  = {}
+        subjs?.forEach((s) => { subjMap[s.id] = s.name })
+        const courseMap: Record<string, string> = {}
+        courses?.forEach((c) => { courseMap[c.id] = c.subject_id })
+        const chMap: Record<string, { title: string; course_id: string }> = {}
+        chs?.forEach((c) => { chMap[c.id] = { title: c.title, course_id: c.course_id } })
 
-      // Chain A: stats → chapters → courses → subjects (recentActivity / chapterSubjectMap)
-      stats.length > 0 ? (async () => {
-        try {
-          const chIds = Array.from(new Set(stats.map((s) => s.chapter_id)))
-          const { data: chs } = await supabase
-            .from('chapters').select('id, title, course_id').in('id', chIds)
-          const courseIds = Array.from(new Set((chs ?? []).map((c) => c.course_id)))
-          const { data: courses } = await supabase
-            .from('courses').select('id, subject_id').in('id', courseIds)
-          const subjIds = Array.from(new Set((courses ?? []).map((c) => c.subject_id)))
-          const { data: subjs } = await supabase
-            .from('subjects').select('id, name').in('id', subjIds)
+        // chapter_id → subject_name 전체 맵 (취약 과목 분석용)
+        const chSubMap: Record<string, string> = {}
+        chs?.forEach((c) => {
+          const subjId = courseMap[c.course_id]
+          if (subjId) chSubMap[c.id] = subjMap[subjId] ?? ''
+        })
+        setChapterSubjectMap(chSubMap)
 
-          const subjMap:  Record<string, string> = {}
-          subjs?.forEach((s) => { subjMap[s.id] = s.name })
-          const courseMap: Record<string, string> = {}
-          courses?.forEach((c) => { courseMap[c.id] = c.subject_id })
-          const chMap: Record<string, { title: string; course_id: string }> = {}
-          chs?.forEach((c) => { chMap[c.id] = { title: c.title, course_id: c.course_id } })
+        // recentActivity: top 5만 표시
+        setRecentActivity(
+          top5.map((s) => ({
+            chapter_id:    s.chapter_id,
+            chapter_title: chMap[s.chapter_id]?.title ?? '챕터',
+            subject_name:  subjMap[courseMap[chMap[s.chapter_id]?.course_id ?? ''] ?? ''] ?? '',
+            date:          s.last_attempt_at,
+            score:         s.avg_score,
+          }))
+        )
+      }
+    } catch { /* ignore */ }
 
-          const chSubMap: Record<string, string> = {}
-          chs?.forEach((c) => {
-            const subjId = courseMap[c.course_id]
-            if (subjId) chSubMap[c.id] = subjMap[subjId] ?? ''
-          })
-          setChapterSubjectMap(chSubMap)
+    // Subject cards (needed for home + classroom)
+    if (selectedNames.length > 0) {
+      const { data: dbSubjs } = await supabase
+        .from('subjects').select('id, name').in('name', selectedNames)
+      const cards: SubjectCard[] = selectedNames.map((name) => {
+        const meta = SUBJECT_META[name] ?? { icon: '📚', desc: '' }
+        const db   = (dbSubjs ?? []).find((d: { id: string; name: string }) => d.name === name)
+        return { name, icon: meta.icon, desc: meta.desc, subjectId: db?.id ?? null }
+      })
+      setSubjectCards(cards)
 
-          setRecentActivity(
-            top5.map((s) => ({
-              chapter_id:    s.chapter_id,
-              chapter_title: chMap[s.chapter_id]?.title ?? '챕터',
-              subject_name:  subjMap[courseMap[chMap[s.chapter_id]?.course_id ?? ''] ?? ''] ?? '',
-              date:          s.last_attempt_at,
-              score:         s.avg_score,
-            }))
-          )
-        } catch { /* ignore */ }
-      })() : Promise.resolve(),
-
-      // Chain B: 진도율 + 오늘챕터 (courses 쿼리 1회 공유)
-      cards.some((c) => c.subjectId) ? (async () => {
-        try {
-          const subjectIds = cards.filter((c) => c.subjectId).map((c) => c.subjectId!)
+      // 과목별 진도율 계산 (강의실 탭용)
+      try {
+        const subjectIds = cards.filter((c) => c.subjectId).map((c) => c.subjectId!)
+        if (subjectIds.length > 0) {
           const { data: allCourses } = await supabase
             .from('courses').select('id, subject_id').in('subject_id', subjectIds)
           const allCourseIds = (allCourses ?? []).map((c) => c.id)
-          if (allCourseIds.length === 0) return
-
-          const { data: allChaps } = await supabase
-            .from('chapters').select('id, title, course_id, order_index').in('course_id', allCourseIds)
-
-          const completedSet = new Set(
-            stats
-              .filter((s) => s.lesson_completed === true || (s.latest_score ?? s.avg_score) >= 80)
-              .map((s) => s.chapter_id)
-          )
-
-          // 진도율
-          const progressMap: Record<string, { total: number; completed: number }> = {}
-          for (const card of cards) {
-            if (!card.subjectId) continue
-            const cIds = (allCourses ?? []).filter((c) => c.subject_id === card.subjectId).map((c) => c.id)
-            const chaps = (allChaps ?? []).filter((c) => cIds.includes(c.course_id))
-            progressMap[card.name] = {
-              total:     chaps.length,
-              completed: chaps.filter((c) => completedSet.has(c.id)).length,
+          if (allCourseIds.length > 0) {
+            const { data: allChaps } = await supabase
+              .from('chapters').select('id, course_id').in('course_id', allCourseIds)
+            const completedSet = new Set(
+              stats.filter((s) => s.lesson_completed === true || (s.latest_score ?? s.avg_score) >= 80).map((s) => s.chapter_id)
+            )
+            const progressMap: Record<string, { total: number; completed: number }> = {}
+            for (const card of cards) {
+              if (!card.subjectId) continue
+              const courseIds = (allCourses ?? [])
+                .filter((c) => c.subject_id === card.subjectId)
+                .map((c) => c.id)
+              const chaps = (allChaps ?? []).filter((c) => courseIds.includes(c.course_id))
+              progressMap[card.name] = {
+                total: chaps.length,
+                completed: chaps.filter((c) => completedSet.has(c.id)).length,
+              }
             }
+            setSubjectProgress(progressMap)
           }
-          setSubjectProgress(progressMap)
+        }
+      } catch { /* ignore */ }
 
-          // 오늘챕터 (첫 번째 과목)
-          const firstCard = cards.find((c) => c.subjectId)
-          if (firstCard?.subjectId) {
-            const firstCourseIds = (allCourses ?? [])
-              .filter((c) => c.subject_id === firstCard.subjectId)
-              .map((c) => c.id)
-            const firstChaps = (allChaps ?? [])
-              .filter((c) => firstCourseIds.includes(c.course_id))
-              .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
-            const total     = firstChaps.length
-            const completed = firstChaps.filter((c) => completedSet.has(c.id)).length
-            const nextChap  = firstChaps.find((c) => !completedSet.has(c.id)) ?? firstChaps[0]
+      // Today chapter thumbnail: first subject with chapters
+      const firstCard = cards.find((c) => c.subjectId)
+      if (firstCard?.subjectId) {
+        try {
+          const { data: courses } = await supabase
+            .from('courses').select('id').eq('subject_id', firstCard.subjectId)
+          const cIds = (courses ?? []).map((c) => c.id)
+          if (cIds.length > 0) {
+            const { data: chaps } = await supabase
+              .from('chapters').select('id, title, order_index').in('course_id', cIds)
+            const sortedChaps = (chaps ?? []).sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+            const completedIds = new Set(
+              (stats ?? []).filter((s) => s.lesson_completed === true || (s.latest_score ?? s.avg_score) >= 80).map((s) => s.chapter_id)
+            )
+            const total     = sortedChaps.length
+            const completed = sortedChaps.filter((c) => completedIds.has(c.id)).length
+            const nextChap  = sortedChaps.find((c) => !completedIds.has(c.id)) ?? sortedChaps[0]
             if (nextChap) {
               setTodayChapter({
                 chapterId:   nextChap.id,
@@ -499,18 +502,17 @@ function DashboardContent() {
             }
           }
         } catch { /* ignore */ }
-      })() : Promise.resolve(),
-    ])
+      }
+    }
 
-    // ── update-phone: fire-and-forget (로딩 블로킹 불필요) ──────────
-    fetch('/api/v1/update-phone')
-      .then((r) => r.json())
-      .then((data) => {
-        if (!data.registered && !sessionStorage.getItem('phone_modal_dismissed')) {
-          setShowPhoneModal(true)
-        }
-      })
-      .catch(() => {})
+    // Phone 등록 여부 확인 → 미등록 + 미dismissal 시 모달 노출
+    try {
+      const phoneRes  = await fetch('/api/v1/update-phone')
+      const phoneData = await phoneRes.json()
+      if (!phoneData.registered && !sessionStorage.getItem('phone_modal_dismissed')) {
+        setShowPhoneModal(true)
+      }
+    } catch { /* ignore */ }
 
     setLoading(false)
   }
@@ -2162,6 +2164,32 @@ function DashboardContent() {
       {/* ── 휴대폰 번호 등록 모달 ── */}
       {showPhoneModal && (
         <PhoneRegisterModal onClose={() => setShowPhoneModal(false)} />
+      )}
+
+      {/* ── 학습 유형 검사 팝업 ── */}
+      {showStylePopup && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-6">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-7 text-center">
+            <div className="text-[44px] mb-4">🧠</div>
+            <h2 className="text-[18px] font-black text-[#1A1A1A] mb-2">학습 유형 분석</h2>
+            <p className="text-[14px] text-[#6B6B6B] leading-relaxed mb-6">
+              학습 유형을 분석하면<br />
+              <span className="text-[#1A1A1A] font-semibold">나에게 맞는 맞춤 학습</span>이 가능합니다
+            </p>
+            <button
+              onClick={() => { setShowStylePopup(false); router.push('/onboarding/style-test') }}
+              className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold mb-3"
+            >
+              지금 확인하기
+            </button>
+            <button
+              onClick={() => { setShowStylePopup(false); router.push('/trainer/dashboard') }}
+              className="w-full py-3 text-[13px] text-[#ADADAD]"
+            >
+              나중에 할게요
+            </button>
+          </div>
+        </div>
       )}
 
       {/* ── D-Day 설정 모달 ── */}

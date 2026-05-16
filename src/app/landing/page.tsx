@@ -533,7 +533,10 @@ export default function LandingPage() {
       {/* ─── Social Proof ─────────────────────────────────────── */}
       <section className="bg-white py-14 px-6">
         <div className="max-w-md mx-auto text-center">
-          <h2 className="text-[22px] font-black text-[#1A1A1A] mb-6">합격자들의 한마디</h2>
+          <h2 className="text-[22px] font-black text-[#1A1A1A] mb-6">이용 후기</h2>
+
+          {/* 실제 후기 데이터 추가 시 아래 주석 해제 */}
+          {/*
           <div className="space-y-3">
             {[
               { name: '김민준', text: '성향 진단이 정말 정확해요. 이해형으로 나왔는데 딱 맞는 설명 방식이 이해가 잘 됩니다.', score: '필기 89점' },
@@ -554,6 +557,14 @@ export default function LandingPage() {
                 </div>
               </div>
             ))}
+          </div>
+          */}
+
+          {/* 빈 상태 UI */}
+          <div className="bg-[#F5F5F3] rounded-2xl py-10 px-6 text-center">
+            <p className="text-[28px] mb-3">🙌</p>
+            <p className="text-[14px] font-bold text-[#1A1A1A] mb-1">베타 테스터 후기를 준비 중입니다</p>
+            <p className="text-[12px] text-[#ADADAD]">첫 번째 합격자의 후기를 기다리고 있어요!</p>
           </div>
         </div>
       </section>

@@ -21,17 +21,18 @@ export async function GET() {
 
   const { data, error } = await supabaseAdmin
     .from('profiles')
-    .select('name, email, avatar_url, cert_type, exam_date')
+    .select('name, email, avatar_url, cert_type, exam_date, learning_style')
     .eq('id', userId)
     .single()
 
   console.log('[profile-me] data:', data, '| error:', error)
 
   return NextResponse.json({
-    name:       data?.name       ?? null,
-    email:      data?.email      ?? null,
-    avatarUrl:  data?.avatar_url ?? null,
-    certType:   data?.cert_type  ?? null,
-    examDate:   data?.exam_date  ?? null,
+    name:          data?.name           ?? null,
+    email:         data?.email          ?? null,
+    avatarUrl:     data?.avatar_url     ?? null,
+    certType:      data?.cert_type      ?? null,
+    examDate:      data?.exam_date      ?? null,
+    learningStyle: data?.learning_style ?? null,
   })
 }
