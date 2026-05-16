@@ -74,6 +74,9 @@ export default function LessonPage() {
   const [chapterTitle, setChapterTitle] = useState('')
   const [subjectName, setSubjectName]   = useState('')
   const [courseDesc, setCourseDesc]     = useState<string | null>(null)
+  const [chapterVideoUrl, setChapterVideoUrl] = useState<string | null>(null)
+  const [chapterAudioUrl, setChapterAudioUrl] = useState<string | null>(null)
+  const [chapterImageUrl, setChapterImageUrl] = useState<string | null>(null)
   const [questions, setQuestions]       = useState<Question[]>([])
   const [slides, setSlides]             = useState<Slide[]>([])
   const [style, setStyle]               = useState<'memorizer' | 'conceptualizer'>('conceptualizer')
@@ -140,7 +143,7 @@ export default function LessonPage() {
     console.log('[fetchData] supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL?.slice(0, 30))
 
     const [{ data: ch, error: chErr }, { data: qs, error: qsErr }] = await Promise.all([
-      supabase.from('chapters').select('id, title, course_id').eq('id', chapterId).single(),
+      supabase.from('chapters').select('id, title, course_id, video_url, audio_url, image_url').eq('id', chapterId).single(),
       supabase.from('chapter_questions')
         .select('id, question, options, answer_index, explanation')
         .eq('chapter_id', chapterId),
@@ -151,6 +154,9 @@ export default function LessonPage() {
 
     if (ch) {
       setChapterTitle(ch.title)
+      if (ch.video_url) setChapterVideoUrl(ch.video_url)
+      if (ch.audio_url) setChapterAudioUrl(ch.audio_url)
+      if (ch.image_url) setChapterImageUrl(ch.image_url)
       if (ch.course_id) {
         const { data: course } = await supabase
           .from('courses').select('id, subject_id, description').eq('id', ch.course_id).single()
@@ -484,6 +490,39 @@ export default function LessonPage() {
               </p>
 
               <div className="flex-1 overflow-y-auto">
+                {/* 영상 */}
+                {chapterVideoUrl && (
+                  <div className="mb-3 rounded-xl overflow-hidden bg-[#1A1A1A]">
+                    <video
+                      src={chapterVideoUrl}
+                      controls
+                      playsInline
+                      className="w-full"
+                      style={{ maxHeight: '220px', objectFit: 'contain' }}
+                    />
+                  </div>
+                )}
+
+                {/* 이미지 */}
+                {chapterImageUrl && !chapterVideoUrl && (
+                  <div className="mb-3 rounded-xl overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={chapterImageUrl}
+                      alt="학습 이미지"
+                      className="w-full object-contain rounded-xl"
+                      style={{ maxHeight: '220px' }}
+                    />
+                  </div>
+                )}
+
+                {/* 음성 */}
+                {chapterAudioUrl && (
+                  <div className="mb-3">
+                    <audio controls src={chapterAudioUrl} className="w-full" />
+                  </div>
+                )}
+
                 {sentences.length > 0 ? (
                   <div className="space-y-2">
                     {sentences.map((sentence, i) => {
