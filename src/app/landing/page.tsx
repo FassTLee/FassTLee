@@ -83,11 +83,6 @@ const PLANS = [
   },
 ]
 
-const MOCK_SCREENS = [
-  { emoji: '📚', label: '챕터 학습', desc: '슬라이드 방식 학습', bg: 'from-[#E24B4A]/20 to-[#1A1A1A]' },
-  { emoji: '✅', label: '확인 퀴즈', desc: 'A/B 2지선다 빠른 체크', bg: 'from-[#378ADD]/20 to-[#1A1A1A]' },
-  { emoji: '📊', label: '오답 리포트', desc: '취약점 상세 분석', bg: 'from-[#639922]/20 to-[#1A1A1A]' },
-]
 
 export default function LandingPage() {
   const router = useRouter()
@@ -263,24 +258,175 @@ export default function LandingPage() {
             <h2 className="text-[24px] font-black text-[#1A1A1A]">이렇게 학습해요</h2>
           </div>
           <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
-            {MOCK_SCREENS.map((s, i) => (
-              <div
-                key={i}
-                className="flex-shrink-0 rounded-2xl overflow-hidden border border-[#E5E5E5]"
-                style={{ width: '75%' }}
-              >
-                <div
-                  className={`flex items-center justify-center bg-gradient-to-br ${s.bg}`}
-                  style={{ aspectRatio: '9/16', maxHeight: 280 }}
-                >
-                  <div className="text-center">
-                    <div className="text-[52px] mb-2">{s.emoji}</div>
-                    <p className="text-white/80 text-[13px] font-bold">{s.label}</p>
-                    <p className="text-white/50 text-[11px]">{s.desc}</p>
-                  </div>
-                </div>
+
+            {/* ── Screen 1: 슬라이드 학습 ── */}
+            <div className="flex-shrink-0 rounded-2xl overflow-hidden border border-[#333]" style={{ width: '72%' }}>
+              <svg viewBox="0 0 180 320" xmlns="http://www.w3.org/2000/svg" className="w-full block">
+                <rect width="180" height="320" fill="#1A1A1A"/>
+                {/* header */}
+                <rect x="0" y="0" width="180" height="52" fill="#111"/>
+                <text x="14" y="30" fill="#6B6B6B" fontSize="14" fontFamily="system-ui">‹</text>
+                <text x="26" y="30" fill="#6B6B6B" fontSize="8.5" fontFamily="system-ui">챕터 목록</text>
+                <rect x="128" y="18" width="40" height="16" rx="8" fill="#2A2A2A" stroke="#444" strokeWidth="0.5"/>
+                <text x="148" y="29" fill="#6B6B6B" fontSize="7.5" fontFamily="system-ui" textAnchor="middle">🖐️ 수동</text>
+                <text x="14" y="46" fill="#ADADAD" fontSize="7" fontFamily="system-ui">운동생리학 › ATP 에너지 시스템</text>
+                {/* slide counter */}
+                <text x="90" y="66" fill="#ADADAD" fontSize="7.5" fontFamily="system-ui" textAnchor="middle">5개 중 1번째</text>
+                {/* slide card */}
+                <rect x="10" y="72" width="160" height="182" rx="12" fill="white"/>
+                <rect x="18" y="82" width="20" height="20" rx="5" fill="#00A65115"/>
+                <text x="28" y="96" fill="#00A651" fontSize="10" fontFamily="system-ui" fontWeight="bold" textAnchor="middle">1</text>
+                <text x="46" y="93" fill="#ADADAD" fontSize="7" fontFamily="system-ui">학습 내용</text>
+                <text x="18" y="116" fill="#1A1A1A" fontSize="9" fontFamily="system-ui" fontWeight="bold">ATP 에너지 시스템의</text>
+                <text x="18" y="128" fill="#1A1A1A" fontSize="9" fontFamily="system-ui" fontWeight="bold">종류와 특징</text>
+                {/* checked item 1 */}
+                <rect x="18" y="138" width="144" height="26" rx="6" fill="#63992212" stroke="#639922" strokeWidth="1"/>
+                <rect x="24" y="146" width="12" height="12" rx="2.5" fill="#639922"/>
+                <polyline points="26.5,152 29,154.5 34.5,148" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                <text x="42" y="155" fill="#639922" fontSize="7.5" fontFamily="system-ui">ATP-PC계: 즉각적 에너지 공급</text>
+                {/* checked item 2 */}
+                <rect x="18" y="169" width="144" height="26" rx="6" fill="#63992212" stroke="#639922" strokeWidth="1"/>
+                <rect x="24" y="177" width="12" height="12" rx="2.5" fill="#639922"/>
+                <polyline points="26.5,183 29,185.5 34.5,179" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                <text x="42" y="186" fill="#639922" fontSize="7.5" fontFamily="system-ui">해당계: 무산소 에너지 대사</text>
+                {/* unchecked item 3 */}
+                <rect x="18" y="200" width="144" height="26" rx="6" fill="#F5F5F3" stroke="#E5E5E5" strokeWidth="1"/>
+                <rect x="24" y="208" width="12" height="12" rx="2.5" fill="none" stroke="#ADADAD" strokeWidth="1"/>
+                <text x="42" y="217" fill="#1A1A1A" fontSize="7.5" fontFamily="system-ui">산화계: 유산소 에너지 대사</text>
+                {/* progress dots */}
+                <rect x="55" y="265" width="14" height="4" rx="2" fill="#00A651"/>
+                <rect x="72" y="265" width="14" height="4" rx="2" fill="#333"/>
+                <rect x="89" y="265" width="14" height="4" rx="2" fill="#333"/>
+                <rect x="106" y="265" width="14" height="4" rx="2" fill="#333"/>
+                <rect x="123" y="265" width="14" height="4" rx="2" fill="#333"/>
+                {/* bottom button disabled */}
+                <rect x="10" y="280" width="160" height="32" rx="10" fill="#2A2A2A"/>
+                <text x="90" y="300" fill="#555" fontSize="11" fontFamily="system-ui" fontWeight="bold" textAnchor="middle">확인 퀴즈</text>
+              </svg>
+              <div className="bg-[#111] px-3 py-2 border-t border-[#333]">
+                <p className="text-[12px] font-bold text-white">슬라이드 학습</p>
+                <p className="text-[10px] text-[#6B6B6B]">체크하며 개념 확인</p>
               </div>
-            ))}
+            </div>
+
+            {/* ── Screen 2: 미니퀴즈 ── */}
+            <div className="flex-shrink-0 rounded-2xl overflow-hidden border border-[#333]" style={{ width: '72%' }}>
+              <svg viewBox="0 0 180 320" xmlns="http://www.w3.org/2000/svg" className="w-full block">
+                <rect width="180" height="320" fill="#1A1A1A"/>
+                {/* dimmed bg */}
+                <rect width="180" height="320" fill="black" opacity="0.55"/>
+                {/* bottom sheet */}
+                <rect x="0" y="82" width="180" height="238" rx="18" fill="white"/>
+                <rect x="75" y="92" width="30" height="4" rx="2" fill="#E5E5E5"/>
+                <text x="14" y="118" fill="#1A1A1A" fontSize="12" fontFamily="system-ui" fontWeight="bold">확인 퀴즈 💡</text>
+                {/* question */}
+                <text x="14" y="136" fill="#1A1A1A" fontSize="8.5" fontFamily="system-ui" fontWeight="600">다음 중 운동 중 가장 먼저</text>
+                <text x="14" y="148" fill="#1A1A1A" fontSize="8.5" fontFamily="system-ui" fontWeight="600">사용되는 에너지 시스템은?</text>
+                {/* option A selected */}
+                <rect x="14" y="158" width="152" height="34" rx="8" fill="#00A65108" stroke="#00A651" strokeWidth="1.5"/>
+                <text x="22" y="179" fill="#00A651" fontSize="9" fontFamily="system-ui" fontWeight="bold">A.</text>
+                <text x="34" y="174" fill="#1A1A1A" fontSize="8" fontFamily="system-ui">ATP-PC 시스템</text>
+                <text x="34" y="185" fill="#6B6B6B" fontSize="7" fontFamily="system-ui">(인원질 시스템)</text>
+                {/* option B */}
+                <rect x="14" y="198" width="152" height="34" rx="8" fill="#F5F5F3" stroke="#E5E5E5" strokeWidth="1"/>
+                <text x="22" y="219" fill="#ADADAD" fontSize="9" fontFamily="system-ui" fontWeight="bold">B.</text>
+                <text x="34" y="214" fill="#1A1A1A" fontSize="8" fontFamily="system-ui">산화적 인산화</text>
+                <text x="34" y="225" fill="#6B6B6B" fontSize="7" fontFamily="system-ui">(유산소 시스템)</text>
+                {/* confirm button */}
+                <rect x="14" y="242" width="152" height="34" rx="10" fill="#00A651"/>
+                <text x="90" y="263" fill="white" fontSize="12" fontFamily="system-ui" fontWeight="bold" textAnchor="middle">확인</text>
+                {/* score indicator */}
+                <text x="90" y="300" fill="#ADADAD" fontSize="8" fontFamily="system-ui" textAnchor="middle">2 / 3 정답</text>
+              </svg>
+              <div className="bg-[#111] px-3 py-2 border-t border-[#333]">
+                <p className="text-[12px] font-bold text-white">확인 퀴즈</p>
+                <p className="text-[10px] text-[#6B6B6B]">슬라이드마다 즉시 점검</p>
+              </div>
+            </div>
+
+            {/* ── Screen 3: 테스트 결과 ── */}
+            <div className="flex-shrink-0 rounded-2xl overflow-hidden border border-[#333]" style={{ width: '72%' }}>
+              <svg viewBox="0 0 180 320" xmlns="http://www.w3.org/2000/svg" className="w-full block">
+                <rect width="180" height="320" fill="#1A1A1A"/>
+                <rect x="0" y="0" width="180" height="48" fill="#111"/>
+                <text x="90" y="28" fill="white" fontSize="11" fontFamily="system-ui" fontWeight="bold" textAnchor="middle">테스트 결과</text>
+                <text x="90" y="42" fill="#ADADAD" fontSize="7.5" fontFamily="system-ui" textAnchor="middle">ATP 에너지 시스템</text>
+                {/* score circle */}
+                <circle cx="90" cy="96" r="34" fill="none" stroke="#2A2A2A" strokeWidth="5"/>
+                <circle cx="90" cy="96" r="34" fill="none" stroke="#00A651" strokeWidth="5"
+                  strokeDasharray="152 214" strokeLinecap="round"
+                  transform="rotate(-90 90 96)"/>
+                <text x="90" y="92" fill="white" fontSize="18" fontFamily="system-ui" fontWeight="black" textAnchor="middle">78</text>
+                <text x="90" y="105" fill="#ADADAD" fontSize="7.5" fontFamily="system-ui" textAnchor="middle">점</text>
+                {/* stats row */}
+                <rect x="14" y="142" width="70" height="38" rx="8" fill="#00A65115"/>
+                <text x="49" y="159" fill="#00A651" fontSize="15" fontFamily="system-ui" fontWeight="black" textAnchor="middle">14</text>
+                <text x="49" y="172" fill="#6B6B6B" fontSize="7.5" fontFamily="system-ui" textAnchor="middle">정답</text>
+                <rect x="96" y="142" width="70" height="38" rx="8" fill="#E24B4A15"/>
+                <text x="131" y="159" fill="#E24B4A" fontSize="15" fontFamily="system-ui" fontWeight="black" textAnchor="middle">6</text>
+                <text x="131" y="172" fill="#6B6B6B" fontSize="7.5" fontFamily="system-ui" textAnchor="middle">오답</text>
+                {/* wrong answers section */}
+                <text x="14" y="198" fill="#ADADAD" fontSize="7.5" fontFamily="system-ui" fontWeight="bold">오답 문제</text>
+                <rect x="14" y="204" width="152" height="26" rx="6" fill="#2A2A2A"/>
+                <rect x="20" y="211" width="8" height="8" rx="2" fill="#E24B4A" opacity="0.8"/>
+                <text x="34" y="218" fill="white" fontSize="7.5" fontFamily="system-ui">산화적 인산화의 ATP 생성량은?</text>
+                <rect x="14" y="234" width="152" height="26" rx="6" fill="#2A2A2A"/>
+                <rect x="20" y="241" width="8" height="8" rx="2" fill="#E24B4A" opacity="0.8"/>
+                <text x="34" y="248" fill="white" fontSize="7.5" fontFamily="system-ui">VO₂max에 영향을 주는 요인은?</text>
+                {/* button */}
+                <rect x="14" y="274" width="152" height="34" rx="10" fill="#00A651"/>
+                <text x="90" y="295" fill="white" fontSize="11" fontFamily="system-ui" fontWeight="bold" textAnchor="middle">오답 복습하기</text>
+              </svg>
+              <div className="bg-[#111] px-3 py-2 border-t border-[#333]">
+                <p className="text-[12px] font-bold text-white">테스트 결과</p>
+                <p className="text-[10px] text-[#6B6B6B]">점수 + 오답 상세 분석</p>
+              </div>
+            </div>
+
+            {/* ── Screen 4: 모의고사 ── */}
+            <div className="flex-shrink-0 rounded-2xl overflow-hidden border border-[#333]" style={{ width: '72%' }}>
+              <svg viewBox="0 0 180 320" xmlns="http://www.w3.org/2000/svg" className="w-full block">
+                <rect width="180" height="320" fill="#1A1A1A"/>
+                <rect x="0" y="0" width="180" height="48" fill="#111"/>
+                <text x="14" y="28" fill="white" fontSize="11" fontFamily="system-ui" fontWeight="bold">모의고사</text>
+                <rect x="110" y="16" width="56" height="18" rx="9" fill="#F5A62320"/>
+                <text x="138" y="28" fill="#F5A623" fontSize="8" fontFamily="system-ui" fontWeight="bold" textAnchor="middle">건강운동관리사</text>
+                <text x="14" y="42" fill="#ADADAD" fontSize="7.5" fontFamily="system-ui">운동생리학 · 20문항</text>
+                {/* timer */}
+                <rect x="10" y="56" width="160" height="52" rx="10" fill="#F5A62310" stroke="#F5A62330" strokeWidth="1"/>
+                <text x="34" y="74" fill="#F5A623" fontSize="8" fontFamily="system-ui" fontWeight="bold">⏱ 남은 시간</text>
+                <text x="90" y="98" fill="#F5A623" fontSize="28" fontFamily="system-ui" fontWeight="black" textAnchor="middle">24:35</text>
+                {/* progress */}
+                <text x="14" y="122" fill="#ADADAD" fontSize="7.5" fontFamily="system-ui">12 / 20 문항</text>
+                <rect x="14" y="126" width="152" height="4" rx="2" fill="#2A2A2A"/>
+                <rect x="14" y="126" width="91" height="4" rx="2" fill="#00A651"/>
+                {/* question */}
+                <rect x="10" y="138" width="160" height="60" rx="10" fill="#222"/>
+                <text x="18" y="154" fill="#ADADAD" fontSize="7.5" fontFamily="system-ui">12번</text>
+                <text x="18" y="167" fill="white" fontSize="8" fontFamily="system-ui" fontWeight="600">최대산소섭취량(VO₂max)에</text>
+                <text x="18" y="179" fill="white" fontSize="8" fontFamily="system-ui" fontWeight="600">영향을 미치는 요인으로 옳은 것은?</text>
+                <text x="18" y="191" fill="#ADADAD" fontSize="7" fontFamily="system-ui">① 성별  ② 연령  ③ 훈련수준  ④ 모두</text>
+                {/* options */}
+                {[['① 성별만 해당된다', false], ['② 연령에 무관하다', false], ['③ 훈련으로 향상 가능', true], ['④ 유전적으로만 결정', false]].map(([txt, sel], oi) => (
+                  <g key={oi}>
+                    <rect x="10" y={206 + oi * 22} width="160" height="18" rx="5"
+                      fill={sel ? '#00A65120' : '#222'}
+                      stroke={sel ? '#00A651' : '#333'} strokeWidth={sel ? 1 : 0.5}/>
+                    <text x="18" y={219 + oi * 22} fill={sel ? '#00A651' : '#AAA'} fontSize="7.5" fontFamily="system-ui">{txt as string}</text>
+                  </g>
+                ))}
+                {/* nav */}
+                <rect x="10" y="298" width="72" height="16" rx="6" fill="#2A2A2A"/>
+                <text x="46" y="309" fill="#6B6B6B" fontSize="8" fontFamily="system-ui" textAnchor="middle">‹ 이전</text>
+                <rect x="98" y="298" width="72" height="16" rx="6" fill="#00A651"/>
+                <text x="134" y="309" fill="white" fontSize="8" fontFamily="system-ui" textAnchor="middle">다음 ›</text>
+              </svg>
+              <div className="bg-[#111] px-3 py-2 border-t border-[#333]">
+                <p className="text-[12px] font-bold text-white">모의고사</p>
+                <p className="text-[10px] text-[#6B6B6B]">실전 대비 타이머 시험</p>
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
