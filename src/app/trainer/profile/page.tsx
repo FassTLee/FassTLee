@@ -17,6 +17,21 @@ const CERT_LABELS: Record<string, string> = {
   'sports-instructor-2':     '🥈 2급 생활스포츠지도사',
 }
 
+const REQUIRED_SUBJECTS: Record<string, string[]> = {
+  'health-exercise-manager': [
+    '운동생리학', '기능해부학', '건강·체력평가', '운동처방론',
+    '운동부하검사', '운동상해', '병태생리학', '스포츠심리학',
+  ],
+  'sports-instructor-2': [
+    '스포츠심리학', '운동생리학', '스포츠교육학', '운동역학',
+    '한국체육사', '스포츠사회학',
+  ],
+  'sports-instructor': [
+    '스포츠심리학', '운동생리학', '스포츠교육학', '운동역학',
+    '한국체육사', '스포츠사회학',
+  ],
+}
+
 interface StyleInfo {
   learning_style: string | null
   style_tested_at: string | null
@@ -29,6 +44,7 @@ export default function ProfilePage() {
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([])
   const [selectedCert, setSelectedCert] = useState<string | null>(null)
   const [requiredSubjects, setRequiredSubjects] = useState<string[]>([])
+  const [dbRequiredNames, setDbRequiredNames]   = useState<string[]>([])
 
   useEffect(() => {
     // 학습 성향
@@ -49,7 +65,14 @@ export default function ProfilePage() {
     fetch('/api/v1/selected-subjects')
       .then((r) => r.json())
       .then((d) => {
-        if (d.selected_cert) setSelectedCert(d.selected_cert)
+        if (d.selected_cert) {
+          setSelectedCert(d.selected_cert)
+          // certification_subjects 테이블에서 필수 과목 조회
+          fetch(`/api/v1/certification-subjects?certKey=${encodeURIComponent(d.selected_cert)}`)
+            .then((r) => r.json())
+            .then((cs) => { if (Array.isArray(cs.required)) setDbRequiredNames(cs.required) })
+            .catch(() => {})
+        }
         if (Array.isArray(d.selected_subjects) && d.selected_subjects.length > 0) setSelectedSubjects(d.selected_subjects)
         if (Array.isArray(d.required_subjects)) setRequiredSubjects(d.required_subjects)
       })
@@ -187,7 +210,13 @@ export default function ProfilePage() {
               ) : (
                 <div className="flex flex-wrap gap-1.5">
                   {selectedSubjects.map((name) => {
-                    const isRequired = requiredSubjects.includes(name)
+                    // DB 우선 → 하드코딩 폴백 → profiles.required_subjects 폴백
+                    const hardcoded  = REQUIRED_SUBJECTS[selectedCert ?? '']
+                    const isRequired = dbRequiredNames.length > 0
+                      ? dbRequiredNames.includes(name)
+                      : hardcoded
+                        ? hardcoded.includes(name)
+                        : requiredSubjects.includes(name)
                     return (
                       <span
                         key={name}

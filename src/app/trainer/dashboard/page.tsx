@@ -242,6 +242,10 @@ function DashboardContent() {
   /* ── 학습 유형 검사 팝업 ─────────────────────────────────────────── */
   const [showStylePopup, setShowStylePopup] = useState(false)
 
+  /* ── certification_subjects DB 데이터 ───────────────────────────── */
+  const [dbRequiredNames, setDbRequiredNames] = useState<string[]>([])
+  const [dbGoalSubjects, setDbGoalSubjects]   = useState<{ name: string; is_required: boolean }[]>([])
+
   /* ── Profile ─────────────────────────────────────────────────────── */
   const [examDateInput, setExamDateInput]     = useState('')
   const [certTypeInput, setCertTypeInput]     = useState('')
@@ -264,6 +268,25 @@ function DashboardContent() {
   useEffect(() => {
     if (tab === 'classroom' && !classroomLoaded) loadClassroom()
   }, [tab]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* certification_subjects — certKey 변경 시 필수/선택 목록 재조회 */
+  useEffect(() => {
+    if (!certKey) { setDbRequiredNames([]); setDbOptionalNames([]); return }
+    fetch(`/api/v1/certification-subjects?certKey=${encodeURIComponent(certKey)}`)
+      .then((r) => r.json())
+      .then((d) => { setDbRequiredNames(d.required ?? []) })
+      .catch(() => {})
+  }, [certKey])
+
+  /* certification_subjects — 목표 자격증(certTypeInput) 변경 시 */
+  useEffect(() => {
+    const key = Object.entries(CERT_LABELS).find(([, v]) => v === certTypeInput)?.[0] ?? ''
+    if (!key) { setDbGoalSubjects([]); return }
+    fetch(`/api/v1/certification-subjects?certKey=${encodeURIComponent(key)}`)
+      .then((r) => r.json())
+      .then((d) => { setDbGoalSubjects(d.subjects ?? []) })
+      .catch(() => {})
+  }, [certTypeInput]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const initCommon = async () => {
     const cert     = localStorage.getItem(CERT_KEY)
@@ -1240,10 +1263,11 @@ function DashboardContent() {
   // ② CLASSROOM TAB
   // ══════════════════════════════════════════════════════════════════
   const renderClassroom = () => {
-    const requiredSubs   = REQUIRED_SUBJECTS[certKey] ?? []
-    const requiredList   = subjects.filter((s) => requiredSubs.includes(s))
-    const optionalList   = subjects.filter((s) => !requiredSubs.includes(s))
-    const showTypeLabels = requiredSubs.length > 0
+    const fallbackRequired = REQUIRED_SUBJECTS[certKey] ?? []
+    const effectiveRequired = dbRequiredNames.length > 0 ? dbRequiredNames : fallbackRequired
+    const requiredList   = subjects.filter((s) => effectiveRequired.includes(s))
+    const optionalList   = subjects.filter((s) => !effectiveRequired.includes(s))
+    const showTypeLabels = effectiveRequired.length > 0
 
     const SubjectRow = ({
       name,
@@ -1589,19 +1613,22 @@ function DashboardContent() {
     const currentStyle   = styleType ?? style
     const styleMeta      = currentStyle ? STYLE_META[currentStyle] : null
 
-    // 자격증/과목 섹션용
-    const displayCertName  = certLabel || profileCert || ''
-    const profileCertKey   = Object.entries(CERT_LABELS).find(([, v]) => v === displayCertName)?.[0] ?? ''
-    const requiredSubsP    = REQUIRED_SUBJECTS[profileCertKey] ?? []
-    const requiredInP      = subjects.filter((s) => requiredSubsP.includes(s))
-    const optionalInP      = subjects.filter((s) => !requiredSubsP.includes(s))
-    const showSubjectLabels = requiredSubsP.length > 0
+    // 자격증/과목 섹션용 (DB 우선, 하드코딩 폴백)
+    const displayCertName   = certLabel || profileCert || ''
+    const fallbackRequiredP = REQUIRED_SUBJECTS[certKey] ?? []
+    const effectiveReqP     = dbRequiredNames.length > 0 ? dbRequiredNames : fallbackRequiredP
+    const requiredInP       = subjects.filter((s) => effectiveReqP.includes(s))
+    const optionalInP       = subjects.filter((s) => !effectiveReqP.includes(s))
+    const showSubjectLabels = effectiveReqP.length > 0
 
-    // 학습 목표 섹션용
-    const selectedCertKeyGoal  = Object.entries(CERT_LABELS).find(([, v]) => v === certTypeInput)?.[0] ?? ''
-    const goalSubjects         = selectedCertKeyGoal ? (REQUIRED_SUBJECTS[selectedCertKeyGoal] ?? []) : []
-    const isHealthExerciseGoal = selectedCertKeyGoal === 'health-exercise-manager'
-    const goalSubjectLabel     = isHealthExerciseGoal ? '필수 과목' : '선택 과목'
+    // 학습 목표 섹션용 (DB 우선, 하드코딩 폴백)
+    const selectedCertKeyGoal = Object.entries(CERT_LABELS).find(([, v]) => v === certTypeInput)?.[0] ?? ''
+    const goalRequiredFromDB  = dbGoalSubjects.filter((s) => s.is_required).map((s) => s.name)
+    const goalOptionalFromDB  = dbGoalSubjects.filter((s) => !s.is_required).map((s) => s.name)
+    const fallbackGoalSubs    = selectedCertKeyGoal ? (REQUIRED_SUBJECTS[selectedCertKeyGoal] ?? []) : []
+    const goalRequiredSubs    = goalRequiredFromDB.length > 0 ? goalRequiredFromDB : fallbackGoalSubs
+    const goalOptionalSubs    = goalOptionalFromDB
+    const hasGoalSubjects     = goalRequiredSubs.length > 0 || goalOptionalSubs.length > 0
     const selectedYear         = examDateInput ? new Date(examDateInput).getFullYear() : null
 
     // 공통 과목 행 컴포넌트 (inline)
@@ -1826,33 +1853,36 @@ function DashboardContent() {
               </div>
 
               {/* 2단계: 관련 과목 표시 (certTypeInput 기반) */}
-              {certTypeInput && goalSubjects.length > 0 && (
+              {certTypeInput && hasGoalSubjects && (
                 <div className="px-4 py-4">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="w-5 h-5 rounded-full bg-[#1A1A1A] text-white text-[10px] font-black flex items-center justify-center flex-shrink-0">2</span>
                     <p className="text-[13px] font-bold text-[#1A1A1A]">관련 과목</p>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      isHealthExerciseGoal
-                        ? 'bg-[#00A651]/10 text-[#00A651]'
-                        : 'bg-[#F5A623]/10 text-[#F5A623]'
-                    }`}>
-                      {goalSubjectLabel}
-                    </span>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {goalSubjects.map((s) => (
-                      <span
-                        key={s}
-                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-                          isHealthExerciseGoal
-                            ? 'bg-[#00A651]/10 text-[#00A651]'
-                            : 'bg-[#F5A623]/10 text-[#F5A623]'
-                        }`}
-                      >
-                        {SUBJECT_META[s]?.icon ?? '📚'} {s}
-                      </span>
-                    ))}
-                  </div>
+                  {goalRequiredSubs.length > 0 && (
+                    <div className="mb-2">
+                      <p className="text-[10px] font-bold text-[#6B6B6B] mb-1.5">필수과목</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {goalRequiredSubs.map((s) => (
+                          <span key={s} className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#00A651]/10 text-[#00A651]">
+                            {SUBJECT_META[s]?.icon ?? '📚'} {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {goalOptionalSubs.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-bold text-[#6B6B6B] mb-1.5">선택과목</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {goalOptionalSubs.map((s) => (
+                          <span key={s} className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#F5A623]/10 text-[#F5A623]">
+                            {SUBJECT_META[s]?.icon ?? '📚'} {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
