@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signIn, useSession } from 'next-auth/react'
@@ -94,9 +94,26 @@ export default function LandingPage() {
   const { status } = useSession()
   const [showSignupPopup, setShowSignupPopup] = useState(false)
 
-  const handleGoogleSignIn = () => signIn('google', { callbackUrl: '/trainer/dashboard' })
-  const handleKakaoSignIn  = () => signIn('kakao',  { callbackUrl: '/trainer/dashboard' })
-  const handleNaverSignIn  = () => signIn('naver',  { callbackUrl: '/trainer/dashboard' })
+  // 이탈 감지 핸들러를 ref에 보관 → 로그인 클릭 시 외부에서 제거 가능
+  const listenersRef = useRef<{
+    beforeUnload: ((e: BeforeUnloadEvent) => void) | null
+    popState: (() => void) | null
+  }>({ beforeUnload: null, popState: null })
+
+  const removeExitListeners = () => {
+    if (listenersRef.current.beforeUnload) {
+      window.removeEventListener('beforeunload', listenersRef.current.beforeUnload)
+      listenersRef.current.beforeUnload = null
+    }
+    if (listenersRef.current.popState) {
+      window.removeEventListener('popstate', listenersRef.current.popState)
+      listenersRef.current.popState = null
+    }
+  }
+
+  const handleGoogleSignIn = () => { removeExitListeners(); signIn('google', { callbackUrl: '/trainer/dashboard' }) }
+  const handleKakaoSignIn  = () => { removeExitListeners(); signIn('kakao',  { callbackUrl: '/trainer/dashboard' }) }
+  const handleNaverSignIn  = () => { removeExitListeners(); signIn('naver',  { callbackUrl: '/trainer/dashboard' }) }
 
   // 이탈 감지: guest 데이터가 있고 비로그인 상태일 때
   useEffect(() => {
@@ -113,19 +130,20 @@ export default function LandingPage() {
       e.preventDefault()
       e.returnValue = ''
     }
+    listenersRef.current.beforeUnload = handleBeforeUnload
     window.addEventListener('beforeunload', handleBeforeUnload)
 
     // 뒤로가기(popstate) → 커스텀 팝업
     window.history.pushState(null, '', window.location.pathname)
     const handlePopState = () => {
-      window.history.pushState(null, '', window.location.pathname) // 실제 뒤로가기 차단
+      window.history.pushState(null, '', window.location.pathname)
       setShowSignupPopup(true)
     }
+    listenersRef.current.popState = handlePopState
     window.addEventListener('popstate', handlePopState)
 
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-      window.removeEventListener('popstate', handlePopState)
+      removeExitListeners()
     }
   }, [status]) // eslint-disable-line react-hooks/exhaustive-deps
 
