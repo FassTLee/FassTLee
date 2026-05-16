@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import BottomTabBar from '@/components/common/BottomTabBar'
 import PhoneRegisterModal from '@/components/PhoneRegisterModal'
+import { ALL_VIDEOS, HOME_VIDEO_COUNT } from '@/lib/videos'
 
 type Tab = 'home' | 'classroom' | 'exam' | 'profile'
 
@@ -75,12 +76,6 @@ const CERT_EXAM_DATES: Record<number, string> = {
   2028: '2028-06-14',
 }
 
-const SAMPLE_VIDEOS = [
-  { src: '/videos/shorts/shorts-demo-01.mp4', title: '추천 영상 1' },
-  { src: '/videos/shorts/shorts-demo-02.mp4', title: '추천 영상 2' },
-  { src: '/videos/shorts/shorts-demo-03.mp4', title: '추천 영상 3' },
-  { src: '/videos/shorts/shorts-demo-04.mp4', title: '추천 영상 4' },
-]
 
 interface ChapterStat {
   chapter_id: string
@@ -989,9 +984,9 @@ function DashboardContent() {
             overscrollBehaviorX: 'contain',
           } as React.CSSProperties}
         >
-          {SAMPLE_VIDEOS.map((vid, i) => {
+          {ALL_VIDEOS.slice(0, HOME_VIDEO_COUNT).map((vid, i) => {
             const isFirst = i === 0
-            const isLast  = i === SAMPLE_VIDEOS.length - 1
+            const isLast  = i === HOME_VIDEO_COUNT - 1
             return (
               <div
                 key={i}
@@ -1050,6 +1045,14 @@ function DashboardContent() {
             )
           })}
         </div>
+
+        {/* 더보기 버튼 */}
+        <button
+          onClick={() => router.push('/videos')}
+          className="w-full mt-3 flex items-center justify-center gap-1.5 py-2.5 text-[13px] font-bold text-[#00A651]"
+        >
+          더보기 <ChevronRight size={14} />
+        </button>
       </div>
 
       {/* ④ 강의실 바로가기 — 자격증 카드 */}
