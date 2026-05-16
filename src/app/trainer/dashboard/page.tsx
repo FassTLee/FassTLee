@@ -271,7 +271,7 @@ function DashboardContent() {
 
   /* certification_subjects — certKey 변경 시 필수/선택 목록 재조회 */
   useEffect(() => {
-    if (!certKey) { setDbRequiredNames([]); setDbOptionalNames([]); return }
+    if (!certKey) { setDbRequiredNames([]); return }
     fetch(`/api/v1/certification-subjects?certKey=${encodeURIComponent(certKey)}`)
       .then((r) => r.json())
       .then((d) => { setDbRequiredNames(d.required ?? []) })

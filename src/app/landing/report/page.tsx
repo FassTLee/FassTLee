@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession, signIn } from 'next-auth/react'
-import { ChevronRight, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronRight, ChevronDown, ChevronUp } from 'lucide-react'
 import Image from 'next/image'
 import type { TestResult, TestQuestion } from '@/lib/landingTest'
+import { SharePanel } from '@/components/common/SharePanel'
 
 type LearningType = 'conceptualizer' | 'memorizer' | 'planner' | 'intensive'
 
@@ -299,6 +300,9 @@ export default function LandingReportPage() {
           </div>
         )}
 
+        {/* ─── 공유하기 ─────────────────────────────────────────── */}
+        <SharePanel score={result.score} total={result.totalQuestions} pct={pct} variant="landing" />
+
         {/* ─── 대시보드 CTA ──────────────────────────────────────── */}
         <div className="bg-white rounded-2xl p-5 border border-[#E5E5E5]">
           <div className="text-[15px] font-bold text-[#1A1A1A] mb-1">맞춤 학습 대시보드</div>
@@ -314,20 +318,6 @@ export default function LandingReportPage() {
             Kinepia 시작하기 <ChevronRight size={18} />
           </button>
         </div>
-
-        {/* ─── 다시 도전 ────────────────────────────────────────── */}
-        <button
-          onClick={() => {
-            localStorage.removeItem('landingTestResult')
-            localStorage.removeItem('landingTestQuestions')
-            sessionStorage.removeItem('landingTestResult')
-            sessionStorage.removeItem('testResult')
-            router.push('/landing/test')
-          }}
-          className="w-full flex items-center justify-center gap-2 py-3.5 border-2 border-[#00A651] bg-white text-[#00A651] rounded-2xl text-[14px] font-semibold"
-        >
-          <RefreshCw size={14} /> 다시 학습 &gt;
-        </button>
       </div>
 
       </div> {/* end blur wrapper */}

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { Check, X, ChevronRight, Lock } from 'lucide-react'
+import { SharePanel } from '@/components/common/SharePanel'
 
 const EXAM_RESULT_KEY = 'examResult'
 
@@ -253,6 +254,9 @@ export default function ExamReportPage() {
             </p>
           </div>
         )}
+
+        {/* 공유하기 */}
+        <SharePanel score={totalScore} total={totalQuestions} pct={pct} variant="exam" />
 
       </div>
 
