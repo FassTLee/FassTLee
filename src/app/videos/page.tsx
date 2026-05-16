@@ -108,7 +108,7 @@ export default function VideosPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[14px] font-bold text-[#1A1A1A] truncate">{vid.title}</p>
-                  <p className="text-[12px] text-[#ADADAD] truncate mt-0.5">{vid.desc}</p>
+                  <p className="text-[12px] text-[#ADADAD] truncate mt-0.5">{vid.description}</p>
                 </div>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 bg-[#F5F5F3] text-[#6B6B6B]">
                   {i + 1} / {ALL_VIDEOS.length}
