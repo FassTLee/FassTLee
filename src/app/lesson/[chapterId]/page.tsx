@@ -100,6 +100,9 @@ export default function LessonPage() {
   const miniTotalRef   = useRef(0)
 
   /* ── Swipe (touch + mouse) ──────────────────── */
+  const [toastMsg, setToastMsg]     = useState<string | null>(null)
+  const toastTimerRef               = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const dragStartX  = useRef(0)
   const isDragging  = useRef(false)
   const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -278,7 +281,8 @@ export default function LessonPage() {
   }
 
   const handleMiniConfirm = () => {
-    if (miniSelected === null || miniConfirmed || !miniQ) return
+    if (miniSelected === null) { showToast('문제를 풀어주세요'); return }
+    if (miniConfirmed || !miniQ) return
     setMiniConfirmed(true)
     const correct = miniSelected === miniQ.answerIdx
     miniTotalRef.current   += 1
@@ -294,6 +298,12 @@ export default function LessonPage() {
         userId: session?.user?.id ?? '',
       }),
     }).catch(() => {})
+  }
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg)
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    toastTimerRef.current = setTimeout(() => setToastMsg(null), 2000)
   }
 
   const toggleMode = () => {
@@ -314,6 +324,7 @@ export default function LessonPage() {
     const delta = clientX - dragStartX.current
     if (Math.abs(delta) < 50) return
     if (delta < 0 && slideIndex < slides.length - 1) {
+      if (slideMode === 'manual' && !allChecked) { showToast('모든 항목을 체크해주세요'); return }
       setSlideIndex((si) => si + 1); setCheckedSentences([]); setAutoProgress(0)
     } else if (delta > 0 && slideIndex > 0) {
       setSlideIndex((si) => si - 1); setCheckedSentences([]); setAutoProgress(0)
@@ -331,7 +342,12 @@ export default function LessonPage() {
 
   /* arrow button helpers */
   const goPrev = () => { if (slideIndex > 0) { setSlideIndex((si) => si - 1); setCheckedSentences([]); setAutoProgress(0) } }
-  const goNext = () => { if (slideIndex < slides.length - 1) { setSlideIndex((si) => si + 1); setCheckedSentences([]); setAutoProgress(0) } }
+  const goNext = () => {
+    if (slideIndex < slides.length - 1) {
+      if (slideMode === 'manual' && !allChecked) { showToast('모든 항목을 체크해주세요'); return }
+      setSlideIndex((si) => si + 1); setCheckedSentences([]); setAutoProgress(0)
+    }
+  }
 
   if (loading) {
     return (
@@ -512,7 +528,10 @@ export default function LessonPage() {
               {slides.map((_, i) => (
                 <button
                   key={i}
-                  onClick={() => { setSlideIndex(i); setCheckedSentences([]); setAutoProgress(0) }}
+                  onClick={() => {
+                    if (i > slideIndex && slideMode === 'manual' && !allChecked) { showToast('모든 항목을 체크해주세요'); return }
+                    setSlideIndex(i); setCheckedSentences([]); setAutoProgress(0)
+                  }}
                   className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${
                     i <= slideIndex ? 'bg-green-500' : 'bg-gray-200'
                   }`}
@@ -585,6 +604,13 @@ export default function LessonPage() {
           >
             다시 복습하기
           </button>
+        </div>
+      )}
+
+      {/* ══════════ Toast ══════════ */}
+      {toastMsg && (
+        <div className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[60] px-5 py-3 bg-[#1A1A1A]/90 text-white text-[14px] font-medium rounded-2xl shadow-lg whitespace-nowrap">
+          {toastMsg}
         </div>
       )}
 
@@ -700,8 +726,7 @@ export default function LessonPage() {
             ) : (
               <button
                 onClick={handleMiniConfirm}
-                disabled={miniSelected === null}
-                className="w-full py-4 bg-[#00A651] disabled:opacity-40 text-white rounded-2xl text-[15px] font-bold"
+                className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold"
               >
                 확인
               </button>
