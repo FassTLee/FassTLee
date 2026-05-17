@@ -169,6 +169,7 @@ export default function LandingPage() {
           <Link
             href="/landing/test"
             prefetch={true}
+            onClick={removeBeforeUnload}
             className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-[#FF5722] text-[#FF5722] hover:bg-[#FF5722] hover:text-white rounded-2xl text-[16px] font-bold mb-4 transition-colors"
           >
             무료 테스트 시작 <ChevronRight size={18} />
@@ -497,7 +498,7 @@ export default function LandingPage() {
                 </div>
 
                 <button
-                  onClick={() => !plan.comingSoon && router.push('/landing/test')}
+                  onClick={() => { removeBeforeUnload(); router.push('/landing/test') }}
                   disabled={plan.comingSoon}
                   className={`w-full py-3 rounded-xl text-[13px] font-bold transition-colors ${
                     plan.comingSoon
@@ -568,6 +569,7 @@ export default function LandingPage() {
           <Link
             href="/landing/test"
             prefetch={true}
+            onClick={removeBeforeUnload}
             className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-[#FF5722] text-[#FF5722] hover:bg-[#FF5722] hover:text-white rounded-2xl text-[16px] font-bold mb-3 transition-colors"
           >
             무료 테스트 시작 <ChevronRight size={18} />
