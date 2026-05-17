@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Providers } from './providers'
 import { Analytics } from "@vercel/analytics/next"
+import Script from 'next/script'
 
 // SessionProvider(next-auth/react)가 SSG 중 React 훅 컨텍스트 없이 실행되는
 // 문제를 방지하기 위해 모든 페이지를 동적(SSR) 렌더링으로 전환
@@ -86,7 +87,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body><Providers>{children}</Providers><Analytics /></body>
+      <body>
+        <Providers>{children}</Providers>
+        <Analytics />
+        <Script src="//t1.kakaocdn.net/kas/static/ba.min.js" strategy="afterInteractive" />
+      </body>
     </html>
   )
 }

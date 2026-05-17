@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { ChevronLeft } from 'lucide-react'
+import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
 
 const RESULT_KEY = 'kinepia_test_result'
 const CERT_KEY   = 'kinepia_selected_cert'
@@ -61,6 +62,8 @@ export default function TestPage() {
   const [loading, setLoading]     = useState(true)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
   const [certLabel, setCertLabel] = useState('')
+  const [reportUrl, setReportUrl] = useState<string | null>(null)  // 전면 광고 후 이동할 URL
+  const [countdown, setCountdown] = useState(3)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -69,6 +72,14 @@ export default function TestPage() {
     if (cert && CERT_LABELS[cert]) setCertLabel(CERT_LABELS[cert])
     fetchQuestions()
   }, [status, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 전면 광고 카운트다운
+  useEffect(() => {
+    if (!reportUrl) return
+    if (countdown <= 0) { router.replace(reportUrl); return }
+    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [reportUrl, countdown]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchQuestions = async () => {
     const { data } = await supabase
@@ -106,7 +117,12 @@ export default function TestPage() {
           userId: session?.user?.id ?? '',
         }),
       }).catch(() => {})
-      router.replace(`/report/${chapterId}`)
+      // 로그인 유저: 전면 광고 3초 후 이동 / 비로그인: 바로 이동
+      if (session) {
+        setReportUrl(`/report/${chapterId}`)
+      } else {
+        router.replace(`/report/${chapterId}`)
+      }
     } else {
       setRecords(nextRecords)
       setCurrent(current + 1)
@@ -118,6 +134,27 @@ export default function TestPage() {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  // 테스트 완료 후 전면 광고 화면
+  if (reportUrl) {
+    return (
+      <div className="min-h-screen bg-[#1A1A1A] flex flex-col items-center justify-center p-6 gap-6">
+        <p className="text-[13px] text-white/50">잠시 후 결과가 표시됩니다</p>
+        <div className="rounded-2xl overflow-hidden bg-white flex items-center justify-center" style={{ width: 300, height: 250 }}>
+          <KakaoAdFit unit="DAN-lIQXmkoBNuojGX5A" width={300} height={250} />
+        </div>
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-[14px] text-white/70">{countdown}초 후 자동으로 이동합니다</p>
+          <button
+            onClick={() => router.replace(reportUrl)}
+            className="px-6 py-2.5 rounded-full border border-white/30 text-[13px] text-white/80"
+          >
+            바로 이동
+          </button>
+        </div>
       </div>
     )
   }
