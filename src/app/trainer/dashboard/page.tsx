@@ -10,6 +10,7 @@ import {
   Calendar, Clock, MapPin, X, Trash2, Bell,
 } from 'lucide-react'
 import BottomTabBar from '@/components/common/BottomTabBar'
+import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
 import PhoneRegisterModal from '@/components/PhoneRegisterModal'
 import { ALL_VIDEOS, HOME_VIDEO_COUNT } from '@/lib/videos'
 
@@ -784,7 +785,7 @@ function DashboardContent() {
       : 0
 
     return (
-    <div className="overflow-y-auto pb-24" style={{ height: 'calc(100dvh - 56px)' }}>
+    <div className="overflow-y-auto pb-[130px]" style={{ height: 'calc(100dvh - 56px)' }}>
 
       {/* ── 유저 정보 영역 ──────────────────────────────────────── */}
       <div className="bg-white px-5 pt-12 pb-5 border-b border-[#F0F0EE]">
@@ -1304,7 +1305,7 @@ function DashboardContent() {
     }
 
     return (
-      <div className="overflow-y-auto p-4 pb-24 space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
+      <div className="overflow-y-auto p-4 pb-[130px] space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
         <div className="pt-8">
           <h2 className="text-[20px] font-black text-[#1A1A1A]">강의실</h2>
         </div>
@@ -1664,7 +1665,7 @@ function DashboardContent() {
     }
 
     return (
-      <div className="overflow-y-auto p-4 pb-24 space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
+      <div className="overflow-y-auto p-4 pb-[130px] space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
         <div className="pt-8">
           <h2 className="text-[20px] font-black text-[#1A1A1A]">내 정보</h2>
         </div>
@@ -2066,6 +2067,13 @@ function DashboardContent() {
         {tab === 'exam'      && renderExam()}
         {tab === 'profile'   && renderProfile()}
       </div>
+
+      {/* 하단 고정 광고 배너 — Free 유저 (구독 구분 추가 전: 로그인 유저 전체) */}
+      {status === 'authenticated' && (
+        <div className="fixed bottom-16 left-0 right-0 z-40 flex justify-center items-center bg-white border-t border-[#E5E5E5]" style={{ height: 50 }}>
+          <KakaoAdFit unit="DAN-tyVXseZl4nT47hHT" width={320} height={50} />
+        </div>
+      )}
 
       <BottomTabBar />
 

@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Check, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { SignupPromptPopup } from '@/components/common/SignupPromptPopup'
+import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
 
 const RESULT_KEY  = 'kinepia_test_result'
 const SUBJECT_KEY = 'kinepia_current_subject_id'
@@ -144,6 +145,13 @@ export default function ReportPage() {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 pb-36 space-y-4">
+
+        {/* 콘텐츠 사이 광고 배너 — Free 유저 (구독 구분 추가 전: 로그인 유저 전체) */}
+        {status === 'authenticated' && (
+          <div className="flex justify-center">
+            <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
+          </div>
+        )}
 
         {!hasTestData && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
