@@ -722,7 +722,7 @@ function DashboardContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId,
-          exam_date:         examDateInput    || null,
+          ...(examDateInput ? { exam_date: examDateInput } : {}),
           cert_type:         certTypeInput    || null,
           region:            regionInput      || null,
           daily_study_hours: dailyHoursInput  ? parseInt(dailyHoursInput) : null,
