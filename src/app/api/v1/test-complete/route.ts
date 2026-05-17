@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
@@ -10,10 +12,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, saved: false })
   }
 
+  const session = await getServerSession(authOptions)
   const body = await req.json()
-  const { chapterId, subjectId, records, userId } = body as {
-    chapterId: string; subjectId: string; records: Record[]; userId: string
+  const { chapterId, subjectId, records } = body as {
+    chapterId: string; subjectId: string; records: Record[]; userId?: string
   }
+
+  // 서버 session 우선, 없으면 클라이언트 userId fallback
+  const userId = session?.user?.id ?? body.userId
   if (!chapterId || !userId || !Array.isArray(records)) {
     return NextResponse.json({ ok: true, saved: false })
   }

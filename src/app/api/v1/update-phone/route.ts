@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 // GET: phone 등록 여부 확인
 export async function GET(_req: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json({ phone: null, registered: false })
   }
   if (!isSupabaseAdminConfigured) {
@@ -18,7 +18,7 @@ export async function GET(_req: NextRequest) {
   const { data } = await supabaseAdmin
     .from('profiles')
     .select('phone')
-    .eq('email', session.user.email)
+    .eq('id', session.user.id)
     .maybeSingle()
 
   return NextResponse.json({
@@ -27,44 +27,23 @@ export async function GET(_req: NextRequest) {
   })
 }
 
-// POST: phone 저장
+// POST: phone 저장 — phone 컬럼만 업데이트
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session?.user?.email) {
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   if (!isSupabaseAdminConfigured) {
     return NextResponse.json({ ok: true, saved: false })
   }
 
-  const { phone, provider } = await req.json()
+  const { phone } = await req.json()
   if (!phone) return NextResponse.json({ error: 'phone required' }, { status: 400 })
-
-  const email = session.user.email
-
-  // 기존 linked_providers, primary_provider 조회
-  const { data: existing } = await supabaseAdmin
-    .from('profiles')
-    .select('linked_providers, primary_provider')
-    .eq('email', email)
-    .maybeSingle()
-
-  const currentProviders: string[] = existing?.linked_providers ?? []
-  const newProviders = currentProviders.includes(provider)
-    ? currentProviders
-    : [...currentProviders, provider]
 
   await supabaseAdmin
     .from('profiles')
-    .upsert(
-      {
-        email,
-        phone,
-        primary_provider: existing?.primary_provider ?? provider,
-        linked_providers: newProviders,
-      },
-      { onConflict: 'email' }
-    )
+    .update({ phone })
+    .eq('id', session.user.id)
 
   return NextResponse.json({ ok: true, saved: true })
 }
