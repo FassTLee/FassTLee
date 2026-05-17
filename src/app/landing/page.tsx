@@ -90,19 +90,14 @@ export default function LandingPage() {
   const [showSignupPopup, setShowSignupPopup] = useState(false)
 
   // 이탈 감지 핸들러를 ref에 보관 → 로그인 클릭 시 외부에서 제거 가능
-  const listenersRef = useRef<{
-    beforeUnload: ((e: BeforeUnloadEvent) => void) | null
-    popState: (() => void) | null
-  }>({ beforeUnload: null, popState: null })
+  const listenersRef = useRef<{ beforeUnload: ((e: BeforeUnloadEvent) => void) | null }>({
+    beforeUnload: null,
+  })
 
   const removeExitListeners = () => {
     if (listenersRef.current.beforeUnload) {
       window.removeEventListener('beforeunload', listenersRef.current.beforeUnload)
       listenersRef.current.beforeUnload = null
-    }
-    if (listenersRef.current.popState) {
-      window.removeEventListener('popstate', listenersRef.current.popState)
-      listenersRef.current.popState = null
     }
   }
 
@@ -111,6 +106,7 @@ export default function LandingPage() {
   const handleNaverSignIn  = () => { removeExitListeners(); signIn('naver',  { callbackUrl: '/trainer/dashboard' }) }
 
   // 이탈 감지: guest 데이터가 있고 비로그인 상태일 때
+  // popstate 차단은 Next.js App Router 내부 popstate 이벤트와 충돌하므로 제거
   useEffect(() => {
     if (status === 'loading' || status === 'authenticated') return
 
@@ -128,18 +124,7 @@ export default function LandingPage() {
     listenersRef.current.beforeUnload = handleBeforeUnload
     window.addEventListener('beforeunload', handleBeforeUnload)
 
-    // 뒤로가기(popstate) → 커스텀 팝업
-    window.history.pushState(null, '', window.location.pathname)
-    const handlePopState = () => {
-      window.history.pushState(null, '', window.location.pathname)
-      setShowSignupPopup(true)
-    }
-    listenersRef.current.popState = handlePopState
-    window.addEventListener('popstate', handlePopState)
-
-    return () => {
-      removeExitListeners()
-    }
+    return () => { removeExitListeners() }
   }, [status]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
