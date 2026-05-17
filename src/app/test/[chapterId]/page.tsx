@@ -188,7 +188,7 @@ export default function TestPage() {
         </div>
 
         {/* 보기 (reference_text) */}
-        {q.reference_text && (
+        {q.reference_text?.trim() && (
           <div className="mb-4 bg-[#F5F5F3] border border-[#E5E5E5] rounded-2xl p-4">
             <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">보기</p>
             <p className="text-[14px] text-[#1A1A1A] leading-relaxed whitespace-pre-line">{q.reference_text}</p>
@@ -196,7 +196,7 @@ export default function TestPage() {
         )}
 
         {/* 그림 (image_url) */}
-        {q.image_url && (
+        {q.image_url?.trim() && (
           <div className="mb-4 rounded-2xl overflow-hidden border border-[#E5E5E5]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
