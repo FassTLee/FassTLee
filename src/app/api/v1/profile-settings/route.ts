@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
   const { error } = await supabaseAdmin
     .from('profiles')
     .update({
-      ...(exam_date           !== undefined && { exam_date }),
+      ...(exam_date !== undefined && exam_date !== null && { exam_date }),
       ...(cert_type           !== undefined && { cert_type }),
       ...(region              !== undefined && { region }),
       ...(daily_study_hours   !== undefined && { daily_study_hours }),
