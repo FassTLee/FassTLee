@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signIn, useSession } from 'next-auth/react'
@@ -88,10 +88,19 @@ export default function LandingPage() {
   const router = useRouter()
   const { status } = useSession()
   const [showSignupPopup, setShowSignupPopup] = useState(false)
+  const beforeUnloadRef = useRef<((e: BeforeUnloadEvent) => void) | null>(null)
 
-  const handleGoogleSignIn = () => signIn('google', { callbackUrl: '/trainer/dashboard' })
-  const handleKakaoSignIn  = () => signIn('kakao',  { callbackUrl: '/trainer/dashboard' })
-  const handleNaverSignIn  = () => signIn('naver',  { callbackUrl: '/trainer/dashboard' })
+  // OAuth redirect 전에 beforeunload 리스너를 제거해 브라우저 확인 다이얼로그 방지
+  const removeBeforeUnload = () => {
+    if (beforeUnloadRef.current) {
+      window.removeEventListener('beforeunload', beforeUnloadRef.current)
+      beforeUnloadRef.current = null
+    }
+  }
+
+  const handleGoogleSignIn = () => { removeBeforeUnload(); signIn('google', { callbackUrl: '/trainer/dashboard' }) }
+  const handleKakaoSignIn  = () => { removeBeforeUnload(); signIn('kakao',  { callbackUrl: '/trainer/dashboard' }) }
+  const handleNaverSignIn  = () => { removeBeforeUnload(); signIn('naver',  { callbackUrl: '/trainer/dashboard' }) }
 
   // 이탈 감지: guest 데이터가 있고 비로그인 상태일 때
   useEffect(() => {
@@ -105,14 +114,16 @@ export default function LandingPage() {
 
     // 브라우저 닫기 / 새로고침 → 네이티브 "나가시겠습니까?" 다이얼로그
     // popstate 차단은 Next.js App Router 내부 popstate 이벤트와 충돌해 제거
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+    const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault()
       e.returnValue = ''
     }
-    window.addEventListener('beforeunload', handleBeforeUnload)
+    beforeUnloadRef.current = handler
+    window.addEventListener('beforeunload', handler)
 
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('beforeunload', handler)
+      beforeUnloadRef.current = null
     }
   }, [status]) // eslint-disable-line react-hooks/exhaustive-deps
 
