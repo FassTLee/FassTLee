@@ -72,7 +72,8 @@ const RESULTS: Record<LearningType, {
 export default function StyleResultPage() {
   const { status } = useSession()
   const router = useRouter()
-  const [type, setType] = useState<LearningType | null>(null)
+  const [type, setType]       = useState<LearningType | null>(null)
+  const [nextPath, setNextPath] = useState<string | null>(null) // null = 로딩 중
 
   useEffect(() => {
     if (status === 'loading') return
@@ -87,6 +88,12 @@ export default function StyleResultPage() {
       return
     }
     setType(saved)
+
+    // cert_type이 이미 있으면 자격증 선택 건너뛰고 대시보드로
+    fetch('/api/v1/profile-me', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((d) => setNextPath(d.certType ? '/trainer/dashboard' : '/select-cert'))
+      .catch(() => setNextPath('/select-cert'))
   }, [status, router])
 
   if (!type) {
@@ -148,10 +155,12 @@ export default function StyleResultPage() {
           </div>
 
           <button
-            onClick={() => router.replace('/select-cert')}
-            className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] text-white rounded-2xl text-[16px] font-bold"
+            onClick={() => nextPath && router.replace(nextPath)}
+            disabled={!nextPath}
+            className="w-full flex items-center justify-center gap-2 py-4 bg-[#E24B4A] disabled:opacity-50 text-white rounded-2xl text-[16px] font-bold"
           >
-            자격증 선택하기 <ChevronRight size={18} />
+            {nextPath === '/trainer/dashboard' ? '학습 시작하기' : '자격증 선택하기'}
+            <ChevronRight size={18} />
           </button>
         </div>
       </div>

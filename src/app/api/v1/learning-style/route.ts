@@ -1,20 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getToken } from 'next-auth/jwt'
-import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getUserId(token: any): string | null {
+  return (token?.userId ?? token?.supabaseId ?? token?.sub) as string | null
+}
 
 export async function GET(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
-  if (!token?.email) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  const email = token.email as string
-  if (!isSupabaseConfigured) {
+  const userId = getUserId(token)
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!isSupabaseAdminConfigured) {
     return NextResponse.json({ learning_style: null, style_tested_at: null })
   }
-  const { data } = await supabase
+  const { data } = await supabaseAdmin
     .from('profiles')
     .select('learning_style, style_tested_at')
-    .eq('email', email)
+    .eq('id', userId)
     .single()
   return NextResponse.json({
     learning_style:  data?.learning_style  ?? null,
@@ -24,28 +27,26 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
-  if (!token?.email) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  const email = token.email as string
-  const name  = (token.name as string | undefined) ?? null
+  const userId = getUserId(token)
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
   const { learning_style } = await req.json()
   if (learning_style !== 'memorizer' && learning_style !== 'conceptualizer') {
     return NextResponse.json({ error: 'Invalid learning_style' }, { status: 400 })
   }
-  if (!isSupabaseConfigured) {
+  if (!isSupabaseAdminConfigured) {
     return NextResponse.json({ ok: true, saved: false })
   }
-  await supabase
+
+  // supabaseAdmin으로 UUID 기준 update — RLS 우회, email upsert 충돌 방지
+  const { error } = await supabaseAdmin
     .from('profiles')
-    .upsert(
-      {
-        email,
-        name,
-        learning_style,
-        style_tested_at: new Date().toISOString(),
-      },
-      { onConflict: 'email' }
-    )
-  return NextResponse.json({ ok: true, saved: true })
+    .update({
+      learning_style,
+      style_tested_at: new Date().toISOString(),
+    })
+    .eq('id', userId)
+
+  if (error) console.error('[learning-style POST]', error)
+  return NextResponse.json({ ok: true, saved: !error })
 }
