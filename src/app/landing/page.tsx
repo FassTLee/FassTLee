@@ -512,7 +512,7 @@ export default function LandingPage() {
                 </div>
 
                 <button
-                  onClick={() => !plan.comingSoon && router.push('/select-cert')}
+                  onClick={() => !plan.comingSoon && router.push('/landing/test')}
                   disabled={plan.comingSoon}
                   className={`w-full py-3 rounded-xl text-[13px] font-bold transition-colors ${
                     plan.comingSoon

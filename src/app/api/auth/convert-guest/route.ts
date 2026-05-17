@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 
 // ================================================================
 // POST /api/auth/convert-guest — 비회원 테스트 결과 → 회원 계정 이전
@@ -64,6 +65,17 @@ export async function POST(req: NextRequest) {
       .from('guest_test_results')
       .update({ is_converted: true })
       .eq('guest_id', guest_id)
+
+    // 5. is_major → profiles 반영
+    const isMajor = guestResults.find(
+      (gr) => gr.is_major !== null && gr.is_major !== undefined
+    )?.is_major
+    if (isMajor !== null && isMajor !== undefined && isSupabaseAdminConfigured) {
+      await supabaseAdmin
+        .from('profiles')
+        .update({ is_major: isMajor })
+        .eq('id', profile.id)
+    }
 
     return NextResponse.json({ ok: true, converted: true, count: guestResults.length })
   } catch (err) {
