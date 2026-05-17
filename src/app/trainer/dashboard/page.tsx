@@ -207,6 +207,15 @@ function DashboardContent() {
   const [examSubmitting, setExamSubmitting] = useState(false)
   const [examDone, setExamDone]             = useState(false)
 
+  /* ── 모의고사 응시 과목 확인 모달 ──────────────────────────────── */
+  const [showExamSubjectModal,  setShowExamSubjectModal]  = useState(false)
+  const [examSubjectLoading,    setExamSubjectLoading]    = useState(false)
+  const [examCertRequired,      setExamCertRequired]      = useState<string[]>([])
+  const [examCertOptional,      setExamCertOptional]      = useState<string[]>([])
+  const [examSelectedOptional,  setExamSelectedOptional]  = useState<string[]>([])
+  const [showOptionalPicker,    setShowOptionalPicker]    = useState(false)
+  const [pickerSelected,        setPickerSelected]        = useState<string[]>([])
+
   // D-Day 모달 열릴 때 건강운동관리사 기본 날짜 자동 추천
   useEffect(() => {
     if (!showDDayModal) return
@@ -272,6 +281,60 @@ function DashboardContent() {
       .then((d) => { setDbRequiredNames(d.required ?? []) })
       .catch(() => {})
   }, [certKey])
+
+  /* 모의고사 탭 진입 시 응시 과목 확인 모달 표시 */
+  useEffect(() => {
+    if (tab !== 'exam') return
+    setShowExamSubjectModal(true)
+    loadExamSubjectData()
+  }, [tab]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadExamSubjectData = async () => {
+    if (!certKey) return
+    setExamSubjectLoading(true)
+    setShowOptionalPicker(false)
+    try {
+      const [certRes, subRes] = await Promise.all([
+        fetch(`/api/v1/certification-subjects?certKey=${encodeURIComponent(certKey)}`).then((r) => r.json()),
+        fetch('/api/v1/selected-subjects', { cache: 'no-store' }).then((r) => r.json()),
+      ])
+      const req: string[] = certRes.required ?? []
+      const opt: string[] = certRes.optional ?? []
+      const sel: string[] = subRes.additional_subjects ?? []
+      setExamCertRequired(req)
+      setExamCertOptional(opt)
+      setExamSelectedOptional(sel)
+      // 선택 과목이 있는데 아직 선택 안 했으면 바로 picker 열기
+      if (opt.length > 0 && sel.length === 0) setShowOptionalPicker(true)
+    } catch {
+      // 로드 실패 시 로컬 데이터로 폴백
+      setExamCertRequired(REQUIRED_SUBJECTS[certKey] ?? [])
+      setExamCertOptional([])
+      setExamSelectedOptional([])
+    }
+    setExamSubjectLoading(false)
+  }
+
+  const saveOptionalSubjects = async () => {
+    const allSelected = [...(examCertRequired), ...pickerSelected]
+    try {
+      await fetch('/api/v1/selected-subjects', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          selected_subjects:   allSelected,
+          selected_cert:       certLabel,
+          required_subjects:   examCertRequired,
+          additional_subjects: pickerSelected,
+        }),
+      })
+      setExamSelectedOptional(pickerSelected)
+      setShowOptionalPicker(false)
+    } catch {
+      setExamSelectedOptional(pickerSelected)
+      setShowOptionalPicker(false)
+    }
+  }
 
   /* certification_subjects — 목표 자격증(certTypeInput) 변경 시 */
   useEffect(() => {
@@ -2081,6 +2144,216 @@ function DashboardContent() {
       </div>
 
       <BottomTabBar />
+
+      {/* ── 모의고사 응시 과목 확인 모달 ── */}
+      {showExamSubjectModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center">
+          <div className="w-full max-w-lg bg-white rounded-t-3xl px-5 pt-5 pb-10 max-h-[85vh] overflow-y-auto">
+            {/* Handle */}
+            <div className="w-10 h-1 bg-[#E5E5E5] rounded-full mx-auto mb-5" />
+
+            {/* 헤더 */}
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-[18px] font-black text-[#1A1A1A]">응시 과목을 확인해 주세요</h2>
+              <button
+                onClick={() => setShowExamSubjectModal(false)}
+                className="w-8 h-8 flex items-center justify-center text-[#ADADAD]"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* 자격증 배지 (탭 — 복수 자격증 대비 구조) */}
+            {certLabel && (
+              <div className="flex gap-2 mb-5 mt-3 overflow-x-auto">
+                <div className="flex-shrink-0 px-3 py-1.5 rounded-full bg-[#1A1A1A] text-white text-[12px] font-bold">
+                  {certLabel}
+                </div>
+              </div>
+            )}
+
+            {/* certKey 없음 */}
+            {!certKey && !examSubjectLoading && (
+              <div className="text-center py-8">
+                <div className="text-[44px] mb-3">🎓</div>
+                <p className="text-[15px] font-bold text-[#1A1A1A] mb-1">자격증을 먼저 선택해 주세요</p>
+                <p className="text-[13px] text-[#6B6B6B] mb-5">프로필에서 목표 자격증을 설정하면 과목이 자동으로 구성됩니다.</p>
+                <button
+                  onClick={() => { setShowExamSubjectModal(false); setTab('profile') }}
+                  className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-2xl text-[14px] font-bold"
+                >
+                  프로필 설정으로
+                </button>
+              </div>
+            )}
+
+            {/* 로딩 */}
+            {certKey && examSubjectLoading && (
+              <div className="flex items-center justify-center py-12">
+                <div className="w-7 h-7 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
+              </div>
+            )}
+
+            {/* 과목 선택 picker — 선택 과목 자격증 */}
+            {certKey && !examSubjectLoading && showOptionalPicker && (
+              <div>
+                <p className="text-[13px] font-bold text-[#1A1A1A] mb-1">선택 과목을 골라주세요</p>
+                <p className="text-[11px] text-[#ADADAD] mb-4">
+                  필수 과목({examCertRequired.length}개)은 항상 포함됩니다. 선택 과목을 추가로 선택하세요.
+                </p>
+
+                {/* 필수 과목 (잠금) */}
+                {examCertRequired.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">필수 과목</p>
+                    <div className="flex flex-wrap gap-2">
+                      {examCertRequired.map((s) => (
+                        <span key={s} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#1A1A1A]/8 rounded-xl text-[12px] font-semibold text-[#1A1A1A]">
+                          {SUBJECT_META[s]?.icon ?? '📘'} {s}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 선택 과목 (체크박스) */}
+                <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">선택 과목</p>
+                <div className="space-y-2 mb-5">
+                  {examCertOptional.map((s) => {
+                    const checked = pickerSelected.includes(s)
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => setPickerSelected((prev) =>
+                          checked ? prev.filter((x) => x !== s) : [...prev, s]
+                        )}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl border-2 text-left transition-all ${
+                          checked ? 'border-[#00A651] bg-[#00A651]/5' : 'border-[#E5E5E5] bg-white'
+                        }`}
+                      >
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                          checked ? 'bg-[#00A651] border-[#00A651]' : 'border-[#ADADAD]'
+                        }`}>
+                          {checked && (
+                            <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                              <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </div>
+                        <span className="text-[14px]">{SUBJECT_META[s]?.icon ?? '📘'}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-semibold text-[#1A1A1A]">{s}</p>
+                          {SUBJECT_META[s]?.desc && (
+                            <p className="text-[11px] text-[#ADADAD]">{SUBJECT_META[s].desc}</p>
+                          )}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <div className="flex gap-2">
+                  {examSelectedOptional.length > 0 && (
+                    <button
+                      onClick={() => setShowOptionalPicker(false)}
+                      className="flex-1 py-3.5 border-2 border-[#E5E5E5] rounded-2xl text-[14px] font-semibold text-[#1A1A1A]"
+                    >
+                      취소
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { setPickerSelected(pickerSelected); saveOptionalSubjects() }}
+                    disabled={pickerSelected.length === 0}
+                    className="flex-[2] py-3.5 bg-[#00A651] disabled:opacity-40 text-white rounded-2xl text-[14px] font-bold"
+                  >
+                    저장하기 ({pickerSelected.length}개 선택)
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* 과목 확인 뷰 — 로드 완료 + picker 닫힘 */}
+            {certKey && !examSubjectLoading && !showOptionalPicker && (
+              <div>
+                {/* 필수 과목 */}
+                {examCertRequired.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">
+                      필수 과목 · {examCertRequired.length}개
+                    </p>
+                    <div className="space-y-2">
+                      {examCertRequired.map((s) => (
+                        <div key={s} className="flex items-center gap-3 px-4 py-3 bg-[#F5F5F3] rounded-2xl">
+                          <span className="text-[16px]">{SUBJECT_META[s]?.icon ?? '📘'}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-semibold text-[#1A1A1A]">{s}</p>
+                            {SUBJECT_META[s]?.desc && (
+                              <p className="text-[11px] text-[#ADADAD]">{SUBJECT_META[s].desc}</p>
+                            )}
+                          </div>
+                          <span className="text-[10px] font-bold px-2 py-0.5 bg-[#1A1A1A]/8 rounded-full text-[#6B6B6B] flex-shrink-0">필수</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 선택 과목 (있을 때) */}
+                {examCertOptional.length > 0 && examSelectedOptional.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">
+                      선택 과목 · {examSelectedOptional.length}개
+                    </p>
+                    <div className="space-y-2">
+                      {examSelectedOptional.map((s) => (
+                        <div key={s} className="flex items-center gap-3 px-4 py-3 bg-[#00A651]/5 border border-[#00A651]/20 rounded-2xl">
+                          <span className="text-[16px]">{SUBJECT_META[s]?.icon ?? '📘'}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-semibold text-[#1A1A1A]">{s}</p>
+                            {SUBJECT_META[s]?.desc && (
+                              <p className="text-[11px] text-[#ADADAD]">{SUBJECT_META[s].desc}</p>
+                            )}
+                          </div>
+                          <span className="text-[10px] font-bold px-2 py-0.5 bg-[#00A651]/15 rounded-full text-[#00A651] flex-shrink-0">선택</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 합계 */}
+                <div className="flex items-center gap-2 px-3 py-2 bg-[#F5F5F3] rounded-xl mb-5">
+                  <span className="text-[12px] text-[#6B6B6B]">총 응시 과목</span>
+                  <span className="text-[13px] font-black text-[#1A1A1A]">
+                    {examCertRequired.length + (examCertOptional.length > 0 ? examSelectedOptional.length : 0)}개
+                  </span>
+                  <span className="text-[11px] text-[#ADADAD] ml-auto">
+                    {examCertRequired.length + examSelectedOptional.length * 20}문항 예상
+                  </span>
+                </div>
+
+                <div className="flex gap-2">
+                  {/* 선택 과목 자격증만 변경하기 표시 */}
+                  {examCertOptional.length > 0 && (
+                    <button
+                      onClick={() => { setPickerSelected(examSelectedOptional); setShowOptionalPicker(true) }}
+                      className="flex-1 py-3.5 border-2 border-[#E5E5E5] rounded-2xl text-[14px] font-semibold text-[#1A1A1A]"
+                    >
+                      변경하기
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { setShowExamSubjectModal(false); router.push('/exam') }}
+                    className="flex-[2] py-3.5 bg-[#00A651] text-white rounded-2xl text-[14px] font-bold flex items-center justify-center gap-1.5"
+                  >
+                    시작하기 <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── 모의고사 사전 신청 모달 ── */}
       {showExamModal && (
