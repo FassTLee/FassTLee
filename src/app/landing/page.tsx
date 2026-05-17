@@ -104,23 +104,15 @@ export default function LandingPage() {
     if (!hasGuestData) return
 
     // 브라우저 닫기 / 새로고침 → 네이티브 "나가시겠습니까?" 다이얼로그
+    // popstate 차단은 Next.js App Router 내부 popstate 이벤트와 충돌해 제거
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault()
       e.returnValue = ''
     }
     window.addEventListener('beforeunload', handleBeforeUnload)
 
-    // 뒤로가기(popstate) → 커스텀 팝업
-    window.history.pushState(null, '', window.location.pathname)
-    const handlePopState = () => {
-      window.history.pushState(null, '', window.location.pathname) // 실제 뒤로가기 차단
-      setShowSignupPopup(true)
-    }
-    window.addEventListener('popstate', handlePopState)
-
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload)
-      window.removeEventListener('popstate', handlePopState)
     }
   }, [status]) // eslint-disable-line react-hooks/exhaustive-deps
 
