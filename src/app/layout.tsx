@@ -87,6 +87,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
+      <head>
+        {/* OAuth 제공자 도메인 사전 연결 — 로그인 redirect 지연 단축 */}
+        <link rel="dns-prefetch" href="//kauth.kakao.com" />
+        <link rel="preconnect" href="https://kauth.kakao.com" />
+        <link rel="dns-prefetch" href="//accounts.google.com" />
+        <link rel="dns-prefetch" href="//nid.naver.com" />
+      </head>
       <body>
         <Providers>{children}</Providers>
         <Analytics />
