@@ -3,15 +3,17 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { ChevronLeft, ChevronRight, LayoutGrid, Clock, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X, Clock } from 'lucide-react'
 
 const TOTAL_MINUTES  = 160
-const _Q_PER_SUBJECT = 20
 const PASS_TOTAL     = 96   // 60% of 160
 const SUBJECT_PASS_Q = 8    // 40% of 20
 
-const SESSION_1 = ['운동생리학', '건강체력평가', '운동처방론', '운동부하검사']
-const SESSION_2 = ['운동상해', '기능해부학', '병태생리학', '스포츠심리학']
+// 8과목 순서 (실제 시험 교시 순)
+const SUBJECT_ORDER = [
+  '운동생리학', '건강체력평가', '운동처방론', '운동부하검사',
+  '운동상해',   '기능해부학',  '병태생리학', '스포츠심리학',
+]
 
 interface ExamQuestion {
   id:           string
@@ -38,8 +40,8 @@ function cleanOption(opt: string): string {
 }
 
 export default function ExamPage() {
-  const router          = useRouter()
-  const { data: session } = useSession()
+  const router             = useRouter()
+  const { data: session }  = useSession()
 
   const [step, setStep]               = useState<'loading' | 'intro' | 'exam' | 'submitting'>('loading')
   const [subjects, setSubjects]       = useState<ExamSubject[]>([])
@@ -49,6 +51,7 @@ export default function ExamPage() {
   const [timeLeft, setTimeLeft]       = useState(TOTAL_MINUTES * 60)
   const [showExit, setShowExit]       = useState(false)
   const [showOverview, setShowOverview] = useState(false)
+  const [overviewSubjectIdx, setOverviewSubjectIdx] = useState(0)
   const [fetchError, setFetchError]   = useState(false)
 
   const timerRef      = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -59,8 +62,12 @@ export default function ExamPage() {
     fetch('/api/v1/exam-questions', { cache: 'no-store' })
       .then((r) => r.json())
       .then((d) => {
-        const valid = (d.subjects ?? []).filter((s: ExamSubject) => s.questions.length > 0)
-        setSubjects(valid)
+        // 교시 순서 정렬
+        const raw: ExamSubject[] = d.subjects ?? []
+        const sorted = SUBJECT_ORDER
+          .map((name) => raw.find((s) => s.name === name))
+          .filter((s): s is ExamSubject => !!s && s.questions.length > 0)
+        setSubjects(sorted.length > 0 ? sorted : raw.filter((s) => s.questions.length > 0))
         setStep('intro')
       })
       .catch(() => { setFetchError(true); setStep('intro') })
@@ -89,6 +96,11 @@ export default function ExamPage() {
     window.addEventListener('beforeunload', warn)
     return () => window.removeEventListener('beforeunload', warn)
   }, [step])
+
+  // ── overview 열릴 때 현재 과목 탭으로 동기화 ─────────────────
+  useEffect(() => {
+    if (showOverview) setOverviewSubjectIdx(subjectIdx)
+  }, [showOverview]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── 결과 저장 ────────────────────────────────────────────────────
   const submit = async (reason: 'complete' | 'abandon' | 'timeout') => {
@@ -144,14 +156,13 @@ export default function ExamPage() {
   }
 
   // ── 내비게이션 ───────────────────────────────────────────────────
-  const currentSubj  = subjects[subjectIdx]
-  const currentQ     = currentSubj?.questions[qIdx]
-  const totalQCount  = subjects.reduce((s, sub) => s + sub.questions.length, 0)
-  const globalQNum   = subjects.slice(0, subjectIdx).reduce((s, sub) => s + sub.questions.length, 0) + qIdx + 1
-  const totalAnswered = Object.keys(answers).length
-  const isFirst      = subjectIdx === 0 && qIdx === 0
-  const isLast       = subjectIdx === subjects.length - 1 && qIdx === (currentSubj?.questions.length ?? 1) - 1
-  const timeUrgent   = timeLeft > 0 && timeLeft <= 600
+  const currentSubj   = subjects[subjectIdx]
+  const currentQ      = currentSubj?.questions[qIdx]
+  const totalQCount   = subjects.reduce((s, sub) => s + sub.questions.length, 0)
+  const totalAnswered  = Object.keys(answers).length
+  const isFirst       = subjectIdx === 0 && qIdx === 0
+  const isLast        = subjectIdx === subjects.length - 1 && qIdx === (currentSubj?.questions.length ?? 1) - 1
+  const timeUrgent    = timeLeft > 0 && timeLeft <= 600
 
   const goNext = () => {
     if (qIdx < (currentSubj?.questions.length ?? 1) - 1) {
@@ -206,12 +217,14 @@ export default function ExamPage() {
         </div>
 
         <div className="p-4 space-y-4 pb-10">
-
-          {/* 교시 안내 */}
+          {/* 시험 구성 */}
           <div className="bg-white rounded-2xl border border-[#E5E5E5] p-5">
             <p className="text-[12px] font-bold text-[#ADADAD] uppercase tracking-wider mb-3">시험 구성</p>
             <div className="space-y-4">
-              {[{ label: '1교시', subjects: SESSION_1 }, { label: '2교시', subjects: SESSION_2 }].map(({ label, subjects: list }) => (
+              {[
+                { label: '1교시', subjects: ['운동생리학', '건강체력평가', '운동처방론', '운동부하검사'] },
+                { label: '2교시', subjects: ['운동상해', '기능해부학', '병태생리학', '스포츠심리학'] },
+              ].map(({ label, subjects: list }) => (
                 <div key={label}>
                   <p className="text-[12px] font-bold text-[#1A1A1A] mb-2">{label}</p>
                   <div className="flex flex-wrap gap-1.5">
@@ -229,9 +242,9 @@ export default function ExamPage() {
           {/* 시험 정보 */}
           <div className="grid grid-cols-3 gap-2">
             {[
-              { label: '총 문항', value: '160문항' },
+              { label: '총 문항',   value: '160문항' },
               { label: '제한 시간', value: '160분' },
-              { label: '과목 수', value: '8과목' },
+              { label: '과목 수',   value: '8과목' },
             ].map((item) => (
               <div key={item.label} className="bg-white rounded-2xl border border-[#E5E5E5] p-3 text-center">
                 <p className="text-[10px] text-[#ADADAD] mb-1">{item.label}</p>
@@ -301,59 +314,45 @@ export default function ExamPage() {
     )
   }
 
+  // 하단 바 높이 (이전/다음 버튼 행 + 과목/문제 보기 바 + safe area)
+  const BOTTOM_H = 128
+
   return (
     <div className="min-h-screen bg-[#F5F5F3] flex flex-col">
 
-      {/* ── Header ── */}
-      <div className="bg-white border-b border-[#E5E5E5] px-4 pt-12 pb-0 flex-shrink-0">
-        <div className="flex items-center justify-between mb-2">
+      {/* ── 헤더: 과목명 + Q번호 + 타이머 ── */}
+      <div className="bg-white border-b border-[#E5E5E5] px-4 pt-12 pb-3 flex-shrink-0">
+        <div className="flex items-center justify-between">
+          {/* 나가기 */}
           <button
             onClick={() => setShowExit(true)}
             className="flex items-center gap-1 text-[13px] text-[#6B6B6B]"
           >
-            <X size={16} /> 나가기
+            <X size={15} /> 나가기
           </button>
-          <span className="text-[13px] font-bold text-[#1A1A1A]">
-            {globalQNum} / {totalQCount}
-          </span>
-          <button
-            onClick={() => setShowOverview(true)}
-            className="flex items-center gap-1 text-[13px] text-[#6B6B6B]"
-          >
-            <LayoutGrid size={15} /> 목록
-          </button>
-        </div>
 
-        {/* 과목 탭 */}
-        <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-none -mx-4 px-4">
-          {subjects.map((subj, i) => (
-            <button
-              key={subj.name}
-              onClick={() => { setSubjectIdx(i); setQIdx(0) }}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors ${
-                i === subjectIdx
-                  ? 'bg-[#1A1A1A] text-white'
-                  : 'bg-[#F5F5F3] text-[#6B6B6B]'
-              }`}
-            >
-              {subj.name}
-            </button>
-          ))}
+          {/* 과목명 + 문제번호 */}
+          <div className="text-center">
+            <p className="text-[11px] text-[#ADADAD] leading-none mb-0.5">{currentSubj.name}</p>
+            <p className="text-[14px] font-black text-[#1A1A1A] leading-none">
+              Q{qIdx + 1} / {currentSubj.questions.length}
+            </p>
+          </div>
+
+          {/* 타이머 (오렌지) */}
+          <div className={`flex items-center gap-1 font-black text-[14px] ${
+            timeUrgent ? 'text-[#E24B4A]' : 'text-[#F5A623]'
+          }`}>
+            <Clock size={13} />
+            <span>{formatTime(timeLeft)}</span>
+          </div>
         </div>
       </div>
 
       {/* ── 문제 영역 ── */}
-      <div className="flex-1 overflow-y-auto p-4 pb-32">
+      <div className="flex-1 overflow-y-auto p-4" style={{ paddingBottom: `${BOTTOM_H + 16}px` }}>
         {/* 문제 카드 */}
         <div className="bg-white rounded-2xl border border-[#E5E5E5] p-5 mb-4">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-[10px] font-bold px-2 py-0.5 bg-[#1A1A1A]/10 rounded-full text-[#1A1A1A]">
-              {currentSubj.name}
-            </span>
-            <span className="text-[10px] text-[#ADADAD]">
-              Q{qIdx + 1} / {currentSubj.questions.length}
-            </span>
-          </div>
           <p className="text-[16px] font-bold text-[#1A1A1A] leading-snug">{currentQ.question}</p>
         </div>
 
@@ -376,7 +375,7 @@ export default function ExamPage() {
                     ? 'bg-[#00A651] border-[#00A651] text-white'
                     : 'border-[#ADADAD] text-[#ADADAD]'
                 }`}>
-                  {['①', '②', '③', '④', '⑤'][i] ?? i + 1}
+                  {['①', '②', '③', '④'][i] ?? i + 1}
                 </span>
                 <span className="text-[14px] font-medium flex-1 leading-relaxed text-[#1A1A1A]">
                   {cleanOption(opt)}
@@ -387,34 +386,135 @@ export default function ExamPage() {
         </div>
       </div>
 
-      {/* ── 하단 바 ── */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E5E5E5] px-4 pt-2 pb-5 flex-shrink-0">
-        <div className={`flex items-center justify-center gap-1.5 mb-2 text-[13px] font-bold ${
-          timeUrgent ? 'text-[#E24B4A]' : 'text-[#6B6B6B]'
-        }`}>
-          <Clock size={14} />
-          <span>{formatTime(timeLeft)}</span>
-          {timeUrgent && <span className="text-[11px] font-normal">⚠️ 시간 부족</span>}
+      {/* ── 과목/문제 보기 슬라이드 업 패널 ── */}
+      <div
+        className={`fixed left-0 right-0 bg-white shadow-2xl rounded-t-2xl z-30 transition-transform duration-300 ease-in-out overflow-hidden`}
+        style={{
+          bottom:    `${BOTTOM_H}px`,
+          maxHeight: `calc(100dvh - 120px - ${BOTTOM_H}px)`,
+          transform: showOverview ? 'translateY(0)' : 'translateY(100%)',
+          overflowY: 'auto',
+        }}
+      >
+        {/* 드래그 핸들 */}
+        <div className="flex justify-center pt-3 pb-1">
+          <button onClick={() => setShowOverview(false)} className="w-10 h-1 bg-[#E5E5E5] rounded-full" />
         </div>
-        <div className="flex items-center gap-2">
+
+        {/* 과목 탭 횡스크롤 */}
+        <div className="flex gap-2 overflow-x-auto px-4 py-3 scrollbar-none">
+          {subjects.map((subj, si) => {
+            const answered    = subj.questions.filter((q) => answers[q.id] !== undefined).length
+            const hasUnanswered = answered < subj.questions.length
+            return (
+              <button
+                key={subj.name}
+                onClick={() => setOverviewSubjectIdx(si)}
+                className={`flex-shrink-0 px-3 py-2 rounded-xl text-[11px] font-bold border-2 transition-all ${
+                  si === overviewSubjectIdx
+                    ? 'bg-[#1A1A1A] border-[#1A1A1A] text-white'
+                    : 'bg-white border-[#E5E5E5] text-[#1A1A1A]'
+                }`}
+              >
+                <span className="block leading-tight">{subj.name}</span>
+                <span className={`block text-[10px] mt-0.5 ${
+                  si === overviewSubjectIdx
+                    ? (hasUnanswered ? 'text-[#F5A623]' : 'text-white/60')
+                    : (hasUnanswered ? 'text-[#E24B4A]' : 'text-[#ADADAD]')
+                }`}>
+                  {answered}/{subj.questions.length}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* 문제 번호 그리드 */}
+        <div className="px-4 pb-3">
+          <div className="flex flex-wrap gap-2">
+            {subjects[overviewSubjectIdx]?.questions.map((q, qi) => {
+              const isAnswered = answers[q.id] !== undefined
+              const isCurrent  = overviewSubjectIdx === subjectIdx && qi === qIdx
+              return (
+                <button
+                  key={q.id}
+                  onClick={() => { setSubjectIdx(overviewSubjectIdx); setQIdx(qi); setShowOverview(false) }}
+                  className={`w-9 h-9 rounded-xl text-[12px] font-bold transition-all border-2 ${
+                    isCurrent
+                      ? 'border-[#00A651] bg-white text-[#00A651]'
+                      : isAnswered
+                      ? 'bg-[#00A651] border-[#00A651] text-white'
+                      : 'bg-[#F5F5F3] border-[#F5F5F3] text-[#ADADAD]'
+                  }`}
+                >
+                  {qi + 1}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* 범례 + 제출 */}
+        <div className="px-4 pb-4 pt-2 border-t border-[#F5F5F3]">
+          <div className="flex items-center gap-4 mb-3">
+            <div className="flex items-center gap-1.5">
+              <div className="w-4 h-4 rounded-md bg-[#00A651]" />
+              <span className="text-[11px] text-[#6B6B6B]">완료</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-4 h-4 rounded-md border-2 border-[#00A651] bg-white" />
+              <span className="text-[11px] text-[#6B6B6B]">현재</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-4 h-4 rounded-md bg-[#F5F5F3]" />
+              <span className="text-[11px] text-[#6B6B6B]">미응답</span>
+            </div>
+          </div>
+          <button
+            onClick={() => { setShowOverview(false); submit('complete').catch(console.error) }}
+            className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-2xl text-[14px] font-bold"
+          >
+            제출하기 ({totalAnswered}/{totalQCount})
+          </button>
+        </div>
+      </div>
+
+      {/* ── 하단 바 ── */}
+      <div
+        className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E5E5E5] z-40"
+        style={{ height: `${BOTTOM_H}px` }}
+      >
+        {/* 과목/문제 보기 토글 바 */}
+        <button
+          onClick={() => setShowOverview((v) => !v)}
+          className="w-full flex items-center justify-between px-4 py-2.5 border-b border-[#F5F5F3]"
+        >
+          <span className="text-[12px] font-bold text-[#6B6B6B]">
+            {showOverview ? '▼' : '▲'} 과목/문제 보기
+          </span>
+          <span className="text-[11px] text-[#ADADAD]">{totalAnswered}/{totalQCount} 답변</span>
+        </button>
+
+        {/* 이전 / 다음·제출 버튼 */}
+        <div className="flex items-center gap-2 px-4 py-3">
           <button
             onClick={goPrev}
             disabled={isFirst}
-            className="flex-1 py-3.5 border-2 border-[#E5E5E5] rounded-2xl text-[14px] font-semibold text-[#1A1A1A] disabled:opacity-30 flex items-center justify-center gap-1"
+            className="flex-1 py-3 border-2 border-[#E5E5E5] rounded-2xl text-[14px] font-semibold text-[#1A1A1A] disabled:opacity-30 flex items-center justify-center gap-1"
           >
             <ChevronLeft size={16} /> 이전
           </button>
           {isLast ? (
             <button
               onClick={() => submit('complete').catch(console.error)}
-              className="flex-[2] py-3.5 bg-[#1A1A1A] text-white rounded-2xl text-[14px] font-bold"
+              className="flex-[2] py-3 bg-[#1A1A1A] text-white rounded-2xl text-[14px] font-bold"
             >
               제출 ({totalAnswered}/{totalQCount})
             </button>
           ) : (
             <button
               onClick={goNext}
-              className="flex-[2] py-3.5 bg-[#00A651] text-white rounded-2xl text-[14px] font-bold flex items-center justify-center gap-1"
+              className="flex-[2] py-3 bg-[#00A651] text-white rounded-2xl text-[14px] font-bold flex items-center justify-center gap-1"
             >
               다음 <ChevronRight size={16} />
             </button>
@@ -445,77 +545,6 @@ export default function ExamPage() {
               className="w-full py-3 border-2 border-[#E5E5E5] rounded-2xl text-[14px] font-semibold text-[#1A1A1A]"
             >
               계속 시험 보기
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ── 문제 목록 오버뷰 ── */}
-      {showOverview && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end">
-          <div className="w-full bg-white rounded-t-3xl px-4 pt-5 pb-8 max-h-[80vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-[16px] font-black text-[#1A1A1A]">문제 목록</h3>
-                <p className="text-[11px] text-[#ADADAD] mt-0.5">
-                  답변 완료 {totalAnswered} / {totalQCount}
-                </p>
-              </div>
-              <button onClick={() => setShowOverview(false)}>
-                <X size={20} className="text-[#6B6B6B]" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {subjects.map((subj, si) => (
-                <div key={subj.name}>
-                  <p className="text-[11px] font-bold text-[#ADADAD] mb-2">{subj.name}</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {subj.questions.map((q, qi) => {
-                      const isAnswered = answers[q.id] !== undefined
-                      const isCurrent  = si === subjectIdx && qi === qIdx
-                      return (
-                        <button
-                          key={q.id}
-                          onClick={() => { setSubjectIdx(si); setQIdx(qi); setShowOverview(false) }}
-                          className={`w-9 h-9 rounded-xl text-[12px] font-bold transition-all ${
-                            isCurrent
-                              ? 'bg-[#1A1A1A] text-white'
-                              : isAnswered
-                              ? 'bg-[#00A651]/15 text-[#00A651]'
-                              : 'bg-[#F5F5F3] text-[#ADADAD]'
-                          }`}
-                        >
-                          {qi + 1}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-[#F5F5F3]">
-              <div className="flex items-center gap-1.5">
-                <div className="w-4 h-4 rounded-md bg-[#00A651]/15" />
-                <span className="text-[11px] text-[#6B6B6B]">답변 완료</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-4 h-4 rounded-md bg-[#F5F5F3]" />
-                <span className="text-[11px] text-[#6B6B6B]">미답변</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-4 h-4 rounded-md bg-[#1A1A1A]" />
-                <span className="text-[11px] text-[#6B6B6B]">현재 문제</span>
-              </div>
-            </div>
-
-            {/* 오버뷰에서도 제출 가능 */}
-            <button
-              onClick={() => { setShowOverview(false); submit('complete').catch(console.error) }}
-              className="w-full mt-4 py-3.5 bg-[#1A1A1A] text-white rounded-2xl text-[14px] font-bold"
-            >
-              제출하기 ({totalAnswered}/{totalQCount})
             </button>
           </div>
         </div>
