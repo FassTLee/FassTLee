@@ -6,7 +6,7 @@ import { ChevronLeft } from 'lucide-react'
 import { LANDING_QUESTIONS, type TestResult, type TestQuestion } from '@/lib/landingTest'
 import { supabase } from '@/lib/supabase'
 
-type Step = 'intro' | 'quiz'
+type Step = 'intro' | 'quiz' | 'loading' | 'major'
 
 const TOTAL_Q = 10
 
@@ -45,16 +45,19 @@ async function fetchDBQuestions(): Promise<TestQuestion[] | null> {
 // ── inner component (uses useSearchParams) ──────────────────────
 
 function LandingTestContent() {
-  const router     = useRouter()
-  const _refId     = useSearchParams().get('ref')
+  const router  = useRouter()
+  const _refId  = useSearchParams().get('ref')
 
-  const [step, setStep]           = useState<Step>('intro')
-  const [currentQ, setCurrentQ]   = useState(0)
-  const [answers, setAnswers]     = useState<(number | null)[]>(Array(TOTAL_Q).fill(null))
-  const [activeQs, setActiveQs]   = useState<TestQuestion[]>(
-    [...LANDING_QUESTIONS, ...LANDING_QUESTIONS].slice(0, TOTAL_Q) // fallback: 5개 반복
+  const [step, setStep]               = useState<Step>('intro')
+  const [currentQ, setCurrentQ]       = useState(0)
+  const [answers, setAnswers]         = useState<(number | null)[]>(Array(TOTAL_Q).fill(null))
+  const [activeQs, setActiveQs]       = useState<TestQuestion[]>(
+    [...LANDING_QUESTIONS, ...LANDING_QUESTIONS].slice(0, TOTAL_Q)
   )
-  const [questionsReady, setQuestionsReady] = useState(false)
+  const [questionsReady, setQuestionsReady]   = useState(false)
+  const [loadingProgress, setLoadingProgress] = useState(0)
+  const [selectedMajor, setSelectedMajor]     = useState<boolean | null>(null)
+  const [showMajorAlert, setShowMajorAlert]   = useState(false)
 
   useEffect(() => {
     getOrCreateGuestId()
@@ -63,6 +66,24 @@ function LandingTestContent() {
       setQuestionsReady(true)
     })
   }, [])
+
+  // 로딩 바 애니메이션 (3초)
+  useEffect(() => {
+    if (step !== 'loading') return
+    setLoadingProgress(0)
+    const start    = Date.now()
+    const duration = 3000
+    const timer    = setInterval(() => {
+      const elapsed  = Date.now() - start
+      const progress = Math.min(Math.round((elapsed / duration) * 100), 100)
+      setLoadingProgress(progress)
+      if (progress >= 100) {
+        clearInterval(timer)
+        setStep('major')
+      }
+    }, 30)
+    return () => clearInterval(timer)
+  }, [step])
 
   const q              = activeQs[currentQ]
   const selectedAnswer = answers[currentQ]
@@ -78,7 +99,7 @@ function LandingTestContent() {
       if (currentQ < totalQ - 1) {
         setCurrentQ(currentQ + 1)
       } else {
-        // 마지막 문제 → 결과 계산 후 sessionStorage 저장
+        // 마지막 문제 → 결과 계산 후 저장
         let score = 0
         const weakAreas: string[] = []
         activeQs.forEach((aq, i) => {
@@ -92,7 +113,6 @@ function LandingTestContent() {
           weakAreas,
           percentage: Math.round((score / totalQ) * 100),
         }
-        // localStorage에 저장 (OAuth 리다이렉트 후에도 유지)
         localStorage.setItem('landingTestResult', JSON.stringify(result))
         localStorage.setItem('landingTestQuestions', JSON.stringify(activeQs))
         sessionStorage.setItem('landingTestResult', JSON.stringify(result))
@@ -103,18 +123,138 @@ function LandingTestContent() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            guest_id: gid,
-            score: result.score,
+            guest_id:        gid,
+            score:           result.score,
             total_questions: result.totalQuestions,
             correct_answers: result.score,
-            level_result: String(result.percentage),
-            answers_json: result.answers,
+            level_result:    String(result.percentage),
+            answers_json:    result.answers,
           }),
         }).catch(() => {})
 
-        router.push('/landing/report')
+        setStep('loading')
       }
     }, 350)
+  }
+
+  const handleMajorConfirm = () => {
+    if (selectedMajor === null) {
+      setShowMajorAlert(true)
+      return
+    }
+    localStorage.setItem('kinepia_is_major', String(selectedMajor))
+    const gid = getOrCreateGuestId()
+    fetch('/api/v1/guest-major', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ guest_id: gid, is_major: selectedMajor }),
+    }).catch(() => {})
+    router.push('/landing/report')
+  }
+
+  // ─── LOADING ────────────────────────────────────────────────────
+  if (step === 'loading') {
+    return (
+      <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center p-6">
+        <div className="w-full max-w-sm text-center">
+          <div className="text-[56px] mb-6">🧠</div>
+          <h2 className="text-[22px] font-black text-[#1A1A1A] mb-2">결과를 분석 중입니다</h2>
+          <p className="text-[13px] text-[#6B6B6B] mb-8">나의 취약 파트를 찾고 있어요...</p>
+          <div className="w-full h-2.5 bg-[#E5E5E5] rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#00A651] rounded-full transition-all duration-75"
+              style={{ width: `${loadingProgress}%` }}
+            />
+          </div>
+          <p className="text-[12px] text-[#ADADAD] mt-3">{loadingProgress}%</p>
+        </div>
+      </div>
+    )
+  }
+
+  // ─── MAJOR ──────────────────────────────────────────────────────
+  if (step === 'major') {
+    return (
+      <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center p-6">
+        <div className="w-full max-w-sm">
+          <div className="bg-white rounded-3xl p-6 border border-[#E5E5E5] shadow-sm">
+            <div className="text-center mb-6">
+              <div className="text-[40px] mb-3">🎓</div>
+              <p className="text-[11px] font-bold text-[#00A651] uppercase tracking-widest mb-1">
+                잠깐, 하나만 여쭤볼게요!
+              </p>
+              <h2 className="text-[20px] font-black text-[#1A1A1A]">전공자이신가요?</h2>
+              <p className="text-[13px] text-[#6B6B6B] mt-2">더 정확한 맞춤 분석을 위해 필요해요</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <button
+                onClick={() => setSelectedMajor(true)}
+                className={`flex flex-col items-center gap-2 py-5 px-3 rounded-2xl border-2 transition-all ${
+                  selectedMajor === true
+                    ? 'border-[#00A651] bg-[#00A651]/10'
+                    : 'border-[#E5E5E5] bg-[#F9F9F9]'
+                }`}
+              >
+                <span className="text-[32px]">🎓</span>
+                <span className="text-[14px] font-bold text-[#1A1A1A]">전공자</span>
+                <span className="text-[11px] text-[#6B6B6B] text-center">체육·운동 관련학과</span>
+              </button>
+              <button
+                onClick={() => setSelectedMajor(false)}
+                className={`flex flex-col items-center gap-2 py-5 px-3 rounded-2xl border-2 transition-all ${
+                  selectedMajor === false
+                    ? 'border-[#00A651] bg-[#00A651]/10'
+                    : 'border-[#E5E5E5] bg-[#F9F9F9]'
+                }`}
+              >
+                <span className="text-[32px]">💼</span>
+                <span className="text-[14px] font-bold text-[#1A1A1A]">비전공자</span>
+                <span className="text-[11px] text-[#6B6B6B] text-center">타 전공 / 독학</span>
+              </button>
+            </div>
+
+            <button
+              onClick={handleMajorConfirm}
+              className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold"
+            >
+              결과 확인하기
+            </button>
+          </div>
+        </div>
+
+        {/* 전공/비전공 미선택 경고 팝업 */}
+        {showMajorAlert && (
+          <div className="fixed inset-0 z-50 flex items-end justify-center pb-6 bg-black/40 px-6">
+            <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-xl">
+              <div className="text-center mb-5">
+                <div className="text-[32px] mb-3">🎯</div>
+                <h3 className="text-[17px] font-black text-[#1A1A1A] mb-2">
+                  전공/비전공 선택이 필요해요!
+                </h3>
+                <p className="text-[13px] text-[#6B6B6B] leading-relaxed">
+                  더 정확한 맞춤 분석을 위해<br />필요합니다
+                </p>
+              </div>
+              <div className="space-y-2">
+                <button
+                  onClick={() => setShowMajorAlert(false)}
+                  className="w-full py-3.5 bg-[#00A651] text-white rounded-2xl text-[14px] font-bold"
+                >
+                  선택하기
+                </button>
+                <button
+                  onClick={() => { setShowMajorAlert(false); router.push('/landing/report') }}
+                  className="w-full py-3.5 text-[#6B6B6B] text-[14px] font-medium"
+                >
+                  그냥 결과 보기
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    )
   }
 
   // ─── INTRO ──────────────────────────────────────────────────────
