@@ -1666,7 +1666,6 @@ function DashboardContent() {
               <div className="w-7 h-7 rounded-full flex items-center justify-center text-[14px] bg-[#F5A623]/20">🎯</div>
               <div>
                 <p className="text-[13px] font-bold text-[#1A1A1A]">6월 13일 (토)</p>
-                <p className="text-[10px] text-[#ADADAD]">실제 시험일</p>
               </div>
             </div>
             <span className="text-[10px] font-bold text-[#F5A623] bg-[#F5A623]/15 px-2.5 py-1 rounded-full">
