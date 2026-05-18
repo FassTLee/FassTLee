@@ -204,6 +204,7 @@ function DashboardContent() {
   const [showSubjectConfirmModal, setShowSubjectConfirmModal] = useState(false)
   const [showRegisteredModal, setShowRegisteredModal]     = useState(false)
   const [showExamInfoModal, setShowExamInfoModal]         = useState(false)
+  const [showExamClosedModal, setShowExamClosedModal]     = useState(false)
 
   /* ── 캘린더 월 이동 ─────────────────────────────────────────────── */
   const [calYear,  setCalYear]  = useState(() => new Date().getFullYear())
@@ -1527,6 +1528,13 @@ function DashboardContent() {
     return '종료'
   }
 
+  // 히어로 카드 버튼 상태 계산
+  const nowForExam       = new Date()
+  const isNextExamToday  = nextExam !== null && new Date(nextExam.dateValue).getTime() === today.getTime()
+  const nowH = nowForExam.getHours(), nowM = nowForExam.getMinutes()
+  const isEntryWindow    = isNextExamToday && (nowH === 9 || (nowH === 10 && nowM === 0))
+  const isEntryClosed    = isNextExamToday && (nowH > 10 || (nowH === 10 && nowM > 0))
+
   const renderExam = () => (
     <div className="overflow-y-auto p-4 pb-24 space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
       <div className="pt-8">
@@ -1553,7 +1561,24 @@ function DashboardContent() {
           </p>
           <div className="text-[43px] font-black text-[#00A651] leading-none">{nextExam.date}</div>
           <div className="text-[43px] font-black text-white leading-none mt-0.5">10:00</div>
-          {registeredRounds.includes(nextExam.round) ? (
+          {!registeredRounds.includes(nextExam.round) ? (
+            /* 미신청 → 오렌지 아웃라인 */
+            <button
+              onClick={() => { setExamRound(nextExam.round); setShowSubjectConfirmModal(true) }}
+              className="mt-4 w-full py-3 rounded-xl text-[14px] font-bold text-[#F5A623] border-2 border-[#F5A623] bg-transparent"
+            >
+              신청하기
+            </button>
+          ) : isEntryClosed ? (
+            /* 당일 10:01 이후 → 회색 비활성 */
+            <button
+              onClick={() => setShowExamClosedModal(true)}
+              className="mt-4 w-full py-3 rounded-xl text-[14px] font-bold text-[#ADADAD] bg-[#F5F5F3]"
+            >
+              입장 마감
+            </button>
+          ) : isEntryWindow ? (
+            /* 당일 09:00~10:00 → 입장하기 활성 */
             <button
               onClick={() => router.push('/exam')}
               className="mt-4 w-full py-3 bg-[#00A651] rounded-xl text-[14px] font-bold text-white"
@@ -1561,12 +1586,10 @@ function DashboardContent() {
               입장하기
             </button>
           ) : (
-            <button
-              onClick={() => { setExamRound(nextExam.round); setShowSubjectConfirmModal(true) }}
-              className="mt-4 w-full py-3 bg-[#00A651] rounded-xl text-[14px] font-bold text-white"
-            >
-              신청하기
-            </button>
+            /* 신청 완료 + 당일 아님 → 녹색 채워진 배지 */
+            <div className="mt-4 w-full py-3 bg-[#00A651] rounded-xl text-[14px] font-bold text-white text-center">
+              신청 완료
+            </div>
           )}
           {/* 모의고사 방법 버튼 */}
           <button
@@ -1601,10 +1624,11 @@ function DashboardContent() {
           {EXAM_DATES.map((e) => {
             const isNext  = nextExam?.round === e.round
             const isPast  = new Date(e.dateValue) < today
+            const isToday = new Date(e.dateValue).getTime() === today.getTime()
             const dday    = calcDDay(e.dateValue)
             return (
               <div key={e.round} className={`flex items-center justify-between px-4 py-3 rounded-xl border ${
-                isNext ? 'border-[#00A651]/30 bg-[#00A651]/5'
+                isToday ? 'border-[#00A651] bg-white'
                 : isPast ? 'border-[#E5E5E5] bg-[#F5F5F3]'
                 : 'border-[#E5E5E5] bg-white'
               }`}>
@@ -2155,47 +2179,68 @@ function DashboardContent() {
               </button>
             </div>
 
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-3 py-1 bg-[#1A1A1A] text-white text-[12px] font-bold rounded-full">
-                건강운동관리사
-              </span>
-              <span className="text-[11px] text-[#ADADAD]">
-                {EXAM_DATES.find((e) => e.round === examRound)?.date} {examRound}회차
-              </span>
-            </div>
-            <p className="text-[12px] text-[#ADADAD] mb-4">아래 8개 과목이 포함됩니다 (변경 불가)</p>
-
-            <div className="space-y-2 mb-6">
-              {[
-                { name: '운동생리학',  session: 1 },
-                { name: '건강체력평가', session: 1 },
-                { name: '운동처방론',  session: 1 },
-                { name: '운동부하검사', session: 1 },
-                { name: '운동상해',    session: 2 },
-                { name: '기능해부학',  session: 2 },
-                { name: '병태생리학',  session: 2 },
-                { name: '스포츠심리학', session: 2 },
-              ].map((s, i) => (
-                <div key={s.name} className="flex items-center gap-3 px-4 py-3 bg-[#F5F5F3] rounded-xl">
-                  <span className="text-[11px] font-bold text-[#ADADAD] w-4 flex-shrink-0">{i + 1}</span>
-                  <span className="text-[13px] font-semibold text-[#1A1A1A] flex-1">{s.name}</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-[#1A1A1A]/8 rounded-full text-[#6B6B6B] flex-shrink-0">{s.session}교시</span>
-                </div>
-              ))}
+            {/* 응시 일정 + 시험 시간 */}
+            <div className="bg-[#F5F5F3] rounded-2xl px-4 py-3 mb-4 space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-[12px] text-[#6B6B6B]">응시 일정</span>
+                <span className="text-[13px] font-bold text-[#1A1A1A]">
+                  {EXAM_DATES.find((e) => e.round === examRound)?.date} · {examRound}회차
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-[12px] text-[#6B6B6B]">시험 시간</span>
+                <span className="text-[13px] font-bold text-[#1A1A1A]">10:00 ~ 13:00 · 160분</span>
+              </div>
             </div>
 
-            <button
-              onClick={() => {
-                setShowSubjectConfirmModal(false)
-                const updated = Array.from(new Set([...registeredRounds, examRound]))
-                setRegisteredRounds(updated)
-                localStorage.setItem('kinepia_registered_rounds', JSON.stringify(updated))
-                setShowRegisteredModal(true)
-              }}
-              className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold"
-            >
-              확인완료
-            </button>
+            <p className="text-[12px] text-[#ADADAD] mb-3">8개 과목 전체 응시 (변경 불가)</p>
+
+            {/* 1교시 그룹 */}
+            <div className="border-2 border-[#00A651]/40 rounded-2xl p-4 mb-3">
+              <p className="text-[11px] font-black text-[#00A651] tracking-wider mb-2">1교시 · 80분</p>
+              <div className="space-y-1.5">
+                {['운동생리학', '건강체력평가', '운동처방론', '운동부하검사'].map((name, i) => (
+                  <div key={name} className="flex items-center gap-3 px-3 py-2 bg-[#F5F5F3] rounded-xl">
+                    <span className="text-[11px] font-bold text-[#ADADAD] w-4 flex-shrink-0">{i + 1}</span>
+                    <span className="text-[13px] font-semibold text-[#1A1A1A]">{name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 2교시 그룹 */}
+            <div className="border-2 border-[#00A651]/40 rounded-2xl p-4 mb-6">
+              <p className="text-[11px] font-black text-[#00A651] tracking-wider mb-2">2교시 · 80분</p>
+              <div className="space-y-1.5">
+                {['운동상해', '기능해부학', '병태생리학', '스포츠심리학'].map((name, i) => (
+                  <div key={name} className="flex items-center gap-3 px-3 py-2 bg-[#F5F5F3] rounded-xl">
+                    <span className="text-[11px] font-bold text-[#ADADAD] w-4 flex-shrink-0">{i + 5}</span>
+                    <span className="text-[13px] font-semibold text-[#1A1A1A]">{name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setShowSubjectConfirmModal(false)}
+                className="py-4 border border-[#E5E5E5] text-[#6B6B6B] rounded-2xl text-[15px] font-bold"
+              >
+                닫기
+              </button>
+              <button
+                onClick={() => {
+                  setShowSubjectConfirmModal(false)
+                  const updated = Array.from(new Set([...registeredRounds, examRound]))
+                  setRegisteredRounds(updated)
+                  localStorage.setItem('kinepia_registered_rounds', JSON.stringify(updated))
+                  setShowRegisteredModal(true)
+                }}
+                className="py-4 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold"
+              >
+                확인 완료
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -2258,6 +2303,26 @@ function DashboardContent() {
             </div>
             <button
               onClick={() => setShowExamInfoModal(false)}
+              className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-2xl text-[15px] font-bold"
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── 입장 마감 안내 모달 ── */}
+      {showExamClosedModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-6">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6 text-center">
+            <div className="text-[44px] mb-3">⏰</div>
+            <h2 className="text-[17px] font-black text-[#1A1A1A] mb-2">입장이 마감되었습니다</h2>
+            <p className="text-[13px] text-[#6B6B6B] leading-relaxed mb-6">
+              모의고사가 시작되었습니다.<br />
+              다음 일정에 참여하세요.
+            </p>
+            <button
+              onClick={() => setShowExamClosedModal(false)}
               className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-2xl text-[15px] font-bold"
             >
               확인
