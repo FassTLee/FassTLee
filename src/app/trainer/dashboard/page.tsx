@@ -303,20 +303,27 @@ function DashboardContent() {
       // profile-me 완료 후 learning_style 확정
       // localStorage도 확인 — DB 저장 실패해도 테스트 완료 여부를 알 수 있음
       const localLessonStyle = localStorage.getItem(STYLE_KEY) // 'memorizer' | 'conceptualizer'
+      console.log('[stylePopup] pm.learningStyle:', pm.learningStyle, '| localStorage:', localLessonStyle,
+        '| sessionStorage dismissed:', sessionStorage.getItem('kinepia_style_dismissed'),
+        '| sessionStorage pending:', sessionStorage.getItem('kinepia_style_pending'))
       if (pm.learningStyle || localLessonStyle) {
-        setProfileLearningStyle(pm.learningStyle ?? localLessonStyle)
+        const resolved = pm.learningStyle ?? localLessonStyle
+        console.log('[stylePopup] → 팝업 없음. resolved:', resolved)
+        setProfileLearningStyle(resolved)
         sessionStorage.removeItem('kinepia_style_pending')
         // localStorage엔 있지만 DB엔 없으면 백그라운드 동기화
         if (!pm.learningStyle && localLessonStyle) {
+          console.log('[stylePopup] DB 없음, localStorage 있음 → 백그라운드 동기화 시도')
           fetch('/api/v1/learning-style', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ learning_style: localLessonStyle }),
-          }).catch(() => {})
+          }).then(r => r.json()).then(j => console.log('[stylePopup] 동기화 결과:', j)).catch(() => {})
         }
       } else {
         // DB·localStorage 모두 없음 — dismiss 여부 확인
         const dismissed = sessionStorage.getItem('kinepia_style_dismissed')
+        console.log('[stylePopup] → DB·localStorage 없음. dismissed:', dismissed, '→ popup:', !dismissed)
         setProfileLearningStyle(dismissed ? 'dismissed' : null)
       }
     } catch (e) { console.warn('[initCommon] profile-me 실패', e) }
