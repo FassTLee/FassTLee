@@ -194,7 +194,7 @@ function DashboardContent() {
   /* ── Classroom (lazy) ────────────────────────────────────────────── */
   const [bookmarks, setBookmarks]             = useState<VideoBookmark[]>([])
   const [classroomLoaded, setClassroomLoaded] = useState(false)
-  const [classroomCertOpen, setClassroomCertOpen]   = useState(true)
+  const [classroomCertOpen, setClassroomCertOpen]   = useState(false)
   const [profileSubjectsOpen, setProfileSubjectsOpen] = useState(false)
   const [subjectProgress, setSubjectProgress] = useState<Record<string, { total: number; completed: number }>>({})
 
@@ -205,9 +205,10 @@ function DashboardContent() {
   const [showRegisteredModal, setShowRegisteredModal]     = useState(false)
   const [showExamInfoModal, setShowExamInfoModal]         = useState(false)
 
-  /* ── 캘린더 월 이동 ─────────��───────────────────────────────────── */
+  /* ── 캘린더 월 이동 ─────────────────────────────────────────────── */
   const [calYear,  setCalYear]  = useState(() => new Date().getFullYear())
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth() + 1)
+  const calTouchStartX = useRef<number | null>(null)
   const [registeredRounds, setRegisteredRounds]           = useState<number[]>(() => {
     if (typeof window === 'undefined') return []
     try { return JSON.parse(localStorage.getItem('kinepia_registered_rounds') ?? '[]') } catch { return [] }
@@ -1163,7 +1164,17 @@ function DashboardContent() {
           <p className="text-[12px] font-bold text-[#ADADAD] uppercase tracking-wider">내 학습 활동 내역</p>
 
           {/* 1. 학습 캘린더 (잔디밭) */}
-          <div className="bg-white rounded-2xl border border-[#E5E5E5] p-4">
+          <div
+            className="bg-white rounded-2xl border border-[#E5E5E5] p-4"
+            onTouchStart={(e) => { calTouchStartX.current = e.touches[0].clientX }}
+            onTouchEnd={(e) => {
+              if (calTouchStartX.current === null) return
+              const dx = e.changedTouches[0].clientX - calTouchStartX.current
+              calTouchStartX.current = null
+              if (dx > 50)  moveCalMonth(-1)  // 오른쪽 스와이프 → 이전 달
+              else if (dx < -50) moveCalMonth(1)  // 왼쪽 스와이프 → 다음 달
+            }}
+          >
             {/* 월 이동 헤더 */}
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
