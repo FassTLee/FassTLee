@@ -38,15 +38,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, saved: false })
   }
 
-  // supabaseAdmin으로 UUID 기준 update — RLS 우회, email upsert 충돌 방지
-  const { error } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('profiles')
     .update({
       learning_style,
-      style_tested_at: new Date().toISOString(),
+      style_tested_at:     new Date().toISOString(),
+      onboarding_completed: true,
     })
     .eq('id', userId)
+    .select('id')
 
-  if (error) console.error('[learning-style POST]', error)
-  return NextResponse.json({ ok: true, saved: !error })
+  if (error) console.error('[learning-style POST] error:', error)
+
+  const saved = !error && (data?.length ?? 0) > 0
+  if (!saved && !error) console.warn('[learning-style POST] 0 rows updated — userId:', userId)
+
+  return NextResponse.json({ ok: true, saved })
 }

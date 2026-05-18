@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getToken } from 'next-auth/jwt'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getUserId(token: any): string | null {
+  return (token?.userId ?? token?.supabaseId ?? token?.sub) as string | null
+}
 
 export async function GET(_req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -34,11 +40,9 @@ export async function GET(_req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-  const email  = session.user.email
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+  const userId = getUserId(token)
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json()
   const { selected_subjects, selected_cert, required_subjects, additional_subjects } = body
@@ -50,18 +54,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, saved: false })
   }
 
-  await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('profiles')
-    .upsert(
-      {
-        email,
-        selected_subjects,
-        selected_cert:       selected_cert       ?? null,
-        required_subjects:   required_subjects   ?? [],
-        additional_subjects: additional_subjects ?? [],
-      },
-      { onConflict: 'email' }
-    )
+    .update({
+      selected_subjects,
+      selected_cert:        selected_cert        ?? null,
+      required_subjects:    required_subjects    ?? [],
+      additional_subjects:  additional_subjects  ?? [],
+      onboarding_completed: true,
+    })
+    .eq('id', userId)
+    .select('id')
 
-  return NextResponse.json({ ok: true, saved: true })
+  if (error) console.error('[selected-subjects POST] error:', error)
+
+  const saved = !error && (data?.length ?? 0) > 0
+  if (!saved && !error) console.warn('[selected-subjects POST] 0 rows updated — userId:', userId)
+
+  return NextResponse.json({ ok: true, saved })
 }
