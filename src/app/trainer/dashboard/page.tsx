@@ -301,36 +301,23 @@ function DashboardContent() {
       if (pm.certType)  { loadedCertType = pm.certType; setProfileCert(pm.certType); setCertTypeInput(pm.certType) }
       if (pm.examDate)  { loadedExamDate = pm.examDate; setProfileExamDate(pm.examDate); setExamDateInput(pm.examDate) }
       // profile-me 완료 후 learning_style 확정
-      if (pm.learningStyle) {
-        setProfileLearningStyle(pm.learningStyle)
-        sessionStorage.removeItem('kinepia_style_pending') // DB에 있으면 pending 제거
-      } else {
-        // DB에 null — pending 재시도 (이전 테스트 완료 후 저장 실패 복구)
-        const pending = sessionStorage.getItem('kinepia_style_pending')
-        if (pending) {
-          try {
-            const res = await fetch('/api/v1/learning-style', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ learning_style: pending }),
-            })
-            const json = await res.json()
-            if (json.saved) {
-              sessionStorage.removeItem('kinepia_style_pending')
-              setProfileLearningStyle(pending)
-            } else {
-              const dismissed = sessionStorage.getItem('kinepia_style_dismissed')
-              setProfileLearningStyle(dismissed ? 'dismissed' : null)
-            }
-          } catch {
-            const dismissed = sessionStorage.getItem('kinepia_style_dismissed')
-            setProfileLearningStyle(dismissed ? 'dismissed' : null)
-          }
-        } else {
-          // 아직 테스트 안 한 경우: dismiss 여부 확인
-          const dismissed = sessionStorage.getItem('kinepia_style_dismissed')
-          setProfileLearningStyle(dismissed ? 'dismissed' : null)
+      // localStorage도 확인 — DB 저장 실패해도 테스트 완료 여부를 알 수 있음
+      const localLessonStyle = localStorage.getItem(STYLE_KEY) // 'memorizer' | 'conceptualizer'
+      if (pm.learningStyle || localLessonStyle) {
+        setProfileLearningStyle(pm.learningStyle ?? localLessonStyle)
+        sessionStorage.removeItem('kinepia_style_pending')
+        // localStorage엔 있지만 DB엔 없으면 백그라운드 동기화
+        if (!pm.learningStyle && localLessonStyle) {
+          fetch('/api/v1/learning-style', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ learning_style: localLessonStyle }),
+          }).catch(() => {})
         }
+      } else {
+        // DB·localStorage 모두 없음 — dismiss 여부 확인
+        const dismissed = sessionStorage.getItem('kinepia_style_dismissed')
+        setProfileLearningStyle(dismissed ? 'dismissed' : null)
       }
     } catch (e) { console.warn('[initCommon] profile-me 실패', e) }
 

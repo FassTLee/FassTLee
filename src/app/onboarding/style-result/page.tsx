@@ -90,6 +90,12 @@ export default function StyleResultPage() {
     setType(saved)
 
     // cert_type이 이미 있으면 자격증 선택 건너뛰고 대시보드로
+    // localStorage에 cert가 있어도 이미 선택한 것으로 간주
+    const localCert = localStorage.getItem('kinepia_selected_cert')
+    if (localCert) {
+      setNextPath('/trainer/dashboard')
+      return
+    }
     fetch('/api/v1/profile-me', { cache: 'no-store' })
       .then((r) => r.json())
       .then((d) => setNextPath(d.certType ? '/trainer/dashboard' : '/select-cert'))

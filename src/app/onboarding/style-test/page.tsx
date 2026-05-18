@@ -238,7 +238,10 @@ export default function StyleTestPage() {
           )}
 
           <button
-            onClick={() => router.replace('/select-subject')}
+            onClick={() => {
+              sessionStorage.setItem('kinepia_style_dismissed', '1')
+              router.replace('/select-subject')
+            }}
             className="mt-10 w-full py-3 text-[12px] text-[#ADADAD]"
           >
             건너뛰기 <ChevronRight size={12} className="inline" />
