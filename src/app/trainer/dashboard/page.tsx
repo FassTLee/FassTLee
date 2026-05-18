@@ -203,6 +203,11 @@ function DashboardContent() {
   const [examRound, setExamRound]                         = useState(1)
   const [showSubjectConfirmModal, setShowSubjectConfirmModal] = useState(false)
   const [showRegisteredModal, setShowRegisteredModal]     = useState(false)
+  const [showExamInfoModal, setShowExamInfoModal]         = useState(false)
+
+  /* ── 캘린더 월 이동 ─────────��───────────────────────────────────── */
+  const [calYear,  setCalYear]  = useState(() => new Date().getFullYear())
+  const [calMonth, setCalMonth] = useState(() => new Date().getMonth() + 1)
   const [registeredRounds, setRegisteredRounds]           = useState<number[]>(() => {
     if (typeof window === 'undefined') return []
     try { return JSON.parse(localStorage.getItem('kinepia_registered_rounds') ?? '[]') } catch { return [] }
@@ -683,6 +688,15 @@ function DashboardContent() {
     }).catch(() => {})
   }
 
+  const moveCalMonth = (delta: number) => {
+    setCalMonth((m) => {
+      const newM = m + delta
+      if (newM < 1)  { setCalYear((y) => y - 1); return 12 }
+      if (newM > 12) { setCalYear((y) => y + 1); return 1 }
+      return newM
+    })
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
@@ -712,19 +726,20 @@ function DashboardContent() {
       if (!studyMap[key]) studyMap[key] = []
       studyMap[key].push(s.avg_score)
     })
-    // 그리드 시작: 4주 전 월요일
-    const todayDow = (actToday.getDay() + 6) % 7   // Mon=0 … Sun=6
-    const gridStart = new Date(actToday)
-    gridStart.setDate(actToday.getDate() - todayDow - 28)
-    const cellsNeeded = Math.round((actToday.getTime() - gridStart.getTime()) / 86400000) + 1
-    const totalCells  = Math.ceil(cellsNeeded / 7) * 7
+    // 그리드: 선택 월 1일~말일, 월요일 시작 패딩 포함
+    const firstDay = new Date(calYear, calMonth - 1, 1)
+    const lastDay  = new Date(calYear, calMonth, 0)
+    const startPad = (firstDay.getDay() + 6) % 7  // Mon=0
+    const totalCells = Math.ceil((startPad + lastDay.getDate()) / 7) * 7
     const calCells = Array.from({ length: totalCells }, (_, i) => {
-      const d = new Date(gridStart)
-      d.setDate(gridStart.getDate() + i)
+      const dayNum = i - startPad + 1
+      if (dayNum < 1 || dayNum > lastDay.getDate()) return { empty: true, isFuture: false, isToday: false, studied: false, avgScore: 0 }
+      const d = new Date(calYear, calMonth - 1, dayNum)
       const isFuture = d > actToday
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
       const scores = studyMap[key] ?? []
       return {
+        empty: false,
         isFuture,
         isToday: d.getTime() === actToday.getTime(),
         studied: scores.length > 0,
@@ -1117,11 +1132,21 @@ function DashboardContent() {
 
           {/* 1. 학습 캘린더 (잔디밭) */}
           <div className="bg-white rounded-2xl border border-[#E5E5E5] p-4">
-            {/* 월 + 연속일 헤더 */}
+            {/* 월 이동 헤더 */}
             <div className="flex items-center justify-between mb-1">
-              <p className="text-[15px] font-black text-[#1A1A1A]">
-                {actToday.getFullYear()}년 {actToday.getMonth() + 1}월
-              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => moveCalMonth(-1)}
+                  className="w-6 h-6 flex items-center justify-center text-[#ADADAD] hover:text-[#1A1A1A] text-[14px] font-bold"
+                >◀</button>
+                <p className="text-[15px] font-black text-[#1A1A1A]">
+                  {calYear}년 {calMonth}월
+                </p>
+                <button
+                  onClick={() => moveCalMonth(1)}
+                  className="w-6 h-6 flex items-center justify-center text-[#ADADAD] hover:text-[#1A1A1A] text-[14px] font-bold"
+                >▶</button>
+              </div>
               <p className="text-[11px] text-[#ADADAD]">
                 {streak > 0 ? `🔥 ${streak}일 연속` : '오늘 학습해보세요'}
               </p>
@@ -1138,8 +1163,8 @@ function DashboardContent() {
               {calCells.map((cell, i) => (
                 <div
                   key={i}
-                  className={`aspect-square rounded-[3px] ${cell.isToday ? 'ring-[1.5px] ring-[#1A1A1A] ring-offset-0' : ''}`}
-                  style={{ backgroundColor: getCellColor(cell) }}
+                  className={`aspect-square rounded-[3px] ${cell.empty ? '' : cell.isToday ? 'ring-[1.5px] ring-[#1A1A1A] ring-offset-0' : ''}`}
+                  style={{ backgroundColor: cell.empty ? 'transparent' : getCellColor(cell) }}
                 />
               ))}
             </div>
@@ -1488,7 +1513,7 @@ function DashboardContent() {
           {registeredRounds.includes(nextExam.round) ? (
             <button
               onClick={() => router.push('/exam')}
-              className="mt-4 w-full py-3 bg-[#1A1A1A] rounded-xl text-[14px] font-bold text-white"
+              className="mt-4 w-full py-3 bg-[#00A651] rounded-xl text-[14px] font-bold text-white"
             >
               입장하기
             </button>
@@ -1500,28 +1525,28 @@ function DashboardContent() {
               신청하기
             </button>
           )}
+          {/* 모의고사 방법 버튼 */}
+          <button
+            onClick={() => setShowExamInfoModal(true)}
+            className="mt-2 w-full py-2 text-[12px] text-white/50 hover:text-white/80"
+          >
+            모의고사 방법 ▾
+          </button>
         </div>
       ) : null}
 
-      {/* 시험 형식 안내 */}
-      <div className="bg-white rounded-2xl border border-[#E5E5E5] p-4">
-        <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-3">모의고사 형식</p>
-        <div className="space-y-2.5">
-          {[
-            { icon: '📝', label: '총 문항',   value: '160문항 (8과목 × 20문항)' },
-            { icon: '⏱️', label: '시험 시간',  value: '160분' },
-            { icon: '✅', label: '합격 기준',  value: '과목별 40% 이상 + 전체 60% 이상' },
-            { icon: '🗓️', label: '시험 방식',  value: '4지선다형 객관식' },
-          ].map(({ icon, label, value }) => (
-            <div key={label} className="flex items-center gap-3">
-              <span className="text-[16px] flex-shrink-0">{icon}</span>
-              <div className="flex-1 flex items-center justify-between">
-                <span className="text-[12px] text-[#6B6B6B]">{label}</span>
-                <span className="text-[12px] font-semibold text-[#1A1A1A]">{value}</span>
-              </div>
-            </div>
-          ))}
+      {/* 체험하기 카드 */}
+      <div className="bg-white rounded-2xl border-2 border-[#00A651] p-4 flex items-center justify-between">
+        <div>
+          <p className="text-[14px] font-black text-[#1A1A1A]">모의고사 체험하기</p>
+          <p className="text-[11px] text-[#6B6B6B] mt-0.5">8과목×5문항 · 40분 · 무료</p>
         </div>
+        <button
+          onClick={() => router.push('/exam')}
+          className="px-4 py-2 bg-[#00A651] rounded-xl text-[13px] font-bold text-white"
+        >
+          시작
+        </button>
       </div>
 
       {/* 일정 목록 */}
@@ -1564,19 +1589,14 @@ function DashboardContent() {
                       종료
                     </span>
                   ) : registeredRounds.includes(e.round) ? (
-                    <button
-                      onClick={() => router.push('/exam')}
-                      className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-[#1A1A1A] text-white"
-                    >
-                      입장하기
-                    </button>
+                    <span className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-[#00A651] text-white">
+                      신청 완료
+                    </span>
                   ) : (
                     <button
                       onClick={() => { setExamRound(e.round); setShowSubjectConfirmModal(true) }}
-                      className={`text-[10px] font-bold px-3 py-1.5 rounded-lg border ${
-                        isNext
-                          ? 'bg-[#00A651] border-[#00A651] text-white'
-                          : 'bg-[#F5F5F3] border-[#00A651] text-[#6B6B6B]'
+                      className={`text-[10px] font-bold px-3 py-1.5 rounded-lg border border-[#00A651] ${
+                        isNext ? 'bg-[#00A651] text-white' : 'bg-white text-[#00A651]'
                       }`}
                     >
                       {isNext ? '신청하기' : '사전 신청하기'}
@@ -2165,6 +2185,40 @@ function DashboardContent() {
                 나중에 입장
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 모의고사 방법 안내 모달 ── */}
+      {showExamInfoModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center">
+          <div className="w-full max-w-sm bg-white rounded-t-3xl p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-[17px] font-black text-[#1A1A1A]">모의고사 형식</h2>
+              <button onClick={() => setShowExamInfoModal(false)} className="w-8 h-8 flex items-center justify-center text-[#ADADAD]">✕</button>
+            </div>
+            <div className="space-y-3 mb-6">
+              {[
+                { icon: '📝', label: '총 문항',   value: '160문항 (8과목 × 20문항)' },
+                { icon: '⏱️', label: '시험 시간',  value: '160분' },
+                { icon: '✅', label: '합격 기준',  value: '과목별 40% 이상 + 전체 60% 이상' },
+                { icon: '🗓️', label: '시험 방식',  value: '4지선다형 객관식' },
+              ].map(({ icon, label, value }) => (
+                <div key={label} className="flex items-center gap-3">
+                  <span className="text-[18px] flex-shrink-0">{icon}</span>
+                  <div className="flex-1 flex items-center justify-between">
+                    <span className="text-[13px] text-[#6B6B6B]">{label}</span>
+                    <span className="text-[13px] font-semibold text-[#1A1A1A]">{value}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowExamInfoModal(false)}
+              className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-2xl text-[15px] font-bold"
+            >
+              확인
+            </button>
           </div>
         </div>
       )}
