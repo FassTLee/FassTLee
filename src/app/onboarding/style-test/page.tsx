@@ -152,13 +152,25 @@ export default function StyleTestPage() {
       localStorage.setItem(STYLE_TYPE_KEY, result)
       localStorage.setItem(STYLE_KEY, lessonStyle)
 
+      // DB 저장 실패 시 sessionStorage에 pending 마킹 — 대시보드에서 재시도 가능하도록
       try {
-        await fetch('/api/v1/learning-style', {
+        const res = await fetch('/api/v1/learning-style', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ learning_style: lessonStyle }),
         })
-      } catch { /* ignore */ }
+        const json = await res.json()
+        if (!json.saved) {
+          sessionStorage.setItem('kinepia_style_pending', lessonStyle)
+          console.warn('[style-test] DB 저장 실패 — pending 마킹')
+        }
+      } catch {
+        sessionStorage.setItem('kinepia_style_pending', lessonStyle)
+        console.warn('[style-test] API 호출 실패 — pending 마킹')
+      }
+
+      // 테스트 완료 → 팝업 dismiss 플래그 제거 (팝업 필요 없음, 결과 페이지로 이동)
+      sessionStorage.removeItem('kinepia_style_dismissed')
 
       router.replace('/onboarding/style-result')
     }, 350)

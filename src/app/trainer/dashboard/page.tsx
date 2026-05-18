@@ -298,8 +298,38 @@ function DashboardContent() {
       if (pm.avatarUrl) setProfileAvatar(pm.avatarUrl)
       if (pm.certType)  { loadedCertType = pm.certType; setProfileCert(pm.certType); setCertTypeInput(pm.certType) }
       if (pm.examDate)  { loadedExamDate = pm.examDate; setProfileExamDate(pm.examDate); setExamDateInput(pm.examDate) }
-      // profile-me 완료 후 learning_style 확정: null이면 팝업, string이면 팝업 없음
-      setProfileLearningStyle(pm.learningStyle ?? null)
+      // profile-me 완료 후 learning_style 확정
+      if (pm.learningStyle) {
+        setProfileLearningStyle(pm.learningStyle)
+        sessionStorage.removeItem('kinepia_style_pending') // DB에 있으면 pending 제거
+      } else {
+        // DB에 null — pending 재시도 (이전 테스트 완료 후 저장 실패 복구)
+        const pending = sessionStorage.getItem('kinepia_style_pending')
+        if (pending) {
+          try {
+            const res = await fetch('/api/v1/learning-style', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ learning_style: pending }),
+            })
+            const json = await res.json()
+            if (json.saved) {
+              sessionStorage.removeItem('kinepia_style_pending')
+              setProfileLearningStyle(pending)
+            } else {
+              const dismissed = sessionStorage.getItem('kinepia_style_dismissed')
+              setProfileLearningStyle(dismissed ? 'dismissed' : null)
+            }
+          } catch {
+            const dismissed = sessionStorage.getItem('kinepia_style_dismissed')
+            setProfileLearningStyle(dismissed ? 'dismissed' : null)
+          }
+        } else {
+          // 아직 테스트 안 한 경우: dismiss 여부 확인
+          const dismissed = sessionStorage.getItem('kinepia_style_dismissed')
+          setProfileLearningStyle(dismissed ? 'dismissed' : null)
+        }
+      }
     } catch (e) { console.warn('[initCommon] profile-me 실패', e) }
 
     let selectedNames: string[] = []
@@ -2248,7 +2278,10 @@ function DashboardContent() {
               지금 확인하기
             </button>
             <button
-              onClick={() => setProfileLearningStyle('skipped')}
+              onClick={() => {
+                sessionStorage.setItem('kinepia_style_dismissed', '1')
+                setProfileLearningStyle('dismissed')
+              }}
               className="w-full py-3 text-[13px] text-[#ADADAD]"
             >
               나중에 할게요
