@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
@@ -10,6 +12,11 @@ const SUBJECT_NAMES = [
 const Q_PER_SUBJECT = 20
 
 export async function GET() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   if (!isSupabaseAdminConfigured) {
     return NextResponse.json({ subjects: [] })
   }
