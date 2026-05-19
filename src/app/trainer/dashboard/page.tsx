@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react'
 import Image from 'next/image'
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import {
@@ -167,6 +167,7 @@ function DashboardContent() {
   const [profileName, setProfileName]       = useState<string | null>(null)
   const [profileAvatar, setProfileAvatar]   = useState<string | null>(null)
   const [avatarError, setAvatarError]       = useState(false)
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [profileCert, setProfileCert]       = useState<string | null>(null)
   const [profileExamDate, setProfileExamDate] = useState<string | null>(null)
   const [streak, setStreak]                 = useState(0)
@@ -2135,6 +2136,37 @@ function DashboardContent() {
             </button>
           ))}
         </div>
+
+        {/* 로그아웃 */}
+        <button
+          onClick={() => setShowLogoutModal(true)}
+          className="w-full py-3 text-[13px] font-semibold text-[#E24B4A]"
+        >
+          로그아웃
+        </button>
+
+        {/* 로그아웃 확인 모달 */}
+        {showLogoutModal && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6">
+            <div className="w-full max-w-xs bg-white rounded-2xl p-6">
+              <p className="text-[16px] font-bold text-[#1A1A1A] text-center mb-6">로그아웃 하시겠습니까?</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowLogoutModal(false)}
+                  className="flex-1 py-3 rounded-xl border-2 border-[#E5E5E5] text-[14px] font-semibold text-[#6B6B6B]"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={() => signOut({ callbackUrl: '/landing' })}
+                  className="flex-1 py-3 rounded-xl bg-[#E24B4A] text-white text-[14px] font-bold"
+                >
+                  로그아웃
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
