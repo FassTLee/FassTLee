@@ -166,6 +166,7 @@ function DashboardContent() {
   /* ── Profile Me ──────────────────────────────────────────────────── */
   const [profileName, setProfileName]       = useState<string | null>(null)
   const [profileAvatar, setProfileAvatar]   = useState<string | null>(null)
+  const [avatarError, setAvatarError]       = useState(false)
   const [profileCert, setProfileCert]       = useState<string | null>(null)
   const [profileExamDate, setProfileExamDate] = useState<string | null>(null)
   const [streak, setStreak]                 = useState(0)
@@ -834,13 +835,14 @@ function DashboardContent() {
       <div className="bg-white px-5 pt-12 pb-5 border-b border-[#F0F0EE]">
         {/* 아바타 + 이름 */}
         <div className="flex items-center gap-3 mb-4">
-          {profileAvatar ? (
+          {profileAvatar && !avatarError ? (
             <Image
               src={profileAvatar}
               alt="avatar"
               width={44}
               height={44}
               className="w-11 h-11 rounded-full object-cover flex-shrink-0"
+              onError={() => setAvatarError(true)}
             />
           ) : (
             <div className="w-11 h-11 rounded-full bg-[#00A651]/15 flex items-center justify-center text-[18px] flex-shrink-0">

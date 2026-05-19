@@ -10,7 +10,8 @@ const nextConfig = {
   images: {
     domains: [
       'lh3.googleusercontent.com',   // Google 프로필 이미지
-      'k.kakaocdn.net',              // 카카오 프로필 이미지
+      'img1.kakaocdn.net',            // 카카오 프로필 이미지 (주)
+      'k.kakaocdn.net',              // 카카오 프로필 이미지 (보조)
       't1.kakaocdn.net',             // 카카오 썸네일 이미지
     ],
     unoptimized: false,
