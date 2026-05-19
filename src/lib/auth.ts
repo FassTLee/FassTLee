@@ -47,7 +47,7 @@ export const authOptions: NextAuthOptions = {
         console.log('[signIn callback 실행됨]', account?.provider, account?.providerAccountId)
         const stableUUID = uuidv5(`${account?.provider}:${account?.providerAccountId}`, UUID_NAMESPACE)
 
-        // 기존 프로필 존재 여부 확인 (upsert 대신 분기 처리 — exam_date 등 학습 설정 보호)
+        // 기존 프로필 존재 여부 확인 (upsert 대신 분기 처리 — exam_target_date 등 학습 설정 보호)
         const { data: existing } = await supabaseAdmin
           .from('profiles')
           .select('id')
@@ -56,7 +56,7 @@ export const authOptions: NextAuthOptions = {
 
         if (existing) {
           // 기존 유저: 표시용 필드(이름·이메일·아바타)만 업데이트
-          // exam_date, cert_type, 학습 설정 등은 절대 건드리지 않음
+          // exam_target_date, cert_type, 학습 설정 등은 절대 건드리지 않음
           const { error } = await supabaseAdmin
             .from('profiles')
             .update({

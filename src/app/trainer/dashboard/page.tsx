@@ -115,7 +115,7 @@ interface ActivityItem {
 interface DayGoal {
   id: string
   cert_type: string
-  exam_date: string
+  exam_target_date: string
 }
 
 interface TodayChapter {
@@ -340,10 +340,10 @@ function DashboardContent() {
       const res  = await fetch(`/api/v1/profile-settings?userId=${encodeURIComponent(userId)}`, { cache: 'no-store' })
       const data = await res.json()
       console.log('[initCommon] profile-settings:', data)
-      if (data.exam_date) {
-        loadedExamDate = data.exam_date
-        setExamDateInput(data.exam_date)
-        setProfileExamDate(data.exam_date)
+      if (data.exam_target_date) {
+        loadedExamDate = data.exam_target_date
+        setExamDateInput(data.exam_target_date)
+        setProfileExamDate(data.exam_target_date)
       }
       if (data.cert_type) {
         loadedCertType = data.cert_type
@@ -368,9 +368,9 @@ function DashboardContent() {
       // profile-me / profile-settings 모두 exam_date 반환 못한 경우 user-goals로 폴백
       if (!loadedExamDate && goals.length > 0) {
         const latest = goals[goals.length - 1]
-        console.log('[initCommon] user-goals 폴백 exam_date:', latest.exam_date)
-        setProfileExamDate(latest.exam_date)
-        setExamDateInput(latest.exam_date)
+        console.log('[initCommon] user-goals 폴백 exam_target_date:', latest.exam_target_date)
+        setProfileExamDate(latest.exam_target_date)
+        setExamDateInput(latest.exam_target_date)
         if (!loadedCertType && latest.cert_type) {
           setProfileCert(latest.cert_type)
           setCertTypeInput(latest.cert_type)
@@ -624,7 +624,7 @@ function DashboardContent() {
       const res  = await fetch('/api/v1/user-goals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, cert_type: ddayNewCert, exam_date: ddayNewDate }),
+        body: JSON.stringify({ userId, cert_type: ddayNewCert, exam_target_date: ddayNewDate }),
       })
       const data = await res.json()
       if (data.goal) setDdayGoals((prev) => [...prev, data.goal])
@@ -633,7 +633,7 @@ function DashboardContent() {
       await fetch('/api/v1/profile-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, exam_date: ddayNewDate, cert_type: ddayNewCert }),
+        body: JSON.stringify({ userId, exam_target_date: ddayNewDate, cert_type: ddayNewCert }),
       })
       setProfileExamDate(ddayNewDate)
       setProfileCert(ddayNewCert)
@@ -663,7 +663,7 @@ function DashboardContent() {
         await fetch('/api/v1/profile-settings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, exam_date: null }),
+          body: JSON.stringify({ userId, exam_target_date: null }),
         })
         setProfileExamDate(null)
         setExamDateInput('')
@@ -680,7 +680,7 @@ function DashboardContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId,
-          ...(examDateInput ? { exam_date: examDateInput } : {}),
+          ...(examDateInput ? { exam_target_date: examDateInput } : {}),
           cert_type:         certTypeInput    || null,
           region:            regionInput      || null,
           daily_study_hours: dailyHoursInput  ? parseInt(dailyHoursInput) : null,
@@ -2377,13 +2377,13 @@ function DashboardContent() {
               <div className="space-y-2">
                 <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider">등록된 D-Day</p>
                 {ddayGoals.map((goal) => {
-                  const diff = Math.ceil((new Date(goal.exam_date).getTime() - Date.now()) / 86400000)
+                  const diff = Math.ceil((new Date(goal.exam_target_date).getTime() - Date.now()) / 86400000)
                   return (
                     <div key={goal.id} className="flex items-center gap-3 bg-[#F5F5F3] rounded-xl px-3 py-2.5">
                       <div className="flex-1 min-w-0">
                         <p className="text-[12px] font-bold text-[#1A1A1A] truncate">{goal.cert_type}</p>
                         <p className="text-[11px] text-[#6B6B6B]">
-                          {new Date(goal.exam_date).toLocaleDateString('ko-KR')}
+                          {new Date(goal.exam_target_date).toLocaleDateString('ko-KR')}
                           {' · '}
                           <span className="font-bold text-[#00A651]">
                             {diff > 0 ? `D-${diff}` : diff === 0 ? 'D-Day' : `D+${Math.abs(diff)}`}

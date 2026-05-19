@@ -22,27 +22,27 @@ export async function GET(req: NextRequest) {
 
   const { data } = await supabase
     .from('user_goals')
-    .select('id, cert_type, exam_date')
+    .select('id, cert_type, exam_target_date')
     .eq('profile_id', profileId)
-    .order('exam_date', { ascending: true })
+    .order('exam_target_date', { ascending: true })
 
   return NextResponse.json({ goals: data ?? [] })
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { userId, cert_type, exam_date } = body
+  const { userId, cert_type, exam_target_date } = body
   if (!userId) return NextResponse.json({ ok: true, saved: false })
   if (!isSupabaseConfigured) return NextResponse.json({ ok: true, saved: false })
-  if (!cert_type || !exam_date) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
+  if (!cert_type || !exam_target_date) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
 
   const profileId = await getProfileId(userId)
   if (!profileId) return NextResponse.json({ ok: true, saved: false })
 
   const { data, error } = await supabase
     .from('user_goals')
-    .insert({ profile_id: profileId, cert_type, exam_date })
-    .select('id, cert_type, exam_date')
+    .insert({ profile_id: profileId, cert_type, exam_target_date })
+    .select('id, cert_type, exam_target_date')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
