@@ -174,7 +174,7 @@ function DashboardContent() {
 
   /* ── Home ────────────────────────────────────────────────────────── */
   const [studiedToday, setStudiedToday]   = useState(false)
-  const [_recentActivity, setRecentActivity] = useState<ActivityItem[]>([])
+  const [recentActivity, setRecentActivity]   = useState<ActivityItem[]>([])
   const [heartedVideos, setHeartedVideos] = useState<Record<string, boolean>>({})
   const [subjectCards, setSubjectCards]   = useState<SubjectCard[]>([])
   const [recentStats, setRecentStats]         = useState<ChapterStat[]>([])
@@ -2115,6 +2115,51 @@ function DashboardContent() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* ── 최근 학습 활동 ── */}
+        <div>
+          <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">최근 학습 활동</p>
+          <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-hidden">
+            {recentActivity.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 px-4">
+                <span className="text-[40px] mb-3">📚</span>
+                <p className="text-[14px] font-bold text-[#1A1A1A] mb-1">아직 학습 기록이 없어요</p>
+                <p className="text-[12px] text-[#ADADAD] text-center mb-5">강의실에서 첫 학습을 시작해 보세요!</p>
+                <button
+                  onClick={() => setTab('classroom')}
+                  className="px-5 py-2.5 bg-[#00A651] text-white rounded-xl text-[13px] font-bold"
+                >
+                  학습 시작하기
+                </button>
+              </div>
+            ) : (
+              recentActivity.map((item, idx) => {
+                const meta = SUBJECT_META[item.subject_name] ?? { icon: '📚', desc: '' }
+                const scoreColor = item.score >= 80 ? '#00A651' : item.score >= 60 ? '#F5A623' : '#E24B4A'
+                const dateStr = item.date
+                  ? new Date(item.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
+                  : ''
+                return (
+                  <div
+                    key={item.chapter_id}
+                    className={`flex items-center gap-3 px-4 py-3 ${idx < recentActivity.length - 1 ? 'border-b border-[#F0F0EE]' : ''}`}
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-[#F5F5F3] flex items-center justify-center text-[16px] flex-shrink-0">
+                      {meta.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-bold text-[#1A1A1A] truncate">{item.chapter_title}</p>
+                      <p className="text-[11px] text-[#ADADAD] truncate">{item.subject_name}{dateStr ? ` · ${dateStr}` : ''}</p>
+                    </div>
+                    <span className="text-[13px] font-black flex-shrink-0" style={{ color: scoreColor }}>
+                      {item.score}점
+                    </span>
+                  </div>
+                )
+              })
+            )}
+          </div>
         </div>
 
         {/* 기타 링크 */}
