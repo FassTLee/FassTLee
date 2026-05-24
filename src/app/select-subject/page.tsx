@@ -114,6 +114,44 @@ const CERT_CONFIG: Record<string, CertConfig> = {
       { name: '특수체육론',     icon: '🎯', desc: '특수 집단 체육 지도' },
     ],
   },
+  'exercise-prescriptionist': {
+    label: '건강운동관리사',
+    mode: 'all-required',
+    subjects: [
+      { name: '건강체력평가', icon: '📊', desc: '체력검사, 측정 방법, 평가 기준' },
+      { name: '기능해부학',   icon: '🦴', desc: '근육·뼈대·관절의 기능과 구조' },
+      { name: '병태생리학',   icon: '🔬', desc: '질환의 발생 원리와 병태 기전' },
+      { name: '스포츠심리학', icon: '🧠', desc: '동기, 루틴, 심리기술 훈련' },
+      { name: '운동부하검사', icon: '🏃', desc: '심전도, 운동부하 프로토콜' },
+      { name: '운동상해',     icon: '🩹', desc: '스포츠 손상, 응급처치, 재활' },
+      { name: '운동생리학',   icon: '🫀', desc: '심폐기능·에너지 대사·운동 적응' },
+      { name: '운동처방론',   icon: '📋', desc: 'FITT 원칙, 대상별 운동 처방' },
+    ],
+    additional: [],
+  },
+  'sports-instructor-2-written': {
+    label: '2급 생활스포츠지도사 필기',
+    mode: 'select-n',
+    selectCount: 5,
+    subjects: [
+      { name: '스포츠교육학', icon: '📚', desc: '교수법, 코칭 이론' },
+      { name: '스포츠사회학', icon: '🏟️', desc: '스포츠와 사회의 관계' },
+      { name: '스포츠심리학', icon: '🧠', desc: '동기, 루틴, 심리기술' },
+      { name: '스포츠윤리',   icon: '⚖️', desc: '페어플레이·도덕·반도핑' },
+      { name: '운동생리학',   icon: '🫀', desc: '심폐기능·에너지 대사' },
+      { name: '운동역학',     icon: '⚙️', desc: '운동의 물리적 원리' },
+      { name: '한국체육사',   icon: '🏛️', desc: '한국 체육의 역사적 흐름' },
+    ],
+    additional: [],
+  },
+  'sports-instructor-2-practical': {
+    label: '2급 생활스포츠지도사 구술/실기',
+    mode: 'all-required',
+    subjects: [
+      { name: '보디빌딩', icon: '🏋️', desc: '보디빌딩 구술·실기' },
+    ],
+    additional: [],
+  },
 }
 
 // ── 컴포넌트 ──────────────────────────────────────────────────────

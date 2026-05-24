@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, ChevronRight, Lock } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronDown, Lock } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 const CERT_KEY = 'kinepia_selected_cert'
@@ -46,6 +46,7 @@ export default function SelectCertPage() {
   const router = useRouter()
   const [tooltip, setTooltip] = useState<string | null>(null)
   const [certs, setCerts] = useState<CertRow[]>([])
+  const [expandedSlug, setExpandedSlug] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -115,6 +116,62 @@ export default function SelectCertPage() {
           const icon = meta?.icon ?? '📋'
           const desc = meta?.desc ?? ''
           const color = meta?.color ?? '#6B6B6B'
+
+          // 2급 생활스포츠지도사: 드롭다운 토글 카드
+          if (cert.slug === 'sport_instructor_lv2') {
+            const isOpen = expandedSlug === cert.slug
+            return (
+              <div key={cert.slug} className="w-full">
+                <button
+                  onClick={() => setExpandedSlug(isOpen ? null : cert.slug)}
+                  className={`w-full bg-white p-5 text-left flex items-center gap-4 transition-all border-2 ${
+                    isOpen
+                      ? 'rounded-t-2xl border-[#2563EB] border-b-0'
+                      : 'rounded-2xl border-[#E5E5E5] active:bg-[#F5F5F3]'
+                  }`}
+                >
+                  <div className="text-[36px] flex-shrink-0">{icon}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-[16px] font-black text-[#1A1A1A]">{cert.name}</span>
+                    </div>
+                    <p className="text-[12px] text-[#6B6B6B]">{desc}</p>
+                  </div>
+                  <ChevronDown
+                    size={18}
+                    className={`text-[#ADADAD] flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {isOpen && (
+                  <div className="bg-white border-2 border-t-[1px] border-[#2563EB] rounded-b-2xl overflow-hidden divide-y divide-[#F0F0EE]">
+                    <button
+                      onClick={() => handleSelect('sports-instructor-2-written')}
+                      className="w-full px-5 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
+                    >
+                      <span className="text-[22px] flex-shrink-0">📝</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[14px] font-bold text-[#1A1A1A]">필기</p>
+                        <p className="text-[11px] text-[#6B6B6B]">7과목 중 5과목 선택</p>
+                      </div>
+                      <ChevronRight size={16} className="text-[#ADADAD] flex-shrink-0" />
+                    </button>
+                    <button
+                      onClick={() => handleSelect('sports-instructor-2-practical')}
+                      className="w-full px-5 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
+                    >
+                      <span className="text-[22px] flex-shrink-0">🏋️</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[14px] font-bold text-[#1A1A1A]">구술/실기</p>
+                        <p className="text-[11px] text-[#6B6B6B]">보디빌딩</p>
+                      </div>
+                      <ChevronRight size={16} className="text-[#ADADAD] flex-shrink-0" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
+          }
+
           return (
             <button
               key={cert.slug}

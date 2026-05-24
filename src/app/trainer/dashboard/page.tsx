@@ -21,9 +21,12 @@ const CERT_KEY     = 'kinepia_selected_cert'
 const STYLE_KEY    = 'kinepia_learning_style'
 
 const CERT_LABELS: Record<string, string> = {
-  'health-exercise-manager': '건강운동관리사',
-  'sports-instructor-2':     '2급 생활스포츠지도사',
-  'sports-instructor':       '생활스포츠지도사',
+  'health-exercise-manager':       '건강운동관리사',
+  'sports-instructor-2':           '2급 생활스포츠지도사',
+  'sports-instructor':             '생활스포츠지도사',
+  'exercise-prescriptionist':      '건강운동관리사',
+  'sports-instructor-2-written':   '2급 생활스포츠지도사 필기',
+  'sports-instructor-2-practical': '2급 생활스포츠지도사 구술/실기',
 }
 
 const CERT_ICONS: Record<string, string> = {
