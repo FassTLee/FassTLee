@@ -12,25 +12,27 @@ interface CertRow {
   slug: string
   name: string
   is_active: boolean
-  color: string | null
 }
 
 const CERT_META: Record<string, {
   icon: string
   desc: string
   certId: string   // select-subject CERT_CONFIG 키 → localStorage 저장값
+  color: string    // 배지 강조색 (hex)
   badgeLabel?: string
 }> = {
   health_exercise_manager: {
     icon: '🏥',
     desc: '운동생리학·해부학·운동처방론 등',
     certId: 'health-exercise-manager',
+    color: '#00A651',
     badgeLabel: 'Beta',
   },
   sport_instructor_lv2: {
     icon: '🏅',
     desc: '생활·전문·장애인·유소년·노인',
     certId: 'sports-instructor-2',
+    color: '#2563EB',
   },
 }
 
@@ -47,7 +49,7 @@ export default function SelectCertPage() {
     if (isSupabaseConfigured) {
       supabase
         .from('certifications')
-        .select('slug, name, is_active, color')
+        .select('slug, name, is_active')
         .then(({ data }) => { if (data) setCerts(data as CertRow[]) })
     }
   }, [status, router])
@@ -97,6 +99,7 @@ export default function SelectCertPage() {
           const meta = CERT_META[cert.slug]
           const icon = meta?.icon ?? '📋'
           const desc = meta?.desc ?? ''
+          const color = meta?.color ?? '#6B6B6B'
 
           if (cert.is_active) {
             return (
@@ -110,7 +113,10 @@ export default function SelectCertPage() {
                   <div className="flex items-center gap-2 mb-0.5">
                     <span className="text-[16px] font-black text-[#1A1A1A]">{cert.name}</span>
                     {meta?.badgeLabel && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#00A651]/10 text-[#00A651]">
+                      <span
+                        className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                        style={{ backgroundColor: `${color}1A`, color }}
+                      >
                         {meta.badgeLabel}
                       </span>
                     )}
