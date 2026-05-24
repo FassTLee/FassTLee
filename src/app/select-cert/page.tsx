@@ -21,18 +21,23 @@ const CERT_META: Record<string, {
   color: string    // 배지 강조색 (hex)
   badgeLabel?: string
 }> = {
-  health_exercise_manager: {
+  exercise_prescriptionist: {
     icon: '🏥',
     desc: '운동생리학·해부학·운동처방론 등',
-    certId: 'health-exercise-manager',
+    certId: 'exercise-prescriptionist',
     color: '#00A651',
-    badgeLabel: 'Beta',
   },
   sport_instructor_lv2: {
     icon: '🏅',
     desc: '생활·전문·장애인·유소년·노인',
     certId: 'sports-instructor-2',
     color: '#2563EB',
+  },
+  health_exercise_manager: {
+    icon: '💊',
+    desc: '운동건강 통합 관리 과정',
+    certId: 'health-exercise-manager',
+    color: '#7C3AED',
   },
 }
 
@@ -50,7 +55,17 @@ export default function SelectCertPage() {
       supabase
         .from('certifications')
         .select('slug, name, is_active')
-        .then(({ data }) => { if (data) setCerts(data as CertRow[]) })
+        .then(({ data }) => {
+          if (data) {
+            const seen = new Set<string>()
+            const unique = (data as CertRow[]).filter(c => {
+              if (seen.has(c.slug)) return false
+              seen.add(c.slug)
+              return true
+            })
+            setCerts(unique)
+          }
+        })
     }
   }, [status, router])
 
@@ -94,40 +109,45 @@ export default function SelectCertPage() {
 
       <div className="p-4 space-y-3">
 
-        {/* ── DB 기반 자격증 카드 ── */}
-        {certs.map((cert) => {
+        {/* ── 활성 자격증 카드 ── */}
+        {certs.filter(c => c.is_active).map((cert) => {
           const meta = CERT_META[cert.slug]
           const icon = meta?.icon ?? '📋'
           const desc = meta?.desc ?? ''
           const color = meta?.color ?? '#6B6B6B'
-
-          if (cert.is_active) {
-            return (
-              <button
-                key={cert.slug}
-                onClick={() => handleSelect(cert.slug)}
-                className="w-full bg-white rounded-2xl border-2 border-[#E5E5E5] p-5 text-left flex items-center gap-4 active:bg-[#F5F5F3] transition-all"
-              >
-                <div className="text-[36px] flex-shrink-0">{icon}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-[16px] font-black text-[#1A1A1A]">{cert.name}</span>
-                    {meta?.badgeLabel && (
-                      <span
-                        className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                        style={{ backgroundColor: `${color}1A`, color }}
-                      >
-                        {meta.badgeLabel}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[12px] text-[#6B6B6B]">{desc}</p>
+          return (
+            <button
+              key={cert.slug}
+              onClick={() => handleSelect(cert.slug)}
+              className="w-full bg-white rounded-2xl border-2 border-[#E5E5E5] p-5 text-left flex items-center gap-4 active:bg-[#F5F5F3] transition-all"
+            >
+              <div className="text-[36px] flex-shrink-0">{icon}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-[16px] font-black text-[#1A1A1A]">{cert.name}</span>
+                  {meta?.badgeLabel && (
+                    <span
+                      className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                      style={{ backgroundColor: `${color}1A`, color }}
+                    >
+                      {meta.badgeLabel}
+                    </span>
+                  )}
                 </div>
-                <ChevronRight size={18} className="text-[#ADADAD] flex-shrink-0" />
-              </button>
-            )
-          }
+                <p className="text-[12px] text-[#6B6B6B]">{desc}</p>
+              </div>
+              <ChevronRight size={18} className="text-[#ADADAD] flex-shrink-0" />
+            </button>
+          )
+        })}
 
+        {/* ── 준비 중 섹션 ── */}
+        <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider px-1 pt-1">준비 중</p>
+
+        {certs.filter(c => !c.is_active).map((cert) => {
+          const meta = CERT_META[cert.slug]
+          const icon = meta?.icon ?? '📋'
+          const desc = meta?.desc ?? ''
           return (
             <button
               key={cert.slug}
@@ -146,9 +166,6 @@ export default function SelectCertPage() {
             </button>
           )
         })}
-
-        {/* ── 비활성화 카드 ── */}
-        <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider px-1 pt-1">준비 중</p>
 
         {[
           { icon: '🦴', name: 'Basic 해부학',  desc: '근골격계 기초 — 뼈·근육·관절' },
