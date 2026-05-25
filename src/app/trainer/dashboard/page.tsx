@@ -212,7 +212,7 @@ function DashboardContent() {
   /* ── Classroom (lazy) ────────────────────────────────────────────── */
   const [bookmarks, setBookmarks]             = useState<VideoBookmark[]>([])
   const [classroomLoaded, setClassroomLoaded] = useState(false)
-  const [classroomCertOpen, setClassroomCertOpen]   = useState(false)
+  const [expandedCertId, setExpandedCertId]         = useState<string | null>(null)
   const [profileSubjectsOpen, setProfileSubjectsOpen] = useState(false)
   const [subjectProgress, setSubjectProgress] = useState<Record<string, { total: number; completed: number }>>({})
   const [userCerts, setUserCerts]             = useState<UserCertification[]>([])
@@ -1484,7 +1484,7 @@ function DashboardContent() {
               .map((uc) => (
                 <div key={uc.id} className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
                   <button
-                    onClick={() => setClassroomCertOpen((o) => !o)}
+                    onClick={() => setExpandedCertId((prev) => prev === uc.id ? null : uc.id)}
                     className="w-full px-4 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
                   >
                     <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center text-[20px] flex-shrink-0">
@@ -1496,12 +1496,12 @@ function DashboardContent() {
                         {uc.subjects.length > 0 ? `${uc.subjects.length}개 과목 수강 중` : '과목을 선택해주세요'}
                       </p>
                     </div>
-                    <div className={`transition-transform duration-200 ${classroomCertOpen ? 'rotate-90' : ''}`}>
+                    <div className={`transition-transform duration-200 ${expandedCertId === uc.id ? 'rotate-90' : ''}`}>
                       <ChevronRight size={16} className="text-[#ADADAD]" />
                     </div>
                   </button>
 
-                  {classroomCertOpen && uc.subjects.length > 0 && (
+                  {expandedCertId === uc.id && uc.subjects.length > 0 && (
                     <div className="border-t border-[#F0F0EE]">
                       {uc.subjects.map((name, idx) => (
                         <SubjectRow
@@ -1544,7 +1544,7 @@ function DashboardContent() {
           <>
             <div className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
               <button
-                onClick={() => setClassroomCertOpen((o) => !o)}
+                onClick={() => setExpandedCertId((prev) => prev === 'fallback' ? null : 'fallback')}
                 className="w-full px-4 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
               >
                 <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center text-[20px] flex-shrink-0">
@@ -1558,12 +1558,12 @@ function DashboardContent() {
                     {subjects.length}개 과목 수강 중
                   </p>
                 </div>
-                <div className={`transition-transform duration-200 ${classroomCertOpen ? 'rotate-90' : ''}`}>
+                <div className={`transition-transform duration-200 ${expandedCertId === 'fallback' ? 'rotate-90' : ''}`}>
                   <ChevronRight size={16} className="text-[#ADADAD]" />
                 </div>
               </button>
 
-              {classroomCertOpen && (
+              {expandedCertId === 'fallback' && (
                 <div className="border-t border-[#F0F0EE]">
                   {showTypeLabels ? (
                     <>
