@@ -130,6 +130,19 @@ interface TodayChapter {
   completed: number
 }
 
+interface UserCertification {
+  id: string
+  user_id: string
+  cert_id: string
+  cert_label: string
+  subjects: string[]
+  exam_type: string
+  is_active: boolean
+  order_index: number
+  added_at: string
+  last_studied_at: string | null
+}
+
 // ─────────────────────────────────────────────────────────────────────
 /* Wrap in Suspense so useSearchParams works in App Router */
 export default function DashboardPage() {
@@ -202,7 +215,7 @@ function DashboardContent() {
   const [classroomCertOpen, setClassroomCertOpen]   = useState(false)
   const [profileSubjectsOpen, setProfileSubjectsOpen] = useState(false)
   const [subjectProgress, setSubjectProgress] = useState<Record<string, { total: number; completed: number }>>({})
-
+  const [userCerts, setUserCerts]             = useState<UserCertification[]>([])
 
   /* ── 모의고사 모달 ───────────────────────────────────────────────── */
   const [examRound, setExamRound]                         = useState(1)
@@ -558,10 +571,34 @@ function DashboardContent() {
       }
     } catch { /* ignore */ }
 
+    // user_certifications 로드
+    const uid = session?.user?.id ?? ''
+    if (uid) {
+      try {
+        const ucRes  = await fetch(`/api/v1/user-certifications?userId=${uid}`)
+        const ucData = await ucRes.json()
+        if (Array.isArray(ucData.data) && ucData.data.length > 0) {
+          setUserCerts(ucData.data as UserCertification[])
+        }
+      } catch { /* ignore */ }
+    }
+
     setLoading(false)
   }
 
   const loadClassroom = async () => {
+    // user_certifications 최신 로드 (강의실 탭 진입 시 갱신)
+    const uid = session?.user?.id ?? ''
+    if (uid) {
+      try {
+        const ucRes  = await fetch(`/api/v1/user-certifications?userId=${uid}`)
+        const ucData = await ucRes.json()
+        if (Array.isArray(ucData.data) && ucData.data.length > 0) {
+          setUserCerts(ucData.data as UserCertification[])
+        }
+      } catch { /* ignore */ }
+    }
+
     // Refresh subject cards if not loaded yet
     if (subjectCards.length === 0 && subjects.length === 0) {
       try {
@@ -1098,64 +1135,123 @@ function DashboardContent() {
             msOverflowStyle: 'none',
           } as React.CSSProperties}
         >
-          {/* 자격증 카드 */}
-          {displayCert ? (
-            <button
-              onClick={() => router.push('/trainer/dashboard?tab=classroom')}
-              className="flex-shrink-0 bg-[#1A1A1A] rounded-2xl p-4 text-left active:opacity-90"
-              style={{ width: '75%', scrollSnapAlign: 'start', marginLeft: '1rem' }}
-            >
-              {/* 자격증명 + 아이콘 */}
-              <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-[20px] flex-shrink-0">
-                  {CERT_ICONS[displayCert] ?? '🏅'}
+          {userCerts.length > 0 ? (
+            <>
+              {/* user_certifications 기반 다중 카드 */}
+              {[...userCerts]
+                .sort((a, b) => {
+                  if (a.last_studied_at && b.last_studied_at)
+                    return new Date(b.last_studied_at).getTime() - new Date(a.last_studied_at).getTime()
+                  if (a.last_studied_at) return -1
+                  if (b.last_studied_at) return 1
+                  return a.order_index - b.order_index
+                })
+                .slice(0, 3)
+                .map((uc) => (
+                  <button
+                    key={uc.id}
+                    onClick={() => router.push('/trainer/dashboard?tab=classroom')}
+                    className="flex-shrink-0 bg-[#1A1A1A] rounded-2xl p-4 text-left active:opacity-90"
+                    style={{ width: '72%', scrollSnapAlign: 'start', marginLeft: '1rem' }}
+                  >
+                    <div className="flex items-center gap-2.5 mb-3">
+                      <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-[20px] flex-shrink-0">
+                        {CERT_ICONS[uc.cert_label] ?? '🏅'}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[13px] font-black text-white truncate">{uc.cert_label}</p>
+                        <p className="text-[11px] text-white/50">
+                          {uc.subjects.length > 0 ? `${uc.subjects.length}개 과목` : '과목을 선택해주세요'}
+                        </p>
+                      </div>
+                    </div>
+                    {/* 과목 태그 */}
+                    {uc.subjects.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {uc.subjects.slice(0, 4).map((s) => (
+                          <span key={s} className="text-[10px] bg-white/10 text-white/70 px-2 py-0.5 rounded-full truncate max-w-[80px]">
+                            {s}
+                          </span>
+                        ))}
+                        {uc.subjects.length > 4 && (
+                          <span className="text-[10px] bg-white/10 text-white/50 px-2 py-0.5 rounded-full">
+                            +{uc.subjects.length - 4}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </button>
+                ))
+              }
+              {/* 강의 추가하기 카드 (최대 3개 미만일 때만) */}
+              {userCerts.length < 3 && (
+                <button
+                  onClick={() => router.push('/select-cert')}
+                  className="flex-shrink-0 rounded-2xl border-2 border-dashed border-[#E5E5E5] bg-white flex flex-col items-center justify-center gap-2 active:bg-[#F5F5F3]"
+                  style={{ width: '44%', scrollSnapAlign: 'start', minHeight: '130px', marginRight: '1rem' }}
+                >
+                  <div className="w-10 h-10 rounded-xl bg-[#F5F5F3] flex items-center justify-center">
+                    <Plus size={20} className="text-[#ADADAD]" />
+                  </div>
+                  <p className="text-[12px] font-bold text-[#ADADAD]">강의 추가하기</p>
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              {/* 기존 단일 자격증 카드 (fallback) */}
+              {displayCert ? (
+                <button
+                  onClick={() => router.push('/trainer/dashboard?tab=classroom')}
+                  className="flex-shrink-0 bg-[#1A1A1A] rounded-2xl p-4 text-left active:opacity-90"
+                  style={{ width: '75%', scrollSnapAlign: 'start', marginLeft: '1rem' }}
+                >
+                  <div className="flex items-center gap-2.5 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-[20px] flex-shrink-0">
+                      {CERT_ICONS[displayCert] ?? '🏅'}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-black text-white truncate">{displayCert}</p>
+                      <p className="text-[11px] text-white/50">
+                        {subjects.length > 0 ? `${subjects.length}개 과목 수강 중` : '과목을 선택해주세요'}
+                      </p>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-baseline justify-between mb-1.5">
+                      <span className="text-[11px] text-white/40">전체 진도율</span>
+                      <span className="text-[18px] font-black text-[#00A651] leading-none">{overallPct}%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-[#00A651] rounded-full transition-all" style={{ width: `${overallPct}%` }} />
+                    </div>
+                    {aggProgress.total > 0 && (
+                      <p className="text-[10px] text-white/30 mt-1.5">
+                        {aggProgress.completed} / {aggProgress.total} 챕터 완료
+                      </p>
+                    )}
+                  </div>
+                </button>
+              ) : null}
+              {/* 자격증 추가하기 카드 */}
+              <button
+                onClick={() => router.push('/select-cert')}
+                className="flex-shrink-0 rounded-2xl border-2 border-dashed border-[#E5E5E5] bg-white flex flex-col items-center justify-center gap-2 active:bg-[#F5F5F3]"
+                style={{
+                  width: displayCert ? '44%' : '75%',
+                  scrollSnapAlign: 'start',
+                  minHeight: '130px',
+                  marginLeft: displayCert ? 0 : '1rem',
+                  marginRight: '1rem',
+                }}
+              >
+                <div className="w-10 h-10 rounded-xl bg-[#F5F5F3] flex items-center justify-center">
+                  <Plus size={20} className="text-[#ADADAD]" />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-[14px] font-black text-white truncate">{displayCert}</p>
-                  <p className="text-[11px] text-white/50">
-                    {subjects.length > 0 ? `${subjects.length}개 과목 수강 중` : '과목을 선택해주세요'}
-                  </p>
-                </div>
-              </div>
-
-              {/* 전체 진도율 */}
-              <div>
-                <div className="flex items-baseline justify-between mb-1.5">
-                  <span className="text-[11px] text-white/40">전체 진도율</span>
-                  <span className="text-[18px] font-black text-[#00A651] leading-none">{overallPct}%</span>
-                </div>
-                <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#00A651] rounded-full transition-all"
-                    style={{ width: `${overallPct}%` }}
-                  />
-                </div>
-                {aggProgress.total > 0 && (
-                  <p className="text-[10px] text-white/30 mt-1.5">
-                    {aggProgress.completed} / {aggProgress.total} 챕터 완료
-                  </p>
-                )}
-              </div>
-            </button>
-          ) : null}
-
-          {/* 자격증 추가하기 카드 */}
-          <button
-            onClick={() => router.push('/select-cert')}
-            className="flex-shrink-0 rounded-2xl border-2 border-dashed border-[#E5E5E5] bg-white flex flex-col items-center justify-center gap-2 active:bg-[#F5F5F3]"
-            style={{
-              width: displayCert ? '44%' : '75%',
-              scrollSnapAlign: 'start',
-              minHeight: '130px',
-              marginLeft: displayCert ? 0 : '1rem',
-              marginRight: '1rem',
-            }}
-          >
-            <div className="w-10 h-10 rounded-xl bg-[#F5F5F3] flex items-center justify-center">
-              <Plus size={20} className="text-[#ADADAD]" />
-            </div>
-            <p className="text-[12px] font-bold text-[#ADADAD]">자격증 추가하기</p>
-          </button>
+                <p className="text-[12px] font-bold text-[#ADADAD]">자격증 추가하기</p>
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -1379,7 +1475,58 @@ function DashboardContent() {
           <h2 className="text-[20px] font-black text-[#1A1A1A]">강의실</h2>
         </div>
 
-        {subjects.length === 0 ? (
+        {userCerts.length > 0 ? (
+          /* ── user_certifications 기반 다중 카드 ── */
+          <>
+            {userCerts
+              .slice()
+              .sort((a, b) => a.order_index - b.order_index)
+              .map((uc) => (
+                <div key={uc.id} className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
+                  <button
+                    onClick={() => setClassroomCertOpen((o) => !o)}
+                    className="w-full px-4 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center text-[20px] flex-shrink-0">
+                      {CERT_ICONS[uc.cert_label] ?? '🏅'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[15px] font-black text-[#1A1A1A] truncate">{uc.cert_label}</p>
+                      <p className="text-[11px] text-[#ADADAD]">
+                        {uc.subjects.length > 0 ? `${uc.subjects.length}개 과목 수강 중` : '과목을 선택해주세요'}
+                      </p>
+                    </div>
+                    <div className={`transition-transform duration-200 ${classroomCertOpen ? 'rotate-90' : ''}`}>
+                      <ChevronRight size={16} className="text-[#ADADAD]" />
+                    </div>
+                  </button>
+
+                  {classroomCertOpen && uc.subjects.length > 0 && (
+                    <div className="border-t border-[#F0F0EE]">
+                      {uc.subjects.map((name, idx) => (
+                        <SubjectRow
+                          key={name}
+                          name={name}
+                          hasBorder={idx < uc.subjects.length - 1}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            }
+
+            {/* 강의 추가하기 버튼 (최대 3개 미만일 때만) */}
+            {userCerts.length < 3 && (
+              <button
+                onClick={() => router.push('/select-cert')}
+                className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-[#E5E5E5] text-[13px] text-[#ADADAD]"
+              >
+                <Plus size={16} /> 강의 추가하기
+              </button>
+            )}
+          </>
+        ) : subjects.length === 0 ? (
           /* ── 빈 상태 ── */
           <div className="flex flex-col items-center justify-center py-16 text-center">
             <div className="text-[56px] mb-4">📚</div>
@@ -1393,10 +1540,9 @@ function DashboardContent() {
             </button>
           </div>
         ) : (
+          /* ── 단일 자격증 카드 + 드롭다운 (기존 fallback) ── */
           <>
-            {/* ── 자격증 카드 + 드롭다운 ── */}
             <div className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
-              {/* 자격증 헤더 (클릭 시 드롭다운 토글) */}
               <button
                 onClick={() => setClassroomCertOpen((o) => !o)}
                 className="w-full px-4 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
@@ -1417,12 +1563,10 @@ function DashboardContent() {
                 </div>
               </button>
 
-              {/* 드롭다운: 과목 목록 */}
               {classroomCertOpen && (
                 <div className="border-t border-[#F0F0EE]">
                   {showTypeLabels ? (
                     <>
-                      {/* 필수과목 */}
                       {requiredList.length > 0 && (
                         <div>
                           <div className="px-4 py-2 bg-[#F5F5F3] flex items-center gap-1.5">
@@ -1430,16 +1574,10 @@ function DashboardContent() {
                             <span className="text-[10px] text-[#ADADAD]">· {requiredList.length}개</span>
                           </div>
                           {requiredList.map((name, idx) => (
-                            <SubjectRow
-                              key={name}
-                              name={name}
-                              hasBorder={idx < requiredList.length - 1 || optionalList.length > 0}
-                            />
+                            <SubjectRow key={name} name={name} hasBorder={idx < requiredList.length - 1 || optionalList.length > 0} />
                           ))}
                         </div>
                       )}
-
-                      {/* 선택과목 */}
                       {optionalList.length > 0 && (
                         <div>
                           <div className={`px-4 py-2 bg-[#F5F5F3] flex items-center gap-1.5 ${requiredList.length > 0 ? 'border-t border-[#F0F0EE]' : ''}`}>
@@ -1447,30 +1585,20 @@ function DashboardContent() {
                             <span className="text-[10px] text-[#ADADAD]">· {optionalList.length}개</span>
                           </div>
                           {optionalList.map((name, idx) => (
-                            <SubjectRow
-                              key={name}
-                              name={name}
-                              hasBorder={idx < optionalList.length - 1}
-                            />
+                            <SubjectRow key={name} name={name} hasBorder={idx < optionalList.length - 1} />
                           ))}
                         </div>
                       )}
                     </>
                   ) : (
-                    /* 자격증 매핑 없는 경우: 구분 없이 전체 표시 */
                     subjects.map((name, idx) => (
-                      <SubjectRow
-                        key={name}
-                        name={name}
-                        hasBorder={idx < subjects.length - 1}
-                      />
+                      <SubjectRow key={name} name={name} hasBorder={idx < subjects.length - 1} />
                     ))
                   )}
                 </div>
               )}
             </div>
 
-            {/* 강의 추가하기 버튼 */}
             <button
               onClick={() => router.push('/select-cert')}
               className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-[#E5E5E5] text-[13px] text-[#ADADAD]"
