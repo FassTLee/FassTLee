@@ -118,7 +118,7 @@ const CERT_CONFIG: Record<string, CertConfig> = {
     label: '건강운동관리사',
     mode: 'all-required',
     subjects: [
-      { name: '건강체력평가', icon: '📊', desc: '체력검사, 측정 방법, 평가 기준' },
+      { name: '건강·체력평가', icon: '📊', desc: '체력검사, 측정 방법, 평가 기준' },
       { name: '기능해부학',   icon: '🦴', desc: '근육·뼈대·관절의 기능과 구조' },
       { name: '병태생리학',   icon: '🔬', desc: '질환의 발생 원리와 병태 기전' },
       { name: '스포츠심리학', icon: '🧠', desc: '동기, 루틴, 심리기술 훈련' },
