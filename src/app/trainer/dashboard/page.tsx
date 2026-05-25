@@ -975,6 +975,9 @@ function DashboardContent() {
                 {SUBJECT_META[todayChapter.subjectName]?.icon ?? '📚'}
               </div>
               <div className="flex-1 min-w-0">
+                {userCerts[0]?.cert_label && (
+                  <p className="text-[10px] font-bold text-[#00A651] truncate mb-0.5">{userCerts[0].cert_label}</p>
+                )}
                 <p className="text-[11px] text-[#ADADAD] truncate">{todayChapter.subjectName}</p>
                 <p className="text-[14px] font-black text-[#1A1A1A] leading-snug truncate">{todayChapter.title}</p>
                 <p className="text-[11px] text-[#00A651] font-semibold mt-0.5">지금 바로 시작하세요 →</p>
@@ -1001,6 +1004,9 @@ function DashboardContent() {
           >
             <span className="text-[24px]">📖</span>
             <div className="text-left flex-1">
+              {userCerts[0]?.cert_label && (
+                <p className="text-[10px] text-white/40 mb-0.5">{userCerts[0].cert_label}</p>
+              )}
               <p className="text-[15px] font-bold">학습 시작하기</p>
               <p className="text-[11px] text-white/50">오늘의 학습을 이어가세요</p>
             </div>
@@ -1014,6 +1020,9 @@ function DashboardContent() {
           >
             <span className="text-[24px]">📚</span>
             <div className="text-left flex-1">
+              {userCerts[0]?.cert_label && (
+                <p className="text-[10px] text-white/60 mb-0.5">{userCerts[0].cert_label}</p>
+              )}
               <p className="text-[15px] font-bold">학습 시작하기</p>
               <p className="text-[11px] text-white/70">강의실에서 과목을 선택해보세요</p>
             </div>
