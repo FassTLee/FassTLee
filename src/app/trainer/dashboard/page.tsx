@@ -35,6 +35,19 @@ const CERT_ICONS: Record<string, string> = {
   '생활스포츠지도사':     '🎽',
 }
 
+// 구술/실기 보디빌딩 과목 → courseId 매핑
+const BODYBUILD_COURSES: Record<string, string> = {
+  '도핑 규정':         'b28e78c8-8443-4013-bfef-dbe655c72994',
+  '보디빌딩 경기 규정': '13f8cdb4-651e-4eba-9cfa-571465cbc905',
+  '복장 및 포징 규정':  '376cc5f3-eeef-4117-89bf-229a3ce417ab',
+  '생활체육 지도 방법': 'add57a42-adb5-4b75-9960-0ccc409c0341',
+  '스포츠 인권':        '24885dc7-5442-481e-81fc-d7a222f76a25',
+  '운동생리학':         '09968a6e-17d3-4439-b1a9-214a7db394e9',
+  '운동영양학':         '22d680e1-cfc5-4173-b828-1647ee1571d1',
+  '응급처치':           '947a8cf1-1ed8-4dcb-9379-263000ef49cf',
+  '협회 규정':          '2c72f373-253d-41fc-b1d5-e156f485043e',
+}
+
 // 자격증별 필수/선택 과목 구분
 const REQUIRED_SUBJECTS: Record<string, string[]> = {
   'health-exercise-manager': [
@@ -1510,15 +1523,36 @@ function DashboardContent() {
                     </div>
                   </button>
 
-                  {expandedCertId === uc.id && uc.subjects.length > 0 && (
+                  {expandedCertId === uc.id && (
                     <div className="border-t border-[#F0F0EE]">
-                      {uc.subjects.map((name, idx) => (
-                        <SubjectRow
-                          key={name}
-                          name={name}
-                          hasBorder={idx < uc.subjects.length - 1}
-                        />
-                      ))}
+                      {uc.cert_id === 'sports-instructor-2-practical' ? (
+                        /* ── 구술/실기 보디빌딩: 고정 9개 과목 → oral-exam 이동 ── */
+                        Object.entries(BODYBUILD_COURSES).map(([subjectName, courseId], idx) => (
+                          <button
+                            key={subjectName}
+                            onClick={() => router.push(`/oral-exam/${courseId}`)}
+                            className={`w-full px-4 py-3.5 flex items-center gap-3 text-left active:bg-[#F5F5F3] ${idx < Object.keys(BODYBUILD_COURSES).length - 1 ? 'border-b border-[#F0F0EE]' : ''}`}
+                          >
+                            <div className="w-9 h-9 rounded-xl bg-[#F5F5F3] flex items-center justify-center text-[18px] flex-shrink-0">
+                              🏋️
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[13px] font-bold text-[#1A1A1A] truncate">{subjectName}</p>
+                              <p className="text-[10px] text-[#ADADAD] mt-0.5">구술 모의고사 시작</p>
+                            </div>
+                            <ChevronRight size={14} className="text-[#ADADAD] flex-shrink-0" />
+                          </button>
+                        ))
+                      ) : uc.subjects.length > 0 ? (
+                        /* ── 일반 자격증: subjects 배열 표시 ── */
+                        uc.subjects.map((name, idx) => (
+                          <SubjectRow
+                            key={name}
+                            name={name}
+                            hasBorder={idx < uc.subjects.length - 1}
+                          />
+                        ))
+                      ) : null}
                     </div>
                   )}
                 </div>
