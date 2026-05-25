@@ -156,7 +156,7 @@ const CERT_CONFIG: Record<string, CertConfig> = {
 
 // ── 컴포넌트 ──────────────────────────────────────────────────────
 export default function SelectSubjectPage() {
-  const { status } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
 
   const [certId, setCertId] = useState<string | null>(null)
@@ -272,6 +272,39 @@ export default function SelectSubjectPage() {
         }),
       })
     } catch { /* ignore */ }
+
+    // user-certifications 연동 (userId 있을 때만)
+    const userId = session?.user?.id
+    if (userId) {
+      try {
+        const examType = certId.includes('practical') ? 'practical'
+          : certId.includes('oral') ? 'oral'
+          : 'written'
+        const certRes = await fetch('/api/v1/user-certifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            cert_id:    localStorage.getItem(CERT_KEY) ?? '',
+            cert_label: CERT_CONFIG[certId]?.label ?? certId,
+            subjects:   combined,
+            exam_type:  examType,
+          }),
+        })
+        if (!certRes.ok) {
+          const certData = await certRes.json()
+          if (certRes.status === 400 && certData.error === '최대 3개까지 추가 가능합니다') {
+            setSaving(false)
+            alert('최대 3개까지 추가 가능합니다')
+            return
+          }
+          console.error('[user-certifications POST]', certData.error)
+        }
+      } catch (e) {
+        console.error('[user-certifications POST]', e)
+      }
+    }
+
     router.replace('/trainer/dashboard')
   }
 
