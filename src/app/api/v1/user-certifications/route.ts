@@ -141,3 +141,35 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ data: inserted as UserCertification })
 }
+
+// ── PATCH /api/v1/user-certifications — 제거 (is_active = false) ──
+export async function PATCH(req: NextRequest) {
+  if (!isSupabaseAdminConfigured) {
+    return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
+  }
+
+  let body: { userId: string; certId: string }
+  try {
+    body = await req.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
+
+  const { userId, certId } = body
+  if (!userId || !certId) {
+    return NextResponse.json({ error: 'userId and certId are required' }, { status: 400 })
+  }
+
+  const { error } = await supabaseAdmin
+    .from('user_certifications')
+    .update({ is_active: false })
+    .eq('user_id', userId)
+    .eq('id', certId)
+
+  if (error) {
+    console.error('[user-certifications PATCH] error:', error)
+    return NextResponse.json({ error: 'DB error' }, { status: 500 })
+  }
+
+  return NextResponse.json({ success: true })
+}

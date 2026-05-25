@@ -1505,23 +1505,44 @@ function DashboardContent() {
               .sort((a, b) => a.order_index - b.order_index)
               .map((uc) => (
                 <div key={uc.id} className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
-                  <button
-                    onClick={() => setExpandedCertId((prev) => prev === uc.id ? null : uc.id)}
-                    className="w-full px-4 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center text-[20px] flex-shrink-0">
-                      {CERT_ICONS[uc.cert_label] ?? '🏅'}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[15px] font-black text-[#1A1A1A] truncate">{uc.cert_label}</p>
-                      <p className="text-[11px] text-[#ADADAD]">
-                        {uc.subjects.length > 0 ? `${uc.subjects.length}개 과목 수강 중` : '과목을 선택해주세요'}
-                      </p>
-                    </div>
-                    <div className={`transition-transform duration-200 ${expandedCertId === uc.id ? 'rotate-90' : ''}`}>
-                      <ChevronRight size={16} className="text-[#ADADAD]" />
-                    </div>
-                  </button>
+                  <div className="flex items-center pr-3">
+                    <button
+                      onClick={() => setExpandedCertId((prev) => prev === uc.id ? null : uc.id)}
+                      className="flex-1 px-4 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center text-[20px] flex-shrink-0">
+                        {CERT_ICONS[uc.cert_label] ?? '🏅'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[15px] font-black text-[#1A1A1A] truncate">{uc.cert_label}</p>
+                        <p className="text-[11px] text-[#ADADAD]">
+                          {uc.subjects.length > 0 ? `${uc.subjects.length}개 과목 수강 중` : '과목을 선택해주세요'}
+                        </p>
+                      </div>
+                      <div className={`transition-transform duration-200 ${expandedCertId === uc.id ? 'rotate-90' : ''}`}>
+                        <ChevronRight size={16} className="text-[#ADADAD]" />
+                      </div>
+                    </button>
+                    {/* 제거 버튼 */}
+                    <button
+                      onClick={async () => {
+                        const userId = session?.user?.id ?? ''
+                        if (!userId) return
+                        try {
+                          await fetch('/api/v1/user-certifications', {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ userId, certId: uc.id }),
+                          })
+                          setExpandedCertId(null)
+                          await loadClassroom()
+                        } catch { /* ignore */ }
+                      }}
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#FFF0F0] flex-shrink-0"
+                    >
+                      <X size={14} className="text-[#E24B4A]" />
+                    </button>
+                  </div>
 
                   {expandedCertId === uc.id && (
                     <div className="border-t border-[#F0F0EE]">

@@ -188,8 +188,8 @@ export default function ChaptersPage() {
   return (
     <div className="min-h-screen bg-[#F5F5F3]">
       <div className="bg-white border-b border-[#E5E5E5] px-5 pt-12 pb-4">
-        <button onClick={() => router.push('/trainer/dashboard')} className="flex items-center gap-1 text-[13px] text-[#6B6B6B] mb-3">
-          <ChevronLeft size={16} /> 대시보드
+        <button onClick={() => router.push('/trainer/dashboard?tab=classroom')} className="flex items-center gap-1 text-[13px] text-[#6B6B6B] mb-3">
+          <ChevronLeft size={16} /> 강의실로
         </button>
         <h1 className="text-[22px] font-black text-[#1A1A1A]">{subject?.name ?? '챕터 목록'}</h1>
         <p className="text-[13px] text-[#6B6B6B] mt-1">{chapters.length}개 챕터</p>
