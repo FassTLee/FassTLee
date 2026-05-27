@@ -51,7 +51,7 @@ function splitSentences(text: string): string[] {
   return text
     .split(/(?<=[.。!?])\s+/)
     .map((s) => s.replace(/[.。!?]$/, '').trim())
-    .filter((s) => s.length > 0)
+    .filter((s) => s.length > 1 && !/^\d+$/.test(s.trim()))
     .slice(0, 3)
 }
 
