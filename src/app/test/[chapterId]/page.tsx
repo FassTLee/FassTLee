@@ -86,6 +86,8 @@ export default function TestPage() {
       .from('chapter_questions')
       .select('id, question, options, answer_index, explanation, image_url, reference_text, question_type')
       .eq('chapter_id', chapterId)
+      .eq('question_type', 'basic')
+      .not('answer_index', 'is', null)
     const raw = data ?? []
     setQuestions(raw.length > 10 ? shuffle(raw).slice(0, 10) : raw)
     setLoading(false)

@@ -247,9 +247,7 @@ export default function ChaptersPage() {
             }
 
             return (
-              <div key={ch.id} className={`w-full rounded-2xl border flex items-center active:bg-[#F5F5F3] ${
-                !stat && !isLocked ? 'bg-[#FAFAFA] border-[#EBEBEB]' : 'bg-white border-[#E5E5E5]'
-              }`}>
+              <div key={ch.id} className="w-full rounded-2xl border border-[#E5E5E5] bg-white flex items-center active:bg-[#F5F5F3]">
                 {/* 메인 영역 (클릭 → 레슨 진입) */}
                 <button
                   onClick={() => {
@@ -279,8 +277,10 @@ export default function ChaptersPage() {
 
                     {isLocked ? (
                       <span className="text-[10px] text-[#ADADAD]">🔒 구독 후 이용 가능</span>
-                    ) : (
+                    ) : statusLabel ? (
                       <span className={`text-[10px] font-bold ${statusColor}`}>{statusLabel}</span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-[#00A651]">시작하기</span>
                     )}
                   </div>
 
