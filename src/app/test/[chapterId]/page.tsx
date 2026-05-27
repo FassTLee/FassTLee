@@ -55,15 +55,16 @@ export default function TestPage() {
   const params = useParams()
   const chapterId = params.chapterId as string
 
-  const [questions, setQuestions] = useState<Question[]>([])
-  const [current, setCurrent]     = useState(0)
-  const [selected, setSelected]   = useState<number | null>(null)
-  const [records, setRecords]     = useState<AnswerRecord[]>([])
-  const [loading, setLoading]     = useState(true)
+  const [questions, setQuestions]         = useState<Question[]>([])
+  const [current, setCurrent]             = useState(0)
+  const [selected, setSelected]           = useState<number | null>(null)
+  const [records, setRecords]             = useState<AnswerRecord[]>([])
+  const [loading, setLoading]             = useState(true)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
-  const [certLabel, setCertLabel] = useState('')
-  const [reportUrl, setReportUrl] = useState<string | null>(null)  // 전면 광고 후 이동할 URL
-  const [countdown, setCountdown] = useState(3)
+  const [certLabel, setCertLabel]         = useState('')
+  const [reportUrl, setReportUrl]         = useState<string | null>(null)
+  const [countdown, setCountdown]         = useState(3)
+  const [showModelAnswer, setShowModelAnswer] = useState(false)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -82,27 +83,37 @@ export default function TestPage() {
   }, [reportUrl, countdown]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchQuestions = async () => {
-    const { data } = await supabase
+    const { data: basicData } = await supabase
       .from('chapter_questions')
       .select('id, question, options, answer_index, explanation, image_url, reference_text, question_type')
       .eq('chapter_id', chapterId)
       .eq('question_type', 'basic')
       .not('answer_index', 'is', null)
-    const raw = data ?? []
-    setQuestions(raw.length > 10 ? shuffle(raw).slice(0, 10) : raw)
+
+    const { data: oralData } = await supabase
+      .from('chapter_questions')
+      .select('id, question, options, answer_index, explanation, image_url, reference_text, question_type')
+      .eq('chapter_id', chapterId)
+      .eq('question_type', 'oral')
+
+    const basicQ = shuffle(basicData ?? []).slice(0, 5)
+    const oralQ  = shuffle(oralData  ?? []).slice(0, 5)
+    setQuestions([...basicQ, ...oralQ])
     setLoading(false)
   }
 
   const handleNext = () => {
     if (selected === null) return
     const q = questions[current]
+    const isOral = q.question_type === 'oral'
+    const correct = isOral ? selected === 0 : selected === q.answer_index
     const rec: AnswerRecord = {
       questionId:   q.id,
       question:     q.question,
       options:      q.options,
       answer_index: q.answer_index,
       selected,
-      correct:      selected === q.answer_index,
+      correct,
       explanation:  q.explanation,
     }
     const nextRecords = [...records, rec]
@@ -129,6 +140,7 @@ export default function TestPage() {
       setRecords(nextRecords)
       setCurrent(current + 1)
       setSelected(null)
+      setShowModelAnswer(false)
     }
   }
 
@@ -171,8 +183,12 @@ export default function TestPage() {
   }
 
   const q        = questions[current]
+  const isOral   = q.question_type === 'oral'
   const progress = ((current + 1) / questions.length) * 100
   const isLast   = current + 1 >= questions.length
+
+  // 하단 버튼 비활성 조건: oral이고 모범답안 미확인이면 비활성
+  const isNextDisabled = selected === null || (isOral && !showModelAnswer)
 
   return (
     <div className="min-h-screen bg-[#F5F5F3] flex flex-col">
@@ -188,7 +204,12 @@ export default function TestPage() {
           <ChevronLeft size={20} className="text-[#1A1A1A]" />
         </button>
         <span className="text-[13px] text-[#ADADAD] flex-1">{current + 1} / {questions.length}</span>
-        {certLabel && (
+        {isOral && (
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1A1A1A]/10 text-[#1A1A1A]">
+            주관식
+          </span>
+        )}
+        {!isOral && certLabel && (
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1A1A1A]/10 text-[#1A1A1A]">
             {certLabel}
           </span>
@@ -247,29 +268,81 @@ export default function TestPage() {
           </div>
         )}
 
-        {/* 4지선다 — 선택한 보기만 하이라이트, 정답/오답 표시 없음 */}
-        <div className="space-y-2.5">
-          {q.options.map((opt, i) => (
-            <button
-              key={i}
-              onClick={() => setSelected(i)}
-              className={`w-full flex items-center px-4 py-4 rounded-2xl border-2 text-left text-[14px] font-medium transition-all ${
-                selected === i
-                  ? 'border-[#00A651] bg-[#00A651]/5 text-[#1A1A1A]'
-                  : 'border-[#E5E5E5] bg-white text-[#1A1A1A]'
-              }`}
-            >
-              {cleanOption(opt)}
-            </button>
-          ))}
-        </div>
+        {/* ── 주관식(oral) UI ── */}
+        {isOral ? (
+          <div className="space-y-3">
+            {!showModelAnswer ? (
+              <>
+                <p className="text-[13px] text-[#ADADAD] text-center py-4">
+                  구술로 답해보세요
+                </p>
+                <button
+                  onClick={() => setShowModelAnswer(true)}
+                  className="w-full py-4 bg-[#1A1A1A] text-white rounded-2xl text-[15px] font-bold"
+                >
+                  모범답안 보기
+                </button>
+              </>
+            ) : (
+              <>
+                {/* 모범답안 카드 */}
+                <div className="bg-[#F5F5F3] rounded-2xl p-4">
+                  <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">모범답안</p>
+                  <p className="text-[14px] text-[#1A1A1A] leading-relaxed whitespace-pre-line">
+                    {q.explanation ?? q.question}
+                  </p>
+                </div>
+                {/* 자기평가 버튼 */}
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={() => setSelected(0)}
+                    className={`flex-1 py-3.5 rounded-2xl text-[14px] font-bold transition-all ${
+                      selected === 0
+                        ? 'bg-[#00A651] text-white'
+                        : 'bg-[#00A651]/10 text-[#00A651] border-2 border-[#00A651]/30'
+                    }`}
+                  >
+                    ✅ 알았다
+                  </button>
+                  <button
+                    onClick={() => setSelected(1)}
+                    className={`flex-1 py-3.5 rounded-2xl text-[14px] font-bold transition-all ${
+                      selected === 1
+                        ? 'bg-[#E24B4A] text-white'
+                        : 'bg-[#E24B4A]/10 text-[#E24B4A] border-2 border-[#E24B4A]/30'
+                    }`}
+                  >
+                    🔁 다시 볼게
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          /* ── 4지선다(basic) UI ── */
+          <div className="space-y-2.5">
+            {q.options.map((opt, i) => (
+              <button
+                key={i}
+                onClick={() => setSelected(i)}
+                className={`w-full flex items-center px-4 py-4 rounded-2xl border-2 text-left text-[14px] font-medium transition-all ${
+                  selected === i
+                    ? 'border-[#00A651] bg-[#00A651]/5 text-[#1A1A1A]'
+                    : 'border-[#E5E5E5] bg-white text-[#1A1A1A]'
+                }`}
+              >
+                {cleanOption(opt)}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Bottom button */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-[#E5E5E5]">
         <button
           onClick={handleNext}
-          disabled={selected === null}
+          disabled={isNextDisabled}
           className={`w-full py-4 disabled:opacity-40 text-white rounded-2xl text-[16px] font-bold ${
             isLast ? 'bg-[#111111]' : 'bg-[#00A651]'
           }`}
