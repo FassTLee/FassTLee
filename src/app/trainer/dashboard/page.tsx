@@ -48,6 +48,19 @@ const BODYBUILD_COURSES: Record<string, string> = {
   '협회 규정':          '2c72f373-253d-41fc-b1d5-e156f485043e',
 }
 
+// 구술/실기 보디빌딩 과목 → subjectId 매핑
+const BODYBUILD_SUBJECTS: Record<string, string> = {
+  '도핑 규정':         '6944e483-027e-4009-93e9-5826ac992d8a',
+  '보디빌딩 경기 규정': '054b7ae7-59df-4f65-b357-5d64d7617cb5',
+  '복장 및 포징 규정':  '6eed10b3-c3c1-4023-8a3c-7bdbb1203212',
+  '생활체육 지도 방법': '7b8b495b-5897-4de9-acf8-0557c5938ad2',
+  '스포츠 인권':        '77119580-8805-4865-a705-65d515017771',
+  '운동생리학':         '8f2c693c-20eb-4752-91b4-af3d45d11601',
+  '운동영양학':         '88754cd4-cf5c-4a11-a974-e10dd50cf09e',
+  '응급처치':           'b967339b-0195-4b7e-bceb-6ff1f4fc60f9',
+  '협회 규정':          '01340b0e-af8a-4b8a-93bc-6ae11b3b2c54',
+}
+
 // 자격증별 필수/선택 과목 구분
 const REQUIRED_SUBJECTS: Record<string, string[]> = {
   'health-exercise-manager': [
@@ -1551,7 +1564,10 @@ function DashboardContent() {
                         Object.entries(BODYBUILD_COURSES).map(([subjectName, courseId], idx) => (
                           <button
                             key={subjectName}
-                            onClick={() => router.push(`/oral-exam/${courseId}`)}
+                            onClick={() => {
+                              localStorage.setItem('kinepia_current_subject_id', BODYBUILD_SUBJECTS[subjectName] ?? '')
+                              router.push(`/chapters/${BODYBUILD_SUBJECTS[subjectName] ?? courseId}`)
+                            }}
                             className={`w-full px-4 py-3.5 flex items-center gap-3 text-left active:bg-[#F5F5F3] ${idx < Object.keys(BODYBUILD_COURSES).length - 1 ? 'border-b border-[#F0F0EE]' : ''}`}
                           >
                             <div className="w-9 h-9 rounded-xl bg-[#F5F5F3] flex items-center justify-center text-[18px] flex-shrink-0">
@@ -1559,7 +1575,7 @@ function DashboardContent() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-[13px] font-bold text-[#1A1A1A] truncate">{subjectName}</p>
-                              <p className="text-[10px] text-[#ADADAD] mt-0.5">구술 모의고사 시작</p>
+                              <p className="text-[10px] text-[#ADADAD] mt-0.5">챕터 학습</p>
                             </div>
                             <ChevronRight size={14} className="text-[#ADADAD] flex-shrink-0" />
                           </button>

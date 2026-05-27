@@ -221,7 +221,7 @@ export default function OralExamPage() {
   // ── 취소 / 나가기 ──────────────────────────────────
   const handleCancel = () => {
     if (activePhase === 'answer') { setShowExitConfirm(true); return }
-    router.push(courseId ? `/chapters/${courseId}` : '/trainer/dashboard')
+    router.push('/trainer/dashboard?tab=classroom')
   }
 
   const optionLabel = ['A', 'B', 'C', 'D', 'E']
