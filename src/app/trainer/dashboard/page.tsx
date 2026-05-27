@@ -1506,6 +1506,14 @@ function DashboardContent() {
 
     return (
       <div className="overflow-y-auto p-4 pb-[130px] space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
+        <style>{`
+          @keyframes marquee {
+            0%   { transform: translateX(0%); }
+            30%  { transform: translateX(0%); }
+            70%  { transform: translateX(-50%); }
+            100% { transform: translateX(-50%); }
+          }
+        `}</style>
         <div className="pt-8">
           <h2 className="text-[20px] font-black text-[#1A1A1A]">강의실</h2>
         </div>
@@ -1518,7 +1526,7 @@ function DashboardContent() {
               .sort((a, b) => a.order_index - b.order_index)
               .map((uc) => (
                 <div key={uc.id} className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
-                  <div className="flex items-center pr-3">
+                  <div className="flex items-center pr-3 overflow-hidden">
                     <button
                       onClick={() => setExpandedCertId((prev) => prev === uc.id ? null : uc.id)}
                       className="flex-1 px-4 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
@@ -1527,7 +1535,18 @@ function DashboardContent() {
                         {CERT_ICONS[uc.cert_label] ?? '🏅'}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[15px] font-black text-[#1A1A1A] truncate">{uc.cert_label}</p>
+                        <div className="overflow-hidden">
+                          <p
+                            className="text-[15px] font-black text-[#1A1A1A] whitespace-nowrap"
+                            style={
+                              uc.cert_label.length > 12
+                                ? { animation: 'marquee 8s linear infinite', display: 'inline-block' }
+                                : {}
+                            }
+                          >
+                            {uc.cert_label}
+                          </p>
+                        </div>
                         <p className="text-[11px] text-[#ADADAD]">
                           {uc.subjects.length > 0 ? `${uc.subjects.length}개 과목 수강 중` : '과목을 선택해주세요'}
                         </p>
