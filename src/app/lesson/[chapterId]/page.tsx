@@ -22,9 +22,10 @@ interface Question {
   id: string
   question: string
   options: string[]
-  answer_index: number
+  answer_index: number | null
   explanation: string | null
   difficulty?: string | null
+  question_type?: string | null
 }
 
 interface Slide {
@@ -145,7 +146,7 @@ export default function LessonPage() {
     const [{ data: ch, error: chErr }, { data: qs, error: qsErr }] = await Promise.all([
       supabase.from('chapters').select('id, title, course_id, video_url, audio_url, image_url').eq('id', chapterId).single(),
       supabase.from('chapter_questions')
-        .select('id, question, options, answer_index, explanation')
+        .select('id, question, options, answer_index, explanation, question_type')
         .eq('chapter_id', chapterId),
     ])
 
@@ -169,7 +170,11 @@ export default function LessonPage() {
       }
     }
 
-    const allQ = qs ?? []
+    const allQ = (qs ?? []).filter(q =>
+      q.answer_index !== null &&
+      Array.isArray(q.options) &&
+      q.options.length >= 2
+    )
     setQuestions(allQ)
 
     const isM = (localStorage.getItem(STYLE_KEY) ?? 'conceptualizer') === 'memorizer'
@@ -253,6 +258,11 @@ export default function LessonPage() {
       return
     }
 
+    if (q.answer_index === null) {
+      if (fromIdx >= slides.length - 1) { advanceFromQuiz() }
+      else { setSlideIndex(fromIdx + 1); setCheckedSentences([]); setAutoProgress(0) }
+      return
+    }
     const correct = q.options[q.answer_index]
     const wrongOptions = q.options.filter((_, i) => i !== q.answer_index)
 

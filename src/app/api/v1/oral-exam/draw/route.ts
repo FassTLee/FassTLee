@@ -34,6 +34,8 @@ export async function GET(req: NextRequest) {
     .from('chapter_questions')
     .select('id, question, options, chapter_id')
     .in('chapter_id', chapterIds)
+    .eq('question_type', 'basic')
+    .not('options', 'eq', '[]')
 
   if (qErr || !questions?.length) {
     return NextResponse.json({ questions: [] })
