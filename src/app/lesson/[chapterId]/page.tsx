@@ -160,12 +160,20 @@ export default function LessonPage() {
       if (ch.image_url) setChapterImageUrl(ch.image_url)
       if (ch.course_id) {
         const { data: course } = await supabase
-          .from('courses').select('id, subject_id, description').eq('id', ch.course_id).single()
+          .from('courses').select('id, subject_id, description, certification_id').eq('id', ch.course_id).single()
         if (course?.description) setCourseDesc(course.description)
         if (course?.subject_id) {
           const { data: subj } = await supabase
             .from('subjects').select('name').eq('id', course.subject_id).single()
           if (subj?.name) setSubjectName(subj.name)
+        }
+        if (course?.certification_id) {
+          const { data: cert } = await supabase
+            .from('certifications')
+            .select('name')
+            .eq('id', course.certification_id)
+            .single()
+          if (cert?.name) setCertLabel(cert.name)
         }
       }
     }
@@ -245,7 +253,7 @@ export default function LessonPage() {
     pendingSlideIdxRef.current = fromIdx
 
     // 현재 슬라이드에 해당하는 문제 사용
-    const q = questions.find((q) => q.id === slides[fromIdx]?.id) ?? questions[fromIdx]
+    const q = questions.find((q) => q.id === slides[fromIdx]?.id) ?? questions[fromIdx % Math.max(questions.length, 1)]
     if (!q) {
       // 문제 데이터 없으면 퀴즈 건너뛰고 바로 진행
       if (fromIdx >= slides.length - 1) {
