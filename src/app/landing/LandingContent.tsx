@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signIn, useSession } from 'next-auth/react'
 import { Check, ChevronRight } from 'lucide-react'
@@ -145,45 +144,45 @@ export default function LandingContent() {
         <div className="relative max-w-md mx-auto px-6 pt-16 pb-12">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-[#00A651]/20 border border-[#00A651]/40 rounded-full px-3 py-1.5 text-[12px] font-bold text-[#00A651] mb-6">
-            🎯 건강운동관리사 합격 특화
+            국가공인 체육 자격증 전문 플랫폼
           </div>
 
           <h1 className="text-[34px] font-black leading-tight mb-3">
-            건강운동관리사<br />
-            <span className="text-[#00A651]">합격의 지름길</span>
+            국가가 인정한<br />
+            <span className="text-[#00A651]">체육 전문가의 시작</span>
           </h1>
           <p className="text-[16px] text-white/70 leading-relaxed mb-8">
-            성향 맞춤 학습으로 더 빠르게 합격하세요.<br />
-            암기형·이해형 진단부터 오답 분석까지,<br />
-            <strong className="text-white">Kinepia</strong>가 함께합니다.
+            건강운동관리사 · 생활스포츠지도사<br />
+            내 성향에 맞는 학습으로 합격까지
           </p>
 
-          {/* Stats row */}
-          <div className="grid grid-cols-3 gap-4 mb-8 pb-8 border-b border-white/10">
+          {/* Cert list */}
+          <div className="space-y-2.5 mb-8 pb-8 border-b border-white/10">
             {[
-              { value: '400+', label: '예상 문제' },
-              { value: '8과목', label: '전 과목 커버' },
-              { value: '무료', label: '시작 가능' },
-            ].map((s, i) => (
-              <div key={i} className="text-center">
-                <div className="text-[20px] font-black text-white">{s.value}</div>
-                <div className="text-[10px] text-white/50 mt-0.5">{s.label}</div>
+              { name: '건강운동관리사', sub: '필기 8과목', available: true },
+              { name: '2급 생활스포츠지도사 (보디빌딩)', sub: '구술/실기', available: true },
+              { name: '2급 생활스포츠지도사 필기', sub: '준비중', available: false },
+              { name: '1급 생활스포츠지도사', sub: '필기 · 준비중', available: false },
+            ].map((cert, i) => (
+              <div key={i} className={`flex items-center justify-between${!cert.available ? ' opacity-45' : ''}`}>
+                <div>
+                  <p className="text-[13px] font-bold text-white">{cert.name}</p>
+                  <p className="text-[11px] text-white/50">{cert.sub}</p>
+                </div>
+                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${cert.available ? 'bg-[#00A651]/30 text-[#00A651]' : 'bg-white/10 text-white/40'}`}>
+                  {cert.available ? '학습 가능' : '준비중'}
+                </span>
               </div>
             ))}
           </div>
 
           {/* CTA */}
-          <Link
-            href="/landing/test"
-            prefetch={true}
-            onClick={removeExitListeners}
-            className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-[#FF5722] text-[#FF5722] hover:bg-[#FF5722] hover:text-white rounded-2xl text-[16px] font-bold mb-4 transition-colors"
+          <button
+            onClick={() => { removeExitListeners(); router.push('/landing/survey') }}
+            className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold mb-4 transition-colors active:bg-[#008c44]"
           >
-            무료 테스트 시작 <ChevronRight size={18} />
-          </Link>
-          <p className="text-[11px] text-white/40 text-center mb-4">
-            로그인 없이 바로 시작 가능 · 결과 저장 시 로그인
-          </p>
+            내 학습 유형 알아보기 <ChevronRight size={18} />
+          </button>
 
           {/* Login buttons */}
           <div className="grid grid-cols-3 gap-2">
@@ -480,7 +479,7 @@ export default function LandingContent() {
                   )}
                 </div>
 
-                <div className="space-y-2 mb-4">
+                <div className="space-y-2">
                   {plan.features.map((f, j) => (
                     <div key={j} className="flex items-center gap-2.5">
                       <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -503,20 +502,6 @@ export default function LandingContent() {
                     </div>
                   ))}
                 </div>
-
-                <button
-                  onClick={() => { removeExitListeners(); router.push('/landing/test') }}
-                  disabled={plan.comingSoon}
-                  className={`w-full py-3 rounded-xl text-[13px] font-bold transition-colors ${
-                    plan.comingSoon
-                      ? 'bg-[#E5E5E5] text-[#ADADAD] cursor-not-allowed'
-                      : plan.highlight
-                      ? 'bg-[#00A651] text-white hover:bg-[#008c44]'
-                      : 'bg-[#F5F5F3] text-[#1A1A1A] hover:bg-[#E5E5E5]'
-                  }`}
-                >
-                  {plan.comingSoon ? 'Coming Soon' : plan.highlight ? '1주일 무료 체험' : '시작하기'}
-                </button>
               </div>
             ))}
           </div>
@@ -573,14 +558,6 @@ export default function LandingContent() {
             무료로 시작하고, 필요할 때 구독하세요.<br />
             건강운동관리사 합격, Kinepia와 함께라면 가능합니다.
           </p>
-          <Link
-            href="/landing/test"
-            prefetch={true}
-            onClick={removeExitListeners}
-            className="w-full flex items-center justify-center gap-2 py-4 bg-white border-2 border-[#FF5722] text-[#FF5722] hover:bg-[#FF5722] hover:text-white rounded-2xl text-[16px] font-bold mb-3 transition-colors"
-          >
-            무료 테스트 시작 <ChevronRight size={18} />
-          </Link>
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={handleGoogleSignIn}
