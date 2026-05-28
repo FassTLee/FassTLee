@@ -42,17 +42,25 @@ interface MiniQ {
   answerIdx: 0 | 1
 }
 
-function getShort(text: string, n = 2): string {
-  const sentences = text.match(/[^.!?。\n]+[.!?。]?/g) ?? []
-  return sentences.slice(0, n).join('').trim()
-}
-
 function splitSentences(text: string): string[] {
   return text
     .split(/(?<=[.。!?])\s+/)
     .map((s) => s.replace(/[.。!?]$/, '').trim())
     .filter((s) => s.length > 1 && !/^\d+$/.test(s.trim()))
     .slice(0, 3)
+}
+
+function parseExplanation(text: string): { prose: string; points: string[] } {
+  if (!text) return { prose: '', points: [] }
+
+  // 번호 패턴 (1. 2. 3. 또는 1) 2) 등)
+  const parts = text.split(/\n?\s*\d+[.)]\s+/)
+  const prose = parts[0].trim()
+  const points = parts.slice(1)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 2)
+
+  return { prose, points }
 }
 
 function toSlideTitle(q: string): string {
@@ -384,9 +392,13 @@ export default function LessonPage() {
   const isMemorizer  = style === 'memorizer'
   const currentSlide = slides[slideIndex]
 
-  const sentences = currentSlide?.explanation
-    ? splitSentences(isMemorizer ? getShort(currentSlide.explanation, 4) : currentSlide.explanation)
-    : []
+  const parsed = currentSlide?.explanation
+    ? parseExplanation(currentSlide.explanation)
+    : { prose: '', points: [] }
+
+  const sentences = parsed.points.length > 0
+    ? parsed.points
+    : splitSentences(currentSlide?.explanation ?? '')
   const allChecked = sentences.length === 0 || (checkedSentences.length === sentences.length && checkedSentences.every(Boolean))
 
   /* ════════════════════════════════════════════════════ */
@@ -541,6 +553,15 @@ export default function LessonPage() {
                   </div>
                 )}
 
+                {parsed.prose && (
+                  <div className="mb-4 p-3 bg-[#F5F5F3] rounded-xl">
+                    <p className="text-[11px] font-bold text-[#00A651] mb-2">📖 학습 내용</p>
+                    <p className="text-[13px] text-[#1A1A1A] leading-relaxed">{parsed.prose}</p>
+                  </div>
+                )}
+                {sentences.length > 0 && (
+                  <p className="text-[11px] font-bold text-[#ADADAD] mb-2">✅ 핵심 포인트 체크</p>
+                )}
                 {sentences.length > 0 ? (
                   <div className="space-y-2">
                     {sentences.map((sentence, i) => {
