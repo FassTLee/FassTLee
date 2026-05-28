@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/auth'
 export const dynamic = 'force-dynamic'
 
 // GET: 현재 유저의 신청 목록
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   if (!isSupabaseAdminConfigured) return NextResponse.json({ data: [] })
   const session = await getServerSession(authOptions)
   if (!session?.user?.id) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })

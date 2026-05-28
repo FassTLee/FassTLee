@@ -170,6 +170,7 @@ interface OralExamRegistration {
   slot_number: number
   week_number: number
   certification_id: string
+  is_completed: boolean
   created_at: string
 }
 
@@ -249,9 +250,14 @@ function DashboardContent() {
 
   /* ── 모의고사 ────────────────────────────────────────────────────── */
   const [selectedExamCert, setSelectedExamCert] = useState<string | null>(null)
-  const [oralRegistration, setOralRegistration] = useState<OralExamRegistration | null>(null)
+  const [oralRegs, setOralRegs] = useState<OralExamRegistration[]>([])
   const [oralLoading, setOralLoading] = useState(false)
-  const [oralSelectedDate, setOralSelectedDate] = useState('')
+  const [showOralDatePicker, setShowOralDatePicker] = useState(false)
+  const [oralPickerTarget, setOralPickerTarget] = useState<{ weekNum: number; slot: number; weekDates: string[] } | null>(null)
+  const [oralPickerDate, setOralPickerDate] = useState<string | null>(null)
+  const [showOralTicket, setShowOralTicket] = useState<OralExamRegistration | null>(null)
+  const [showOralTimeError, setShowOralTimeError] = useState(false)
+  const [showOralNoReg, setShowOralNoReg] = useState(false)
   const [oralSubmitting, setOralSubmitting] = useState(false)
   const [healthCertSubjects, setHealthCertSubjects] = useState<{ id: string; name: string }[]>([])
 
@@ -339,14 +345,9 @@ function DashboardContent() {
   useEffect(() => {
     if (selectedExamCert !== 'sports-instructor-2-practical') return
     setOralLoading(true)
-    fetch('/api/v1/oral-exam-register')
+    fetch('/api/v1/oral-exam-reg')
       .then((r) => r.json())
-      .then((d) => {
-        const regs = d.registrations ?? []
-        setOralRegistration(regs.length > 0 ? regs[0] : null)
-      })
-      .catch(() => {})
-      .finally(() => setOralLoading(false))
+      .then((d) => { setOralRegs(d.data ?? []); setOralLoading(false) })
   }, [selectedExamCert])
 
   const initCommon = async () => {
@@ -1844,18 +1845,54 @@ function DashboardContent() {
     if (selectedExamCert === 'sports-instructor-2-practical') {
       const todayStr = new Date().toISOString().split('T')[0]
 
-      let canEnter = false
-      let endTimeStr = ''
-      if (oralRegistration?.start_time && oralRegistration?.exam_date) {
-        const startDt = new Date(`${oralRegistration.exam_date}T${oralRegistration.start_time}:00`)
-        const endDt   = new Date(startDt.getTime() + 10 * 60 * 1000)
-        canEnter = new Date() >= startDt && new Date() <= endDt
-        const eh = endDt.getHours(); const em = endDt.getMinutes()
-        endTimeStr = `${String(eh).padStart(2, '0')}:${String(em).padStart(2, '0')}`
+      const getOralWeeks = () => {
+        const now = new Date()
+        now.setHours(0, 0, 0, 0)
+        const examDate = new Date('2026-06-16')
+
+        const dayOfWeek = now.getDay()
+        const monday = new Date(now)
+        monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1))
+
+        const weeks: {
+          weekNum: number; label: string; range: string
+          dates: string[]; isCurrent: boolean; isPast: boolean
+        }[] = []
+
+        for (let w = -1; w <= 2; w++) {
+          const weekStart = new Date(monday)
+          weekStart.setDate(monday.getDate() + w * 7)
+          const weekEnd = new Date(weekStart)
+          weekEnd.setDate(weekStart.getDate() + 6)
+
+          if (weekStart > examDate) continue
+
+          const dates = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(weekStart)
+            d.setDate(weekStart.getDate() + i)
+            return d.toISOString().split('T')[0]
+          })
+
+          const diffDays = Math.ceil((examDate.getTime() - weekStart.getTime()) / 86400000)
+          const weekNum = Math.ceil(diffDays / 7)
+
+          weeks.push({
+            weekNum,
+            label: `${weekNum}주차`,
+            range: `${weekStart.getMonth() + 1}/${weekStart.getDate()} — ${weekEnd.getMonth() + 1}/${weekEnd.getDate()}`,
+            dates,
+            isCurrent: w === 0,
+            isPast: w < 0,
+          })
+        }
+        return weeks.reverse()
       }
+
+      const oralWeeks = getOralWeeks()
 
       return (
         <div className="overflow-y-auto p-4 pb-24 space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
+          {/* 헤더 */}
           <div className="pt-8 pb-2 flex items-center gap-3">
             <button
               onClick={() => setSelectedExamCert(null)}
@@ -1865,7 +1902,7 @@ function DashboardContent() {
             </button>
             <div>
               <h2 className="text-[20px] font-black text-[#1A1A1A]">구술 모의고사</h2>
-              <p className="text-[13px] text-[#ADADAD] mt-0.5">주당 2회 자유 응시</p>
+              <p className="text-[13px] text-[#ADADAD] mt-0.5">주당 2회 · 날짜 자유 선택</p>
             </div>
           </div>
 
@@ -1873,90 +1910,115 @@ function DashboardContent() {
             <div className="flex items-center justify-center py-12">
               <div className="w-6 h-6 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : oralRegistration === null ? (
-            /* 신청 전 */
-            <div className="bg-white rounded-2xl border border-[#E5E5E5] p-5 space-y-4">
-              <div>
-                <p className="text-[16px] font-black text-[#1A1A1A]">구술 모의고사 신청</p>
-                <p className="text-[12px] text-[#ADADAD] mt-1">매주 2회 응시 가능 · 신청 순서대로 수험번호 배정</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-[12px] font-bold text-[#6B6B6B]">시험 날짜 선택</p>
-                <input
-                  type="date"
-                  min={todayStr}
-                  value={oralSelectedDate}
-                  onChange={(e) => setOralSelectedDate(e.target.value)}
-                  className="w-full border border-[#E5E5E5] rounded-xl px-4 py-3 text-[14px] text-[#1A1A1A] outline-none focus:border-[#00A651]"
-                />
-              </div>
-              <button
-                disabled={!oralSelectedDate || oralSubmitting}
-                onClick={async () => {
-                  if (!oralSelectedDate || oralSubmitting) return
-                  setOralSubmitting(true)
-                  try {
-                    const res  = await fetch('/api/v1/oral-exam-register', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ exam_date: oralSelectedDate }),
-                    })
-                    const data = await res.json()
-                    if (!res.ok) { alert(data.error ?? '신청에 실패했습니다') }
-                    else { setOralRegistration(data.registration) }
-                  } catch { alert('네트워크 오류가 발생했습니다') }
-                  finally { setOralSubmitting(false) }
-                }}
-                className={`w-full py-3.5 rounded-xl text-[14px] font-bold transition-colors ${
-                  oralSelectedDate && !oralSubmitting
-                    ? 'bg-[#1A1A1A] text-white active:bg-[#333]'
-                    : 'bg-[#F5F5F3] text-[#ADADAD]'
-                }`}
-              >
-                {oralSubmitting ? '신청 중...' : '신청하기'}
-              </button>
-            </div>
           ) : (
-            /* 신청 완료 — 수험증 카드 */
-            <div className="space-y-3">
-              <div className="bg-white rounded-2xl border-2 border-[#1A1A1A] p-5 space-y-4">
-                <div className="text-center">
-                  <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-widest">수험번호</p>
-                  <p className="text-[52px] font-black text-[#1A1A1A] leading-none mt-1">
-                    #{oralRegistration.ticket_number}
-                  </p>
+            <div className="space-y-4">
+              {oralWeeks.map((week) => (
+                <div key={week.weekNum} className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
+                  {/* 주차 헤더 */}
+                  <div className={`px-4 py-3 flex items-center justify-between ${week.isCurrent ? 'bg-[#1A1A1A]' : 'bg-[#F5F5F3]'}`}>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[14px] font-black ${week.isCurrent ? 'text-white' : 'text-[#1A1A1A]'}`}>
+                        {week.label}
+                      </span>
+                      {week.isCurrent && (
+                        <span className="text-[10px] font-bold text-[#00A651] bg-[#00A651]/20 px-2 py-0.5 rounded-full">이번 주</span>
+                      )}
+                      {week.isPast && (
+                        <span className="text-[10px] font-bold text-[#ADADAD] bg-[#E5E5E5] px-2 py-0.5 rounded-full">지난 주</span>
+                      )}
+                    </div>
+                    <span className={`text-[11px] ${week.isCurrent ? 'text-white/60' : 'text-[#ADADAD]'}`}>{week.range}</span>
+                  </div>
+
+                  {/* 슬롯 2개 */}
+                  <div className="divide-y divide-[#F0F0EE]">
+                    {([1, 2] as const).map((slot) => {
+                      const reg = oralRegs.find(
+                        (r) => r.week_number === week.weekNum && r.slot_number === slot
+                      )
+                      const isToday = reg?.exam_date === todayStr
+
+                      let slotButton: JSX.Element
+
+                      if (reg?.is_completed) {
+                        slotButton = (
+                          <button
+                            disabled
+                            className="px-4 py-2 rounded-xl text-[12px] font-bold bg-[#00A651]/10 text-[#00A651]"
+                          >
+                            완료 ✓
+                          </button>
+                        )
+                      } else if (reg && isToday) {
+                        slotButton = (
+                          <button
+                            className="px-4 py-2 rounded-xl text-[12px] font-bold bg-[#1A1A1A] text-white active:opacity-80"
+                            onClick={() => {
+                              const [h, m] = reg.start_time.split(':').map(Number)
+                              const startMin = h * 60 + m
+                              const now = new Date()
+                              const nowMin = now.getHours() * 60 + now.getMinutes()
+                              if (nowMin >= startMin && nowMin < startMin + 10) {
+                                router.push('/oral-exam/b28e78c8-8443-4013-bfef-dbe655c72994')
+                              } else {
+                                setShowOralTimeError(true)
+                              }
+                            }}
+                          >
+                            시작하기
+                          </button>
+                        )
+                      } else if (reg && !isToday) {
+                        slotButton = (
+                          <button
+                            className="px-4 py-2 rounded-xl text-[12px] font-bold bg-[#F5F5F3] text-[#6B6B6B] border border-[#E5E5E5] active:bg-[#EBEBEB]"
+                            onClick={() => setShowOralTicket(reg)}
+                          >
+                            수험표
+                          </button>
+                        )
+                      } else if (!reg && week.isPast) {
+                        slotButton = (
+                          <button
+                            disabled
+                            className="px-4 py-2 rounded-xl text-[12px] font-bold bg-[#F5F5F3] text-[#ADADAD]"
+                          >
+                            기간 종료
+                          </button>
+                        )
+                      } else {
+                        slotButton = (
+                          <button
+                            className="px-4 py-2 rounded-xl text-[12px] font-bold bg-[#00A651] text-white active:opacity-80"
+                            onClick={() => {
+                              setOralPickerTarget({ weekNum: week.weekNum, slot, weekDates: week.dates })
+                              setShowOralDatePicker(true)
+                            }}
+                          >
+                            신청하기
+                          </button>
+                        )
+                      }
+
+                      return (
+                        <div key={slot} className="px-4 py-3.5 flex items-center justify-between">
+                          <div>
+                            <p className="text-[13px] font-bold text-[#1A1A1A]">{slot}회차</p>
+                            {reg ? (
+                              <p className="text-[11px] text-[#ADADAD] mt-0.5">
+                                {reg.exam_date} · #{reg.ticket_number}번
+                              </p>
+                            ) : (
+                              <p className="text-[11px] text-[#ADADAD] mt-0.5">날짜 미정</p>
+                            )}
+                          </div>
+                          {slotButton}
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
-                <div className="border-t border-[#F0F0EE] pt-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12px] text-[#ADADAD]">시험 일시</span>
-                    <span className="text-[13px] font-bold text-[#1A1A1A]">
-                      {oralRegistration.exam_date} {oralRegistration.start_time}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12px] text-[#ADADAD]">자격증</span>
-                    <span className="text-[13px] font-bold text-[#1A1A1A]">2급 생활스포츠지도사 구술</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12px] text-[#ADADAD]">입장 가능 시간</span>
-                    <span className="text-[13px] font-bold text-[#1A1A1A]">
-                      {oralRegistration.start_time} ~ {endTimeStr}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <button
-                disabled={!canEnter}
-                onClick={() => { if (canEnter) router.push('/oral-exam/b28e78c8-8443-4013-bfef-dbe655c72994') }}
-                className={`w-full py-4 rounded-2xl text-[15px] font-bold transition-colors ${
-                  canEnter
-                    ? 'bg-[#00A651] text-white active:bg-[#008c44]'
-                    : 'bg-[#F5F5F3] text-[#ADADAD]'
-                }`}
-              >
-                {canEnter ? '입장하기' : '수험 시간 외 입장 불가'}
-              </button>
-              <p className="text-center text-[11px] text-[#ADADAD]">신청 후 변경은 불가합니다</p>
+              ))}
             </div>
           )}
         </div>
@@ -2851,6 +2913,190 @@ function DashboardContent() {
               className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-2xl text-[15px] font-bold"
             >
               확인
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── 구술 모의고사: 날짜 선택 바텀시트 ── */}
+      {showOralDatePicker && oralPickerTarget && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center">
+          <div className="w-full max-w-lg bg-white rounded-t-3xl px-5 pt-5 pb-10">
+            <div className="w-10 h-1 bg-[#E5E5E5] rounded-full mx-auto mb-5" />
+            <div className="mb-4">
+              <h2 className="text-[18px] font-black text-[#1A1A1A]">
+                {oralPickerTarget.weekNum}주차 {oralPickerTarget.slot}회차
+              </h2>
+              <p className="text-[13px] text-[#ADADAD] mt-1">응시할 날짜를 선택하세요</p>
+            </div>
+
+            {/* 요일 헤더 */}
+            <div className="grid grid-cols-7 gap-1.5 mb-1.5">
+              {['월', '화', '수', '목', '금', '토', '일'].map((d, i) => (
+                <div
+                  key={d}
+                  className={`text-center text-[11px] font-bold ${i >= 5 ? 'text-[#E24B4A]' : 'text-[#ADADAD]'}`}
+                >
+                  {d}
+                </div>
+              ))}
+            </div>
+
+            {/* 날짜 버튼 7개 */}
+            <div className="grid grid-cols-7 gap-1.5 mb-5">
+              {oralPickerTarget.weekDates.map((dateStr, i) => {
+                const isPast = dateStr < new Date().toISOString().split('T')[0]
+                const isSelected = oralPickerDate === dateStr
+                const isSatSun = i >= 5
+                return (
+                  <button
+                    key={dateStr}
+                    disabled={isPast}
+                    onClick={() => setOralPickerDate(dateStr)}
+                    className={`aspect-square rounded-xl flex flex-col items-center justify-center transition-all ${
+                      isPast ? 'opacity-30 cursor-not-allowed' : ''
+                    } ${
+                      isSelected
+                        ? 'bg-[#1A1A1A] text-white'
+                        : isSatSun
+                        ? 'bg-[#FFF0F0] text-[#E24B4A]'
+                        : 'bg-[#F5F5F3] text-[#1A1A1A]'
+                    }`}
+                  >
+                    <span className="text-[12px] font-bold">{dateStr.split('-')[2]}</span>
+                  </button>
+                )
+              })}
+            </div>
+
+            <p className="text-[12px] font-bold text-[#E24B4A] text-center mb-4">신청 후 변경이 불가합니다</p>
+
+            <button
+              disabled={!oralPickerDate || oralSubmitting}
+              onClick={() => {
+                if (!oralPickerDate || !oralPickerTarget || oralSubmitting) return
+                setOralSubmitting(true)
+                fetch('/api/v1/oral-exam-reg', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    certificationId: 'cc68cb0c-6c32-4b14-a7d7-e422a5bc9954',
+                    examDate: oralPickerDate,
+                    weekNumber: oralPickerTarget.weekNum,
+                    slotNumber: oralPickerTarget.slot,
+                  }),
+                })
+                  .then((r) => r.json())
+                  .then((d) => {
+                    if (d.data) {
+                      setOralRegs((prev) => [...prev, d.data])
+                      setShowOralTicket(d.data)
+                    }
+                    setShowOralDatePicker(false)
+                    setOralPickerDate(null)
+                    setOralSubmitting(false)
+                  })
+              }}
+              className={`w-full py-4 rounded-2xl text-[15px] font-bold transition-colors ${
+                oralPickerDate && !oralSubmitting
+                  ? 'bg-[#1A1A1A] text-white active:bg-[#333]'
+                  : 'bg-[#F5F5F3] text-[#ADADAD]'
+              }`}
+            >
+              {oralSubmitting ? '신청 중...' : '신청 완료'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── 구술 모의고사: 수험표 바텀시트 ── */}
+      {showOralTicket && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center">
+          <div className="w-full max-w-lg bg-white rounded-t-3xl overflow-hidden">
+            {/* 검정 헤더 */}
+            <div className="bg-[#1A1A1A] px-5 pt-6 pb-8 text-center">
+              <p className="text-[12px] font-bold text-white/50 mb-4">2급 생활스포츠지도사 구술/실기</p>
+              <p className="text-[64px] font-black text-white leading-none">
+                #{showOralTicket.ticket_number}
+              </p>
+              <p className="text-[12px] font-bold text-white/40 mt-2">수험번호</p>
+            </div>
+
+            {/* 본문 */}
+            <div className="px-5 py-5 space-y-3">
+              {(() => {
+                const startParts = showOralTicket.start_time.split(':').map(Number)
+                const endTotalMin = startParts[0] * 60 + startParts[1] + 10
+                const endH = Math.floor(endTotalMin / 60)
+                const endM = endTotalMin % 60
+                const endTimeStr = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`
+                return (
+                  <>
+                    {[
+                      { label: '응시일',        value: showOralTicket.exam_date },
+                      { label: '수험번호',       value: `#${showOralTicket.ticket_number}` },
+                      { label: '배정 시간',      value: showOralTicket.start_time.slice(0, 5) },
+                      { label: '입장 가능 시간', value: `${showOralTicket.start_time.slice(0, 5)} ~ ${endTimeStr}` },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="flex items-center justify-between py-2 border-b border-[#F0F0EE]">
+                        <span className="text-[13px] text-[#ADADAD]">{label}</span>
+                        <span className="text-[13px] font-bold text-[#1A1A1A]">{value}</span>
+                      </div>
+                    ))}
+                    <div className="mt-3 bg-[#00A651]/10 rounded-xl px-4 py-3 text-center">
+                      <p className="text-[12px] font-bold text-[#00A651]">수험 시간 외 입장 불가</p>
+                    </div>
+                  </>
+                )
+              })()}
+            </div>
+
+            <div className="px-5 pb-10">
+              <button
+                onClick={() => setShowOralTicket(null)}
+                className="w-full py-4 rounded-2xl border-2 border-[#E5E5E5] text-[15px] font-bold text-[#6B6B6B] active:bg-[#F5F5F3]"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 구술 모의고사: 수험 시간 오류 팝업 ── */}
+      {showOralTimeError && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-6">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6 text-center">
+            <div className="text-[44px] mb-3">⏰</div>
+            <h2 className="text-[17px] font-black text-[#1A1A1A] mb-2">수험 시간 외 입장 불가</h2>
+            <p className="text-[13px] text-[#6B6B6B] leading-relaxed mb-6">
+              배정된 수험 시간에만 입장할 수 있어요.<br />
+              수험표에서 배정 시간을 확인해 주세요.
+            </p>
+            <button
+              onClick={() => setShowOralTimeError(false)}
+              className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-2xl text-[15px] font-bold"
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── 구술 모의고사: 신청 내역 없음 팝업 ── */}
+      {showOralNoReg && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-6">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6 text-center">
+            <div className="text-[44px] mb-3">📋</div>
+            <h2 className="text-[17px] font-black text-[#1A1A1A] mb-2">신청 내역이 없습니다</h2>
+            <p className="text-[13px] text-[#6B6B6B] leading-relaxed mb-6">
+              원하는 날짜에 구술 모의고사를 신청해 보세요.
+            </p>
+            <button
+              onClick={() => setShowOralNoReg(false)}
+              className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-2xl text-[15px] font-bold"
+            >
+              신청하러 가기
             </button>
           </div>
         </div>
