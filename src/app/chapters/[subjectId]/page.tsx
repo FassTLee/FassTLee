@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { ChevronLeft, ChevronRight, BookOpen, Flame, Check, Lock, FileText } from 'lucide-react'
+import { ChevronLeft, ChevronRight, BookOpen, Flame, Check, Lock } from 'lucide-react'
 
 interface Chapter {
   id: string
@@ -38,7 +38,9 @@ export default function ChaptersPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const params = useParams()
-  const subjectId = params.subjectId as string
+  const subjectId    = params.subjectId as string
+  const searchParams   = useSearchParams()
+  const courseIdFilter = searchParams.get('courseId')
 
   const [subject, setSubject] = useState<Subject | null>(null)
   const [chapters, setChapters] = useState<Chapter[]>([])
@@ -127,10 +129,13 @@ export default function ChaptersPage() {
       // Step 3: chapters
       let allChapters: Chapter[] = []
       if (courseIds.length > 0) {
-        const { data: chaptersData, error: chaptersErr } = await supabase
-          .from('chapters')
-          .select('id, title, order_index, course_id')
-          .in('course_id', courseIds)
+        const chapQuery = courseIdFilter
+          ? supabase.from('chapters').select('id, title, order_index, course_id')
+              .eq('course_id', courseIdFilter)
+          : supabase.from('chapters').select('id, title, order_index, course_id')
+              .in('course_id', courseIds)
+
+        const { data: chaptersData, error: chaptersErr } = await chapQuery
           .order('order_index', { ascending: true })
 
         if (chaptersErr) {
@@ -185,6 +190,10 @@ export default function ChaptersPage() {
     )
   }
 
+  const visibleChapters = chapters.filter(
+    (ch) => ch.course_id !== '376cc5f3-eeef-4117-89bf-229a3ce417ab'
+  )
+
   return (
     <div className="min-h-screen bg-[#F5F5F3]">
       <div className="bg-white border-b border-[#E5E5E5] px-5 pt-12 pb-4">
@@ -192,18 +201,18 @@ export default function ChaptersPage() {
           <ChevronLeft size={16} /> 강의실로
         </button>
         <h1 className="text-[22px] font-black text-[#1A1A1A]">{subject?.name ?? '챕터 목록'}</h1>
-        <p className="text-[13px] text-[#6B6B6B] mt-1">{chapters.length}개 챕터</p>
+        <p className="text-[13px] text-[#6B6B6B] mt-1">{visibleChapters.length}개 챕터</p>
       </div>
 
       <div className="p-4 space-y-2">
-        {chapters.length === 0 ? (
+        {visibleChapters.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <BookOpen size={40} className="text-[#ADADAD] mb-3" />
             <p className="text-[14px] font-bold text-[#1A1A1A] mb-1">학습 콘텐츠 준비중입니다</p>
             <p className="text-[12px] text-[#ADADAD]">곧 업데이트될 예정이에요</p>
           </div>
         ) : (
-          chapters.map((ch, idx) => {
+          visibleChapters.map((ch, idx) => {
             const stat     = statsMap[ch.id]
             console.log('[chapters] card:', ch.id, statsMap[ch.id])
             const isLocked = !isSubscribed && idx >= FREE_LIMIT
@@ -277,6 +286,17 @@ export default function ChaptersPage() {
 
                     {isLocked ? (
                       <span className="text-[10px] text-[#ADADAD]">🔒 구독 후 이용 가능</span>
+                    ) : stat && (stat.test_attempts ?? 0) >= 1 ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          router.push(`/report/${ch.id}`)
+                        }}
+                        className={`flex items-center gap-0.5 text-[11px] font-bold ${statusColor}`}
+                      >
+                        {statusLabel}
+                        <ChevronRight size={10} />
+                      </button>
                     ) : statusLabel ? (
                       <span className={`text-[10px] font-bold ${statusColor}`}>{statusLabel}</span>
                     ) : (
@@ -287,18 +307,6 @@ export default function ChaptersPage() {
                   {!isLocked && <ChevronRight size={16} className="text-[#ADADAD] flex-shrink-0" />}
                 </button>
 
-                {/* 리포트 아이콘 (테스트 응시 완료 시만) */}
-                {!isLocked && stat && (stat.test_attempts ?? 0) >= 1 && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      router.push(`/report/${ch.id}`)
-                    }}
-                    className="flex-shrink-0 px-3 py-4 border-l border-[#F5F5F3]"
-                  >
-                    <FileText size={16} className="text-[#ADADAD]" />
-                  </button>
-                )}
               </div>
             )
           })
