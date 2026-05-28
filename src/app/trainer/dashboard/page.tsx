@@ -235,10 +235,12 @@ function DashboardContent() {
   const [bookmarks, setBookmarks]             = useState<VideoBookmark[]>([])
   const [classroomLoaded, setClassroomLoaded] = useState(false)
   const [expandedCertId, setExpandedCertId]         = useState<string | null>(null)
-  const [expandedExamCertId, setExpandedExamCertId] = useState<string | null>(null)
   const [profileSubjectsOpen, setProfileSubjectsOpen] = useState(false)
   const [subjectProgress, setSubjectProgress] = useState<Record<string, { total: number; completed: number }>>({})
   const [userCerts, setUserCerts]             = useState<UserCertification[]>([])
+
+  /* ── 모의고사 ────────────────────────────────────────────────────── */
+  const [selectedExamCert, setSelectedExamCert] = useState<string | null>(null)
 
   /* ── 모의고사 모달 ───────────────────────────────────────────────── */
   const [examRound, setExamRound]                         = useState(1)
@@ -1761,26 +1763,22 @@ function DashboardContent() {
   const isEntryWindow    = isNextExamToday && (nowH === 9 || (nowH === 10 && nowM === 0))
   const isEntryClosed    = isNextExamToday && (nowH > 10 || (nowH === 10 && nowM > 0))
 
-  const renderExam = () => (
-    <div className="overflow-y-auto p-4 pb-24 space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
-      <div className="pt-8 pb-2">
-        <h2 className="text-[20px] font-black text-[#1A1A1A]">모의고사</h2>
-        <p className="text-[13px] text-[#ADADAD] mt-1">내 자격증에서 시작하세요</p>
-      </div>
-
-      {/* 내 자격증 카드 */}
-      {userCerts.length > 0 ? (
-        <div className="space-y-3 mb-4">
-          {userCerts.map((uc) => {
-            const isOral = uc.cert_id === 'sports-instructor-2-practical'
-            const isExpanded = expandedExamCertId === uc.id
-
-            return (
-              <div key={uc.id} className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
-                {/* 자격증 헤더 */}
+  const renderExam = () => {
+    /* ── 1뎁스: 자격증 선택 ── */
+    if (selectedExamCert === null) {
+      return (
+        <div className="overflow-y-auto p-4 pb-24 space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
+          <div className="pt-8 pb-2">
+            <h2 className="text-[20px] font-black text-[#1A1A1A]">모의고사</h2>
+            <p className="text-[13px] text-[#ADADAD] mt-1">자격증을 선택하세요</p>
+          </div>
+          {userCerts.length > 0 ? (
+            <div className="space-y-3">
+              {userCerts.map((uc) => (
                 <button
-                  onClick={() => setExpandedExamCertId(isExpanded ? null : uc.id)}
-                  className="w-full px-4 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
+                  key={uc.id}
+                  onClick={() => setSelectedExamCert(uc.cert_id)}
+                  className="w-full bg-white rounded-2xl border border-[#E5E5E5] px-4 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
                 >
                   <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center text-[20px] flex-shrink-0">
                     {CERT_ICONS[uc.cert_label] ?? '🎯'}
@@ -1788,218 +1786,216 @@ function DashboardContent() {
                   <div className="flex-1 min-w-0">
                     <p className="text-[15px] font-black text-[#1A1A1A] truncate">{uc.cert_label}</p>
                     <p className="text-[11px] text-[#ADADAD]">
-                      {isOral ? '구술 모의고사 · 7과목' : '필기 모의고사 · 8과목 × 5문항'}
+                      {uc.cert_id === 'sports-instructor-2-practical' ? '구술 모의고사 · 7과목' : '필기 모의고사 · 8과목 × 5문항'}
                     </p>
                   </div>
-                  <div className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>
-                    <ChevronRight size={16} className="text-[#ADADAD]" />
-                  </div>
+                  <ChevronRight size={16} className="text-[#ADADAD] flex-shrink-0" />
                 </button>
-
-                {/* 펼침: 필기 */}
-                {isExpanded && !isOral && (
-                  <div className="border-t border-[#F0F0EE]">
-                    <button
-                      onClick={() => router.push('/exam')}
-                      className="w-full px-4 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
-                    >
-                      <div className="w-9 h-9 rounded-xl bg-[#EAF3DE] flex items-center justify-center text-[16px] flex-shrink-0">
-                        📝
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-bold text-[#1A1A1A]">필기 모의고사</p>
-                        <p className="text-[11px] text-[#ADADAD]">8과목 × 5문항 · 40문제</p>
-                      </div>
-                      <ChevronRight size={14} className="text-[#ADADAD]" />
-                    </button>
-                  </div>
-                )}
-
-                {/* 펼침: 구술 */}
-                {isExpanded && isOral && (
-                  <div className="border-t border-[#F0F0EE]">
-                    {Object.entries(BODYBUILD_COURSES).map(([subjectName, courseId], idx) => (
-                      <button
-                        key={subjectName}
-                        onClick={() => router.push(`/oral-exam/${courseId}`)}
-                        className={`w-full px-4 py-3.5 flex items-center gap-3 text-left active:bg-[#F5F5F3] ${
-                          idx < Object.keys(BODYBUILD_COURSES).length - 1 ? 'border-b border-[#F0F0EE]' : ''
-                        }`}
-                      >
-                        <div className="w-9 h-9 rounded-xl bg-[#E6F1FB] flex items-center justify-center text-[16px] flex-shrink-0">
-                          🎤
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-bold text-[#1A1A1A]">{subjectName}</p>
-                          <p className="text-[11px] text-[#ADADAD]">랜덤 3문제 뽑기</p>
-                        </div>
-                        <ChevronRight size={14} className="text-[#ADADAD]" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-      ) : (
-        <div className="bg-white rounded-2xl border border-[#E5E5E5] p-6 text-center mb-4">
-          <p className="text-[14px] text-[#ADADAD]">강의실에서 자격증을 추가하면 모의고사를 이용할 수 있어요</p>
-        </div>
-      )}
-
-      <div>
-        <p className="text-[12px] text-[#ADADAD]">시험 준비</p>
-        <h2 className="text-[18px] font-black text-[#1A1A1A]">2026년 건강운동관리사 모의고사</h2>
-      </div>
-
-      {/* 히어로 카드 */}
-      {allExamsDone ? (
-        /* 모든 모의고사 종료 → 응원 메시지 */
-        <div className="bg-[#1A1A1A] rounded-2xl p-5 text-white text-center">
-          <div className="text-[36px] mb-2">💪</div>
-          <p className="text-[16px] font-black text-white leading-snug">
-            시험 당일입니다!
-          </p>
-          <p className="text-[13px] text-white/70 mt-2 leading-relaxed">
-            지금까지 준비한 실력을 믿으세요
-          </p>
-        </div>
-      ) : nextExam ? (
-        <div className="bg-[#1A1A1A] rounded-2xl p-5 text-white">
-          <p className="text-[13px] text-white/50 font-bold tracking-wider mb-2">
-            {nextExam.round}회차 모의고사
-          </p>
-          <div className="text-[43px] font-black text-[#00A651] leading-none">{nextExam.date}</div>
-          <div className="text-[43px] font-black text-white leading-none mt-0.5">10:00</div>
-          {!registeredRounds.includes(nextExam.round) ? (
-            /* 미신청 → 오렌지 아웃라인 */
-            <button
-              onClick={() => { setExamRound(nextExam.round); setShowSubjectConfirmModal(true) }}
-              className="mt-4 w-full py-3 rounded-xl text-[14px] font-bold text-[#F5A623] border-2 border-[#F5A623] bg-transparent"
-            >
-              신청하기
-            </button>
-          ) : isEntryClosed ? (
-            /* 당일 10:01 이후 → 회색 비활성 */
-            <button
-              onClick={() => setShowExamClosedModal(true)}
-              className="mt-4 w-full py-3 rounded-xl text-[14px] font-bold text-[#ADADAD] bg-[#F5F5F3]"
-            >
-              입장 마감
-            </button>
-          ) : isEntryWindow ? (
-            /* 당일 09:00~10:00 → 입장하기 활성 */
-            <button
-              onClick={() => router.push('/exam')}
-              className="mt-4 w-full py-3 bg-[#00A651] rounded-xl text-[14px] font-bold text-white"
-            >
-              입장하기
-            </button>
+              ))}
+            </div>
           ) : (
-            /* 신청 완료 + 당일 아님 → 녹색 채워진 배지 */
-            <div className="mt-4 w-full py-3 bg-[#00A651] rounded-xl text-[14px] font-bold text-white text-center">
-              신청 완료
+            <div className="bg-white rounded-2xl border border-[#E5E5E5] p-6 text-center">
+              <p className="text-[14px] text-[#ADADAD]">강의실에서 자격증을 추가하면 모의고사를 이용할 수 있어요</p>
             </div>
           )}
-          {/* 모의고사 방법 버튼 */}
+        </div>
+      )
+    }
+
+    /* ── 2뎁스: 구술 모의고사 ── */
+    if (selectedExamCert === 'sports-instructor-2-practical') {
+      return (
+        <div className="overflow-y-auto p-4 pb-24 space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
+          <div className="pt-8 pb-2 flex items-center gap-3">
+            <button
+              onClick={() => setSelectedExamCert(null)}
+              className="w-9 h-9 flex items-center justify-center rounded-xl bg-[#F5F5F3] text-[#1A1A1A] text-[18px]"
+            >
+              ←
+            </button>
+            <div>
+              <h2 className="text-[20px] font-black text-[#1A1A1A]">구술 모의고사</h2>
+              <p className="text-[13px] text-[#ADADAD] mt-0.5">주당 2회 자유 응시</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-2xl border border-[#E5E5E5] p-6 text-center">
+            <p className="text-[14px] text-[#ADADAD]">구술 모의고사 일정을 준비 중입니다</p>
+          </div>
+        </div>
+      )
+    }
+
+    /* ── 2뎁스: 필기 모의고사 (기존 로직 유지) ── */
+    const selectedCertLabel = userCerts.find((c) => c.cert_id === selectedExamCert)?.cert_label ?? ''
+
+    return (
+      <div className="overflow-y-auto p-4 pb-24 space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
+        <div className="pt-8 pb-2 flex items-center gap-3">
           <button
-            onClick={() => setShowExamInfoModal(true)}
-            className="mt-2 w-full py-2 text-[12px] text-white/50 hover:text-white/80"
+            onClick={() => setSelectedExamCert(null)}
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-[#F5F5F3] text-[#1A1A1A] text-[18px]"
           >
-            모의고사 방법 ▾
+            ←
+          </button>
+          <div>
+            <h2 className="text-[20px] font-black text-[#1A1A1A]">{selectedCertLabel}</h2>
+            <p className="text-[13px] text-[#ADADAD] mt-0.5">필기 모의고사</p>
+          </div>
+        </div>
+
+        <div>
+          <p className="text-[12px] text-[#ADADAD]">시험 준비</p>
+          <h2 className="text-[18px] font-black text-[#1A1A1A]">2026년 건강운동관리사 모의고사</h2>
+        </div>
+
+        {/* 히어로 카드 */}
+        {allExamsDone ? (
+          /* 모든 모의고사 종료 → 응원 메시지 */
+          <div className="bg-[#1A1A1A] rounded-2xl p-5 text-white text-center">
+            <div className="text-[36px] mb-2">💪</div>
+            <p className="text-[16px] font-black text-white leading-snug">
+              시험 당일입니다!
+            </p>
+            <p className="text-[13px] text-white/70 mt-2 leading-relaxed">
+              지금까지 준비한 실력을 믿으세요
+            </p>
+          </div>
+        ) : nextExam ? (
+          <div className="bg-[#1A1A1A] rounded-2xl p-5 text-white">
+            <p className="text-[13px] text-white/50 font-bold tracking-wider mb-2">
+              {nextExam.round}회차 모의고사
+            </p>
+            <div className="text-[43px] font-black text-[#00A651] leading-none">{nextExam.date}</div>
+            <div className="text-[43px] font-black text-white leading-none mt-0.5">10:00</div>
+            {!registeredRounds.includes(nextExam.round) ? (
+              /* 미신청 → 오렌지 아웃라인 */
+              <button
+                onClick={() => { setExamRound(nextExam.round); setShowSubjectConfirmModal(true) }}
+                className="mt-4 w-full py-3 rounded-xl text-[14px] font-bold text-[#F5A623] border-2 border-[#F5A623] bg-transparent"
+              >
+                신청하기
+              </button>
+            ) : isEntryClosed ? (
+              /* 당일 10:01 이후 → 회색 비활성 */
+              <button
+                onClick={() => setShowExamClosedModal(true)}
+                className="mt-4 w-full py-3 rounded-xl text-[14px] font-bold text-[#ADADAD] bg-[#F5F5F3]"
+              >
+                입장 마감
+              </button>
+            ) : isEntryWindow ? (
+              /* 당일 09:00~10:00 → 입장하기 활성 */
+              <button
+                onClick={() => router.push('/exam')}
+                className="mt-4 w-full py-3 bg-[#00A651] rounded-xl text-[14px] font-bold text-white"
+              >
+                입장하기
+              </button>
+            ) : (
+              /* 신청 완료 + 당일 아님 → 녹색 채워진 배지 */
+              <div className="mt-4 w-full py-3 bg-[#00A651] rounded-xl text-[14px] font-bold text-white text-center">
+                신청 완료
+              </div>
+            )}
+            {/* 모의고사 방법 버튼 */}
+            <button
+              onClick={() => setShowExamInfoModal(true)}
+              className="mt-2 w-full py-2 text-[12px] text-white/50 hover:text-white/80"
+            >
+              모의고사 방법 ▾
+            </button>
+          </div>
+        ) : null}
+
+        {/* 체험하기 카드 */}
+        <div className="bg-white rounded-2xl border-2 border-[#00A651] p-4 flex items-center justify-between">
+          <div>
+            <p className="text-[14px] font-black text-[#1A1A1A]">모의고사 체험하기</p>
+            <p className="text-[11px] text-[#6B6B6B] mt-0.5">8과목×5문항 · 40분 · 무료</p>
+          </div>
+          <button
+            onClick={() => router.push('/exam')}
+            className="px-4 py-2 bg-[#00A651] rounded-xl text-[13px] font-bold text-white"
+          >
+            시작
           </button>
         </div>
-      ) : null}
 
-      {/* 체험하기 카드 */}
-      <div className="bg-white rounded-2xl border-2 border-[#00A651] p-4 flex items-center justify-between">
+        {/* 일정 목록 */}
         <div>
-          <p className="text-[14px] font-black text-[#1A1A1A]">모의고사 체험하기</p>
-          <p className="text-[11px] text-[#6B6B6B] mt-0.5">8과목×5문항 · 40분 · 무료</p>
-        </div>
-        <button
-          onClick={() => router.push('/exam')}
-          className="px-4 py-2 bg-[#00A651] rounded-xl text-[13px] font-bold text-white"
-        >
-          시작
-        </button>
-      </div>
-
-      {/* 일정 목록 */}
-      <div>
-        <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">
-          <Calendar size={11} className="inline mr-1" />전체 일정
-        </p>
-        <div className="space-y-2">
-          {EXAM_DATES.map((e) => {
-            const isNext  = nextExam?.round === e.round
-            const isPast  = new Date(e.dateValue) < today
-            const isToday = new Date(e.dateValue).getTime() === today.getTime()
-            const dday    = calcDDay(e.dateValue)
-            return (
-              <div key={e.round} className={`flex items-center justify-between px-4 py-3 rounded-xl border ${
-                isToday ? 'border-[#00A651] bg-white'
-                : isPast ? 'border-[#E5E5E5] bg-[#F5F5F3]'
-                : 'border-[#E5E5E5] bg-white'
-              }`}>
-                <div className="flex items-center gap-3">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black ${
-                    isNext  ? 'bg-[#00A651] text-white'
-                    : isPast ? 'bg-[#E5E5E5] text-[#ADADAD]'
-                    : 'bg-[#F5F5F3] text-[#ADADAD]'
-                  }`}>{e.round}</div>
-                  <div>
-                    <p className={`text-[13px] font-bold ${
-                      isNext ? 'text-[#00A651]' : isPast ? 'text-[#ADADAD]' : 'text-[#1A1A1A]'
-                    }`}>{e.date}</p>
-                    <p className="text-[10px] text-[#ADADAD]">{e.round}회차</p>
+          <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">
+            <Calendar size={11} className="inline mr-1" />전체 일정
+          </p>
+          <div className="space-y-2">
+            {EXAM_DATES.map((e) => {
+              const isNext  = nextExam?.round === e.round
+              const isPast  = new Date(e.dateValue) < today
+              const isToday = new Date(e.dateValue).getTime() === today.getTime()
+              const dday    = calcDDay(e.dateValue)
+              return (
+                <div key={e.round} className={`flex items-center justify-between px-4 py-3 rounded-xl border ${
+                  isToday ? 'border-[#00A651] bg-white'
+                  : isPast ? 'border-[#E5E5E5] bg-[#F5F5F3]'
+                  : 'border-[#E5E5E5] bg-white'
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black ${
+                      isNext  ? 'bg-[#00A651] text-white'
+                      : isPast ? 'bg-[#E5E5E5] text-[#ADADAD]'
+                      : 'bg-[#F5F5F3] text-[#ADADAD]'
+                    }`}>{e.round}</div>
+                    <div>
+                      <p className={`text-[13px] font-bold ${
+                        isNext ? 'text-[#00A651]' : isPast ? 'text-[#ADADAD]' : 'text-[#1A1A1A]'
+                      }`}>{e.date}</p>
+                      <p className="text-[10px] text-[#ADADAD]">{e.round}회차</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {!isPast && (
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        isNext ? 'text-[#00A651] bg-[#00A651]/10' : 'text-[#ADADAD] bg-[#F5F5F3]'
+                      }`}>{dday}</span>
+                    )}
+                    {isPast ? (
+                      <span className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-[#E5E5E5] text-[#ADADAD]">
+                        종료
+                      </span>
+                    ) : registeredRounds.includes(e.round) ? (
+                      <span className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-[#00A651] text-white">
+                        신청 완료
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => { setExamRound(e.round); setShowSubjectConfirmModal(true) }}
+                        className={`text-[10px] font-bold px-3 py-1.5 rounded-lg border border-[#00A651] ${
+                          isNext ? 'bg-[#00A651] text-white' : 'bg-white text-[#00A651]'
+                        }`}
+                      >
+                        {isNext ? '신청하기' : '사전 신청하기'}
+                      </button>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {!isPast && (
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      isNext ? 'text-[#00A651] bg-[#00A651]/10' : 'text-[#ADADAD] bg-[#F5F5F3]'
-                    }`}>{dday}</span>
-                  )}
-                  {isPast ? (
-                    <span className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-[#E5E5E5] text-[#ADADAD]">
-                      종료
-                    </span>
-                  ) : registeredRounds.includes(e.round) ? (
-                    <span className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-[#00A651] text-white">
-                      신청 완료
-                    </span>
-                  ) : (
-                    <button
-                      onClick={() => { setExamRound(e.round); setShowSubjectConfirmModal(true) }}
-                      className={`text-[10px] font-bold px-3 py-1.5 rounded-lg border border-[#00A651] ${
-                        isNext ? 'bg-[#00A651] text-white' : 'bg-white text-[#00A651]'
-                      }`}
-                    >
-                      {isNext ? '신청하기' : '사전 신청하기'}
-                    </button>
-                  )}
+              )
+            })}
+            {/* 실제 시험일 카드 */}
+            <div className="flex items-center justify-between px-4 py-3 rounded-xl border-2 border-[#F5A623] bg-[#F5A623]/5">
+              <div className="flex items-center gap-3">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-[14px] bg-[#F5A623]/20">🎯</div>
+                <div>
+                  <p className="text-[13px] font-bold text-[#1A1A1A]">6월 13일 (토)</p>
                 </div>
               </div>
-            )
-          })}
-          {/* 실제 시험일 카드 */}
-          <div className="flex items-center justify-between px-4 py-3 rounded-xl border-2 border-[#F5A623] bg-[#F5A623]/5">
-            <div className="flex items-center gap-3">
-              <div className="w-7 h-7 rounded-full flex items-center justify-center text-[14px] bg-[#F5A623]/20">🎯</div>
-              <div>
-                <p className="text-[13px] font-bold text-[#1A1A1A]">6월 13일 (토)</p>
-              </div>
+              <span className="text-[10px] font-bold text-[#F5A623] bg-[#F5A623]/15 px-2.5 py-1 rounded-full">
+                실제 시험일 🎯
+              </span>
             </div>
-            <span className="text-[10px] font-bold text-[#F5A623] bg-[#F5A623]/15 px-2.5 py-1 rounded-full">
-              실제 시험일 🎯
-            </span>
           </div>
         </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   // ══════════════════════════════════════════════════════════════════
   // ⑤ PROFILE TAB
