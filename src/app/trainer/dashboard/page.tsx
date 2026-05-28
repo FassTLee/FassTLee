@@ -38,12 +38,10 @@ const CERT_ICONS: Record<string, string> = {
 // 구술/실기 보디빌딩 과목 → courseId 매핑
 const BODYBUILD_COURSES: Record<string, string> = {
   '도핑 규정':         'b28e78c8-8443-4013-bfef-dbe655c72994',
-  '보디빌딩 경기 규정': '13f8cdb4-651e-4eba-9cfa-571465cbc905',
-  '복장 및 포징 규정':  '376cc5f3-eeef-4117-89bf-229a3ce417ab',
+  '보디빌딩1':         '13f8cdb4-651e-4eba-9cfa-571465cbc905',
+  '보디빌딩2':         '67cfd191-fc7f-4d57-9124-096ac4e8c40c',
   '생활체육 지도 방법': 'add57a42-adb5-4b75-9960-0ccc409c0341',
   '스포츠 인권':        '24885dc7-5442-481e-81fc-d7a222f76a25',
-  '운동생리학':         '09968a6e-17d3-4439-b1a9-214a7db394e9',
-  '운동영양학':         '22d680e1-cfc5-4173-b828-1647ee1571d1',
   '응급처치':           '947a8cf1-1ed8-4dcb-9379-263000ef49cf',
   '협회 규정':          '2c72f373-253d-41fc-b1d5-e156f485043e',
 }
@@ -51,12 +49,10 @@ const BODYBUILD_COURSES: Record<string, string> = {
 // 구술/실기 보디빌딩 과목 → subjectId 매핑
 const BODYBUILD_SUBJECTS: Record<string, string> = {
   '도핑 규정':         '6944e483-027e-4009-93e9-5826ac992d8a',
-  '보디빌딩 경기 규정': '054b7ae7-59df-4f65-b357-5d64d7617cb5',
-  '복장 및 포징 규정':  '6eed10b3-c3c1-4023-8a3c-7bdbb1203212',
+  '보디빌딩1':         '054b7ae7-59df-4f65-b357-5d64d7617cb5',
+  '보디빌딩2':         '054b7ae7-59df-4f65-b357-5d64d7617cb5',
   '생활체육 지도 방법': '7b8b495b-5897-4de9-acf8-0557c5938ad2',
   '스포츠 인권':        '77119580-8805-4865-a705-65d515017771',
-  '운동생리학':         '8f2c693c-20eb-4752-91b4-af3d45d11601',
-  '운동영양학':         '88754cd4-cf5c-4a11-a974-e10dd50cf09e',
   '응급처치':           'b967339b-0195-4b7e-bceb-6ff1f4fc60f9',
   '협회 규정':          '01340b0e-af8a-4b8a-93bc-6ae11b3b2c54',
 }
@@ -1580,12 +1576,14 @@ function DashboardContent() {
                     <div className="border-t border-[#F0F0EE]">
                       {uc.cert_id === 'sports-instructor-2-practical' ? (
                         /* ── 구술/실기 보디빌딩: 고정 9개 과목 → oral-exam 이동 ── */
-                        Object.entries(BODYBUILD_COURSES).map(([subjectName, courseId], idx) => (
+                        Object.entries(BODYBUILD_COURSES).map(([subjectName, _courseId], idx) => (
                           <button
                             key={subjectName}
                             onClick={() => {
-                              localStorage.setItem('kinepia_current_subject_id', BODYBUILD_SUBJECTS[subjectName] ?? '')
-                              router.push(`/chapters/${BODYBUILD_SUBJECTS[subjectName] ?? courseId}`)
+                              const subjectId = BODYBUILD_SUBJECTS[subjectName] ?? ''
+                              const courseId  = BODYBUILD_COURSES[subjectName]  ?? ''
+                              localStorage.setItem('kinepia_current_subject_id', subjectId)
+                              router.push(`/chapters/${subjectId}?courseId=${courseId}`)
                             }}
                             className={`w-full px-4 py-3.5 flex items-center gap-3 text-left active:bg-[#F5F5F3] ${idx < Object.keys(BODYBUILD_COURSES).length - 1 ? 'border-b border-[#F0F0EE]' : ''}`}
                           >
