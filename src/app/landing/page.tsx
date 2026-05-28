@@ -87,6 +87,13 @@ const PLANS = [
 export default function LandingPage() {
   const router = useRouter()
   const { status } = useSession()
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.replace('/trainer/dashboard')
+    }
+  }, [status, router])
+
   const [showSignupPopup, setShowSignupPopup] = useState(false)
 
   // 이탈 감지 핸들러를 ref에 보관 → 로그인 클릭 시 외부에서 제거 가능
