@@ -235,6 +235,7 @@ function DashboardContent() {
   const [bookmarks, setBookmarks]             = useState<VideoBookmark[]>([])
   const [classroomLoaded, setClassroomLoaded] = useState(false)
   const [expandedCertId, setExpandedCertId]         = useState<string | null>(null)
+  const [expandedExamCertId, setExpandedExamCertId] = useState<string | null>(null)
   const [profileSubjectsOpen, setProfileSubjectsOpen] = useState(false)
   const [subjectProgress, setSubjectProgress] = useState<Record<string, { total: number; completed: number }>>({})
   const [userCerts, setUserCerts]             = useState<UserCertification[]>([])
@@ -1762,7 +1763,92 @@ function DashboardContent() {
 
   const renderExam = () => (
     <div className="overflow-y-auto p-4 pb-24 space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
-      <div className="pt-8">
+      <div className="pt-8 pb-2">
+        <h2 className="text-[20px] font-black text-[#1A1A1A]">모의고사</h2>
+        <p className="text-[13px] text-[#ADADAD] mt-1">내 자격증에서 시작하세요</p>
+      </div>
+
+      {/* 내 자격증 카드 */}
+      {userCerts.length > 0 ? (
+        <div className="space-y-3 mb-4">
+          {userCerts.map((uc) => {
+            const isOral = uc.cert_id === 'sports-instructor-2-practical'
+            const isExpanded = expandedExamCertId === uc.id
+
+            return (
+              <div key={uc.id} className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
+                {/* 자격증 헤더 */}
+                <button
+                  onClick={() => setExpandedExamCertId(isExpanded ? null : uc.id)}
+                  className="w-full px-4 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center text-[20px] flex-shrink-0">
+                    {CERT_ICONS[uc.cert_label] ?? '🎯'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[15px] font-black text-[#1A1A1A] truncate">{uc.cert_label}</p>
+                    <p className="text-[11px] text-[#ADADAD]">
+                      {isOral ? '구술 모의고사 · 7과목' : '필기 모의고사 · 8과목 × 5문항'}
+                    </p>
+                  </div>
+                  <div className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>
+                    <ChevronRight size={16} className="text-[#ADADAD]" />
+                  </div>
+                </button>
+
+                {/* 펼침: 필기 */}
+                {isExpanded && !isOral && (
+                  <div className="border-t border-[#F0F0EE]">
+                    <button
+                      onClick={() => router.push('/exam')}
+                      className="w-full px-4 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-[#EAF3DE] flex items-center justify-center text-[16px] flex-shrink-0">
+                        📝
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-bold text-[#1A1A1A]">필기 모의고사</p>
+                        <p className="text-[11px] text-[#ADADAD]">8과목 × 5문항 · 40문제</p>
+                      </div>
+                      <ChevronRight size={14} className="text-[#ADADAD]" />
+                    </button>
+                  </div>
+                )}
+
+                {/* 펼침: 구술 */}
+                {isExpanded && isOral && (
+                  <div className="border-t border-[#F0F0EE]">
+                    {Object.entries(BODYBUILD_COURSES).map(([subjectName, courseId], idx) => (
+                      <button
+                        key={subjectName}
+                        onClick={() => router.push(`/oral-exam/${courseId}`)}
+                        className={`w-full px-4 py-3.5 flex items-center gap-3 text-left active:bg-[#F5F5F3] ${
+                          idx < Object.keys(BODYBUILD_COURSES).length - 1 ? 'border-b border-[#F0F0EE]' : ''
+                        }`}
+                      >
+                        <div className="w-9 h-9 rounded-xl bg-[#E6F1FB] flex items-center justify-center text-[16px] flex-shrink-0">
+                          🎤
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-bold text-[#1A1A1A]">{subjectName}</p>
+                          <p className="text-[11px] text-[#ADADAD]">랜덤 3문제 뽑기</p>
+                        </div>
+                        <ChevronRight size={14} className="text-[#ADADAD]" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-[#E5E5E5] p-6 text-center mb-4">
+          <p className="text-[14px] text-[#ADADAD]">강의실에서 자격증을 추가하면 모의고사를 이용할 수 있어요</p>
+        </div>
+      )}
+
+      <div>
         <p className="text-[12px] text-[#ADADAD]">시험 준비</p>
         <h2 className="text-[18px] font-black text-[#1A1A1A]">2026년 건강운동관리사 모의고사</h2>
       </div>
