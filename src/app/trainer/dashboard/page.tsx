@@ -57,12 +57,8 @@ const BODYBUILD_SUBJECTS: Record<string, string> = {
   '협회 규정':          '01340b0e-af8a-4b8a-93bc-6ae11b3b2c54',
 }
 
-// 자격증별 필수/선택 과목 구분
+// 자격증별 필수/선택 과목 구분 (건강운동관리사는 certification_subjects API로 동적 조회)
 const REQUIRED_SUBJECTS: Record<string, string[]> = {
-  'health-exercise-manager': [
-    '운동생리학', '기능해부학', '건강·체력평가', '운동처방론',
-    '운동부하검사', '운동상해', '병태생리학', '스포츠심리학',
-  ],
   'sports-instructor-2': [
     '스포츠심리학', '운동생리학', '스포츠교육학', '운동역학',
     '한국체육사', '스포츠사회학',
@@ -257,6 +253,7 @@ function DashboardContent() {
   const [oralLoading, setOralLoading] = useState(false)
   const [oralSelectedDate, setOralSelectedDate] = useState('')
   const [oralSubmitting, setOralSubmitting] = useState(false)
+  const [healthCertSubjects, setHealthCertSubjects] = useState<{ id: string; name: string }[]>([])
 
   /* ── 모의고사 모달 ───────────────────────────────────────────────── */
   const [examRound, setExamRound]                         = useState(1)
@@ -637,6 +634,15 @@ function DashboardContent() {
         }
       } catch { /* ignore */ }
     }
+
+    // 건강운동관리사 과목 동적 조회 (certification_subjects DB 기준)
+    try {
+      const hcsRes  = await fetch('/api/v1/certification-subjects?cert_id=feddb13b-91c9-461b-a6d5-a1efb0448f17')
+      const hcsData = await hcsRes.json()
+      if (Array.isArray(hcsData.subjects) && hcsData.subjects.length > 0) {
+        setHealthCertSubjects(hcsData.subjects as { id: string; name: string }[])
+      }
+    } catch { /* ignore */ }
 
     setLoading(false)
   }
@@ -1474,7 +1480,9 @@ function DashboardContent() {
   // ② CLASSROOM TAB
   // ══════════════════════════════════════════════════════════════════
   const renderClassroom = () => {
-    const fallbackRequired = REQUIRED_SUBJECTS[certKey] ?? []
+    const fallbackRequired = certKey === 'health-exercise-manager'
+      ? healthCertSubjects.map((s) => s.name)
+      : (REQUIRED_SUBJECTS[certKey] ?? [])
     const effectiveRequired = dbRequiredNames.length > 0 ? dbRequiredNames : fallbackRequired
     const requiredList   = subjects.filter((s) => effectiveRequired.includes(s))
     const optionalList   = subjects.filter((s) => !effectiveRequired.includes(s))
@@ -2136,7 +2144,9 @@ function DashboardContent() {
 
     // 자격증/과목 섹션용 (DB 우선, 하드코딩 폴백)
     const displayCertName   = certLabel || profileCert || ''
-    const fallbackRequiredP = REQUIRED_SUBJECTS[certKey] ?? []
+    const fallbackRequiredP = certKey === 'health-exercise-manager'
+      ? healthCertSubjects.map((s) => s.name)
+      : (REQUIRED_SUBJECTS[certKey] ?? [])
     const effectiveReqP     = dbRequiredNames.length > 0 ? dbRequiredNames : fallbackRequiredP
     const requiredInP       = subjects.filter((s) => effectiveReqP.includes(s))
     const optionalInP       = subjects.filter((s) => !effectiveReqP.includes(s))
@@ -2146,7 +2156,9 @@ function DashboardContent() {
     const selectedCertKeyGoal = Object.entries(CERT_LABELS).find(([, v]) => v === certTypeInput)?.[0] ?? ''
     const goalRequiredFromDB  = dbGoalSubjects.filter((s) => s.is_required).map((s) => s.name)
     const goalOptionalFromDB  = dbGoalSubjects.filter((s) => !s.is_required).map((s) => s.name)
-    const fallbackGoalSubs    = selectedCertKeyGoal ? (REQUIRED_SUBJECTS[selectedCertKeyGoal] ?? []) : []
+    const fallbackGoalSubs    = selectedCertKeyGoal === 'health-exercise-manager'
+      ? healthCertSubjects.map((s) => s.name)
+      : (selectedCertKeyGoal ? (REQUIRED_SUBJECTS[selectedCertKeyGoal] ?? []) : [])
     const goalRequiredSubs    = goalRequiredFromDB.length > 0 ? goalRequiredFromDB : fallbackGoalSubs
     const goalOptionalSubs    = goalOptionalFromDB
     const hasGoalSubjects     = goalRequiredSubs.length > 0 || goalOptionalSubs.length > 0

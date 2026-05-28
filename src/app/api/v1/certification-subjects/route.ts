@@ -4,6 +4,7 @@ import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 export const dynamic = 'force-dynamic'
 
 export interface CertSubject {
+  id: string
   name: string
   is_required: boolean
   display_order: number
@@ -11,26 +12,31 @@ export interface CertSubject {
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const certKey = searchParams.get('certKey')
+  const certKey     = searchParams.get('certKey')
+  const certIdParam = searchParams.get('cert_id')
 
-  if (!certKey || !isSupabaseAdminConfigured) {
+  if ((!certKey && !certIdParam) || !isSupabaseAdminConfigured) {
     return NextResponse.json({ subjects: [], required: [], optional: [] })
   }
 
-  const { data: cert } = await supabaseAdmin
-    .from('certifications')
-    .select('id')
-    .eq('key', certKey)
-    .maybeSingle()
+  let certUUID: string | null = certIdParam
+  if (!certUUID) {
+    const { data: cert } = await supabaseAdmin
+      .from('certifications')
+      .select('id')
+      .eq('key', certKey!)
+      .maybeSingle()
+    certUUID = cert?.id ?? null
+  }
 
-  if (!cert?.id) {
+  if (!certUUID) {
     return NextResponse.json({ subjects: [], required: [], optional: [] })
   }
 
   const { data: rows, error } = await supabaseAdmin
     .from('certification_subjects')
-    .select('subject_id, is_required, display_order, subjects(name)')
-    .eq('certification_id', cert.id)
+    .select('subject_id, is_required, display_order, subjects(id, name)')
+    .eq('certification_id', certUUID)
     .order('display_order', { ascending: true })
 
   if (error) {
@@ -42,13 +48,14 @@ export async function GET(req: NextRequest) {
     subject_id:    string
     is_required:   boolean
     display_order: number
-    subjects:      { name: string }[] | { name: string } | null
+    subjects:      { id: string; name: string }[] | { id: string; name: string } | null
   }
 
   const subjects: CertSubject[] = (rows as CertSubjectRow[])
     .map((r) => {
       const subj = Array.isArray(r.subjects) ? r.subjects[0] : r.subjects
       return {
+        id:            r.subject_id,
         name:          subj?.name ?? '',
         is_required:   r.is_required,
         display_order: r.display_order ?? 0,

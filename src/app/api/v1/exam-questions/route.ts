@@ -1,17 +1,14 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
 
-const SUBJECT_NAMES = [
-  '운동생리학', '건강체력평가', '운동처방론', '운동부하검사',  // 1교시
-  '운동상해',   '기능해부학',   '병태생리학', '스포츠심리학',  // 2교시
-]
-const Q_PER_SUBJECT = 20
+const DEFAULT_CERT_ID = 'feddb13b-91c9-461b-a6d5-a1efb0448f17'
+const Q_PER_SUBJECT   = 20
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session?.user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -21,38 +18,38 @@ export async function GET() {
     return NextResponse.json({ subjects: [] })
   }
 
+  const cert_id = new URL(req.url).searchParams.get('cert_id') ?? DEFAULT_CERT_ID
+
+  // 1. certification_subjects JOIN subjects → { id, name }[] ordered by name
+  const { data: csRows, error: csError } = await supabaseAdmin
+    .from('certification_subjects')
+    .select('subject_id, subjects(id, name)')
+    .eq('certification_id', cert_id)
+
+  if (csError || !csRows?.length) {
+    return NextResponse.json({ subjects: [] })
+  }
+
+  type CsRow = {
+    subject_id: string
+    subjects:   { id: string; name: string } | { id: string; name: string }[] | null
+  }
+
+  const subjectList = (csRows as CsRow[])
+    .map((r) => {
+      const s = Array.isArray(r.subjects) ? r.subjects[0] : r.subjects
+      return s ? { id: s.id, name: s.name } : null
+    })
+    .filter((s): s is { id: string; name: string } => s !== null)
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
+
+  // 2. For each subject, query chapter_questions by subject_id column
   const subjects = await Promise.all(
-    SUBJECT_NAMES.map(async (name) => {
-      const { data: subjectRow } = await supabaseAdmin
-        .from('subjects')
-        .select('id')
-        .eq('name', name)
-        .single()
-
-      if (!subjectRow) return { name, questions: [] }
-
-      const { data: courses } = await supabaseAdmin
-        .from('courses')
-        .select('id')
-        .eq('subject_id', subjectRow.id)
-
-      if (!courses?.length) return { name, questions: [] }
-
-      const courseIds = courses.map((c) => c.id)
-
-      const { data: chapters } = await supabaseAdmin
-        .from('chapters')
-        .select('id')
-        .in('course_id', courseIds)
-
-      if (!chapters?.length) return { name, questions: [] }
-
-      const chapterIds = chapters.map((c) => c.id)
-
+    subjectList.map(async ({ id: subjectId, name }) => {
       const { data: questions } = await supabaseAdmin
         .from('chapter_questions')
         .select('id, question, options, answer_index, explanation')
-        .in('chapter_id', chapterIds)
+        .eq('subject_id', subjectId)
 
       if (!questions?.length) return { name, questions: [] }
 
