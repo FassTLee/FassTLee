@@ -32,6 +32,7 @@ interface Slide {
   id: string
   question: string
   explanation: string | null
+  key_points?: string[] | null
 }
 
 interface MiniQ {
@@ -154,7 +155,7 @@ export default function LessonPage() {
     const [{ data: ch, error: chErr }, { data: qs, error: qsErr }] = await Promise.all([
       supabase.from('chapters').select('id, title, course_id, video_url, audio_url, image_url').eq('id', chapterId).single(),
       supabase.from('chapter_questions')
-        .select('id, question, options, answer_index, explanation, question_type')
+        .select('id, chapter_id, question, options, answer_index, explanation, order_index, question_type, image_url, reference_text, key_points')
         .eq('chapter_id', chapterId),
     ])
 
@@ -199,6 +200,7 @@ export default function LessonPage() {
       id: q.id,
       question: q.question,
       explanation: q.explanation,
+      key_points: q.key_points as string[] | null,
     }))
     console.log('[fetchData] slides built:', built.length)
     setSlides(built)
@@ -396,9 +398,12 @@ export default function LessonPage() {
     ? parseExplanation(currentSlide.explanation)
     : { prose: '', points: [] }
 
-  const sentences = parsed.points.length > 0
-    ? parsed.points
-    : splitSentences(currentSlide?.explanation ?? '')
+  const keyPoints: string[] = (currentSlide?.key_points as string[] | null) ?? []
+  const sentences = keyPoints.length > 0
+    ? keyPoints
+    : parsed.points.length > 0
+      ? parsed.points
+      : splitSentences(currentSlide?.explanation ?? '')
   const allChecked = sentences.length === 0 || (checkedSentences.length === sentences.length && checkedSentences.every(Boolean))
 
   /* ════════════════════════════════════════════════════ */
