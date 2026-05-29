@@ -359,7 +359,7 @@ export default function LessonPage() {
     if (Math.abs(delta) < 50) return
     if (delta < 0 && slideIndex < slides.length - 1) {
       if (slideMode === 'manual' && !allChecked) { showToast('모든 항목을 체크해주세요'); return }
-      setSlideIndex((si) => si + 1); setCheckedSentences([]); setAutoProgress(0)
+      triggerMiniQuiz(slideIndex)
     } else if (delta > 0 && slideIndex > 0) {
       setSlideIndex((si) => si - 1); setCheckedSentences([]); setAutoProgress(0)
     }
@@ -398,12 +398,12 @@ export default function LessonPage() {
     ? parseExplanation(currentSlide.explanation)
     : { prose: '', points: [] }
 
-  const keyPoints: string[] = (currentSlide?.key_points as string[] | null) ?? []
-  const sentences = keyPoints.length > 0
-    ? keyPoints
-    : parsed.points.length > 0
-      ? parsed.points
-      : splitSentences(currentSlide?.explanation ?? '')
+  const rawPoints = Array.isArray(currentSlide?.key_points)
+    ? (currentSlide.key_points as string[]).filter(p => p.length > 1)
+    : []
+  const sentences = rawPoints.length > 0
+    ? rawPoints
+    : splitSentences(currentSlide?.explanation ?? '')
   const allChecked = sentences.length === 0 || (checkedSentences.length === sentences.length && checkedSentences.every(Boolean))
 
   /* ════════════════════════════════════════════════════ */
@@ -547,6 +547,7 @@ export default function LessonPage() {
                       alt="학습 이미지"
                       className="w-full object-contain rounded-xl"
                       style={{ maxHeight: '220px' }}
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
                     />
                   </div>
                 )}
