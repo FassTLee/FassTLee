@@ -1859,7 +1859,7 @@ function DashboardContent() {
           dates: string[]; isCurrent: boolean; isPast: boolean
         }[] = []
 
-        for (let w = -1; w <= 2; w++) {
+        for (const w of [0, 1, 2, -1]) {
           const weekStart = new Date(monday)
           weekStart.setDate(monday.getDate() + w * 7)
           const weekEnd = new Date(weekStart)
@@ -1885,7 +1885,7 @@ function DashboardContent() {
             isPast: w < 0,
           })
         }
-        return weeks.reverse()
+        return weeks
       }
 
       const oralWeeks = getOralWeeks()
@@ -2924,11 +2924,19 @@ function DashboardContent() {
         <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center">
           <div className="w-full max-w-lg bg-white rounded-t-3xl px-5 pt-5 pb-10">
             <div className="w-10 h-1 bg-[#E5E5E5] rounded-full mx-auto mb-5" />
-            <div className="mb-4">
-              <h2 className="text-[18px] font-black text-[#1A1A1A]">
-                {oralPickerTarget.weekNum}주차 {oralPickerTarget.slot}회차
-              </h2>
-              <p className="text-[13px] text-[#ADADAD] mt-1">응시할 날짜를 선택하세요</p>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-[18px] font-black text-[#1A1A1A]">
+                  {oralPickerTarget.weekNum}주차 {oralPickerTarget.slot}회차
+                </h2>
+                <p className="text-[13px] text-[#ADADAD] mt-1">응시할 날짜를 선택하세요</p>
+              </div>
+              <button
+                onClick={() => { setShowOralDatePicker(false); setOralPickerDate(null); setOralPickerTarget(null) }}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-[#F5F5F3] text-[#6B6B6B] flex-shrink-0"
+              >
+                <X size={16} />
+              </button>
             </div>
 
             {/* 요일 헤더 */}
@@ -2945,17 +2953,22 @@ function DashboardContent() {
 
             {/* 날짜 버튼 7개 */}
             <div className="grid grid-cols-7 gap-1.5 mb-5">
-              {oralPickerTarget.weekDates.map((dateStr, i) => {
+              {(() => {
+                const usedDatesInWeek = oralRegs
+                  .filter(r => r.week_number === oralPickerTarget.weekNum)
+                  .map(r => r.exam_date)
+                return oralPickerTarget.weekDates.map((dateStr, i) => {
                 const isPast = dateStr < new Date().toISOString().split('T')[0]
+                const isUsed = usedDatesInWeek.includes(dateStr)
                 const isSelected = oralPickerDate === dateStr
                 const isSatSun = i >= 5
                 return (
                   <button
                     key={dateStr}
-                    disabled={isPast}
+                    disabled={isPast || isUsed}
                     onClick={() => setOralPickerDate(dateStr)}
                     className={`aspect-square rounded-xl flex flex-col items-center justify-center transition-all ${
-                      isPast ? 'opacity-30 cursor-not-allowed' : ''
+                      isPast || isUsed ? 'opacity-30 cursor-not-allowed' : ''
                     } ${
                       isSelected
                         ? 'bg-[#1A1A1A] text-white'
@@ -2967,7 +2980,8 @@ function DashboardContent() {
                     <span className="text-[12px] font-bold">{dateStr.split('-')[2]}</span>
                   </button>
                 )
-              })}
+              })
+              })()}
             </div>
 
             <p className="text-[12px] font-bold text-[#E24B4A] text-center mb-4">신청 후 변경이 불가합니다</p>
