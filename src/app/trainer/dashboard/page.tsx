@@ -1586,7 +1586,7 @@ function DashboardContent() {
                           </p>
                         </div>
                         <p className="text-[11px] text-[#ADADAD]">
-                          {uc.subjects.length > 0 ? `${uc.subjects.length}개 과목 수강 중` : '과목을 선택해주세요'}
+                          {uc.cert_id === 'sports-instructor-2-practical' ? '보디빌딩' : uc.subjects.length > 0 ? `${uc.subjects.length}개 과목 수강 중` : '과목을 선택해주세요'}
                         </p>
                       </div>
                       <div className={`transition-transform duration-200 ${expandedCertId === uc.id ? 'rotate-90' : ''}`}>
@@ -1825,7 +1825,7 @@ function DashboardContent() {
                   <div className="flex-1 min-w-0">
                     <p className="text-[15px] font-black text-[#1A1A1A] truncate">{uc.cert_label}</p>
                     <p className="text-[11px] text-[#ADADAD]">
-                      {uc.cert_id === 'sports-instructor-2-practical' ? '구술 모의고사 · 7과목' : '필기 모의고사 · 8과목 × 5문항'}
+                      {uc.cert_id === 'sports-instructor-2-practical' ? '구술모의고사 · 보디빌딩' : '필기 · 8과목 × 20문항'}
                     </p>
                   </div>
                   <ChevronRight size={16} className="text-[#ADADAD] flex-shrink-0" />
@@ -1901,6 +1901,7 @@ function DashboardContent() {
               ←
             </button>
             <div>
+              <p className="text-[11px] text-[#ADADAD] mb-0.5">2급 생활스포츠지도사</p>
               <h2 className="text-[20px] font-black text-[#1A1A1A]">구술 모의고사</h2>
               <p className="text-[13px] text-[#ADADAD] mt-0.5">주당 2회 · 날짜 자유 선택</p>
             </div>
