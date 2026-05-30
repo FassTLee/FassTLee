@@ -47,12 +47,12 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://t1.kakaocdn.net https://va.vercel-scripts.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://t1.kakaocdn.net https://*.kakaocdn.net https://va.vercel-scripts.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: blob: https://lh3.googleusercontent.com https://*.supabase.co https://img1.kakaocdn.net https://k.kakaocdn.net https://t1.kakaocdn.net",
-      "connect-src 'self' https://*.supabase.co https://accounts.google.com",
-      "frame-src https://accounts.google.com",
+      "img-src 'self' data: blob: https://lh3.googleusercontent.com https://*.supabase.co https://img1.kakaocdn.net https://k.kakaocdn.net https://t1.kakaocdn.net https://*.kakaocdn.net",
+      "connect-src 'self' https://*.supabase.co https://accounts.google.com https://*.kakao.com https://ka-f.kakaocdn.net",
+      "frame-src https://accounts.google.com https://t1.kakaocdn.net https://ka-f.kakaocdn.net https://*.kakaocdn.net https://*.kakao.com",
     ].join('; ')
   )
   // HSTS
