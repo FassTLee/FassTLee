@@ -26,13 +26,18 @@ interface Question {
   explanation: string | null
   difficulty?: string | null
   question_type?: string | null
+  image_url?: string | null
+  reference_text?: string | null
+  key_points?: string[] | null
 }
 
 interface Slide {
   id: string
   question: string
-  explanation: string | null
-  key_points?: string[] | null
+  explanation: string
+  key_points: string[]
+  image_url: string | null
+  reference_text: string | null
 }
 
 interface MiniQ {
@@ -149,18 +154,12 @@ export default function LessonPage() {
   }, [session?.user?.id, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
-    console.log('[fetchData] chapterId:', chapterId)
-    console.log('[fetchData] supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL?.slice(0, 30))
-
-    const [{ data: ch, error: chErr }, { data: qs, error: qsErr }] = await Promise.all([
+    const [{ data: ch }, { data: qs }] = await Promise.all([
       supabase.from('chapters').select('id, title, course_id, video_url, audio_url, image_url').eq('id', chapterId).single(),
       supabase.from('chapter_questions')
         .select('id, chapter_id, question, options, answer_index, explanation, order_index, question_type, image_url, reference_text, key_points')
         .eq('chapter_id', chapterId),
     ])
-
-    console.log('[fetchData] chapters — id:', ch?.id ?? null, '/ error:', chErr?.message ?? null)
-    console.log('[fetchData] questions — count:', qs?.length ?? 0, '/ error:', qsErr?.message ?? null)
 
     if (ch) {
       setChapterTitle(ch.title)
@@ -194,16 +193,16 @@ export default function LessonPage() {
     )
     setQuestions(allQ)
 
-    const isM = (localStorage.getItem(STYLE_KEY) ?? 'conceptualizer') === 'memorizer'
-    const maxSlides = isM ? 3 : 5
-    const built = allQ.slice(0, maxSlides).map((q) => ({
+    const oralQs = (qs ?? []).filter(q => q.question_type === 'oral')
+    const slideArray = oralQs.map(q => ({
       id: q.id,
       question: q.question,
-      explanation: q.explanation,
-      key_points: (() => { console.log('slide key_points:', q.id, q.key_points); return q.key_points ?? [] })(),
+      explanation: q.explanation ?? '',
+      key_points: Array.isArray(q.key_points) ? q.key_points : [],
+      image_url: q.image_url ?? null,
+      reference_text: q.reference_text ?? null,
     }))
-    console.log('[fetchData] slides built:', built.length)
-    setSlides(built)
+    setSlides(slideArray)
 
     setLoading(false)
   }
@@ -236,7 +235,6 @@ export default function LessonPage() {
     setMiniQ(null)
     if (pendingSlideIdxRef.current >= slides.length - 1) {
       // 학습 완료 → DB 저장
-      console.log('[lesson-complete] 호출 시도 userId:', session?.user?.id)
       fetch('/api/v1/lesson-complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -248,8 +246,7 @@ export default function LessonPage() {
           userId: session?.user?.id ?? '',
         }),
       })
-        .then((res) => console.log('[lesson-complete] 응답:', res.status))
-        .catch((err) => console.log('[lesson-complete] 오류:', err))
+        .catch(() => {})
       setShowComplete(true)
     } else {
       setSlideIndex(pendingSlideIdxRef.current + 1)
@@ -398,7 +395,6 @@ export default function LessonPage() {
     ? parseExplanation(currentSlide.explanation)
     : { prose: '', points: [] }
 
-  console.log('currentSlide key_points:', currentSlide?.key_points)
   const rawPoints = Array.isArray(currentSlide?.key_points)
     ? (currentSlide.key_points as string[]).filter((p: string) => p.length > 1)
     : []
@@ -505,13 +501,6 @@ export default function LessonPage() {
           </div>
         ) : (
           <>
-            {/* Overview strip — first slide only */}
-            {slideIndex === 0 && subjectName && (
-              <div className="bg-[#00A651]/5 border border-[#00A651]/20 rounded-2xl p-3 mb-3 flex-shrink-0">
-                <p className="text-[11px] font-bold text-[#00A651]">{subjectName} › {chapterTitle}</p>
-              </div>
-            )}
-
             {/* Main slide card */}
             <div className="flex-1 bg-white rounded-2xl border border-[#E5E5E5] p-5 flex flex-col min-h-0">
               <div className="flex items-center gap-2 mb-4 flex-shrink-0">
