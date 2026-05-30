@@ -1576,14 +1576,7 @@ function DashboardContent() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="overflow-hidden">
-                          <p
-                            className="text-[15px] font-black text-[#1A1A1A] whitespace-nowrap"
-                            style={
-                              uc.cert_label.length > 12
-                                ? { animation: 'marquee 8s linear infinite', display: 'inline-block' }
-                                : {}
-                            }
-                          >
+                          <p className="text-[15px] font-black text-[#1A1A1A] truncate max-w-[160px]">
                             {uc.cert_label}
                           </p>
                         </div>

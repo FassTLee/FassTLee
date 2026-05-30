@@ -64,7 +64,8 @@ export default function TestPage() {
   const [certLabel, setCertLabel]         = useState('')
   const [reportUrl, setReportUrl]         = useState<string | null>(null)
   const [countdown, setCountdown]         = useState(3)
-  const [showModelAnswer, setShowModelAnswer] = useState(false)
+  const [userAnswers, setUserAnswers]         = useState<Record<string, string>>({})
+  const [revealedAnswers, setRevealedAnswers] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (status === 'loading') return
@@ -140,7 +141,6 @@ export default function TestPage() {
       setRecords(nextRecords)
       setCurrent(current + 1)
       setSelected(null)
-      setShowModelAnswer(false)
     }
   }
 
@@ -187,8 +187,8 @@ export default function TestPage() {
   const progress = ((current + 1) / questions.length) * 100
   const isLast   = current + 1 >= questions.length
 
-  // 하단 버튼 비활성 조건: oral이고 모범답안 미확인이면 비활성
-  const isNextDisabled = selected === null || (isOral && !showModelAnswer)
+  // 하단 버튼 비활성 조건
+  const isNextDisabled = selected === null || (isOral && !revealedAnswers.has(q.id))
 
   return (
     <div className="min-h-screen bg-[#F5F5F3] flex flex-col">
@@ -271,48 +271,54 @@ export default function TestPage() {
         {/* ── 주관식(oral) UI ── */}
         {isOral ? (
           <div className="space-y-3">
-            {!showModelAnswer ? (
+            {!revealedAnswers.has(q.id) ? (
               <>
-                <p className="text-[13px] text-[#ADADAD] text-center py-4">
-                  구술로 답해보세요
-                </p>
+                <textarea
+                  value={userAnswers[q.id] ?? ''}
+                  onChange={(e) => setUserAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                  placeholder="답변을 입력하세요..."
+                  rows={4}
+                  className="w-full p-3 mt-3 border border-[#E5E5E5] rounded-xl text-[14px] resize-none focus:outline-none focus:border-[#1A1A1A]"
+                />
                 <button
-                  onClick={() => setShowModelAnswer(true)}
-                  className="w-full py-4 bg-[#1A1A1A] text-white rounded-2xl text-[15px] font-bold"
+                  onClick={() => setRevealedAnswers(prev => new Set([...prev, q.id]))}
+                  disabled={!userAnswers[q.id]?.trim()}
+                  className="w-full py-3 mt-2 bg-[#1A1A1A] disabled:bg-[#E5E5E5] disabled:text-[#ADADAD] text-white rounded-xl text-[14px] font-bold"
                 >
-                  모범답안 보기
+                  모범답안 확인
                 </button>
               </>
             ) : (
               <>
-                {/* 모범답안 카드 */}
-                <div className="bg-[#F5F5F3] rounded-2xl p-4">
-                  <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">모범답안</p>
-                  <p className="text-[14px] text-[#1A1A1A] leading-relaxed whitespace-pre-line">
-                    {q.explanation ?? q.question}
+                {/* 내 답변 */}
+                <div className="bg-[#F5F5F3] rounded-xl p-3 mb-3">
+                  <p className="text-[10px] font-bold text-[#ADADAD] mb-1">내 답변</p>
+                  <p className="text-[13px] text-[#1A1A1A] leading-relaxed whitespace-pre-wrap">
+                    {userAnswers[q.id]}
                   </p>
                 </div>
+                {/* 모범답안 */}
+                <div className="bg-[#00A651]/10 border border-[#00A651]/20 rounded-xl p-3 mb-3">
+                  <p className="text-[10px] font-bold text-[#00A651] mb-1">모범답안</p>
+                  <p className="text-[13px] text-[#1A1A1A] leading-relaxed">{q.explanation}</p>
+                </div>
                 {/* 자기평가 버튼 */}
-                <div className="flex gap-2 pt-1">
+                <div className="flex gap-2">
                   <button
                     onClick={() => setSelected(0)}
-                    className={`flex-1 py-3.5 rounded-2xl text-[14px] font-bold transition-all ${
-                      selected === 0
-                        ? 'bg-[#00A651] text-white'
-                        : 'bg-[#00A651]/10 text-[#00A651] border-2 border-[#00A651]/30'
+                    className={`flex-1 py-3 rounded-xl text-[14px] font-bold transition-all ${
+                      selected === 0 ? 'bg-[#00A651] text-white' : 'bg-[#00A651]/10 text-[#00A651]'
                     }`}
                   >
-                    ✅ 알았다
+                    알았다 ✓
                   </button>
                   <button
                     onClick={() => setSelected(1)}
-                    className={`flex-1 py-3.5 rounded-2xl text-[14px] font-bold transition-all ${
-                      selected === 1
-                        ? 'bg-[#E24B4A] text-white'
-                        : 'bg-[#E24B4A]/10 text-[#E24B4A] border-2 border-[#E24B4A]/30'
+                    className={`flex-1 py-3 rounded-xl text-[14px] font-bold transition-all ${
+                      selected === 1 ? 'bg-[#E24B4A] text-white' : 'bg-[#F5F5F3] text-[#1A1A1A]'
                     }`}
                   >
-                    🔁 다시 볼게
+                    다시 볼게
                   </button>
                 </div>
               </>
