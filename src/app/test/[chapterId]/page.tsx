@@ -281,7 +281,7 @@ export default function TestPage() {
                   className="w-full p-3 mt-3 border border-[#E5E5E5] rounded-xl text-[14px] resize-none focus:outline-none focus:border-[#1A1A1A]"
                 />
                 <button
-                  onClick={() => setRevealedAnswers(prev => new Set([...prev, q.id]))}
+                  onClick={() => setRevealedAnswers(prev => { const s = new Set(prev); s.add(q.id); return s })}
                   disabled={!userAnswers[q.id]?.trim()}
                   className="w-full py-3 mt-2 bg-[#1A1A1A] disabled:bg-[#E5E5E5] disabled:text-[#ADADAD] text-white rounded-xl text-[14px] font-bold"
                 >
