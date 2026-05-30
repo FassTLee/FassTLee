@@ -187,69 +187,8 @@ export default function ReportPage() {
           </div>
         )}
 
-        {/* ── 문항별 ○/✕ ── */}
-        {result && result.records.length > 0 && (
-          <div className="bg-white rounded-2xl border border-[#E5E5E5] p-4">
-            <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider mb-3">문항별 결과</p>
-            <div className="flex flex-wrap gap-2">
-              {result.records.map((r, i) => (
-                <div
-                  key={r.questionId}
-                  className={`flex flex-col items-center gap-0.5 w-10 py-1 rounded-xl ${
-                    r.correct ? 'bg-[#63992210]' : 'bg-[#E24B4A10]'
-                  }`}
-                >
-                  <span className="text-[10px] font-semibold text-[#ADADAD]">Q{i + 1}</span>
-                  {r.correct
-                    ? <Check size={16} className="text-[#639922]" />
-                    : <X    size={16} className="text-[#E24B4A]" />
-                  }
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── 오답노트 ── */}
-        {wrong.length > 0 ? (
-          <div>
-            <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider px-1 mb-2">
-              오답노트 ({wrong.length}문제)
-            </p>
-            <div className="space-y-3">
-              {wrong.map((r) => (
-                <div key={r.questionId} className="bg-white rounded-2xl border border-[#E5E5E5] p-4">
-                  <div className="flex items-start gap-2 mb-3">
-                    <X size={14} className="text-[#E24B4A] mt-0.5 flex-shrink-0" />
-                    <p className="text-[13px] font-semibold text-[#1A1A1A]">{r.question}</p>
-                  </div>
-                  <div className="space-y-1.5 mb-3">
-                    {r.options.map((opt, oi) => (
-                      <div
-                        key={oi}
-                        className={`px-3 py-2 rounded-xl text-[12px] ${
-                          oi === r.answer_index
-                            ? 'bg-[#63992215] text-[#639922] font-semibold'
-                            : oi === r.selected
-                            ? 'bg-[#E24B4A10] text-[#E24B4A] line-through'
-                            : 'text-[#ADADAD]'
-                        }`}
-                      >
-                        {opt}
-                      </div>
-                    ))}
-                  </div>
-                  {r.explanation && (
-                    <div className="bg-[#F5F5F3] rounded-xl p-3">
-                      <p className="text-[11px] font-bold text-[#ADADAD] mb-1">해설</p>
-                      <p className="text-[12px] text-[#1A1A1A] leading-relaxed">{r.explanation}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : score !== null && wrong.length === 0 && (
+        {/* ── 전체 정답 배지 ── */}
+        {score !== null && wrong.length === 0 && (
           <div className="bg-[#63992210] border border-[#63992230] rounded-2xl p-5 text-center">
             <div className="text-[32px] mb-2">🎉</div>
             <p className="text-[14px] font-bold text-[#639922]">완벽해요! 모두 정답입니다</p>
