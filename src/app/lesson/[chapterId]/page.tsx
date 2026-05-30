@@ -643,7 +643,7 @@ export default function LessonPage() {
             onClick={() => router.push(`/test/${chapterId}`)}
             className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold"
           >
-            <Zap size={18} /> 테스트 시작
+            <Zap size={18} /> 챕터 테스트
           </button>
         ) : slideMode === 'manual' ? (
           <button
@@ -673,7 +673,7 @@ export default function LessonPage() {
             onClick={() => router.push(`/test/${chapterId}`)}
             className="w-full max-w-sm flex items-center justify-center gap-2 py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold"
           >
-            <Zap size={18} /> 테스트 시작하기
+            <Zap size={18} /> 챕터 테스트
           </button>
           <button
             onClick={() => {
