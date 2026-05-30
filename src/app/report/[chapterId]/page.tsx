@@ -3,8 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
-import { Check, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Check, X, ChevronLeft } from 'lucide-react'
 import { SignupPromptPopup } from '@/components/common/SignupPromptPopup'
 import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
 
@@ -43,7 +42,6 @@ export default function ReportPage() {
 
   const [result, setResult]           = useState<TestResult | null>(null)
   const [lessonStat, setLessonStat]   = useState<LessonStat | null>(null)
-  const [nextChapterId, setNextChapterId] = useState<string | null>(null)
   const [subjectId, setSubjectId]     = useState<string | null>(null)
   const [loading, setLoading]         = useState(true)
   const [showSignupPopup, setShowSignupPopup] = useState(false)
@@ -67,7 +65,7 @@ export default function ReportPage() {
   }, [status, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchAll = async (userId: string | null) => {
-    await Promise.all([fetchLessonStat(userId), fetchNextChapter()])
+    await fetchLessonStat(userId)
     setLoading(false)
   }
 
@@ -83,28 +81,6 @@ export default function ReportPage() {
     } catch { /* ignore */ }
   }
 
-  const fetchNextChapter = async () => {
-    const { data: chapter } = await supabase
-      .from('chapters')
-      .select('course_id, order_index')
-      .eq('id', chapterId)
-      .single()
-
-    if (chapter) {
-      const { data: siblings } = await supabase
-        .from('chapters')
-        .select('id, order_index')
-        .eq('course_id', chapter.course_id)
-        .order('order_index', { ascending: true })
-
-      if (siblings) {
-        const idx = siblings.findIndex((c) => c.id === chapterId)
-        if (idx !== -1 && idx + 1 < siblings.length) {
-          setNextChapterId(siblings[idx + 1].id)
-        }
-      }
-    }
-  }
 
   if (loading) {
     return (
