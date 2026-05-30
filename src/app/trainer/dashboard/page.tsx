@@ -1876,10 +1876,21 @@ function DashboardContent() {
           const diffDays = Math.ceil((examDate.getTime() - weekStart.getTime()) / 86400000)
           const weekNum = Math.ceil(diffDays / 7)
 
+          const startM = weekStart.getMonth() + 1
+          const startD = weekStart.getDate()
+          const endM   = weekEnd.getMonth() + 1
+          const endD   = weekEnd.getDate()
+          const dateRange = `${startM}/${startD} - ${endM}/${endD}`
+          const label =
+            w === 0  ? `${dateRange} (이번 주)` :
+            w === 1  ? `${dateRange} (다음 주)` :
+            w === -1 ? `${dateRange} (지난 주)` :
+                       dateRange
+
           weeks.push({
             weekNum,
-            label: `${weekNum}주차`,
-            range: `${weekStart.getMonth() + 1}/${weekStart.getDate()} — ${weekEnd.getMonth() + 1}/${weekEnd.getDate()}`,
+            label,
+            range: dateRange,
             dates,
             isCurrent: w === 0,
             isPast: w < 0,
@@ -1917,18 +1928,9 @@ function DashboardContent() {
                 <div key={week.weekNum} className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
                   {/* 주차 헤더 */}
                   <div className={`px-4 py-3 flex items-center justify-between ${week.isCurrent ? 'bg-[#1A1A1A]' : 'bg-[#F5F5F3]'}`}>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[14px] font-black ${week.isCurrent ? 'text-white' : 'text-[#1A1A1A]'}`}>
-                        {week.label}
-                      </span>
-                      {week.isCurrent && (
-                        <span className="text-[10px] font-bold text-[#00A651] bg-[#00A651]/20 px-2 py-0.5 rounded-full">이번 주</span>
-                      )}
-                      {week.isPast && (
-                        <span className="text-[10px] font-bold text-[#ADADAD] bg-[#E5E5E5] px-2 py-0.5 rounded-full">지난 주</span>
-                      )}
-                    </div>
-                    <span className={`text-[11px] ${week.isCurrent ? 'text-white/60' : 'text-[#ADADAD]'}`}>{week.range}</span>
+                    <span className={`text-[14px] font-black ${week.isCurrent ? 'text-white' : 'text-[#1A1A1A]'}`}>
+                      {week.label}
+                    </span>
                   </div>
 
                   {/* 슬롯 2개 */}
