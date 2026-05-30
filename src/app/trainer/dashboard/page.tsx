@@ -1589,7 +1589,7 @@ function DashboardContent() {
                           {uc.cert_id === 'sports-instructor-2-practical' ? '보디빌딩' : uc.subjects.length > 0 ? `${uc.subjects.length}개 과목 수강 중` : '과목을 선택해주세요'}
                         </p>
                       </div>
-                      <div className={`transition-transform duration-200 ${expandedCertId === uc.id ? 'rotate-90' : ''}`}>
+                      <div className={`transition-transform duration-200 flex-shrink-0 ${expandedCertId === uc.id ? 'rotate-90' : ''}`}>
                         <ChevronRight size={16} className="text-[#ADADAD]" />
                       </div>
                     </button>
