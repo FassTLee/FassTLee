@@ -16,9 +16,10 @@ import { ALL_VIDEOS, HOME_VIDEO_COUNT } from '@/lib/videos'
 
 type Tab = 'home' | 'classroom' | 'exam' | 'profile'
 
-const SUBJECTS_KEY = 'kinepia_selected_subjects'
-const CERT_KEY     = 'kinepia_selected_cert'
-const STYLE_KEY    = 'kinepia_learning_style'
+const SUBJECTS_KEY  = 'kinepia_selected_subjects'
+const CERT_KEY      = 'kinepia_selected_cert'
+const STYLE_KEY     = 'kinepia_learning_style'
+const ADMIN_EMAILS  = ['shotace@naver.com', 'prehabex@naver.com']
 
 const CERT_LABELS: Record<string, string> = {
   'health-exercise-manager':       '건강운동관리사',
@@ -267,6 +268,7 @@ function DashboardContent() {
   const [showRegisteredModal, setShowRegisteredModal]     = useState(false)
   const [showExamInfoModal, setShowExamInfoModal]         = useState(false)
   const [showExamClosedModal, setShowExamClosedModal]     = useState(false)
+  const [showExamNotYetModal, setShowExamNotYetModal]     = useState(false)
 
   /* ── 캘린더 월 이동 ─────────────────────────────────────────────── */
   const [calYear,  setCalYear]  = useState(() => new Date().getFullYear())
@@ -1795,6 +1797,9 @@ function DashboardContent() {
     return '종료'
   }
 
+  // Admin 여부
+  const isAdmin = ADMIN_EMAILS.includes(session?.user?.email ?? '')
+
   // 히어로 카드 버튼 상태 계산
   const nowForExam       = new Date()
   const isNextExamToday  = nextExam !== null && new Date(nextExam.dateValue).getTime() === today.getTime()
@@ -1918,6 +1923,15 @@ function DashboardContent() {
             </div>
           </div>
 
+          {isAdmin && (
+            <button
+              onClick={() => router.push('/oral-exam/b28e78c8-8443-4013-bfef-dbe655c72994')}
+              className="w-full py-3 mb-3 border-2 border-dashed border-[#00A651] rounded-2xl text-[14px] font-bold text-[#00A651]"
+            >
+              🔍 관리자 체험하기
+            </button>
+          )}
+
           {oralLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="w-6 h-6 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
@@ -1961,7 +1975,7 @@ function DashboardContent() {
                               const startMin = h * 60 + m
                               const now = new Date()
                               const nowMin = now.getHours() * 60 + now.getMinutes()
-                              if (nowMin >= startMin && nowMin < startMin + 10) {
+                              if (isAdmin || (nowMin >= startMin && nowMin < startMin + 10)) {
                                 router.push('/oral-exam/b28e78c8-8443-4013-bfef-dbe655c72994')
                               } else {
                                 setShowOralTimeError(true)
@@ -2086,10 +2100,18 @@ function DashboardContent() {
               >
                 입장 마감
               </button>
-            ) : isEntryWindow ? (
-              /* 당일 09:00~10:00 → 입장하기 활성 */
+            ) : isNextExamToday ? (
+              /* 당일 → 입장하기 버튼 (시간 체크) */
               <button
-                onClick={() => router.push('/exam')}
+                onClick={() => {
+                  const nowMin  = new Date().getHours() * 60 + new Date().getMinutes()
+                  const openMin  = 9 * 60 + 50
+                  const closeMin = 10 * 60 + 1
+                  if (isAdmin) { router.push('/exam') }
+                  else if (nowMin < openMin) { setShowExamNotYetModal(true) }
+                  else if (nowMin <= closeMin) { router.push('/exam') }
+                  else { setShowExamClosedModal(true) }
+                }}
                 className="mt-4 w-full py-3 bg-[#00A651] rounded-xl text-[14px] font-bold text-white"
               >
                 입장하기
@@ -2893,6 +2915,25 @@ function DashboardContent() {
             </div>
             <button
               onClick={() => setShowExamInfoModal(false)}
+              className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-2xl text-[15px] font-bold"
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── 아직 입장 시간 아님 모달 ── */}
+      {showExamNotYetModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-6">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6 text-center">
+            <div className="text-[44px] mb-3">⏳</div>
+            <h2 className="text-[17px] font-black text-[#1A1A1A] mb-2">아직 입장 시간이 아닙니다</h2>
+            <p className="text-[13px] text-[#6B6B6B] leading-relaxed mb-6">
+              입장 가능 시간은 09:50 ~ 10:01 입니다.
+            </p>
+            <button
+              onClick={() => setShowExamNotYetModal(false)}
               className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-2xl text-[15px] font-bold"
             >
               확인
