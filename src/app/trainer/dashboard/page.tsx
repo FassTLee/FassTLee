@@ -1804,7 +1804,6 @@ function DashboardContent() {
   const nowForExam       = new Date()
   const isNextExamToday  = nextExam !== null && new Date(nextExam.dateValue).getTime() === today.getTime()
   const nowH = nowForExam.getHours(), nowM = nowForExam.getMinutes()
-  const isEntryWindow    = isNextExamToday && (nowH === 9 || (nowH === 10 && nowM === 0))
   const isEntryClosed    = isNextExamToday && (nowH > 10 || (nowH === 10 && nowM > 0))
 
   const renderExam = () => {
