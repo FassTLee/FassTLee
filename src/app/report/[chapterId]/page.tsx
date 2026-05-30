@@ -267,37 +267,21 @@ export default function ReportPage() {
       </div>
 
       {/* Bottom buttons */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-[#E5E5E5] space-y-2">
-        {score !== null ? (
-          nextChapterId ? (
-            <button
-              onClick={() => router.push(`/lesson/${nextChapterId}`)}
-              className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold"
-            >
-              다음 챕터 <ChevronRight size={16} />
-            </button>
-          ) : (
-            <button
-              onClick={() => router.push(`/test/${chapterId}`)}
-              className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold"
-            >
-              테스트 다시 도전 <ChevronRight size={16} />
-            </button>
-          )
-        ) : (
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E5E5E5]">
+        <div className="flex gap-3 p-4">
           <button
-            onClick={() => router.push(`/lesson/${chapterId}`)}
-            className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold"
+            onClick={() => router.back()}
+            className="flex-1 py-4 border-2 border-[#E5E5E5] rounded-2xl text-[15px] font-bold text-[#1A1A1A]"
           >
-            학습 시작하기 <ChevronRight size={16} />
+            강의실로 돌아가기
           </button>
-        )}
-        <button
-          onClick={() => router.push('/trainer/dashboard?tab=classroom')}
-          className="w-full py-3.5 border-2 border-[#111111] bg-white rounded-2xl text-[14px] font-semibold text-[#111111]"
-        >
-          강의실로
-        </button>
+          <button
+            onClick={() => router.push(`/review/${chapterId}`)}
+            className="flex-1 py-4 bg-[#1A1A1A] rounded-2xl text-[15px] font-bold text-white"
+          >
+            오답노트 보기
+          </button>
+        </div>
       </div>
 
       {/* 비로그인 가입 유도 팝업 (오버레이) */}
