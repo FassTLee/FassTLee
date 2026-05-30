@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { ChevronLeft, ChevronRight as ArrowRight, Check, Zap } from 'lucide-react'
+import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
 // Zap used in completion screen
 
 const STYLE_KEY   = 'kinepia_learning_style'
@@ -651,7 +652,10 @@ export default function LessonPage() {
           <div className="text-[72px] mb-6">🎉</div>
           <h2 className="text-[26px] font-black text-[#1A1A1A] mb-2">학습 완료!</h2>
           <p className="text-[15px] text-[#6B6B6B] mb-1">{chapterTitle}</p>
-          <p className="text-[13px] text-[#ADADAD] mb-10">총 {slides.length}개 슬라이드를 완료했어요</p>
+          <p className="text-[13px] text-[#ADADAD] mb-6">총 {slides.length}개 슬라이드를 완료했어요</p>
+          <div className="w-full max-w-sm mb-4 flex justify-center">
+            <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
+          </div>
           <button
             onClick={() => router.push(`/test/${chapterId}`)}
             className="w-full max-w-sm flex items-center justify-center gap-2 py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold"
