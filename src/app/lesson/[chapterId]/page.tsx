@@ -200,7 +200,7 @@ export default function LessonPage() {
       id: q.id,
       question: q.question,
       explanation: q.explanation,
-      key_points: q.key_points as string[] | null,
+      key_points: q.key_points ?? [],
     }))
     console.log('[fetchData] slides built:', built.length)
     setSlides(built)
@@ -399,7 +399,7 @@ export default function LessonPage() {
     : { prose: '', points: [] }
 
   const rawPoints = Array.isArray(currentSlide?.key_points)
-    ? (currentSlide.key_points as string[]).filter(p => p.length > 1)
+    ? (currentSlide.key_points as string[]).filter((p: string) => p.length > 1)
     : []
   const sentences = rawPoints.length > 0
     ? rawPoints
