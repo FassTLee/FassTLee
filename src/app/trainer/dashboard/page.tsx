@@ -2109,8 +2109,8 @@ function DashboardContent() {
                 입장하기
               </button>
             ) : (
-              /* 신청 완료 + 당일 아님 → 녹색 채워진 배지 */
-              <div className="mt-4 w-full py-3 bg-[#00A651] rounded-xl text-[14px] font-bold text-white text-center">
+              /* 신청 완료 + 당일 아님 → 초록 아웃라인 */
+              <div className="mt-4 w-full py-3 rounded-xl text-[14px] font-bold text-center border-2 border-[#00A651] bg-[#00A651]/10 text-[#00A651]">
                 신청 완료
               </div>
             )}
@@ -2179,7 +2179,7 @@ function DashboardContent() {
                         종료
                       </span>
                     ) : registeredRounds.includes(e.round) ? (
-                      <span className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-[#00A651] text-white">
+                      <span className="text-[10px] font-bold px-3 py-1.5 rounded-lg border-2 border-[#00A651] bg-[#00A651]/10 text-[#00A651]">
                         신청 완료
                       </span>
                     ) : (
