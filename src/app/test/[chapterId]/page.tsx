@@ -318,7 +318,7 @@ export default function TestPage() {
                       selected === 1 ? 'bg-[#E24B4A] text-white' : 'bg-[#F5F5F3] text-[#1A1A1A]'
                     }`}
                   >
-                    다시 볼게
+                    오답노트에 저장
                   </button>
                 </div>
               </>

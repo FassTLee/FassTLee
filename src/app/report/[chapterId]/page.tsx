@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 import { Check, X, ChevronLeft } from 'lucide-react'
 import { SignupPromptPopup } from '@/components/common/SignupPromptPopup'
 import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
@@ -40,10 +41,11 @@ export default function ReportPage() {
   const params = useParams()
   const chapterId = params.chapterId as string
 
-  const [result, setResult]           = useState<TestResult | null>(null)
-  const [lessonStat, setLessonStat]   = useState<LessonStat | null>(null)
-  const [subjectId, setSubjectId]     = useState<string | null>(null)
-  const [loading, setLoading]         = useState(true)
+  const [result, setResult]               = useState<TestResult | null>(null)
+  const [lessonStat, setLessonStat]       = useState<LessonStat | null>(null)
+  const [nextChapterId, setNextChapterId] = useState<string | null>(null)
+  const [subjectId, setSubjectId]         = useState<string | null>(null)
+  const [loading, setLoading]             = useState(true)
   const [showSignupPopup, setShowSignupPopup] = useState(false)
 
   useEffect(() => {
@@ -65,8 +67,21 @@ export default function ReportPage() {
   }, [status, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchAll = async (userId: string | null) => {
-    await fetchLessonStat(userId)
+    await Promise.all([fetchLessonStat(userId), fetchNextChapter()])
     setLoading(false)
+  }
+
+  const fetchNextChapter = async () => {
+    const { data: chapter } = await supabase
+      .from('chapters').select('course_id, order_index').eq('id', chapterId).single()
+    if (!chapter) return
+    const { data: siblings } = await supabase
+      .from('chapters').select('id, order_index')
+      .eq('course_id', chapter.course_id).order('order_index', { ascending: true })
+    if (siblings) {
+      const idx = siblings.findIndex((c) => c.id === chapterId)
+      if (idx !== -1 && idx + 1 < siblings.length) setNextChapterId(siblings[idx + 1].id)
+    }
   }
 
   const fetchLessonStat = async (userId: string | null) => {
@@ -243,21 +258,54 @@ export default function ReportPage() {
       </div>
 
       {/* Bottom buttons */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E5E5E5]">
-        <div className="flex gap-3 p-4">
-          <button
-            onClick={() => router.back()}
-            className="flex-1 py-4 border-2 border-[#E5E5E5] rounded-2xl text-[15px] font-bold text-[#1A1A1A]"
-          >
-            강의실로 돌아가기
-          </button>
-          <button
-            onClick={() => router.push(`/review/${chapterId}`)}
-            className="flex-1 py-4 bg-[#1A1A1A] rounded-2xl text-[15px] font-bold text-white"
-          >
-            오답노트 보기
-          </button>
-        </div>
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E5E5E5] p-4 space-y-2">
+        {wrong.length > 0 ? (
+          <>
+            {/* 오답 있음: 오답노트 primary + 다음챕터/강의실 row */}
+            <button
+              onClick={() => router.push(`/review/${chapterId}`)}
+              className="w-full py-4 bg-[#1A1A1A] rounded-2xl text-[15px] font-bold text-white"
+            >
+              오답노트 확인하기
+            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => nextChapterId
+                  ? router.push(`/lesson/${nextChapterId}`)
+                  : router.push(subjectId ? `/chapters/${subjectId}` : '/trainer/dashboard?tab=classroom')
+                }
+                className="flex-1 py-3.5 border-2 border-[#E5E5E5] rounded-2xl text-[14px] font-bold text-[#1A1A1A]"
+              >
+                다음 챕터 →
+              </button>
+              <button
+                onClick={() => router.push(subjectId ? `/chapters/${subjectId}` : '/trainer/dashboard?tab=classroom')}
+                className="flex-1 py-3.5 border-2 border-[#E5E5E5] rounded-2xl text-[14px] font-bold text-[#1A1A1A]"
+              >
+                강의실로
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* 오답 없음: 다음챕터 primary + 강의실 텍스트 링크 */}
+            <button
+              onClick={() => nextChapterId
+                ? router.push(`/lesson/${nextChapterId}`)
+                : router.push(subjectId ? `/chapters/${subjectId}` : '/trainer/dashboard?tab=classroom')
+              }
+              className="w-full py-4 bg-[#00A651] rounded-2xl text-[15px] font-bold text-white"
+            >
+              다음 챕터 →
+            </button>
+            <button
+              onClick={() => router.push(subjectId ? `/chapters/${subjectId}` : '/trainer/dashboard?tab=classroom')}
+              className="w-full py-2 text-[14px] text-[#ADADAD] text-center"
+            >
+              강의실로
+            </button>
+          </>
+        )}
       </div>
 
       {/* 비로그인 가입 유도 팝업 (오버레이) */}
