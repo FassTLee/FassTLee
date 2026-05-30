@@ -220,13 +220,6 @@ export default function LessonPage() {
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [slideMode, slideIndex, showMiniQuiz, loading])
 
-  /* ── Advance when timer completes ─────────────────── */
-  useEffect(() => {
-    if (autoProgress < 100 || slideMode !== 'auto' || showMiniQuiz) return
-    setAutoProgress(0)
-    triggerMiniQuiz(slideIndex)
-  }, [autoProgress]) // eslint-disable-line react-hooks/exhaustive-deps
-
   /* ── Post-quiz navigation ──────────────────────────── */
   const advanceFromQuiz = () => {
     setShowMiniQuiz(false)
