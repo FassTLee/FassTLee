@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { ChevronLeft, ChevronRight, BookOpen, Flame, Check, Lock } from 'lucide-react'
+import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
 
 interface Chapter {
   id: string
@@ -310,6 +311,12 @@ export default function ChaptersPage() {
               </div>
             )
           })
+        )}
+        {/* AdFit 배너 — 챕터 목록 최하단 */}
+        {visibleChapters.length > 0 && (
+          <div className="flex justify-center pt-2 pb-4">
+            <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
+          </div>
         )}
       </div>
 

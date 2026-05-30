@@ -156,6 +156,9 @@ export default function TestPage() {
   if (reportUrl) {
     return (
       <div className="min-h-screen bg-[#1A1A1A] flex flex-col items-center justify-center p-6 gap-6">
+        <div className="rounded-2xl overflow-hidden bg-white flex items-center justify-center">
+          <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
+        </div>
         <p className="text-[13px] text-white/50">잠시 후 결과가 표시됩니다</p>
         <div className="rounded-2xl overflow-hidden bg-white flex items-center justify-center" style={{ width: 300, height: 250 }}>
           <KakaoAdFit unit="DAN-lIQXmkoBNuojGX5A" width={300} height={250} />

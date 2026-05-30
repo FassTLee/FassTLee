@@ -144,14 +144,12 @@ export default function ReportPage() {
         <h1 className="text-[20px] font-black text-[#1A1A1A]">학습 리포트</h1>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 pb-36 space-y-4">
+      {/* 광고 배너 — 헤더 바로 아래 */}
+      <div className="flex justify-center bg-white border-b border-[#E5E5E5] py-2">
+        <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
+      </div>
 
-        {/* 콘텐츠 사이 광고 배너 — Free 유저 (구독 구분 추가 전: 로그인 유저 전체) */}
-        {status === 'authenticated' && (
-          <div className="flex justify-center">
-            <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
-          </div>
-        )}
+      <div className="flex-1 overflow-y-auto p-4 pb-36 space-y-4">
 
         {!hasTestData && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
