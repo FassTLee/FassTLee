@@ -1980,10 +1980,10 @@ function DashboardContent() {
                       } else if (reg && !isToday) {
                         slotButton = (
                           <button
-                            className="px-4 py-2 rounded-xl text-[12px] font-bold bg-[#F5F5F3] text-[#6B6B6B] border border-[#E5E5E5] active:bg-[#EBEBEB]"
+                            className="px-4 py-2 rounded-xl text-[12px] font-bold border-2 border-[#00A651] bg-[#00A651]/10 text-[#00A651]"
                             onClick={() => setShowOralTicket(reg)}
                           >
-                            수험표
+                            신청 완료
                           </button>
                         )
                       } else if (!reg && week.isPast) {
