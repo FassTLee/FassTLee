@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     userId,
     exam_target_date, cert_type, region, daily_study_hours,
     daily_study_time, daily_study_count, study_time_slot,
-    push_enabled, selected_subjects,
+    push_enabled, selected_subjects, code_popup_shown,
   } = body
 
   if (!userId || !isSupabaseAdminConfigured) {
@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
       ...(study_time_slot     !== undefined && { study_time_slot }),
       ...(push_enabled        !== undefined && { push_enabled }),
       ...(selected_subjects   !== undefined && { selected_subjects }),
+      ...(code_popup_shown    !== undefined && { code_popup_shown }),
     })
     .eq('id', userId)
 

@@ -21,7 +21,7 @@ export async function GET() {
 
   const { data, error } = await supabaseAdmin
     .from('profiles')
-    .select('name, email, avatar_url, cert_type, selected_cert, exam_target_date, learning_style')
+    .select('name, email, avatar_url, cert_type, selected_cert, exam_target_date, learning_style, code_popup_shown, access_code_used')
     .eq('id', userId)
     .single()
 
@@ -34,6 +34,8 @@ export async function GET() {
     // cert_type(프로필 편집) 없으면 selected_cert(온보딩) fallback
     certType:      data?.cert_type ?? data?.selected_cert ?? null,
     examDate:      data?.exam_target_date ?? null,
-    learningStyle: data?.learning_style ?? null,
+    learningStyle:    data?.learning_style    ?? null,
+    codePopupShown:   data?.code_popup_shown  ?? null,
+    accessCodeUsed:   data?.access_code_used  ?? null,
   })
 }

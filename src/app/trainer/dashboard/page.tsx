@@ -293,6 +293,13 @@ function DashboardContent() {
   /* ── Phone Modal ─────────────────────────────────────────────────── */
   const [showPhoneModal, setShowPhoneModal] = useState(false)
 
+  /* ── Access Code Popup ───────────────────────────────────────────── */
+  const [showCodePopup, setShowCodePopup]       = useState(false)
+  const [codeInput, setCodeInput]               = useState('')
+  const [codeError, setCodeError]               = useState<string | null>(null)
+  const [codeSubmitting, setCodeSubmitting]     = useState(false)
+  const [_accessCodeUsed, setAccessCodeUsed]     = useState<string | null>(null)
+
   /* ── 학습 유형 검사 팝업 ─────────────────────────────────────────── */
   // undefined = profile-me 로딩 중, null = 스타일 미설정(팝업 표시), string = 설정됨
   const [profileLearningStyle, setProfileLearningStyle] = useState<string | null | undefined>(undefined)
@@ -373,6 +380,8 @@ function DashboardContent() {
       if (pm.avatarUrl) setProfileAvatar(pm.avatarUrl)
       if (pm.certType)  { loadedCertType = pm.certType; setProfileCert(pm.certType); setCertTypeInput(pm.certType) }
       if (pm.examDate)  { loadedExamDate = pm.examDate; setProfileExamDate(pm.examDate); setExamDateInput(pm.examDate) }
+      if (pm.accessCodeUsed) setAccessCodeUsed(pm.accessCodeUsed)
+      if (pm.codePopupShown === false) setShowCodePopup(true)
       // profile-me 완료 후 learning_style 확정
       // localStorage도 확인 — DB 저장 실패해도 테스트 완료 여부를 알 수 있음
       const localLessonStyle = localStorage.getItem(STYLE_KEY) // 'memorizer' | 'conceptualizer'
@@ -717,6 +726,39 @@ function DashboardContent() {
     } else {
       vid.pause()
       setPlayingIdx(null)
+    }
+  }
+
+  const dismissCodePopup = async () => {
+    setShowCodePopup(false)
+    const userId = session?.user?.id ?? ''
+    if (userId) {
+      fetch('/api/v1/profile-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, code_popup_shown: true }),
+      }).catch(() => {})
+    }
+  }
+
+  const handleCodeSubmit = async () => {
+    if (!codeInput.trim() || codeSubmitting) return
+    setCodeSubmitting(true)
+    setCodeError(null)
+    try {
+      const res  = await fetch('/api/v1/access-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: codeInput.trim().toUpperCase() }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setCodeError(data.error ?? '오류가 발생했습니다'); return }
+      setAccessCodeUsed(codeInput.trim().toUpperCase())
+      setShowCodePopup(false)
+    } catch {
+      setCodeError('네트워크 오류가 발생했습니다')
+    } finally {
+      setCodeSubmitting(false)
     }
   }
 
@@ -3155,6 +3197,45 @@ function DashboardContent() {
       {/* ── 휴대폰 번호 등록 모달 ── */}
       {showPhoneModal && (
         <PhoneRegisterModal onClose={() => setShowPhoneModal(false)} />
+      )}
+
+      {/* ── 이용권 코드 입력 팝업 ── */}
+      {showCodePopup && (
+        <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center px-6">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6">
+            <div className="text-center mb-5">
+              <div className="text-[44px] mb-3">🎁</div>
+              <h2 className="text-[18px] font-black text-[#1A1A1A] mb-2">Kinepia 무료 이용권</h2>
+              <p className="text-[13px] text-[#6B6B6B] leading-relaxed">
+                코드를 입력하면 6월 30일까지<br />모든 과목을 무료로 이용할 수 있습니다.
+              </p>
+            </div>
+            <input
+              type="text"
+              value={codeInput}
+              onChange={(e) => { setCodeInput(e.target.value.toUpperCase()); setCodeError(null) }}
+              placeholder="코드를 입력하세요"
+              className="w-full px-4 py-3 border-2 border-[#E5E5E5] rounded-2xl text-[15px] font-bold tracking-widest text-center mb-2 focus:outline-none focus:border-[#1A1A1A]"
+              onKeyDown={(e) => e.key === 'Enter' && handleCodeSubmit()}
+            />
+            {codeError && (
+              <p className="text-[12px] text-[#E24B4A] text-center mb-2">{codeError}</p>
+            )}
+            <button
+              onClick={handleCodeSubmit}
+              disabled={!codeInput.trim() || codeSubmitting}
+              className="w-full py-3.5 bg-[#1A1A1A] disabled:bg-[#E5E5E5] disabled:text-[#ADADAD] text-white rounded-2xl text-[15px] font-bold mt-1"
+            >
+              {codeSubmitting ? '확인 중...' : '코드 입력하기'}
+            </button>
+            <button
+              onClick={dismissCodePopup}
+              className="w-full py-2.5 mt-2 text-[13px] text-[#ADADAD] text-center"
+            >
+              나중에 입력할게요
+            </button>
+          </div>
+        </div>
       )}
 
       {/* ── 학습 유형 검사 팝업 ── */}

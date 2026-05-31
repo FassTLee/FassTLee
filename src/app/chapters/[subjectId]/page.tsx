@@ -48,15 +48,23 @@ export default function ChaptersPage() {
   const [statsMap, setStatsMap] = useState<Record<string, ChapterStat>>({})
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
-  const [showLockPopup, setShowLockPopup] = useState(false)
+  const [accessCodeUsed, setAccessCodeUsed] = useState<string | null>(null)
+  const [showCodePopup, setShowCodePopup]   = useState(false)
+  const [codeInput, setCodeInput]           = useState('')
+  const [codeError, setCodeError]           = useState<string | null>(null)
+  const [codeSubmitting, setCodeSubmitting] = useState(false)
 
-  // TODO: replace with real subscription check (e.g. from profile API)
-  const isSubscribed = false
+  const isSubscribed = !!accessCodeUsed
 
   // ── 챕터 목록 + 통계 fetch: 페이지 진입마다 항상 실행 ─────────────────
   useEffect(() => {
     if (status === 'loading') return
     if (status === 'unauthenticated') { router.replace('/landing'); return }
+    // access_code_used 확인
+    fetch('/api/v1/profile-me', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((pm) => { if (pm.accessCodeUsed) setAccessCodeUsed(pm.accessCodeUsed) })
+      .catch(() => {})
     fetchData()
     const userId = session?.user?.id
     console.log('[chapters] fetchStats userId:', userId)
@@ -161,6 +169,28 @@ export default function ChaptersPage() {
     }
   }
 
+  const handleCodeSubmit = async () => {
+    if (!codeInput.trim() || codeSubmitting) return
+    setCodeSubmitting(true)
+    setCodeError(null)
+    try {
+      const res  = await fetch('/api/v1/access-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: codeInput.trim().toUpperCase() }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setCodeError(data.error ?? '오류가 발생했습니다'); return }
+      setAccessCodeUsed(codeInput.trim().toUpperCase())
+      setShowCodePopup(false)
+      setCodeInput('')
+    } catch {
+      setCodeError('네트워크 오류가 발생했습니다')
+    } finally {
+      setCodeSubmitting(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
@@ -261,7 +291,7 @@ export default function ChaptersPage() {
                 {/* 메인 영역 (클릭 → 레슨 진입) */}
                 <button
                   onClick={() => {
-                    if (isLocked) { setShowLockPopup(true); return }
+                    if (isLocked) { setShowCodePopup(true); return }
                     localStorage.setItem('kinepia_current_subject_id', subjectId)
                     router.push(`/lesson/${ch.id}`)
                   }}
@@ -320,26 +350,40 @@ export default function ChaptersPage() {
         )}
       </div>
 
-      {/* Free-plan lock popup */}
-      {showLockPopup && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center p-4">
-          <div className="w-full max-w-sm bg-white rounded-3xl p-6 space-y-4">
-            <div className="text-center">
-              <div className="text-[44px] mb-2">🔒</div>
-              <h2 className="text-[18px] font-black text-[#1A1A1A] mb-2">구독 전용 챕터</h2>
+      {/* 이용권 코드 입력 팝업 */}
+      {showCodePopup && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-6">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6">
+            <div className="text-center mb-5">
+              <div className="text-[44px] mb-3">🎁</div>
+              <h2 className="text-[18px] font-black text-[#1A1A1A] mb-2">Kinepia 무료 이용권</h2>
               <p className="text-[13px] text-[#6B6B6B] leading-relaxed">
-                이 챕터는 구독 후 이용 가능합니다.<br />
-                1주일 무료 체험으로 모든 챕터를 열어보세요!
+                코드를 입력하면 6월 30일까지<br />모든 과목을 무료로 이용할 수 있습니다.
               </p>
             </div>
-            <button className="w-full py-3.5 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold">
-              1주일 무료 체험
+            <input
+              type="text"
+              value={codeInput}
+              onChange={(e) => { setCodeInput(e.target.value.toUpperCase()); setCodeError(null) }}
+              placeholder="코드를 입력하세요"
+              className="w-full px-4 py-3 border-2 border-[#E5E5E5] rounded-2xl text-[15px] font-bold tracking-widest text-center mb-2 focus:outline-none focus:border-[#1A1A1A]"
+              onKeyDown={(e) => e.key === 'Enter' && handleCodeSubmit()}
+            />
+            {codeError && (
+              <p className="text-[12px] text-[#E24B4A] text-center mb-2">{codeError}</p>
+            )}
+            <button
+              onClick={handleCodeSubmit}
+              disabled={!codeInput.trim() || codeSubmitting}
+              className="w-full py-3.5 bg-[#1A1A1A] disabled:bg-[#E5E5E5] disabled:text-[#ADADAD] text-white rounded-2xl text-[15px] font-bold mt-1"
+            >
+              {codeSubmitting ? '확인 중...' : '코드 입력하기'}
             </button>
             <button
-              onClick={() => setShowLockPopup(false)}
-              className="w-full border-2 border-[#111111] bg-white text-[#111111] rounded-2xl py-2.5 text-[13px] font-medium"
+              onClick={() => { setShowCodePopup(false); setCodeInput(''); setCodeError(null) }}
+              className="w-full py-2.5 mt-2 text-[13px] text-[#ADADAD] text-center"
             >
-              나중에
+              닫기
             </button>
           </div>
         </div>
