@@ -197,10 +197,18 @@ function DashboardContent() {
 
   const [tab, setTab] = useState<Tab>(tabParam)
 
+  /* ── 로그인 유도 바텀시트 ───────────────────────────────────────── */
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false)
+
   /* Sync tab when URL search param changes (BottomTabBar navigation) */
   useEffect(() => {
+    // profile 탭은 로그인 필요
+    if (tabParam === 'profile' && !session) {
+      setShowLoginPrompt(true)
+      return
+    }
     setTab(tabParam)
-  }, [tabParam])
+  }, [tabParam, session])
   const [loading, setLoading] = useState(true)
 
   /* ── Common ──────────────────────────────────────────────────────── */
@@ -323,7 +331,10 @@ function DashboardContent() {
   // ── Init ────────────────────────────────────────────────────────────
   useEffect(() => {
     if (status === 'loading') return
-    if (status === 'unauthenticated') { router.replace('/landing'); return }
+    if (status === 'unauthenticated') {
+      setLoading(false)  // 비로그인도 대시보드 렌더링 허용
+      return
+    }
     initCommon()
   }, [status, router]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -381,7 +392,7 @@ function DashboardContent() {
       if (pm.certType)  { loadedCertType = pm.certType; setProfileCert(pm.certType); setCertTypeInput(pm.certType) }
       if (pm.examDate)  { loadedExamDate = pm.examDate; setProfileExamDate(pm.examDate); setExamDateInput(pm.examDate) }
       if (pm.accessCodeUsed) setAccessCodeUsed(pm.accessCodeUsed)
-      if (pm.codePopupShown === false) setShowCodePopup(true)
+      if (session && pm.codePopupShown === false) setShowCodePopup(true)
       // profile-me 완료 후 learning_style 확정
       // localStorage도 확인 — DB 저장 실패해도 테스트 완료 여부를 알 수 있음
       const localLessonStyle = localStorage.getItem(STYLE_KEY) // 'memorizer' | 'conceptualizer'
@@ -1610,7 +1621,10 @@ function DashboardContent() {
                 <div key={uc.id} className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
                   <div className="flex items-center pr-3 overflow-hidden">
                     <button
-                      onClick={() => setExpandedCertId((prev) => prev === uc.id ? null : uc.id)}
+                      onClick={() => {
+                        if (!session) { setShowLoginPrompt(true); return }
+                        setExpandedCertId((prev) => prev === uc.id ? null : uc.id)
+                      }}
                       className="flex-1 px-4 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
                     >
                       <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center text-[20px] flex-shrink-0">
@@ -1855,7 +1869,10 @@ function DashboardContent() {
               {userCerts.map((uc) => (
                 <button
                   key={uc.id}
-                  onClick={() => setSelectedExamCert(uc.cert_id)}
+                  onClick={() => {
+                    if (!session) { setShowLoginPrompt(true); return }
+                    setSelectedExamCert(uc.cert_id)
+                  }}
                   className="w-full bg-white rounded-2xl border border-[#E5E5E5] px-4 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
                 >
                   <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center text-[20px] flex-shrink-0">
@@ -3199,6 +3216,32 @@ function DashboardContent() {
         <PhoneRegisterModal onClose={() => setShowPhoneModal(false)} />
       )}
 
+      {/* ── 로그인 유도 바텀시트 ── */}
+      {showLoginPrompt && (
+        <div className="fixed inset-0 bg-black/60 z-[70] flex items-end justify-center">
+          <div className="w-full max-w-lg bg-white rounded-t-3xl px-6 pt-6 pb-10">
+            <div className="w-10 h-1 bg-[#E5E5E5] rounded-full mx-auto mb-6" />
+            <div className="text-center mb-6">
+              <div className="text-[44px] mb-3">🔐</div>
+              <h2 className="text-[18px] font-black text-[#1A1A1A] mb-2">로그인이 필요해요</h2>
+              <p className="text-[13px] text-[#6B6B6B] leading-relaxed">무료로 시작하고 학습 기록을 저장하세요</p>
+            </div>
+            <button
+              onClick={() => router.push('/landing')}
+              className="w-full py-4 bg-[#1A1A1A] text-white rounded-2xl text-[15px] font-bold"
+            >
+              로그인 / 회원가입
+            </button>
+            <button
+              onClick={() => setShowLoginPrompt(false)}
+              className="w-full py-2.5 mt-2 text-[13px] text-[#ADADAD] text-center"
+            >
+              나중에 하기
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── 이용권 코드 입력 팝업 ── */}
       {showCodePopup && (
         <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center px-6">
@@ -3239,8 +3282,8 @@ function DashboardContent() {
       )}
 
       {/* ── 학습 유형 검사 팝업 ── */}
-      {/* profile-me 응답 완료(undefined 아님) + learning_style 미설정(null)인 경우에만 표시 */}
-      {profileLearningStyle === null && (
+      {/* 로그인 상태 + profile-me 응답 완료(undefined 아님) + learning_style 미설정(null)인 경우에만 표시 */}
+      {session && profileLearningStyle === null && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-6">
           <div className="w-full max-w-sm bg-white rounded-3xl p-7 text-center">
             <div className="text-[44px] mb-4">🧠</div>
