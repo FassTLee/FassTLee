@@ -9,10 +9,15 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 const CERT_KEY = 'kinepia_selected_cert'
 
 interface CertRow {
+  id: string
   slug: string
   name: string
   is_active: boolean
 }
+
+const HIDDEN_CERT_IDS = [
+  '40ac89d8-a6b7-4d53-8cbe-34ac40af6307', // 운동건강관리사 (화이트라벨 준비 중)
+]
 
 const CERT_META: Record<string, {
   icon: string
@@ -55,11 +60,12 @@ export default function SelectCertPage() {
     if (isSupabaseConfigured) {
       supabase
         .from('certifications')
-        .select('slug, name, is_active')
+        .select('id, slug, name, is_active')
         .then(({ data }) => {
           if (data) {
             const seen = new Set<string>()
             const unique = (data as CertRow[]).filter(c => {
+              if (HIDDEN_CERT_IDS.includes(c.id)) return false
               if (seen.has(c.slug)) return false
               seen.add(c.slug)
               return true
