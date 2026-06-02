@@ -132,6 +132,7 @@ interface ActivityItem {
   subject_name: string
   date: string | null
   score: number
+  bestScore: number | null
 }
 
 interface DayGoal {
@@ -559,6 +560,7 @@ function DashboardContent() {
             subject_name:  subjMap[courseMap[chMap[s.chapter_id]?.course_id ?? ''] ?? ''] ?? '',
             date:          s.last_attempt_at,
             score:         s.avg_score,
+            bestScore:     s.best_score ?? null,
           }))
         )
       }
@@ -2768,8 +2770,16 @@ function DashboardContent() {
                 return (
                   <div
                     key={item.chapter_id}
-                    className={`flex items-center gap-3 px-4 py-3 ${idx < recentActivity.length - 1 ? 'border-b border-[#F0F0EE]' : ''}`}
+                    className={`relative flex items-center gap-3 px-4 py-3 ${idx < recentActivity.length - 1 ? 'border-b border-[#F0F0EE]' : ''} ${item.bestScore === 100 ? 'border-[1.5px] border-[#FFD54F]' : ''}`}
                   >
+                    {item.bestScore === 100 && (
+                      <div className="absolute top-2 right-3 text-[#FFD54F]">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M8 21h8M12 17v4M17 7A5 5 0 0 1 7 7H6a4 4 0 0 0 4 4h4a4 4 0 0 0 4-4h-1z"/>
+                          <path d="M6 7H4a2 2 0 0 0 0 4h2M18 7h2a2 2 0 0 0 0-4h-2"/>
+                        </svg>
+                      </div>
+                    )}
                     <div className="w-8 h-8 rounded-lg bg-[#F5F5F3] flex items-center justify-center text-[16px] flex-shrink-0">
                       {meta.icon}
                     </div>
