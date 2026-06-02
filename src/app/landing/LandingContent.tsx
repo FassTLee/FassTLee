@@ -148,8 +148,8 @@ export default function LandingContent() {
           </div>
 
           <h1 className="text-[32px] font-black leading-tight mb-3">
-            국가공인
-            <span className="text-[#00A651]"> 체육 지도 전문가</span>
+            국가공인<br />
+            <span className="text-[#00A651]">체육 지도 전문가</span>
           </h1>
           <div className="inline-flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-full px-3 py-1 text-[11px] font-semibold text-white/60 mb-3">
             🏛️ 특허 출원 중
