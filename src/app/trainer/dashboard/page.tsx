@@ -906,12 +906,19 @@ function DashboardContent() {
     // 캘린더: 날짜별 점수 맵
     const actToday = new Date(); actToday.setHours(0, 0, 0, 0)
     const studyMap: Record<string, number[]> = {}
+    const hundredMap: { [key: string]: boolean } = {}
     allStats.forEach((s) => {
       if (!s.last_attempt_at) return
       const d = new Date(s.last_attempt_at)
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
       if (!studyMap[key]) studyMap[key] = []
       studyMap[key].push(s.avg_score)
+
+      if (s.best_score === 100) {
+        const d2 = new Date(s.last_attempt_at)
+        const hKey = `${d2.getFullYear()}-${String(d2.getMonth() + 1).padStart(2, '0')}-${String(d2.getDate()).padStart(2, '0')}`
+        hundredMap[hKey] = true
+      }
     })
     // 그리드: 선택 월 1일~말일, 월요일 시작 패딩 포함
     const firstDay = new Date(calYear, calMonth - 1, 1)
@@ -932,6 +939,7 @@ function DashboardContent() {
         studied: scores.length > 0,
         avgScore: scores.length > 0
           ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0,
+        hasHundred: hundredMap[key] ?? false,
       }
     })
     const getCellColor = (cell: typeof calCells[0]) => {
@@ -1434,7 +1442,7 @@ function DashboardContent() {
               {calCells.map((cell, i) => (
                 <div
                   key={i}
-                  className={`aspect-square rounded-[3px] ${cell.empty ? '' : cell.isToday ? 'ring-[1.5px] ring-[#1A1A1A] ring-offset-0' : ''}`}
+                  className={`aspect-square rounded-[3px] ${cell.empty ? '' : cell.isToday ? 'ring-[1.5px] ring-[#1A1A1A] ring-offset-0' : cell.hasHundred ? 'ring-[1.5px] ring-[#FFD54F] ring-offset-0' : ''}`}
                   style={{ backgroundColor: cell.empty ? 'transparent' : getCellColor(cell) }}
                 />
               ))}
