@@ -8,17 +8,20 @@ import Script from 'next/script'
 // 문제를 방지하기 위해 모든 페이지를 동적(SSR) 렌더링으로 전환
 export const dynamic = 'force-dynamic'
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://kinepia-rho.vercel.app'
+const BASE_URL = 'https://kinepia.com'
+
+const TITLE       = 'Kinepia — 국가공인 체육 자격증 학습 플랫폼'
+const DESCRIPTION = '건강운동관리사 · 2급 생활스포츠지도사 필기·구술 기출문제와 학습 슬라이드로 합격까지. 체육 지도 전문가의 시작.'
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: 'Kinepia — 트레이너를 위한 전문 지식 플랫폼',
+    default: TITLE,
     template: '%s | Kinepia',
   },
-  description: '기초 해부학부터 컨디셔닝 실습까지, 게이미피케이션으로 즐겁게 배우는 트레이너 전문 지식 플랫폼',
+  description: DESCRIPTION,
   applicationName: 'Kinepia',
-  keywords: ['트레이너', '해부학', '기능해부학', '교차증후군', '컨디셔닝', '자격증'],
+  keywords: ['건강운동관리사', '2급 생활스포츠지도사', '체육 자격증', '필기 기출', '구술 시험', '자격증 공부', '체육 지도사'],
   authors: [{ name: 'Kinepia' }],
 
   // Open Graph
@@ -27,8 +30,8 @@ export const metadata: Metadata = {
     locale: 'ko_KR',
     url: BASE_URL,
     siteName: 'Kinepia',
-    title: 'Kinepia — 트레이너를 위한 전문 지식 플랫폼',
-    description: '기초 해부학부터 컨디셔닝 실습까지, 게이미피케이션으로 즐겁게 배우는 트레이너 전문 지식 플랫폼',
+    title: TITLE,
+    description: DESCRIPTION,
     images: [
       {
         url: '/og-image.png',
@@ -42,8 +45,8 @@ export const metadata: Metadata = {
   // Twitter / 카카오 공유
   twitter: {
     card: 'summary_large_image',
-    title: 'Kinepia — 트레이너를 위한 전문 지식 플랫폼',
-    description: '기초 해부학부터 컨디셔닝 실습까지, 게이미피케이션으로 즐겁게 배우는 트레이너 전문 지식 플랫폼',
+    title: TITLE,
+    description: DESCRIPTION,
     images: ['/og-image.png'],
   },
 
