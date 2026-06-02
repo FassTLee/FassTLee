@@ -41,10 +41,10 @@ const PLANS = [
       { text: '과목당 3챕터 무료', ok: true },
       { text: '기본 리포트 (점수 확인)', ok: true },
       { text: '미니 퀴즈', ok: true },
+      { text: '챕터 테스트', ok: true },
       { text: '전체 챕터 학습', ok: false },
       { text: '상세 오답 해설', ok: false },
       { text: 'D-Day 학습 플랜', ok: false },
-      { text: '광고 없음', ok: false },
     ],
   },
   {
@@ -147,9 +147,9 @@ export default function LandingContent() {
             국가공인 체육 자격증 학습 플랫폼
           </div>
 
-          <h1 className="text-[34px] font-black leading-tight mb-3">
-            국가공인<br />
-            <span className="text-[#00A651]">체육 지도 전문가의 시작</span>
+          <h1 className="text-[32px] font-black leading-tight mb-3">
+            국가공인
+            <span className="text-[#00A651]"> 체육 지도 전문가</span>
           </h1>
           <div className="inline-flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-full px-3 py-1 text-[11px] font-semibold text-white/60 mb-3">
             🏛️ 특허 출원 중
@@ -165,7 +165,7 @@ export default function LandingContent() {
           {/* Cert list */}
           <div className="space-y-2.5 mb-8 pb-8 border-b border-white/10">
             {[
-              { name: '건강운동관리사', sub: '필기 8과목', available: true },
+              { name: '건강운동관리사', sub: '필기 8과목', available: false },
               { name: '2급 생활스포츠지도사 (보디빌딩)', sub: '구술/실기', available: true },
               { name: '2급 생활스포츠지도사 필기', sub: '준비중', available: false },
               { name: '1급 생활스포츠지도사', sub: '필기 · 준비중', available: false },
@@ -176,7 +176,7 @@ export default function LandingContent() {
                   <p className="text-[11px] text-white/50">{cert.sub}</p>
                 </div>
                 <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${cert.available ? 'bg-[#00A651]/30 text-[#00A651]' : 'bg-white/10 text-white/40'}`}>
-                  {cert.available ? '학습 가능' : '준비중'}
+                  {cert.available ? '학습 가능' : 'coming soon'}
                 </span>
               </div>
             ))}
@@ -508,6 +508,17 @@ export default function LandingContent() {
                     </div>
                   ))}
                 </div>
+                {plan.name === 'Free' && (
+                  <div className="mt-3 pt-3 border-t border-[#E5E5E5]">
+                    <p className="text-[10px] text-[#ADADAD] mb-1.5">🎁 무료 코드 입력 시 이용 가능</p>
+                    {['전체 챕터 학습', '상세 오답 해설', 'D-Day 학습 플랜'].map(f => (
+                      <div key={f} className="flex items-center gap-1.5 text-[11px] text-[#6B6B6B] mb-1">
+                        <span className="text-[#00A651]">✓</span>
+                        {f}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
