@@ -136,7 +136,8 @@ export default function ReportPage() {
       </div>
 
       {/* 광고 배너 — 헤더 바로 아래 */}
-      <div className="flex justify-center bg-white border-b border-[#E5E5E5] py-2">
+      <div className="flex flex-col items-center py-4 mt-2 mb-2 px-4 bg-white border-b border-[#E5E5E5]">
+        <span className="text-[9px] text-[#ADADAD] mb-1 self-start">광고</span>
         <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
       </div>
 
