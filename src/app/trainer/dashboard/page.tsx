@@ -286,7 +286,8 @@ function DashboardContent() {
   /* ── 캘린더 월 이동 ─────────────────────────────────────────────── */
   const [calYear,  setCalYear]  = useState(() => new Date().getFullYear())
   const [calMonth, setCalMonth] = useState(() => new Date().getMonth() + 1)
-  const calTouchStartX = useRef<number | null>(null)
+  const calTouchStartX      = useRef<number | null>(null)
+  const surveyCompletedRef  = useRef(false)
   const [registeredRounds, setRegisteredRounds]           = useState<number[]>(() => {
     if (typeof window === 'undefined') return []
     try { return JSON.parse(localStorage.getItem('kinepia_registered_rounds') ?? '[]') } catch { return [] }
@@ -332,6 +333,17 @@ function DashboardContent() {
   const [_pushEnabled, _setPushEnabled]       = useState(false)
   const [_settingsOpen, _setSettingsOpen]     = useState(false) // unused — preserved for future use
   const [savingProfile, setSavingProfile]     = useState(false)
+
+  // ── 이용 설문 팝업 ──────────────────────────────────────────────────
+  const [showSurveyPopup, setShowSurveyPopup]                   = useState(false)
+  const [hasShownSurveyThisSession, setHasShownSurveyThisSession] = useState(false)
+  const [surveyStep, setSurveyStep]         = useState(0)
+  const [surveyQ1, setSurveyQ1]             = useState('')
+  const [surveyQ2, setSurveyQ2]             = useState('')
+  const [surveyStars, setSurveyStars]       = useState(0)
+  const [surveyText, setSurveyText]         = useState('')
+  const [surveyConsent, setSurveyConsent]   = useState(false)
+  const [surveyLoading, setSurveyLoading]   = useState(false)
 
   // ── Init ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -398,6 +410,8 @@ function DashboardContent() {
       if (pm.examDate)  { loadedExamDate = pm.examDate; setProfileExamDate(pm.examDate); setExamDateInput(pm.examDate) }
       if (pm.accessCodeUsed) setAccessCodeUsed(pm.accessCodeUsed)
       if (session && pm.codePopupShown === false) setShowCodePopup(true)
+      // 설문 팝업: surveyCompleted 여부를 로컬 변수로 보관 → stats 로드 후 판단
+      surveyCompletedRef.current = Boolean(pm.surveyCompleted)
       // profile-me 완료 후 learning_style 확정
       // localStorage도 확인 — DB 저장 실패해도 테스트 완료 여부를 알 수 있음
       const localLessonStyle = localStorage.getItem(STYLE_KEY) // 'memorizer' | 'conceptualizer'
@@ -501,6 +515,19 @@ function DashboardContent() {
       const data  = await res.json()
       stats = data.chapter_stats ?? []
       setAllStats(stats)
+
+      // 설문 팝업: authenticated + 미완료 + 미표시 + 학습 기록 있음
+      if (
+        status === 'authenticated' &&
+        !surveyCompletedRef.current &&
+        !hasShownSurveyThisSession &&
+        stats.length > 0
+      ) {
+        setTimeout(() => {
+          setShowSurveyPopup(true)
+          setHasShownSurveyThisSession(true)
+        }, 1500)
+      }
 
       const sorted = [...stats].sort((a, b) =>
         new Date(b.last_attempt_at ?? 0).getTime() - new Date(a.last_attempt_at ?? 0).getTime()
@@ -856,6 +883,28 @@ function DashboardContent() {
     if (swap < 0 || swap >= next.length) return
     ;[next[idx], next[swap]] = [next[swap], next[idx]]
     setSubjectOrder(next)
+  }
+
+  const handleSurveySubmit = async () => {
+    if (!surveyStars) return
+    setSurveyLoading(true)
+    try {
+      await fetch('/api/v1/survey', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId:        session?.user?.id,
+          starRating:    surveyStars,
+          reviewText:    surveyText,
+          surveyAnswers: { q1: surveyQ1, q2: surveyQ2 },
+          isPublic:      surveyConsent,
+        }),
+      })
+      surveyCompletedRef.current = true
+      setShowSurveyPopup(false)
+    } finally {
+      setSurveyLoading(false)
+    }
   }
 
   const handleSaveProfile = async () => {
@@ -2938,6 +2987,114 @@ function DashboardContent() {
 
 
       <BottomTabBar />
+
+      {/* ── 이용 설문 팝업 ── */}
+      {showSurveyPopup && (
+        <div className="fixed inset-0 bg-black/40 flex items-end z-50">
+          <div className="bg-white rounded-t-3xl w-full max-w-md mx-auto p-6 pb-10">
+            <div className="w-10 h-1 bg-[#E5E5E5] rounded-full mx-auto mb-5" />
+
+            {/* Q1 */}
+            {surveyStep === 0 && (
+              <div>
+                <p className="text-[16px] font-bold mb-1">학습하면서 가장 도움이 된 기능은?</p>
+                <p className="text-[12px] text-[#ADADAD] mb-4">1 / 4</p>
+                {['학습 슬라이드', '챕터 테스트', '오답노트', 'D-Day 플랜'].map(opt => (
+                  <button key={opt}
+                    onClick={() => { setSurveyQ1(opt); setSurveyStep(1) }}
+                    className="w-full text-left px-4 py-3 mb-2 rounded-2xl border border-[#E5E5E5] text-[13px] font-medium active:bg-[#F5F5F3]">
+                    {opt}
+                  </button>
+                ))}
+                <button onClick={() => setShowSurveyPopup(false)}
+                  className="w-full py-2 text-[12px] text-[#ADADAD] mt-1">
+                  나중에 하기
+                </button>
+              </div>
+            )}
+
+            {/* Q2 */}
+            {surveyStep === 1 && (
+              <div>
+                <p className="text-[16px] font-bold mb-1">학습 콘텐츠 난이도는 어떠셨나요?</p>
+                <p className="text-[12px] text-[#ADADAD] mb-4">2 / 4</p>
+                {['너무 어려워요', '적당해요', '쉬워요', '모르겠어요'].map(opt => (
+                  <button key={opt}
+                    onClick={() => { setSurveyQ2(opt); setSurveyStep(2) }}
+                    className="w-full text-left px-4 py-3 mb-2 rounded-2xl border border-[#E5E5E5] text-[13px] font-medium active:bg-[#F5F5F3]">
+                    {opt}
+                  </button>
+                ))}
+                <button onClick={() => setSurveyStep(0)}
+                  className="w-full py-2 text-[12px] text-[#ADADAD] mt-1">
+                  이전
+                </button>
+              </div>
+            )}
+
+            {/* Q3 별점 */}
+            {surveyStep === 2 && (
+              <div>
+                <p className="text-[16px] font-bold mb-1">별점으로 평가해주세요</p>
+                <p className="text-[12px] text-[#ADADAD] mb-4">3 / 4</p>
+                <div className="flex justify-center gap-3 mb-6">
+                  {[1,2,3,4,5].map(n => (
+                    <button key={n}
+                      onClick={() => setSurveyStars(n)}
+                      className={`text-[36px] transition-transform ${n <= surveyStars ? 'opacity-100' : 'opacity-30'}`}>
+                      ⭐
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => surveyStars > 0 && setSurveyStep(3)}
+                  disabled={!surveyStars}
+                  className="w-full py-3 rounded-2xl bg-[#1A1A1A] text-white text-[14px] font-bold disabled:opacity-40 mb-2">
+                  다음
+                </button>
+                <button onClick={() => setSurveyStep(1)}
+                  className="w-full py-2 text-[12px] text-[#ADADAD]">
+                  이전
+                </button>
+              </div>
+            )}
+
+            {/* Q4 자유 서술 + 동의 */}
+            {surveyStep === 3 && (
+              <div>
+                <p className="text-[16px] font-bold mb-1">Kinepia를 한 문장으로 표현해주세요</p>
+                <p className="text-[12px] text-[#ADADAD] mb-3">4 / 4</p>
+                <textarea
+                  value={surveyText}
+                  onChange={e => setSurveyText(e.target.value)}
+                  placeholder="자유롭게 작성해주세요"
+                  rows={3}
+                  className="w-full border border-[#E5E5E5] rounded-2xl px-4 py-3 text-[13px] outline-none resize-none mb-3"
+                />
+                <label className="flex items-center gap-2 mb-4 cursor-pointer">
+                  <input type="checkbox"
+                    checked={surveyConsent}
+                    onChange={e => setSurveyConsent(e.target.checked)}
+                    className="w-4 h-4 accent-[#00A651]" />
+                  <span className="text-[12px] text-[#ADADAD]">
+                    후기를 홍보에 활용하는 것에 동의합니다
+                  </span>
+                </label>
+                <button
+                  onClick={handleSurveySubmit}
+                  disabled={surveyLoading}
+                  className="w-full py-3 rounded-2xl bg-[#00A651] text-white text-[14px] font-bold disabled:opacity-40 mb-2">
+                  {surveyLoading ? '제출 중...' : '완료'}
+                </button>
+                <button onClick={() => setSurveyStep(2)}
+                  className="w-full py-2 text-[12px] text-[#ADADAD]">
+                  이전
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── 응시 과목 확인 모달 ── */}
       {showSubjectConfirmModal && (
