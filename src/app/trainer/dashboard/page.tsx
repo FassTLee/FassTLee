@@ -255,7 +255,9 @@ function DashboardContent() {
   const [bookmarks, setBookmarks]             = useState<VideoBookmark[]>([])
   const [classroomLoaded, setClassroomLoaded] = useState(false)
   const [expandedCertId, setExpandedCertId]         = useState<string | null>(null)
-  const [profileSubjectsOpen, setProfileSubjectsOpen] = useState(false)
+  const [certOpen, setCertOpen]         = useState(false)
+  const [methodOpen, setMethodOpen]     = useState(false)
+  const [activityOpen, setActivityOpen] = useState(false)
   const [subjectProgress, setSubjectProgress] = useState<Record<string, { total: number; completed: number }>>({})
   const [userCerts, setUserCerts]             = useState<UserCertification[]>([])
 
@@ -327,7 +329,7 @@ function DashboardContent() {
   const [studyCountInput, setStudyCountInput] = useState('')
   const [studyTimeSlotInput, setStudyTimeSlotInput] = useState('')
   const [pushEnabled, setPushEnabled]         = useState(false)
-  const [settingsOpen, setSettingsOpen]       = useState(false)
+  const [_settingsOpen, _setSettingsOpen]     = useState(false) // unused — preserved for future use
   const [savingProfile, setSavingProfile]     = useState(false)
 
   // ── Init ────────────────────────────────────────────────────────────
@@ -2352,7 +2354,7 @@ function DashboardContent() {
       : (selectedCertKeyGoal ? (REQUIRED_SUBJECTS[selectedCertKeyGoal] ?? []) : [])
     const goalRequiredSubs    = goalRequiredFromDB.length > 0 ? goalRequiredFromDB : fallbackGoalSubs
     const goalOptionalSubs    = goalOptionalFromDB
-    const hasGoalSubjects     = goalRequiredSubs.length > 0 || goalOptionalSubs.length > 0
+    const _hasGoalSubjects    = goalRequiredSubs.length > 0 || goalOptionalSubs.length > 0
     const selectedYear         = examDateInput ? new Date(examDateInput).getFullYear() : null
 
     // 공통 과목 행 컴포넌트 (inline)
@@ -2397,11 +2399,11 @@ function DashboardContent() {
           <h2 className="text-[20px] font-black text-[#1A1A1A]">내 정보</h2>
         </div>
 
-        {/* ── 학습 성향 ── */}
+        {/* ── 1. 학습 성향 ── */}
         <div>
           <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">학습 성향</p>
           {styleMeta ? (
-            <div className="bg-white rounded-xl border border-[#E5E5E5] px-4 py-4 flex items-center gap-3">
+            <div className="bg-white rounded-2xl border border-[#E5E5E5] px-4 py-4 flex items-center gap-3">
               <div
                 className="w-12 h-12 rounded-2xl flex items-center justify-center text-[26px] flex-shrink-0"
                 style={{ backgroundColor: `${styleMeta.color}18` }}
@@ -2426,7 +2428,7 @@ function DashboardContent() {
           ) : (
             <button
               onClick={() => router.push('/onboarding/style-test')}
-              className="w-full bg-white rounded-xl border-2 border-dashed border-[#E5E5E5] px-4 py-4 flex items-center gap-3 active:bg-[#F5F5F3]"
+              className="w-full bg-white rounded-2xl border-2 border-dashed border-[#E5E5E5] px-4 py-4 flex items-center gap-3 active:bg-[#F5F5F3]"
             >
               <div className="w-12 h-12 rounded-2xl bg-[#F5F5F3] flex items-center justify-center text-[24px] flex-shrink-0">🧩</div>
               <div className="flex-1 text-left">
@@ -2438,36 +2440,51 @@ function DashboardContent() {
           )}
         </div>
 
-        {/* ── 자격증 · 수강 과목 (드롭다운 카드) ── */}
+        {/* ── 2. 이용 코드 ── */}
         <div>
-          <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">자격증 · 수강 과목</p>
-          {displayCertName ? (
-            <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-hidden">
-              {/* 자격증 헤더 */}
-              <button
-                onClick={() => setProfileSubjectsOpen((o) => !o)}
-                className="w-full px-4 py-3.5 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
-              >
-                <div className="w-9 h-9 rounded-xl bg-[#1A1A1A] flex items-center justify-center text-[18px] flex-shrink-0">
-                  {CERT_ICONS[displayCertName] ?? '🏅'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-black text-[#1A1A1A] truncate">{displayCertName}</p>
+          <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">이용 코드</p>
+          <div className="bg-white rounded-2xl border border-[#E5E5E5] px-4 py-4">
+            <p className="text-[13px] font-bold text-[#1A1A1A] mb-1">무료 이용권 코드 입력</p>
+            <p className="text-[11px] text-[#ADADAD] mb-3">코드를 입력하면 모든 과목을 무료로 이용할 수 있어요.</p>
+            <button
+              onClick={() => router.push('/chapters/access')}
+              className="text-[12px] font-bold text-[#00A651] border border-[#00A651]/30 bg-[#00A651]/5 px-3 py-2 rounded-xl"
+            >
+              코드 입력하러 가기
+            </button>
+          </div>
+        </div>
+
+        {/* ── 3. 수강 자격증 & 학습 목표 (collapsible) ── */}
+        <div>
+          <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">수강 자격증 &amp; 학습 목표</p>
+          <div
+            className="bg-white rounded-2xl border border-[#E5E5E5] px-4 py-3 cursor-pointer"
+            onClick={() => setCertOpen(!certOpen)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-[15px]">🎯</span>
+                <div>
+                  <p className="text-[13px] font-bold text-[#1A1A1A]">자격증 · 과목 · 학습 목표</p>
                   <p className="text-[11px] text-[#ADADAD]">
-                    {subjects.length > 0 ? `${subjects.length}개 과목 수강 중` : '과목을 선택해주세요'}
+                    {displayCertName || '자격증을 선택하세요'}
+                    {subjects.length > 0 ? ` · ${subjects.length}개 과목` : ''}
                   </p>
                 </div>
-                <div className={`transition-transform duration-200 flex-shrink-0 ${profileSubjectsOpen ? 'rotate-90' : ''}`}>
-                  <ChevronRight size={16} className="text-[#ADADAD]" />
-                </div>
-              </button>
+              </div>
+              <span className={`text-[#ADADAD] text-[18px] transition-transform inline-block ${certOpen ? 'rotate-90' : ''}`}>›</span>
+            </div>
 
-              {/* 드롭다운: 과목 목록 */}
-              {profileSubjectsOpen && (
-                <div className="border-t border-[#F0F0EE]">
-                  {subjects.length === 0 ? (
-                    <div className="px-4 py-5 text-center">
-                      <p className="text-[13px] text-[#ADADAD] mb-3">아직 선택한 과목이 없어요</p>
+            {certOpen && (
+              <div className="mt-3 pt-3 border-t border-[#E5E5E5]" onClick={(e) => e.stopPropagation()}>
+
+                {/* 수강 과목 */}
+                <p className="text-[11px] font-bold text-[#6B6B6B] mb-2">수강 과목</p>
+                {displayCertName ? (
+                  subjects.length === 0 ? (
+                    <div className="py-3 text-center">
+                      <p className="text-[12px] text-[#ADADAD] mb-2">아직 선택한 과목이 없어요</p>
                       <button
                         onClick={() => router.push('/select-subject')}
                         className="px-4 py-2 bg-[#00A651] text-white rounded-xl text-[12px] font-bold"
@@ -2476,273 +2493,192 @@ function DashboardContent() {
                       </button>
                     </div>
                   ) : showSubjectLabels ? (
-                    <>
+                    <div className="space-y-1 mb-4">
                       {requiredInP.length > 0 && (
-                        <div>
-                          <div className="px-4 py-2 bg-[#F5F5F3] flex items-center gap-1.5">
-                            <span className="text-[10px] font-black text-[#6B6B6B] uppercase tracking-wider">필수과목</span>
-                            <span className="text-[10px] text-[#ADADAD]">· {requiredInP.length}개</span>
-                          </div>
+                        <>
+                          <p className="text-[10px] font-black text-[#6B6B6B] uppercase tracking-wider mb-1">필수과목</p>
                           {requiredInP.map((name, idx) => (
-                            <SubjectRowP
-                              key={name}
-                              name={name}
-                              hasBorder={idx < requiredInP.length - 1 || optionalInP.length > 0}
-                            />
+                            <SubjectRowP key={name} name={name} hasBorder={idx < requiredInP.length - 1 || optionalInP.length > 0} />
                           ))}
-                        </div>
+                        </>
                       )}
                       {optionalInP.length > 0 && (
-                        <div>
-                          <div className={`px-4 py-2 bg-[#F5F5F3] flex items-center gap-1.5 ${requiredInP.length > 0 ? 'border-t border-[#F0F0EE]' : ''}`}>
-                            <span className="text-[10px] font-black text-[#6B6B6B] uppercase tracking-wider">선택과목</span>
-                            <span className="text-[10px] text-[#ADADAD]">· {optionalInP.length}개</span>
-                          </div>
+                        <>
+                          <p className="text-[10px] font-black text-[#6B6B6B] uppercase tracking-wider mt-2 mb-1">선택과목</p>
                           {optionalInP.map((name, idx) => (
                             <SubjectRowP key={name} name={name} hasBorder={idx < optionalInP.length - 1} />
                           ))}
-                        </div>
+                        </>
                       )}
-                    </>
+                    </div>
                   ) : (
-                    subjects.map((name, idx) => (
-                      <SubjectRowP key={name} name={name} hasBorder={idx < subjects.length - 1} />
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-          ) : (
-            <button
-              onClick={() => router.push('/select-cert')}
-              className="w-full bg-white rounded-xl border-2 border-dashed border-[#E5E5E5] px-4 py-4 flex items-center gap-3 active:bg-[#F5F5F3]"
-            >
-              <div className="w-10 h-10 rounded-xl bg-[#F5F5F3] flex items-center justify-center flex-shrink-0">
-                <Plus size={20} className="text-[#ADADAD]" />
-              </div>
-              <div className="flex-1 text-left">
-                <p className="text-[13px] font-bold text-[#1A1A1A]">자격증 추가하기</p>
-                <p className="text-[11px] text-[#ADADAD] mt-0.5">목표 자격증을 선택하세요</p>
-              </div>
-              <ChevronRight size={16} className="text-[#ADADAD] flex-shrink-0" />
-            </button>
-          )}
-        </div>
-
-        {/* ── 학습 목표 (collapsible, 3단계) ── */}
-        <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-hidden">
-          <button
-            onClick={() => setSettingsOpen((o) => !o)}
-            className="w-full px-4 py-3.5 flex items-center justify-between active:bg-[#F5F5F3]"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-[15px]">🎯</span>
-              <span className="text-[14px] font-bold text-[#1A1A1A]">학습 목표</span>
-              {(certTypeInput || examDateInput) && (
-                <span className="text-[10px] text-[#00A651] bg-[#00A651]/10 px-1.5 py-0.5 rounded-full font-bold">설정됨</span>
-              )}
-            </div>
-            <div className={`transition-transform duration-200 ${settingsOpen ? 'rotate-90' : ''}`}>
-              <ChevronRight size={16} className="text-[#ADADAD]" />
-            </div>
-          </button>
-
-          {settingsOpen && (
-            <div className="border-t border-[#F0F0EE] divide-y divide-[#F0F0EE]">
-
-              {/* 1단계: 목표 자격증 */}
-              <div className="px-4 py-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="w-5 h-5 rounded-full bg-[#1A1A1A] text-white text-[10px] font-black flex items-center justify-center flex-shrink-0">1</span>
-                  <p className="text-[13px] font-bold text-[#1A1A1A]">목표 자격증</p>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    { key: 'health-exercise-manager', label: '건강운동관리사' },
-                    { key: 'sports-instructor-2',     label: '2급 생활스포츠지도사' },
-                  ].map(({ key, label }) => (
-                    <button
-                      key={key}
-                      onClick={() => setCertTypeInput(label)}
-                      className={`px-3 py-1.5 rounded-full text-[12px] font-bold border-2 transition-all ${
-                        certTypeInput === label
-                          ? 'bg-[#00A651] border-[#00A651] text-white'
-                          : 'bg-white border-[#E5E5E5] text-[#6B6B6B]'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 2단계: 관련 과목 표시 (certTypeInput 기반) */}
-              {certTypeInput && hasGoalSubjects && (
-                <div className="px-4 py-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="w-5 h-5 rounded-full bg-[#1A1A1A] text-white text-[10px] font-black flex items-center justify-center flex-shrink-0">2</span>
-                    <p className="text-[13px] font-bold text-[#1A1A1A]">관련 과목</p>
-                  </div>
-                  {goalRequiredSubs.length > 0 && (
-                    <div className="mb-2">
-                      <p className="text-[10px] font-bold text-[#6B6B6B] mb-1.5">필수과목</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {goalRequiredSubs.map((s) => (
-                          <span key={s} className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#00A651]/10 text-[#00A651]">
-                            {SUBJECT_META[s]?.icon ?? '📚'} {s}
-                          </span>
-                        ))}
-                      </div>
+                    <div className="space-y-1 mb-4">
+                      {subjects.map((name, idx) => (
+                        <SubjectRowP key={name} name={name} hasBorder={idx < subjects.length - 1} />
+                      ))}
                     </div>
-                  )}
-                  {goalOptionalSubs.length > 0 && (
-                    <div>
-                      <p className="text-[10px] font-bold text-[#6B6B6B] mb-1.5">선택과목</p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {goalOptionalSubs.map((s) => (
-                          <span key={s} className="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#F5A623]/10 text-[#F5A623]">
-                            {SUBJECT_META[s]?.icon ?? '📚'} {s}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
+                  )
+                ) : (
+                  <button
+                    onClick={() => router.push('/select-cert')}
+                    className="w-full flex items-center gap-2 py-3 text-[12px] text-[#00A651] font-bold"
+                  >
+                    <Plus size={14} /> 자격증 추가하기
+                  </button>
+                )}
 
-              {/* 3단계: 시험 연도 */}
-              <div className="px-4 py-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="w-5 h-5 rounded-full bg-[#1A1A1A] text-white text-[10px] font-black flex items-center justify-center flex-shrink-0">3</span>
-                  <p className="text-[13px] font-bold text-[#1A1A1A]">시험 연도</p>
-                  {selectedYear && (
-                    <span className="text-[10px] text-[#ADADAD]">
-                      ({examDateInput ? new Date(examDateInput).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' }) : ''} 기준)
-                    </span>
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  {([2026, 2027, 2028] as const).map((year) => (
-                    <button
-                      key={year}
-                      onClick={() => setExamDateInput(CERT_EXAM_DATES[year])}
-                      className={`flex-1 py-2.5 rounded-xl text-[13px] font-bold border-2 transition-all ${
-                        selectedYear === year
-                          ? 'bg-[#1A1A1A] border-[#1A1A1A] text-white'
-                          : 'bg-white border-[#E5E5E5] text-[#6B6B6B]'
-                      }`}
-                    >
-                      {year}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                {/* 학습 목표 */}
+                <p className="text-[11px] font-bold text-[#6B6B6B] mb-3 mt-2">학습 목표</p>
 
-              {/* 지역 */}
-              <div className="px-4 py-4">
-                <label className="text-[11px] font-bold text-[#6B6B6B] mb-2.5 flex items-center gap-1.5">
-                  <MapPin size={11} /> 지역
-                </label>
-                <input
-                  type="text"
-                  placeholder="예: 서울, 부산, 대구..."
-                  value={regionInput}
-                  onChange={(e) => setRegionInput(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-[#E5E5E5] text-[13px] text-[#1A1A1A] outline-none focus:border-[#00A651]"
-                />
-              </div>
-
-              {/* 하루 공부 시간 */}
-              <div className="px-4 py-4">
-                <label className="text-[11px] font-bold text-[#6B6B6B] mb-2.5 flex items-center gap-1.5">
-                  <Clock size={11} /> 하루 공부 시간
-                </label>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {['30분', '1시간', '2시간', '3시간+'].map((t) => (
-                    <button
-                      key={t}
-                      onClick={() => setStudyTimeInput(t)}
-                      className={`py-2 rounded-xl text-[11px] font-bold border-2 transition-all ${
-                        studyTimeInput === t
-                          ? 'bg-[#00A651] border-[#00A651] text-white'
-                          : 'bg-white border-[#E5E5E5] text-[#6B6B6B]'
-                      }`}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 하루 공부 횟수 */}
-              <div className="px-4 py-4">
-                <p className="text-[11px] font-bold text-[#6B6B6B] mb-2.5">하루 공부 횟수</p>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {['1회', '2회', '3회+'].map((c) => (
-                    <button
-                      key={c}
-                      onClick={() => setStudyCountInput(c)}
-                      className={`py-2 rounded-xl text-[12px] font-bold border-2 transition-all ${
-                        studyCountInput === c
-                          ? 'bg-[#00A651] border-[#00A651] text-white'
-                          : 'bg-white border-[#E5E5E5] text-[#6B6B6B]'
-                      }`}
-                    >
-                      {c}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 주요 학습 시간대 */}
-              <div className="px-4 py-4">
-                <p className="text-[11px] font-bold text-[#6B6B6B] mb-2.5">주요 학습 시간대</p>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {[
-                    { label: '오전', emoji: '🌅' },
-                    { label: '오후', emoji: '☀️' },
-                    { label: '저녁', emoji: '🌆' },
-                    { label: '새벽', emoji: '🌙' },
-                  ].map(({ label, emoji }) => (
-                    <button
-                      key={label}
-                      onClick={() => setStudyTimeSlotInput(label)}
-                      className={`py-2 rounded-xl text-[11px] font-bold border-2 transition-all flex flex-col items-center gap-0.5 ${
-                        studyTimeSlotInput === label
-                          ? 'bg-[#1A1A1A] border-[#1A1A1A] text-white'
-                          : 'bg-white border-[#E5E5E5] text-[#6B6B6B]'
-                      }`}
-                    >
-                      <span className="text-[14px]">{emoji}</span>
-                      <span>{label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 학습 알림 */}
-              <div className="px-4 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <Bell size={15} className="text-[#6B6B6B]" />
-                  <div>
-                    <p className="text-[13px] font-bold text-[#1A1A1A]">학습 알림</p>
-                    <p className="text-[11px] text-[#ADADAD]">공부 리마인더를 받아보세요</p>
+                {/* 목표 자격증 */}
+                <div className="mb-3">
+                  <p className="text-[10px] text-[#ADADAD] mb-1.5">목표 자격증</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { key: 'health-exercise-manager', label: '건강운동관리사' },
+                      { key: 'sports-instructor-2',     label: '2급 생활스포츠지도사' },
+                    ].map(({ key, label }) => (
+                      <button
+                        key={key}
+                        onClick={() => setCertTypeInput(label)}
+                        className={`px-3 py-1.5 rounded-full text-[12px] font-bold border-2 transition-all ${
+                          certTypeInput === label
+                            ? 'bg-[#00A651] border-[#00A651] text-white'
+                            : 'bg-white border-[#E5E5E5] text-[#6B6B6B]'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
                   </div>
                 </div>
-                <button
-                  onClick={() => handleTogglePush(!pushEnabled)}
-                  className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${
-                    pushEnabled ? 'bg-[#00A651]' : 'bg-[#DADADA]'
-                  }`}
-                >
-                  <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200 ${
-                    pushEnabled ? 'right-0.5' : 'left-0.5'
-                  }`} />
-                </button>
+
+                {/* 시험 연도 */}
+                <div className="mb-3">
+                  <p className="text-[10px] text-[#ADADAD] mb-1.5">
+                    시험 연도
+                    {selectedYear && examDateInput && (
+                      <span className="ml-1">({new Date(examDateInput).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })} 기준)</span>
+                    )}
+                  </p>
+                  <div className="flex gap-2">
+                    {([2026, 2027, 2028] as const).map((year) => (
+                      <button
+                        key={year}
+                        onClick={() => setExamDateInput(CERT_EXAM_DATES[year])}
+                        className={`flex-1 py-2 rounded-xl text-[12px] font-bold border-2 transition-all ${
+                          selectedYear === year
+                            ? 'bg-[#1A1A1A] border-[#1A1A1A] text-white'
+                            : 'bg-white border-[#E5E5E5] text-[#6B6B6B]'
+                        }`}
+                      >
+                        {year}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 지역 */}
+                <div className="mb-3">
+                  <label className="text-[10px] text-[#ADADAD] mb-1.5 flex items-center gap-1">
+                    <MapPin size={10} /> 지역
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="예: 서울, 부산, 대구..."
+                    value={regionInput}
+                    onChange={(e) => setRegionInput(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-[#E5E5E5] text-[13px] text-[#1A1A1A] outline-none focus:border-[#00A651]"
+                  />
               </div>
 
-              {/* 저장 버튼 */}
-              <div className="px-4 py-4">
+                {/* 하루 공부 시간 */}
+                <div className="mb-3">
+                  <label className="text-[10px] text-[#ADADAD] mb-1.5 flex items-center gap-1">
+                    <Clock size={10} /> 하루 공부 시간
+                  </label>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {['30분', '1시간', '2시간', '3시간+'].map((t) => (
+                      <button
+                        key={t}
+                        onClick={() => setStudyTimeInput(t)}
+                        className={`py-2 rounded-xl text-[11px] font-bold border-2 transition-all ${
+                          studyTimeInput === t
+                            ? 'bg-[#00A651] border-[#00A651] text-white'
+                            : 'bg-white border-[#E5E5E5] text-[#6B6B6B]'
+                        }`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 하루 공부 횟수 */}
+                <div className="mb-3">
+                  <p className="text-[10px] text-[#ADADAD] mb-1.5">하루 공부 횟수</p>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {['1회', '2회', '3회+'].map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setStudyCountInput(c)}
+                        className={`py-2 rounded-xl text-[12px] font-bold border-2 transition-all ${
+                          studyCountInput === c
+                            ? 'bg-[#00A651] border-[#00A651] text-white'
+                            : 'bg-white border-[#E5E5E5] text-[#6B6B6B]'
+                        }`}
+                      >
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 주요 학습 시간대 */}
+                <div className="mb-3">
+                  <p className="text-[10px] text-[#ADADAD] mb-1.5">주요 학습 시간대</p>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {[
+                      { label: '오전', emoji: '🌅' },
+                      { label: '오후', emoji: '☀️' },
+                      { label: '저녁', emoji: '🌆' },
+                      { label: '새벽', emoji: '🌙' },
+                    ].map(({ label, emoji }) => (
+                      <button
+                        key={label}
+                        onClick={() => setStudyTimeSlotInput(label)}
+                        className={`py-2 rounded-xl text-[11px] font-bold border-2 transition-all flex flex-col items-center gap-0.5 ${
+                          studyTimeSlotInput === label
+                            ? 'bg-[#1A1A1A] border-[#1A1A1A] text-white'
+                            : 'bg-white border-[#E5E5E5] text-[#6B6B6B]'
+                        }`}
+                      >
+                        <span className="text-[14px]">{emoji}</span>
+                        <span>{label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 학습 알림 */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Bell size={13} className="text-[#6B6B6B]" />
+                    <p className="text-[12px] font-bold text-[#1A1A1A]">학습 알림</p>
+                  </div>
+                  <button
+                    onClick={() => handleTogglePush(!pushEnabled)}
+                    className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${
+                      pushEnabled ? 'bg-[#00A651]' : 'bg-[#DADADA]'
+                    }`}
+                  >
+                    <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200 ${
+                      pushEnabled ? 'right-0.5' : 'left-0.5'
+                    }`} />
+                  </button>
+                </div>
+
+                {/* 저장 버튼 */}
                 <button
                   onClick={handleSaveProfile}
                   disabled={savingProfile}
@@ -2756,75 +2692,121 @@ function DashboardContent() {
                   ) : '저장하기'}
                 </button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
 
+        {/* ── 4. 학습 방법 (collapsible) ── */}
+        <div>
+          <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">학습 방법</p>
+          <div
+            className="bg-white rounded-2xl border border-[#E5E5E5] px-4 py-3 cursor-pointer"
+            onClick={() => setMethodOpen(!methodOpen)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-[15px]">📖</span>
+                <div>
+                  <p className="text-[13px] font-bold text-[#1A1A1A]">학습 방법 설정</p>
+                  <p className="text-[11px] text-[#ADADAD]">학습 방식과 알림을 설정하세요</p>
+                </div>
+              </div>
+              <span className={`text-[#ADADAD] text-[18px] transition-transform inline-block ${methodOpen ? 'rotate-90' : ''}`}>›</span>
+            </div>
+            {methodOpen && (
+              <div className="mt-3 pt-3 border-t border-[#E5E5E5]" onClick={(e) => e.stopPropagation()}>
+                <p className="text-[12px] text-[#ADADAD] text-center py-4">준비 중입니다.</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── 5. 광고 ── */}
         <div className="flex flex-col items-center mt-6 mb-2 px-4">
           <span className="text-[9px] text-[#ADADAD] mb-1 self-start">광고</span>
           <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
         </div>
 
-        {/* ── 최근 학습 활동 ── */}
+        {/* ── 6. 최근 학습 활동 (collapsible) ── */}
         <div>
           <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">최근 학습 활동</p>
-          <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-hidden">
-            {recentActivity.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-10 px-4">
-                <span className="text-[40px] mb-3">📚</span>
-                <p className="text-[14px] font-bold text-[#1A1A1A] mb-1">아직 학습 기록이 없어요</p>
-                <p className="text-[12px] text-[#ADADAD] text-center mb-5">강의실에서 첫 학습을 시작해 보세요!</p>
-                <button
-                  onClick={() => setTab('classroom')}
-                  className="px-5 py-2.5 bg-[#00A651] text-white rounded-xl text-[13px] font-bold"
-                >
-                  학습 시작하기
-                </button>
+          <div
+            className="bg-white rounded-2xl border border-[#E5E5E5] px-4 py-3 cursor-pointer"
+            onClick={() => setActivityOpen(!activityOpen)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-[15px]">📋</span>
+                <div>
+                  <p className="text-[13px] font-bold text-[#1A1A1A]">최근 학습 활동</p>
+                  <p className="text-[11px] text-[#ADADAD]">
+                    {recentActivity.length > 0
+                      ? `최근: ${recentActivity[0].chapter_title}`
+                      : '아직 학습 기록이 없어요'}
+                  </p>
+                </div>
               </div>
-            ) : (
-              recentActivity.map((item, idx) => {
-                const meta = SUBJECT_META[item.subject_name] ?? { icon: '📚', desc: '' }
-                const scoreColor = item.score >= 80 ? '#00A651' : item.score >= 60 ? '#F5A623' : '#E24B4A'
-                const dateStr = item.date
-                  ? new Date(item.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
-                  : ''
-                return (
-                  <div
-                    key={item.chapter_id}
-                    className={`relative flex items-center gap-3 px-4 py-3 ${idx < recentActivity.length - 1 ? 'border-b border-[#F0F0EE]' : ''} ${item.bestScore === 100 ? 'border-[1.5px] border-[#FFD54F]' : ''}`}
-                  >
-                    {item.bestScore === 100 && (
-                      <div className="absolute top-2 right-3 text-[#FFD54F]">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M8 21h8M12 17v4M17 7A5 5 0 0 1 7 7H6a4 4 0 0 0 4 4h4a4 4 0 0 0 4-4h-1z"/>
-                          <path d="M6 7H4a2 2 0 0 0 0 4h2M18 7h2a2 2 0 0 0 0-4h-2"/>
-                        </svg>
-                      </div>
-                    )}
-                    <div className="w-8 h-8 rounded-lg bg-[#F5F5F3] flex items-center justify-center text-[16px] flex-shrink-0">
-                      {meta.icon}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-bold text-[#1A1A1A] truncate">{item.chapter_title}</p>
-                      <p className="text-[11px] text-[#ADADAD] truncate">{item.subject_name}{dateStr ? ` · ${dateStr}` : ''}</p>
-                    </div>
-                    <span className="text-[13px] font-black flex-shrink-0" style={{ color: scoreColor }}>
-                      {item.score}점
-                    </span>
+              <span className={`text-[#ADADAD] text-[18px] transition-transform inline-block ${activityOpen ? 'rotate-90' : ''}`}>›</span>
+            </div>
+            {activityOpen && (
+              <div className="mt-3 pt-3 border-t border-[#E5E5E5]" onClick={(e) => e.stopPropagation()}>
+                {recentActivity.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-8 px-4">
+                    <span className="text-[32px] mb-2">📚</span>
+                    <p className="text-[13px] font-bold text-[#1A1A1A] mb-1">아직 학습 기록이 없어요</p>
+                    <p className="text-[11px] text-[#ADADAD] text-center mb-4">강의실에서 첫 학습을 시작해 보세요!</p>
+                    <button
+                      onClick={() => setTab('classroom')}
+                      className="px-5 py-2 bg-[#00A651] text-white rounded-xl text-[12px] font-bold"
+                    >
+                      학습 시작하기
+                    </button>
                   </div>
-                )
-              })
+                ) : (
+                  recentActivity.map((item, idx) => {
+                    const meta = SUBJECT_META[item.subject_name] ?? { icon: '📚', desc: '' }
+                    const scoreColor = item.score >= 80 ? '#00A651' : item.score >= 60 ? '#F5A623' : '#E24B4A'
+                    const dateStr = item.date
+                      ? new Date(item.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
+                      : ''
+                    return (
+                      <div
+                        key={item.chapter_id}
+                        className={`relative flex items-center gap-3 py-3 ${idx < recentActivity.length - 1 ? 'border-b border-[#F0F0EE]' : ''} ${item.bestScore === 100 ? 'border-l-2 border-[#FFD54F] pl-2' : ''}`}
+                      >
+                        {item.bestScore === 100 && (
+                          <div className="absolute top-2 right-0 text-[#FFD54F]">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M8 21h8M12 17v4M17 7A5 5 0 0 1 7 7H6a4 4 0 0 0 4 4h4a4 4 0 0 0 4-4h-1z"/>
+                              <path d="M6 7H4a2 2 0 0 0 0 4h2M18 7h2a2 2 0 0 0 0-4h-2"/>
+                            </svg>
+                          </div>
+                        )}
+                        <div className="w-7 h-7 rounded-lg bg-[#F5F5F3] flex items-center justify-center text-[14px] flex-shrink-0">
+                          {meta.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12px] font-bold text-[#1A1A1A] truncate">{item.chapter_title}</p>
+                          <p className="text-[10px] text-[#ADADAD] truncate">{item.subject_name}{dateStr ? ` · ${dateStr}` : ''}</p>
+                        </div>
+                        <span className="text-[12px] font-black flex-shrink-0" style={{ color: scoreColor }}>
+                          {item.score}점
+                        </span>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
             )}
           </div>
         </div>
 
-        {/* 기타 링크 */}
-        <div className="bg-white rounded-xl border border-[#E5E5E5] overflow-hidden">
+        {/* ── 7. 기타 링크 ── */}
+        <div className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
           {[
-            { label: '리더보드',        path: '/trainer/leaderboard', icon: '🏆' },
-            { label: '개인정보 설정',   path: '/settings/privacy',    icon: '🔒' },
-            { label: '개인정보처리방침', path: '/privacy',             icon: '📄' },
-            { label: '이용약관',        path: '/terms',               icon: '📋' },
+            { label: '개인정보 설정',   path: '/settings/privacy', icon: '🔒' },
+            { label: '개인정보처리방침', path: '/privacy',          icon: '📄' },
+            { label: '이용약관',        path: '/terms',            icon: '📋' },
           ].map((item, idx, arr) => (
             <button
               key={item.label}
