@@ -258,6 +258,7 @@ function DashboardContent() {
   const [certOpen, setCertOpen]         = useState(false)
   const [methodOpen, setMethodOpen]     = useState(false)
   const [activityOpen, setActivityOpen] = useState(false)
+  const [subjectOrder, setSubjectOrder] = useState<string[]>([])
   const [subjectProgress, setSubjectProgress] = useState<Record<string, { total: number; completed: number }>>({})
   const [userCerts, setUserCerts]             = useState<UserCertification[]>([])
 
@@ -847,6 +848,14 @@ function DashboardContent() {
         setExamDateInput('')
       }
     } catch { /* ignore */ }
+  }
+
+  const moveSubject = (idx: number, dir: 'up' | 'down') => {
+    const next = [...subjectOrder]
+    const swap = dir === 'up' ? idx - 1 : idx + 1
+    if (swap < 0 || swap >= next.length) return
+    ;[next[idx], next[swap]] = [next[swap], next[idx]]
+    setSubjectOrder(next)
   }
 
   const handleSaveProfile = async () => {
@@ -2460,7 +2469,13 @@ function DashboardContent() {
           <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">수강 자격증 &amp; 학습 목표</p>
           <div
             className="bg-white rounded-2xl border border-[#E5E5E5] px-4 py-3 cursor-pointer"
-            onClick={() => setCertOpen(!certOpen)}
+            onClick={() => {
+              if (!certOpen && subjectOrder.length === 0) {
+                const allSubjs = userCerts.flatMap((c) => c.subjects ?? [])
+                setSubjectOrder(Array.from(new Set(allSubjs)))
+              }
+              setCertOpen(!certOpen)
+            }}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -2479,7 +2494,37 @@ function DashboardContent() {
             {certOpen && (
               <div className="mt-3 pt-3 border-t border-[#E5E5E5]" onClick={(e) => e.stopPropagation()}>
 
-                {/* 수강 과목 */}
+                {/* A. 학습 순서 */}
+                {subjectOrder.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-[11px] text-[#ADADAD] mb-2">학습 순서</p>
+                    {subjectOrder.map((subjectName, idx) => (
+                      <div
+                        key={subjectName}
+                        className="flex items-center justify-between py-2 border-b border-[#F5F5F3] last:border-0"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-[13px]">{SUBJECT_META[subjectName]?.icon ?? '📚'}</span>
+                          <span className="text-[13px] text-[#1A1A1A]">{subjectName}</span>
+                        </div>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => moveSubject(idx, 'up')}
+                            disabled={idx === 0}
+                            className="text-[#ADADAD] disabled:opacity-30 px-1 text-[14px]"
+                          >↑</button>
+                          <button
+                            onClick={() => moveSubject(idx, 'down')}
+                            disabled={idx === subjectOrder.length - 1}
+                            className="text-[#ADADAD] disabled:opacity-30 px-1 text-[14px]"
+                          >↓</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* B. 수강 과목 */}
                 <p className="text-[11px] font-bold text-[#6B6B6B] mb-2">수강 과목</p>
                 {displayCertName ? (
                   subjects.length === 0 ? (
