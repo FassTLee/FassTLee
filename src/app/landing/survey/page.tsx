@@ -101,25 +101,26 @@ function SurveyContent() {
       // 로그인 완료 → guest 데이터 자동 병합
       const guestId = localStorage.getItem(GUEST_ID_KEY)
       console.log('[survey] guestId from localStorage:', guestId)
-      if (!guestId) return
 
-      fetch('/api/auth/convert-guest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ guest_id: guestId }),
-      })
-        .then((r) => r.json())
-        .then((data) => {
-          console.log('[survey] convert-guest 결과:', data)
-          GUEST_CLEANUP_KEYS.forEach((k) => localStorage.removeItem(k))
-          console.log('[survey] localStorage guest 키 정리 완료')
+      if (guestId) {
+        fetch('/api/auth/convert-guest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ guest_id: guestId }),
         })
-        .catch((e) => {
-          console.log('[survey] convert-guest 오류:', e)
-        })
+          .then((r) => r.json())
+          .then((data) => {
+            console.log('[survey] convert-guest 결과:', data)
+            GUEST_CLEANUP_KEYS.forEach((k) => localStorage.removeItem(k))
+            console.log('[survey] localStorage guest 키 정리 완료')
+          })
+          .catch((e) => {
+            console.log('[survey] convert-guest 오류:', e)
+          })
+      }
     }
     // unauthenticated: 아무것도 안 함 → 설문 진행 허용
-  }, [status, router])
+  }, [status])
 
   const handleSelect = (type: LearningType) => {
     if (selected || saving) return
