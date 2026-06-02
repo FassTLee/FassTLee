@@ -287,7 +287,14 @@ export default function ChaptersPage() {
             }
 
             return (
-              <div key={ch.id} className="w-full rounded-2xl border border-[#E5E5E5] bg-white flex items-center active:bg-[#F5F5F3]">
+              <div key={ch.id}>
+                {idx === 4 && visibleChapters.length > 5 && (
+                  <div className="flex flex-col items-center my-6 px-4">
+                    <span className="text-[9px] text-[#ADADAD] mb-1 self-start">광고</span>
+                    <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
+                  </div>
+                )}
+              <div className="w-full rounded-2xl border border-[#E5E5E5] bg-white flex items-center active:bg-[#F5F5F3]">
                 {/* 메인 영역 (클릭 → 레슨 진입) */}
                 <button
                   onClick={() => {
@@ -339,12 +346,14 @@ export default function ChaptersPage() {
                 </button>
 
               </div>
+              </div>
             )
           })
         )}
         {/* AdFit 배너 — 챕터 목록 최하단 */}
         {visibleChapters.length > 0 && (
-          <div className="flex justify-center pt-2 pb-4">
+          <div className="flex flex-col items-center pt-8 pb-4 px-4">
+            <span className="text-[9px] text-[#ADADAD] mb-1 self-start">광고</span>
             <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
           </div>
         )}
