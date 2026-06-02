@@ -455,7 +455,7 @@ function DashboardContent() {
     if (pm.avatarUrl) setProfileAvatar(pm.avatarUrl as string)
     if (pm.certType)  { loadedCertType = pm.certType as string; setProfileCert(pm.certType as string); setCertTypeInput(pm.certType as string) }
     if (pm.examDate)  { loadedExamDate = pm.examDate as string; setProfileExamDate(pm.examDate as string); setExamDateInput(pm.examDate as string) }
-    if (pm.accessCodeUsed) setAccessCodeUsed(pm.accessCodeUsed as boolean)
+    if (pm.accessCodeUsed) setAccessCodeUsed(String(pm.accessCodeUsed))
     if (session && pm.codePopupShown === false) setShowCodePopup(true)
     surveyCompletedRef.current = Boolean(pm.surveyCompleted)
     const localLessonStyle = localStorage.getItem(STYLE_KEY)
