@@ -2060,6 +2060,20 @@ function DashboardContent() {
             </div>
           ) : (
             <div className="space-y-4">
+              {/* 모의고사 체험하기 카드 */}
+              <div className="mx-4 mb-4 bg-white border border-[#00A651] rounded-2xl flex items-center justify-between px-4 py-3">
+                <div>
+                  <p className="text-[13px] font-bold text-[#1A1A1A]">모의고사 체험하기</p>
+                  <p className="text-[11px] text-[#ADADAD]">랜덤 2문항 · 등록 없이 무료</p>
+                </div>
+                <button
+                  onClick={() => router.push('/oral-exam/b28e78c8-8443-4013-bfef-dbe655c72994?preview=true')}
+                  className="px-4 py-2 rounded-xl text-[12px] font-bold bg-[#00A651] text-white"
+                >
+                  시작
+                </button>
+              </div>
+
               {oralWeeks.map((week) => (
                 <div key={week.weekNum} className="bg-white rounded-2xl border border-[#E5E5E5] overflow-hidden">
                   {/* 주차 헤더 */}
@@ -2091,7 +2105,7 @@ function DashboardContent() {
                       } else if (reg && isToday) {
                         slotButton = (
                           <button
-                            className="px-4 py-2 rounded-xl text-[12px] font-bold bg-[#1A1A1A] text-white active:opacity-80"
+                            className="px-4 py-2 rounded-xl text-[12px] font-bold bg-[#00A651] text-white active:opacity-80"
                             onClick={() => {
                               const [h, m] = reg.start_time.split(':').map(Number)
                               const startMin = h * 60 + m
@@ -2128,7 +2142,7 @@ function DashboardContent() {
                       } else {
                         slotButton = (
                           <button
-                            className="px-4 py-2 rounded-xl text-[12px] font-bold bg-[#00A651] text-white active:opacity-80"
+                            className="px-4 py-2 rounded-xl text-[12px] font-bold border-2 border-[#F5A623] text-[#F5A623] bg-transparent active:opacity-80"
                             onClick={() => {
                               setOralPickerTarget({ weekNum: week.weekNum, slot, weekDates: week.dates })
                               setShowOralDatePicker(true)
