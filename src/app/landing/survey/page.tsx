@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSession, signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { ChevronRight } from 'lucide-react'
 import Image from 'next/image'
@@ -88,11 +88,12 @@ function SurveyContent() {
   const { status } = useSession()
   const router = useRouter()
 
-  const [current, setCurrent]     = useState(0)
-  const [votes, setVotes]         = useState<LearningType[]>([])
-  const [selected, setSelected]   = useState<LearningType | null>(null)
-  const [result, setResult]       = useState<LearningType | null>(null)
-  const [saving, setSaving]       = useState(false)
+  const [current, setCurrent]       = useState(0)
+  const [votes, setVotes]           = useState<LearningType[]>([])
+  const [selected, setSelected]     = useState<LearningType | null>(null)
+  const [result, setResult]         = useState<LearningType | null>(null)
+  const [saving, setSaving]         = useState(false)
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -171,6 +172,7 @@ function SurveyContent() {
   if (result) {
     const meta = TYPE_META[result]
     return (
+      <>
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
           <div className="bg-white rounded-3xl p-6 border border-[#E5E5E5] shadow-sm text-center">
@@ -189,19 +191,68 @@ function SurveyContent() {
             <h2 className="text-[22px] font-black text-[#1A1A1A] mb-2">
               당신은 <span style={{ color: meta.color }}>{meta.label}</span>!
             </h2>
-            <p className="text-[13px] text-[#6B6B6B] leading-relaxed mb-6">
+            <p className="text-[13px] text-[#6B6B6B] leading-relaxed mb-2">
               학습 유형이 확인됐어요.<br />
-              테스트 결과와 함께 리포트를 확인해보세요.
+              로그인하면 진도와 결과가 저장됩니다.
             </p>
             <button
-              onClick={() => router.replace('/landing/report')}
-              className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold"
+              onClick={() => setShowLoginModal(true)}
+              className="w-full py-3 rounded-2xl bg-[#1A1A1A] text-white text-[14px] font-bold mt-6"
             >
-              리포트 보기 <ChevronRight size={18} />
+              Kinepia 시작하기
             </button>
           </div>
         </div>
       </div>
+
+      {showLoginModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-end justify-center z-50"
+          onClick={() => setShowLoginModal(false)}
+        >
+          <div
+            className="bg-white rounded-t-3xl w-full max-w-md p-6 pb-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-10 h-1 bg-[#E5E5E5] rounded-full mx-auto mb-6" />
+            <p className="text-[16px] font-bold text-[#1A1A1A] text-center mb-1">
+              학습 기록을 저장하세요
+            </p>
+            <p className="text-[12px] text-[#ADADAD] text-center mb-6">
+              로그인하면 학습 유형과 진도가 저장됩니다
+            </p>
+
+            <button
+              onClick={() => signIn('google', { callbackUrl: '/trainer/dashboard' })}
+              className="w-full flex items-center justify-center gap-2 py-3 mb-3 border border-[#E5E5E5] rounded-2xl text-[14px] font-medium"
+            >
+              <span>🔍</span> 구글로 시작하기
+            </button>
+
+            <button
+              onClick={() => signIn('kakao', { callbackUrl: '/trainer/dashboard' })}
+              className="w-full flex items-center justify-center gap-2 py-3 mb-3 bg-[#FEE500] rounded-2xl text-[14px] font-medium text-[#1A1A1A]"
+            >
+              <span>💬</span> 카카오로 시작하기
+            </button>
+
+            <button
+              onClick={() => signIn('naver', { callbackUrl: '/trainer/dashboard' })}
+              className="w-full flex items-center justify-center gap-2 py-3 mb-4 bg-[#03C75A] rounded-2xl text-[14px] font-medium text-white"
+            >
+              <span>N</span> 네이버로 시작하기
+            </button>
+
+            <button
+              onClick={() => router.push('/trainer/dashboard')}
+              className="w-full py-2 text-[12px] text-[#ADADAD] text-center"
+            >
+              Guest로 Kinepia 시작하기
+            </button>
+          </div>
+        </div>
+      )}
+      </>
     )
   }
 
