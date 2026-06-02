@@ -419,66 +419,87 @@ function DashboardContent() {
     if (styleTypeVal) setStyleType(styleTypeVal)
     if (session?.user?.name) setUserName(session.user.name.split(' ')[0])
 
-    // ① profile-me (서버사이드 세션 → RLS 우회, exam_date 1차 로드)
+    // userId: 이후 모든 API 호출에서 공통 사용
+    const userId = session?.user?.id ?? ''
+
+    // ── 병렬 fetch: profile-me · user-certifications · chapter-stats ──
+    // 세 API는 서로 의존 관계 없으므로 동시에 요청해 왕복 시간 단축
+    // eslint-disable-next-line prefer-const
+    let pm: Record<string, unknown> = {}
+    // eslint-disable-next-line prefer-const
+    let certsData: { data?: UserCertification[] } = {}
+    // eslint-disable-next-line prefer-const
+    let statsRawData: { chapter_stats?: ChapterStat[] } = {}
+    try {
+      const [pmRes, certsRes, statsRes] = await Promise.all([
+        fetch('/api/v1/profile-me', { cache: 'no-store' }),
+        userId
+          ? fetch(`/api/v1/user-certifications?userId=${encodeURIComponent(userId)}`)
+          : Promise.resolve(new Response(JSON.stringify({}))),
+        userId
+          ? fetch(`/api/v1/report?userId=${encodeURIComponent(userId)}`)
+          : Promise.resolve(new Response(JSON.stringify({}))),
+      ])
+      ;[pm, certsData, statsRawData] = await Promise.all([
+        pmRes.json(),
+        certsRes.json(),
+        statsRes.json(),
+      ])
+    } catch (e) { console.warn('[initCommon] parallel fetch 실패', e) }
+
+    // ── profile-me 결과 처리 ──
     let loadedExamDate: string | null = null
     let loadedCertType: string | null = null
-    try {
-      const pm = await fetch('/api/v1/profile-me', { cache: 'no-store' }).then((r) => r.json())
-      console.log('[initCommon] profile-me:', pm)
-      if (pm.name)      setProfileName(pm.name)
-      if (pm.avatarUrl) setProfileAvatar(pm.avatarUrl)
-      if (pm.certType)  { loadedCertType = pm.certType; setProfileCert(pm.certType); setCertTypeInput(pm.certType) }
-      if (pm.examDate)  { loadedExamDate = pm.examDate; setProfileExamDate(pm.examDate); setExamDateInput(pm.examDate) }
-      if (pm.accessCodeUsed) setAccessCodeUsed(pm.accessCodeUsed)
-      if (session && pm.codePopupShown === false) setShowCodePopup(true)
-      // 설문 팝업: surveyCompleted 여부를 로컬 변수로 보관 → stats 로드 후 판단
-      surveyCompletedRef.current = Boolean(pm.surveyCompleted)
-      // profile-me 완료 후 learning_style 확정
-      // localStorage도 확인 — DB 저장 실패해도 테스트 완료 여부를 알 수 있음
-      const localLessonStyle = localStorage.getItem(STYLE_KEY) // 'memorizer' | 'conceptualizer'
-      console.log('[stylePopup] pm.learningStyle:', pm.learningStyle, '| localStorage:', localLessonStyle,
-        '| sessionStorage dismissed:', sessionStorage.getItem('kinepia_style_dismissed'),
-        '| sessionStorage pending:', sessionStorage.getItem('kinepia_style_pending'))
-      if (pm.learningStyle || localLessonStyle) {
-        const resolved = pm.learningStyle ?? localLessonStyle
-        console.log('[stylePopup] → 팝업 없음. resolved:', resolved)
-        setProfileLearningStyle(resolved)
-        sessionStorage.removeItem('kinepia_style_pending')
-        // localStorage엔 있지만 DB엔 없으면 백그라운드 동기화
-        if (!pm.learningStyle && localLessonStyle) {
-          console.log('[stylePopup] DB 없음, localStorage 있음 → 백그라운드 동기화 시도')
-          fetch('/api/v1/learning-style', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ learning_style: localLessonStyle }),
-          }).then(r => r.json()).then(j => console.log('[stylePopup] 동기화 결과:', j)).catch(() => {})
-        }
-      } else {
-        // DB·localStorage 모두 없음 — dismiss 여부 확인
-        const dismissed = sessionStorage.getItem('kinepia_style_dismissed')
-        console.log('[stylePopup] → DB·localStorage 없음. dismissed:', dismissed, '→ popup:', !dismissed)
-        setProfileLearningStyle(dismissed ? 'dismissed' : null)
+    console.log('[initCommon] profile-me:', pm)
+    if (pm.name)      setProfileName(pm.name as string)
+    if (pm.avatarUrl) setProfileAvatar(pm.avatarUrl as string)
+    if (pm.certType)  { loadedCertType = pm.certType as string; setProfileCert(pm.certType as string); setCertTypeInput(pm.certType as string) }
+    if (pm.examDate)  { loadedExamDate = pm.examDate as string; setProfileExamDate(pm.examDate as string); setExamDateInput(pm.examDate as string) }
+    if (pm.accessCodeUsed) setAccessCodeUsed(pm.accessCodeUsed as boolean)
+    if (session && pm.codePopupShown === false) setShowCodePopup(true)
+    surveyCompletedRef.current = Boolean(pm.surveyCompleted)
+    const localLessonStyle = localStorage.getItem(STYLE_KEY)
+    console.log('[stylePopup] pm.learningStyle:', pm.learningStyle, '| localStorage:', localLessonStyle,
+      '| sessionStorage dismissed:', sessionStorage.getItem('kinepia_style_dismissed'),
+      '| sessionStorage pending:', sessionStorage.getItem('kinepia_style_pending'))
+    if (pm.learningStyle || localLessonStyle) {
+      const resolved = (pm.learningStyle ?? localLessonStyle) as string
+      console.log('[stylePopup] → 팝업 없음. resolved:', resolved)
+      setProfileLearningStyle(resolved)
+      sessionStorage.removeItem('kinepia_style_pending')
+      if (!pm.learningStyle && localLessonStyle) {
+        console.log('[stylePopup] DB 없음, localStorage 있음 → 백그라운드 동기화 시도')
+        fetch('/api/v1/learning-style', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ learning_style: localLessonStyle }),
+        }).then(r => r.json()).then(j => console.log('[stylePopup] 동기화 결과:', j)).catch(() => {})
       }
-    } catch (e) { console.warn('[initCommon] profile-me 실패', e) }
+    } else {
+      const dismissed = sessionStorage.getItem('kinepia_style_dismissed')
+      console.log('[stylePopup] → DB·localStorage 없음. dismissed:', dismissed, '→ popup:', !dismissed)
+      setProfileLearningStyle(dismissed ? 'dismissed' : null)
+    }
 
+    // ── user-certifications 결과 처리 ──
+    if (Array.isArray(certsData.data) && certsData.data.length > 0) {
+      setUserCerts(certsData.data)
+    }
+
+    // selectedNames: localStorage 우선, 없으면 certsData 폴백
     let selectedNames: string[] = []
     if (subs) {
       try { selectedNames = JSON.parse(subs) } catch { /* ignore */ }
     }
-
-    // localStorage 비어있으면 userCerts에서 폴백
-    // (재초기화 시 userCerts state가 이미 로드된 경우에 유효)
-    if (selectedNames.length === 0 && userCerts.length > 0) {
-      selectedNames = userCerts.flatMap((c) => c.subjects ?? [])
+    if (selectedNames.length === 0 && certsData.data && certsData.data.length > 0) {
+      selectedNames = certsData.data.flatMap((c) => c.subjects ?? [])
       if (selectedNames.length > 0) {
         localStorage.setItem(SUBJECTS_KEY, JSON.stringify(selectedNames))
       }
     }
-
     setSubjects(selectedNames)
 
     // ② profile-settings (userId 기반, exam_date 2차 로드 — profile-me보다 우선)
-    const userId = session?.user?.id ?? ''
     try {
       const res  = await fetch(`/api/v1/profile-settings?userId=${encodeURIComponent(userId)}`, { cache: 'no-store' })
       const data = await res.json()
@@ -539,12 +560,9 @@ function DashboardContent() {
       }
     }
 
-    // Chapter stats
-    let stats: ChapterStat[] = []
+    // Chapter stats (병렬 fetch에서 이미 수신한 결과 사용)
+    const stats: ChapterStat[] = statsRawData.chapter_stats ?? []
     try {
-      const res   = await fetch(`/api/v1/report?userId=${encodeURIComponent(userId)}`)
-      const data  = await res.json()
-      stats = data.chapter_stats ?? []
       setAllStats(stats)
 
       // 설문 팝업: authenticated + 미완료 + 미표시 + 학습 기록 있음
@@ -723,18 +741,6 @@ function DashboardContent() {
         setShowPhoneModal(true)
       }
     } catch { /* ignore */ }
-
-    // user_certifications 로드
-    const uid = session?.user?.id ?? ''
-    if (uid) {
-      try {
-        const ucRes  = await fetch(`/api/v1/user-certifications?userId=${uid}`)
-        const ucData = await ucRes.json()
-        if (Array.isArray(ucData.data) && ucData.data.length > 0) {
-          setUserCerts(ucData.data as UserCertification[])
-        }
-      } catch { /* ignore */ }
-    }
 
     // 건강운동관리사 과목 동적 조회 (certification_subjects DB 기준)
     try {
