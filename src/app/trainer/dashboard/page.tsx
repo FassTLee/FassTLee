@@ -1060,6 +1060,11 @@ function DashboardContent() {
         </div>
       </div>
 
+      <div className="flex flex-col items-center mt-6 mb-2 px-4">
+        <span className="text-[9px] text-[#ADADAD] mb-1 self-start">광고</span>
+        <KakaoAdFit unit="DAN-tyVXseZl4nT47hHT" width={320} height={50} />
+      </div>
+
       {/* ② Daily 학습/테스트 */}
       <div className="px-4 py-2">
         {studiedToday ? (
@@ -1706,6 +1711,11 @@ function DashboardContent() {
               ))
             }
 
+            <div className="flex flex-col items-center mt-6 mb-2 px-4">
+              <span className="text-[9px] text-[#ADADAD] mb-1 self-start">광고</span>
+              <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
+            </div>
+
             {/* 강의 추가하기 버튼 (최대 3개 미만일 때만) */}
             {userCerts.length < 3 && (
               <button
@@ -1865,29 +1875,35 @@ function DashboardContent() {
             <p className="text-[13px] text-[#ADADAD] mt-1">자격증을 선택하세요</p>
           </div>
           {userCerts.length > 0 ? (
-            <div className="space-y-3">
-              {userCerts.map((uc) => (
-                <button
-                  key={uc.id}
-                  onClick={() => {
-                    if (!session) { setShowLoginPrompt(true); return }
-                    setSelectedExamCert(uc.cert_id)
-                  }}
-                  className="w-full bg-white rounded-2xl border border-[#E5E5E5] px-4 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center text-[20px] flex-shrink-0">
-                    {CERT_ICONS[uc.cert_label] ?? '🎯'}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[15px] font-black text-[#1A1A1A] truncate">{uc.cert_label}</p>
-                    <p className="text-[11px] text-[#ADADAD]">
-                      {uc.cert_id === 'sports-instructor-2-practical' ? '구술모의고사 · 보디빌딩' : '필기 · 8과목 × 20문항'}
-                    </p>
-                  </div>
-                  <ChevronRight size={16} className="text-[#ADADAD] flex-shrink-0" />
-                </button>
-              ))}
-            </div>
+            <>
+              <div className="space-y-3">
+                {userCerts.map((uc) => (
+                  <button
+                    key={uc.id}
+                    onClick={() => {
+                      if (!session) { setShowLoginPrompt(true); return }
+                      setSelectedExamCert(uc.cert_id)
+                    }}
+                    className="w-full bg-white rounded-2xl border border-[#E5E5E5] px-4 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-[#1A1A1A] flex items-center justify-center text-[20px] flex-shrink-0">
+                      {CERT_ICONS[uc.cert_label] ?? '🎯'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[15px] font-black text-[#1A1A1A] truncate">{uc.cert_label}</p>
+                      <p className="text-[11px] text-[#ADADAD]">
+                        {uc.cert_id === 'sports-instructor-2-practical' ? '구술모의고사 · 보디빌딩' : '필기 · 8과목 × 20문항'}
+                      </p>
+                    </div>
+                    <ChevronRight size={16} className="text-[#ADADAD] flex-shrink-0" />
+                  </button>
+                ))}
+              </div>
+              <div className="flex flex-col items-center mt-6 mb-2 px-4">
+                <span className="text-[9px] text-[#ADADAD] mb-1 self-start">광고</span>
+                <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
+              </div>
+            </>
           ) : (
             <div className="bg-white rounded-2xl border border-[#E5E5E5] p-6 text-center">
               <p className="text-[14px] text-[#ADADAD]">강의실에서 자격증을 추가하면 모의고사를 이용할 수 있어요</p>
@@ -2707,6 +2723,11 @@ function DashboardContent() {
           )}
         </div>
 
+        <div className="flex flex-col items-center mt-6 mb-2 px-4">
+          <span className="text-[9px] text-[#ADADAD] mb-1 self-start">광고</span>
+          <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
+        </div>
+
         {/* ── 최근 학습 활동 ── */}
         <div>
           <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">최근 학습 활동</p>
@@ -2818,12 +2839,6 @@ function DashboardContent() {
         {tab === 'profile'   && renderProfile()}
       </div>
 
-      {/* 하단 고정 광고 배너 — Free 유저 (구독 구분 추가 전: 로그인 유저 전체) */}
-      {status === 'authenticated' && (
-        <div className="fixed bottom-16 left-0 right-0 z-40 flex justify-center items-center bg-white border-t border-[#E5E5E5]" style={{ height: 50 }}>
-          <KakaoAdFit unit="DAN-tyVXseZl4nT47hHT" width={320} height={50} />
-        </div>
-      )}
 
       <BottomTabBar />
 
