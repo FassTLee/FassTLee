@@ -388,6 +388,26 @@ function DashboardContent() {
       .then((d) => { setOralRegs(d.data ?? []); setOralLoading(false) })
   }, [selectedExamCert])
 
+  /* userCerts 로드 후 todayChapter가 여전히 null이면 initCommon 재시도 */
+  useEffect(() => {
+    if (userCerts.length === 0) return
+    if (todayChapter !== null) return
+
+    const subs = localStorage.getItem(SUBJECTS_KEY)
+    let selectedNames: string[] = []
+    if (subs) {
+      try { selectedNames = JSON.parse(subs) } catch { /* ignore */ }
+    }
+
+    if (selectedNames.length === 0) {
+      const fallback = userCerts.flatMap((c) => c.subjects ?? [])
+      if (fallback.length > 0) {
+        localStorage.setItem(SUBJECTS_KEY, JSON.stringify(fallback))
+        initCommon()
+      }
+    }
+  }, [userCerts]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const initCommon = async () => {
     const cert     = localStorage.getItem(CERT_KEY)
     const subs     = localStorage.getItem(SUBJECTS_KEY)
