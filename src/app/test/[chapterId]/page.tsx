@@ -59,7 +59,8 @@ export default function TestPage() {
   const [questions, setQuestions]         = useState<Question[]>([])
   const [current, setCurrent]             = useState(0)
   const [selected, setSelected]           = useState<number | null>(null)
-  const [records, setRecords]             = useState<AnswerRecord[]>([])
+  const [answers, setAnswers]             = useState<Record<number, number>>({})
+  const [showReview, setShowReview]       = useState(false)
   const [loading, setLoading]             = useState(true)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
   const [certLabel, setCertLabel]         = useState('')
@@ -106,42 +107,54 @@ export default function TestPage() {
 
   const handleNext = () => {
     if (selected === null) return
-    const q = questions[current]
-    const isOral = q.question_type === 'oral'
-    const correct = isOral ? selected === 0 : selected === q.answer_index
-    const rec: AnswerRecord = {
-      questionId:   q.id,
-      question:     q.question,
-      options:      q.options,
-      answer_index: q.answer_index,
-      selected,
-      correct,
-      explanation:  q.explanation,
-    }
-    const nextRecords = [...records, rec]
+    const nextAnswers = { ...answers, [current]: selected }
+    setAnswers(nextAnswers)
 
     if (current + 1 >= questions.length) {
-      localStorage.setItem(RESULT_KEY, JSON.stringify({ chapterId, records: nextRecords }))
-      fetch('/api/v1/test-complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chapterId,
-          subjectId: localStorage.getItem('kinepia_current_subject_id') ?? '',
-          records: nextRecords.map((r) => ({ questionId: r.questionId, correct: r.correct })),
-          userId: session?.user?.id ?? '',
-        }),
-      }).catch(() => {})
-      // 로그인 유저: 전면 광고 3초 후 이동 / 비로그인: 바로 이동
-      if (session) {
-        setReportUrl(`/report/${chapterId}`)
-      } else {
-        router.replace(`/report/${chapterId}`)
-      }
+      setShowReview(true)
     } else {
-      setRecords(nextRecords)
       setCurrent(current + 1)
-      setSelected(null)
+      setSelected(nextAnswers[current + 1] ?? null)
+    }
+  }
+
+  const handlePrev = () => {
+    if (current === 0) return
+    if (selected !== null) setAnswers((prev) => ({ ...prev, [current]: selected }))
+    const prevIdx = current - 1
+    setCurrent(prevIdx)
+    setSelected(answers[prevIdx] ?? null)
+  }
+
+  const handleSubmit = () => {
+    const finalRecords: AnswerRecord[] = questions.map((q, idx) => {
+      const isOral = q.question_type === 'oral'
+      const sel    = answers[idx] ?? -1
+      return {
+        questionId:   q.id,
+        question:     q.question,
+        options:      q.options,
+        answer_index: q.answer_index,
+        selected:     sel,
+        correct:      isOral ? sel === 0 : sel === q.answer_index,
+        explanation:  q.explanation ?? '',
+      }
+    })
+    localStorage.setItem(RESULT_KEY, JSON.stringify({ chapterId, records: finalRecords }))
+    fetch('/api/v1/test-complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chapterId,
+        subjectId: localStorage.getItem('kinepia_current_subject_id') ?? '',
+        records: finalRecords.map((r) => ({ questionId: r.questionId, correct: r.correct })),
+        userId: session?.user?.id ?? '',
+      }),
+    }).catch(() => {})
+    if (session) {
+      setReportUrl(`/report/${chapterId}`)
+    } else {
+      router.replace(`/report/${chapterId}`)
     }
   }
 
@@ -183,11 +196,61 @@ export default function TestPage() {
     )
   }
 
+  // 검토 화면
+  if (showReview) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F3] flex flex-col">
+        <div className="bg-white border-b border-[#E5E5E5] px-5 pt-10 pb-3 flex items-center gap-3">
+          <button onClick={() => setShowReview(false)} className="p-1">
+            <ChevronLeft size={20} className="text-[#1A1A1A]" />
+          </button>
+          <span className="text-[15px] font-bold text-[#1A1A1A]">내 답 확인</span>
+        </div>
+        <div className="flex-1 overflow-y-auto p-5 pb-48">
+          {questions.map((qItem, idx) => (
+            <div key={idx} className="border border-[#E5E5E5] rounded-2xl p-4 mb-3 bg-white">
+              <p className="text-[11px] text-[#ADADAD] mb-1">{idx + 1}번 문제</p>
+              <p className="text-[13px] font-medium text-[#1A1A1A] mb-2 line-clamp-2">{qItem.question}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-[#ADADAD]">내 답:</span>
+                {answers[idx] !== undefined ? (
+                  <span className="text-[12px] font-bold text-[#1A1A1A]">
+                    {cleanOption(qItem.options[answers[idx]])}
+                  </span>
+                ) : (
+                  <span className="text-[12px] text-[#FF3B30]">미답변</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-[#E5E5E5] space-y-2">
+          <button
+            onClick={() => {
+              const firstUnanswered = questions.findIndex((_, i) => answers[i] === undefined)
+              const target = firstUnanswered >= 0 ? firstUnanswered : 0
+              setCurrent(target)
+              setSelected(answers[target] ?? null)
+              setShowReview(false)
+            }}
+            className="w-full py-3 rounded-2xl border border-[#E5E5E5] text-[14px] font-bold text-[#1A1A1A]"
+          >
+            다시 검토하기
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="w-full py-3 rounded-2xl bg-[#00A651] text-white text-[14px] font-bold"
+          >
+            제출하기
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   const q        = questions[current]
   const isOral   = q.question_type === 'oral'
   const progress = ((current + 1) / questions.length) * 100
-  const isLast   = current + 1 >= questions.length
-
   // 하단 버튼 비활성 조건
   const isNextDisabled = selected === null || (isOral && !revealedAnswers.has(q.id))
 
@@ -356,17 +419,24 @@ export default function TestPage() {
         )}
       </div>
 
-      {/* Bottom button */}
+      {/* Bottom buttons */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-[#E5E5E5]">
-        <button
-          onClick={handleNext}
-          disabled={isNextDisabled}
-          className={`w-full py-4 disabled:opacity-40 text-white rounded-2xl text-[16px] font-bold ${
-            isLast ? 'bg-[#111111]' : 'bg-[#00A651]'
-          }`}
-        >
-          {isLast ? '결과 보기' : '다음 문제'}
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={handlePrev}
+            disabled={current === 0}
+            className="flex-1 py-3 rounded-2xl border border-[#E5E5E5] text-[14px] font-bold text-[#1A1A1A] disabled:opacity-30"
+          >
+            이전
+          </button>
+          <button
+            onClick={handleNext}
+            disabled={isNextDisabled}
+            className="flex-1 py-3 rounded-2xl bg-[#1A1A1A] text-white text-[14px] font-bold disabled:opacity-40"
+          >
+            {current + 1 === questions.length ? '검토하기' : '다음'}
+          </button>
+        </div>
       </div>
     </div>
   )
