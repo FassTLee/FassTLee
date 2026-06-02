@@ -249,6 +249,7 @@ function DashboardContent() {
 
   /* ── Today chapter thumbnail ─────────────────────────────────────── */
   const [todayChapter, setTodayChapter]   = useState<TodayChapter | null>(null)
+  const [todayChapterState, setTodayChapterState] = useState<'lesson' | 'test_start' | 'test_retry' | null>(null)
 
   /* ── Classroom (lazy) ────────────────────────────────────────────── */
   const [bookmarks, setBookmarks]             = useState<VideoBookmark[]>([])
@@ -625,6 +626,20 @@ function DashboardContent() {
             const completed = sortedChaps.filter((c) => completedIds.has(c.id)).length
             const nextChap  = sortedChaps.find((c) => !completedIds.has(c.id)) ?? sortedChaps[0]
             if (nextChap) {
+              const chapStat = (stats ?? []).find((s: ChapterStat) => s.chapter_id === nextChap.id)
+
+              let state: 'lesson' | 'test_start' | 'test_retry' = 'lesson'
+              if (chapStat) {
+                if (!chapStat.lesson_completed) {
+                  state = 'lesson'
+                } else if (!chapStat.test_attempts || chapStat.test_attempts === 0) {
+                  state = 'test_start'
+                } else {
+                  state = 'test_retry'
+                }
+              }
+              setTodayChapterState(state)
+
               setTodayChapter({
                 chapterId:   nextChap.id,
                 title:       nextChap.title,
@@ -1091,40 +1106,46 @@ function DashboardContent() {
             <ChevronRight size={18} className="text-white/50" />
           </button>
         ) : todayChapter ? (
-          /* ── 오늘의 학습 썸네일 카드 (학습 미완료) ── */
-          <button
-            onClick={() => router.push(`/lesson/${todayChapter.chapterId}`)}
-            className="w-full bg-white border-2 border-[#00A651] rounded-2xl overflow-hidden text-left active:bg-[#F0FFF6]"
-          >
-            {/* 상단 배너 */}
-            <div className="bg-[#00A651] px-4 py-2 flex items-center justify-between">
-              <span className="text-[11px] font-bold text-white/80 uppercase tracking-wide">학습 시작하기</span>
-              <span className="text-[11px] text-white/60">{todayChapter.completed} / {todayChapter.total} 챕터 완료</span>
-            </div>
-            {/* 본문 */}
-            <div className="px-4 py-3 flex items-center gap-3">
-              <div className="w-10 h-10 bg-[#00A651]/10 rounded-xl flex items-center justify-center text-[20px] flex-shrink-0">
+          /* ── 오늘의 학습 카드 (3단계 상태 분기) ── */
+          <div className="bg-white rounded-2xl border border-[#E5E5E5] p-4">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+                style={{ backgroundColor: '#00A651' + '1A' }}
+              >
                 {SUBJECT_META[todayChapter.subjectName]?.icon ?? '📚'}
               </div>
               <div className="flex-1 min-w-0">
-                {userCerts[0]?.cert_label && (
-                  <p className="text-[10px] font-bold text-[#00A651] truncate mb-0.5">{userCerts[0].cert_label}</p>
-                )}
+                <p className="text-[13px] font-bold text-[#1A1A1A] truncate">{todayChapter.title}</p>
                 <p className="text-[11px] text-[#ADADAD] truncate">{todayChapter.subjectName}</p>
-                <p className="text-[14px] font-black text-[#1A1A1A] leading-snug truncate">{todayChapter.title}</p>
-                <p className="text-[11px] text-[#00A651] font-semibold mt-0.5">지금 바로 시작하세요 →</p>
               </div>
             </div>
-            {/* 진행률 바 */}
-            <div className="px-4 pb-3">
-              <div className="w-full h-1.5 bg-[#F0F0EE] rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-[#00A651] rounded-full transition-all"
-                  style={{ width: `${todayChapter.total > 0 ? Math.round((todayChapter.completed / todayChapter.total) * 100) : 0}%` }}
-                />
-              </div>
-            </div>
-          </button>
+
+            {todayChapterState === 'lesson' && (
+              <button
+                onClick={() => router.push(`/lesson/${todayChapter.chapterId}`)}
+                className="mt-3 flex items-center gap-1 text-[11px] font-bold bg-[#E8F5E9] text-[#2e7d32] px-3 py-1.5 rounded-full"
+              >
+                ▶ 학습 이어서 하기
+              </button>
+            )}
+            {todayChapterState === 'test_start' && (
+              <button
+                onClick={() => router.push(`/test/${todayChapter.chapterId}`)}
+                className="mt-3 flex items-center gap-1 text-[11px] font-bold bg-[#E3F2FD] text-[#1565c0] px-3 py-1.5 rounded-full"
+              >
+                ✏️ 챕터 테스트 시작하기
+              </button>
+            )}
+            {todayChapterState === 'test_retry' && (
+              <button
+                onClick={() => router.push(`/test/${todayChapter.chapterId}`)}
+                className="mt-3 flex items-center gap-1 text-[11px] font-bold bg-[#FFF8E1] text-[#e65100] px-3 py-1.5 rounded-full"
+              >
+                🔄 챕터 테스트 재도전
+              </button>
+            )}
+          </div>
         ) : recentStats.length > 0 ? (
           /* 학습 이력 있음 + 오늘 미학습 → 학습 시작하기 */
           <button
