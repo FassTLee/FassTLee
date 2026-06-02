@@ -144,16 +144,22 @@ export default function LandingContent() {
         <div className="relative max-w-md mx-auto px-6 pt-16 pb-12">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-[#00A651]/20 border border-[#00A651]/40 rounded-full px-3 py-1.5 text-[12px] font-bold text-[#00A651] mb-6">
-            국가공인 체육 자격증 전문 플랫폼
+            국가공인 체육 자격증 학습 플랫폼
           </div>
 
           <h1 className="text-[34px] font-black leading-tight mb-3">
-            국가가 인정한<br />
-            <span className="text-[#00A651]">체육 전문가의 시작</span>
+            국가공인<br />
+            <span className="text-[#00A651]">체육 지도 전문가의 시작</span>
           </h1>
-          <p className="text-[16px] text-white/70 leading-relaxed mb-8">
+          <div className="inline-flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-full px-3 py-1 text-[11px] font-semibold text-white/60 mb-3">
+            🏛️ 특허 출원 중
+          </div>
+          <p className="text-[16px] text-white/70 leading-relaxed mb-2">
             건강운동관리사 · 생활스포츠지도사<br />
             내 성향에 맞는 학습으로 합격까지
+          </p>
+          <p className="text-[12px] text-white/40 leading-relaxed mb-6">
+            건강운동관리사 필기 · 2급 생활스포츠지도사 필기 · 구술/실기
           </p>
 
           {/* Cert list */}
