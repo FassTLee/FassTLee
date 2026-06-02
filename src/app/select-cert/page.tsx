@@ -47,11 +47,12 @@ const CERT_META: Record<string, {
 }
 
 export default function SelectCertPage() {
-  const { status } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
-  const [tooltip, setTooltip] = useState<string | null>(null)
-  const [certs, setCerts] = useState<CertRow[]>([])
-  const [expandedSlug, setExpandedSlug] = useState<string | null>(null)
+  const [tooltip, setTooltip]             = useState<string | null>(null)
+  const [certs, setCerts]                 = useState<CertRow[]>([])
+  const [expandedSlug, setExpandedSlug]   = useState<string | null>(null)
+  const [existingCertIds, setExistingCertIds] = useState<string[]>([])
 
   useEffect(() => {
     if (status === 'loading') return
@@ -76,8 +77,25 @@ export default function SelectCertPage() {
     }
   }, [status, router])
 
+  useEffect(() => {
+    if (!session?.user?.id) return
+    supabase
+      .from('user_certifications')
+      .select('cert_id')
+      .eq('user_id', session.user.id)
+      .then(({ data }) => {
+        if (data) setExistingCertIds(data.map((d: { cert_id: string }) => d.cert_id))
+      })
+  }, [session])
+
   const handleSelect = (slug: string) => {
     const certId = CERT_META[slug]?.certId ?? slug
+
+    if (existingCertIds.includes(certId)) {
+      showTooltip('이미 추가된 자격증입니다 ✓')
+      return
+    }
+
     localStorage.setItem(CERT_KEY, certId)
     router.push('/select-subject')
   }
