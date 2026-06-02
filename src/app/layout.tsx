@@ -70,6 +70,11 @@ export const metadata: Metadata = {
       { url: '/icon-512.png' },
     ],
   },
+
+  // Android Chrome PWA (mobile-web-app-capable)
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
 }
 
 export const viewport = {
