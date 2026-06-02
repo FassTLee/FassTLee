@@ -329,7 +329,7 @@ function DashboardContent() {
   const [studyTimeInput, setStudyTimeInput]   = useState('')
   const [studyCountInput, setStudyCountInput] = useState('')
   const [studyTimeSlotInput, setStudyTimeSlotInput] = useState('')
-  const [pushEnabled, setPushEnabled]         = useState(false)
+  const [_pushEnabled, _setPushEnabled]       = useState(false)
   const [_settingsOpen, _setSettingsOpen]     = useState(false) // unused — preserved for future use
   const [savingProfile, setSavingProfile]     = useState(false)
 
@@ -454,7 +454,7 @@ function DashboardContent() {
       if (data.daily_study_count) setStudyCountInput(data.daily_study_count)
       if (data.study_time_slot)   setStudyTimeSlotInput(data.study_time_slot)
       if (data.push_enabled !== undefined && data.push_enabled !== null)
-        setPushEnabled(Boolean(data.push_enabled))
+        _setPushEnabled(Boolean(data.push_enabled))
     } catch (e) { console.warn('[initCommon] profile-settings 실패', e) }
 
     // ③ D-Day goals — user-goals 테이블에서도 exam_date 폴백 확인
@@ -893,8 +893,8 @@ function DashboardContent() {
   }
 
   // 알림 토글 → 즉시 자동 저장
-  const handleTogglePush = async (value: boolean) => {
-    setPushEnabled(value)
+  const _handleTogglePush = async (value: boolean) => {
+    _setPushEnabled(value)
     const userId = session?.user?.id ?? ''
     fetch('/api/v1/profile-settings', {
       method: 'POST',
@@ -2637,6 +2637,44 @@ function DashboardContent() {
                   />
               </div>
 
+                {/* 저장 버튼 (자격증·목표) */}
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={savingProfile}
+                  className="w-full py-3 bg-[#111111] text-white rounded-xl text-[13px] font-bold disabled:opacity-40"
+                >
+                  {savingProfile ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+                      저장 중...
+                    </span>
+                  ) : '저장하기'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── 4. 학습 방법 (collapsible) ── */}
+        <div>
+          <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">학습 방법</p>
+          <div
+            className="bg-white rounded-2xl border border-[#E5E5E5] px-4 py-3 cursor-pointer"
+            onClick={() => setMethodOpen(!methodOpen)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-[15px]">📖</span>
+                <div>
+                  <p className="text-[13px] font-bold text-[#1A1A1A]">학습 방법 설정</p>
+                  <p className="text-[11px] text-[#ADADAD]">학습 방식과 알림을 설정하세요</p>
+                </div>
+              </div>
+              <span className={`text-[#ADADAD] text-[18px] transition-transform inline-block ${methodOpen ? 'rotate-90' : ''}`}>›</span>
+            </div>
+            {methodOpen && (
+              <div className="mt-3 pt-3 border-t border-[#E5E5E5]" onClick={(e) => e.stopPropagation()}>
+
                 {/* 하루 공부 시간 */}
                 <div className="mb-3">
                   <label className="text-[10px] text-[#ADADAD] mb-1.5 flex items-center gap-1">
@@ -2705,25 +2743,16 @@ function DashboardContent() {
                   </div>
                 </div>
 
-                {/* 학습 알림 */}
-                <div className="flex items-center justify-between mb-3">
+                {/* 학습 알리미 */}
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Bell size={13} className="text-[#6B6B6B]" />
-                    <p className="text-[12px] font-bold text-[#1A1A1A]">학습 알림</p>
+                    <p className="text-[12px] font-bold text-[#1A1A1A]">학습 알리미</p>
                   </div>
-                  <button
-                    onClick={() => handleTogglePush(!pushEnabled)}
-                    className={`relative w-12 h-6 rounded-full transition-all duration-200 flex-shrink-0 ${
-                      pushEnabled ? 'bg-[#00A651]' : 'bg-[#DADADA]'
-                    }`}
-                  >
-                    <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-200 ${
-                      pushEnabled ? 'right-0.5' : 'left-0.5'
-                    }`} />
-                  </button>
+                  <span className="text-[10px] text-[#ADADAD]">앱 설치 후 사용 가능</span>
                 </div>
 
-                {/* 저장 버튼 */}
+                {/* 학습 방법 저장 버튼 */}
                 <button
                   onClick={handleSaveProfile}
                   disabled={savingProfile}
@@ -2736,31 +2765,6 @@ function DashboardContent() {
                     </span>
                   ) : '저장하기'}
                 </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── 4. 학습 방법 (collapsible) ── */}
-        <div>
-          <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">학습 방법</p>
-          <div
-            className="bg-white rounded-2xl border border-[#E5E5E5] px-4 py-3 cursor-pointer"
-            onClick={() => setMethodOpen(!methodOpen)}
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-[15px]">📖</span>
-                <div>
-                  <p className="text-[13px] font-bold text-[#1A1A1A]">학습 방법 설정</p>
-                  <p className="text-[11px] text-[#ADADAD]">학습 방식과 알림을 설정하세요</p>
-                </div>
-              </div>
-              <span className={`text-[#ADADAD] text-[18px] transition-transform inline-block ${methodOpen ? 'rotate-90' : ''}`}>›</span>
-            </div>
-            {methodOpen && (
-              <div className="mt-3 pt-3 border-t border-[#E5E5E5]" onClick={(e) => e.stopPropagation()}>
-                <p className="text-[12px] text-[#ADADAD] text-center py-4">준비 중입니다.</p>
               </div>
             )}
           </div>
