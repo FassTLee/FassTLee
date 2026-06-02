@@ -96,28 +96,29 @@ function SurveyContent() {
 
   useEffect(() => {
     if (status === 'loading') return
-    if (status === 'unauthenticated') { router.replace('/landing'); return }
 
-    // 로그인 완료 → guest 데이터 자동 병합
-    const guestId = localStorage.getItem(GUEST_ID_KEY)
-    console.log('[survey] guestId from localStorage:', guestId)
-    if (!guestId) return
+    if (status === 'authenticated') {
+      // 로그인 완료 → guest 데이터 자동 병합
+      const guestId = localStorage.getItem(GUEST_ID_KEY)
+      console.log('[survey] guestId from localStorage:', guestId)
+      if (!guestId) return
 
-    fetch('/api/auth/convert-guest', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ guest_id: guestId }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        console.log('[survey] convert-guest 결과:', data)
-        // 병합 성공 여부와 무관하게 localStorage 정리
-        GUEST_CLEANUP_KEYS.forEach((k) => localStorage.removeItem(k))
-        console.log('[survey] localStorage guest 키 정리 완료')
+      fetch('/api/auth/convert-guest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guest_id: guestId }),
       })
-      .catch((e) => {
-        console.log('[survey] convert-guest 오류:', e)
-      })
+        .then((r) => r.json())
+        .then((data) => {
+          console.log('[survey] convert-guest 결과:', data)
+          GUEST_CLEANUP_KEYS.forEach((k) => localStorage.removeItem(k))
+          console.log('[survey] localStorage guest 키 정리 완료')
+        })
+        .catch((e) => {
+          console.log('[survey] convert-guest 오류:', e)
+        })
+    }
+    // unauthenticated: 아무것도 안 함 → 설문 진행 허용
   }, [status, router])
 
   const handleSelect = (type: LearningType) => {
@@ -142,20 +143,22 @@ function SurveyContent() {
       localStorage.setItem(STYLE_TYPE_KEY, finalType)
       localStorage.setItem(STYLE_KEY, lessonStyle)
 
-      try {
-        await fetch('/api/v1/learning-style', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ learning_style: lessonStyle }),
-        })
-      } catch { /* ignore */ }
+      if (status === 'authenticated') {
+        try {
+          await fetch('/api/v1/learning-style', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ learning_style: lessonStyle }),
+          })
+        } catch { /* ignore */ }
+      }
 
       setResult(finalType)
       setSaving(false)
     }, 350)
   }
 
-  if (status === 'loading') {
+  if (status === 'loading' && typeof window !== 'undefined' && !localStorage.getItem(STYLE_KEY)) {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
