@@ -1154,7 +1154,7 @@ function DashboardContent() {
       </div>
 
       {/* ③ 추천 영상 — 중앙 85% + 좌우 peek 캐러셀 */}
-      <div className="py-2">
+      {false && <div className="py-2">
         <p className="text-[12px] font-bold text-[#ADADAD] uppercase tracking-wider px-4 mb-2">
           오늘의 추천 영상
         </p>
@@ -1249,7 +1249,7 @@ function DashboardContent() {
         >
           더보기 <ChevronRight size={14} />
         </button>
-      </div>
+      </div>}
 
       {/* ④ 강의실 바로가기 — 자격증 카드 */}
       <div className="py-2">
@@ -1471,7 +1471,7 @@ function DashboardContent() {
                   <p className={`text-[10px] mt-1 font-semibold ${
                     thisWeekCount >= lastWeekCount ? 'text-[#00A651]' : 'text-[#E24B4A]'
                   }`}>
-                    {thisWeekCount >= lastWeekCount ? '↑' : '↓'} {Math.abs(thisWeekCount - lastWeekCount)}챕터 vs 지난주
+                    {thisWeekCount >= lastWeekCount ? '↑' : '↓'} {Math.abs(thisWeekCount - lastWeekCount)}챕터
                   </p>
                 )}
               </div>
@@ -1489,6 +1489,12 @@ function DashboardContent() {
           )}
 
           {/* 3. 취약 과목 알림 */}
+          {weakSubjects.length === 0 && allStats.length > 0 && (
+            <div className="text-[12px] text-[#ADADAD] text-center py-4">
+              아직 테스트 데이터가 없어요.<br/>
+              챕터 테스트를 완료하면 취약 과목이 표시됩니다.
+            </div>
+          )}
           {weakSubjects.length > 0 && (
             <div className="bg-[#FFF8F0] rounded-2xl border border-[#F5A623]/30 p-4">
               <div className="flex items-center gap-2 mb-3">
