@@ -23,6 +23,7 @@ function shuffle<T>(arr: T[]): T[] {
 /** Remove leading numeric/alpha prefixes. Keeps circled numbers ①②③④⑤ intact. */
 function cleanOption(opt: string): string {
   return opt
+    .replace(/^\s*[①②③④⑤⑥⑦⑧⑨⑩]\s*/, '')
     .replace(/^\s*\d+[.)、]\s*/, '')
     .replace(/^\s*[A-Da-d][.)]\s*/, '')
     .trim()
@@ -326,19 +327,30 @@ export default function TestPage() {
           </div>
         ) : (
           /* ── 4지선다(basic) UI ── */
-          <div className="space-y-2.5">
+          <div>
             {q.options.map((opt, i) => (
-              <button
+              <div
                 key={i}
+                className="flex items-center gap-[10px] mb-2 cursor-pointer"
                 onClick={() => setSelected(i)}
-                className={`w-full flex items-center px-4 py-4 rounded-2xl border-2 text-left text-[14px] font-medium transition-all ${
-                  selected === i
-                    ? 'border-[#00A651] bg-[#00A651]/5 text-[#1A1A1A]'
-                    : 'border-[#E5E5E5] bg-white text-[#1A1A1A]'
-                }`}
               >
-                {cleanOption(opt)}
-              </button>
+                {/* 원형 번호 뱃지 */}
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[13px] font-medium flex-shrink-0 transition-colors ${
+                  selected === i
+                    ? 'bg-[#1A1A1A] text-white'
+                    : 'bg-white border border-[#D0D0D0] text-[#888]'
+                }`}>
+                  {i + 1}
+                </div>
+                {/* 보기 텍스트 박스 */}
+                <div className={`flex-1 px-4 py-[11px] rounded-2xl text-[13px] text-left transition-colors ${
+                  selected === i
+                    ? 'border-[1.5px] border-[#00A651] bg-[#f0fbf4] text-[#1A1A1A]'
+                    : 'border-[0.5px] border-[#E5E5E5] bg-white text-[#1A1A1A]'
+                } border`}>
+                  {cleanOption(opt)}
+                </div>
+              </div>
             ))}
           </div>
         )}
