@@ -445,6 +445,16 @@ function DashboardContent() {
     if (subs) {
       try { selectedNames = JSON.parse(subs) } catch { /* ignore */ }
     }
+
+    // localStorage 비어있으면 userCerts에서 폴백
+    // (재초기화 시 userCerts state가 이미 로드된 경우에 유효)
+    if (selectedNames.length === 0 && userCerts.length > 0) {
+      selectedNames = userCerts.flatMap((c) => c.subjects ?? [])
+      if (selectedNames.length > 0) {
+        localStorage.setItem(SUBJECTS_KEY, JSON.stringify(selectedNames))
+      }
+    }
+
     setSubjects(selectedNames)
 
     // ② profile-settings (userId 기반, exam_date 2차 로드 — profile-me보다 우선)
