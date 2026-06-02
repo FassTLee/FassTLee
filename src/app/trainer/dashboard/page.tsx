@@ -258,7 +258,8 @@ function DashboardContent() {
   const [certOpen, setCertOpen]         = useState(false)
   const [methodOpen, setMethodOpen]     = useState(false)
   const [activityOpen, setActivityOpen] = useState(false)
-  const [subjectOrder, setSubjectOrder] = useState<string[]>([])
+  const [certOrder, setCertOrder]                                     = useState<string[]>([])
+  const [subjectOrderByCert, setSubjectOrderByCert]                   = useState<Record<string, string[]>>({})
   const [subjectProgress, setSubjectProgress] = useState<Record<string, { total: number; completed: number }>>({})
   const [userCerts, setUserCerts]             = useState<UserCertification[]>([])
 
@@ -877,12 +878,32 @@ function DashboardContent() {
     } catch { /* ignore */ }
   }
 
-  const moveSubject = (idx: number, dir: 'up' | 'down') => {
-    const next = [...subjectOrder]
+  const moveCert = (idx: number, dir: 'up' | 'down') => {
+    const next = [...certOrder]
     const swap = dir === 'up' ? idx - 1 : idx + 1
     if (swap < 0 || swap >= next.length) return
     ;[next[idx], next[swap]] = [next[swap], next[idx]]
-    setSubjectOrder(next)
+    setCertOrder(next)
+  }
+
+  const moveSubject = (certId: string, idx: number, dir: 'up' | 'down') => {
+    const subjects = [...(subjectOrderByCert[certId] ?? [])]
+    const swap = dir === 'up' ? idx - 1 : idx + 1
+    if (swap < 0 || swap >= subjects.length) return
+    ;[subjects[idx], subjects[swap]] = [subjects[swap], subjects[idx]]
+    setSubjectOrderByCert((prev) => ({ ...prev, [certId]: subjects }))
+  }
+
+  const handleOrderSave = async () => {
+    localStorage.setItem('kinepia_subject_order', JSON.stringify(subjectOrderByCert))
+    const updates = certOrder.map((certId, idx) =>
+      supabase
+        .from('user_certifications')
+        .update({ order_index: idx })
+        .eq('cert_id', certId)
+        .eq('user_id', session?.user?.id ?? '')
+    )
+    await Promise.all(updates)
   }
 
   const handleSurveySubmit = async () => {
@@ -2540,9 +2561,15 @@ function DashboardContent() {
           <div
             className="bg-white rounded-2xl border border-[#E5E5E5] px-4 py-3 cursor-pointer"
             onClick={() => {
-              if (!certOpen && subjectOrder.length === 0) {
-                const allSubjs = userCerts.flatMap((c) => c.subjects ?? [])
-                setSubjectOrder(Array.from(new Set(allSubjs)))
+              if (!certOpen && certOrder.length === 0) {
+                const sortedCerts = [...userCerts].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+                setCertOrder(sortedCerts.map((c) => c.cert_id))
+                const savedOrder = JSON.parse(localStorage.getItem('kinepia_subject_order') ?? '{}')
+                const initialSubjectOrder: Record<string, string[]> = {}
+                sortedCerts.forEach((cert) => {
+                  initialSubjectOrder[cert.cert_id] = savedOrder[cert.cert_id] ?? cert.subjects ?? []
+                })
+                setSubjectOrderByCert(initialSubjectOrder)
               }
               setCertOpen(!certOpen)
             }}
@@ -2564,33 +2591,60 @@ function DashboardContent() {
             {certOpen && (
               <div className="mt-3 pt-3 border-t border-[#E5E5E5]" onClick={(e) => e.stopPropagation()}>
 
-                {/* A. 학습 순서 */}
-                {subjectOrder.length > 0 && (
+                {/* A. 자격증 학습 우선순위 */}
+                {certOrder.length > 1 && (
                   <div className="mb-4">
-                    <p className="text-[11px] text-[#ADADAD] mb-2">학습 순서</p>
-                    {subjectOrder.map((subjectName, idx) => (
-                      <div
-                        key={subjectName}
-                        className="flex items-center justify-between py-2 border-b border-[#F5F5F3] last:border-0"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-[13px]">{SUBJECT_META[subjectName]?.icon ?? '📚'}</span>
-                          <span className="text-[13px] text-[#1A1A1A]">{subjectName}</span>
+                    <p className="text-[11px] text-[#ADADAD] font-medium mb-2">자격증 학습 우선순위</p>
+                    {certOrder.map((certId, idx) => {
+                      const cert = userCerts.find((c) => c.cert_id === certId)
+                      if (!cert) return null
+                      return (
+                        <div key={certId} className="flex items-center justify-between py-2 border-b border-[#F5F5F3] last:border-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-[#ADADAD] w-4">{idx + 1}</span>
+                            <span className="text-[13px] text-[#1A1A1A]">{cert.cert_label}</span>
+                          </div>
+                          <div className="flex gap-1">
+                            <button onClick={() => moveCert(idx, 'up')} disabled={idx === 0}
+                              className="text-[#ADADAD] disabled:opacity-30 px-1 text-[14px]">↑</button>
+                            <button onClick={() => moveCert(idx, 'down')} disabled={idx === certOrder.length - 1}
+                              className="text-[#ADADAD] disabled:opacity-30 px-1 text-[14px]">↓</button>
+                          </div>
                         </div>
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => moveSubject(idx, 'up')}
-                            disabled={idx === 0}
-                            className="text-[#ADADAD] disabled:opacity-30 px-1 text-[14px]"
-                          >↑</button>
-                          <button
-                            onClick={() => moveSubject(idx, 'down')}
-                            disabled={idx === subjectOrder.length - 1}
-                            className="text-[#ADADAD] disabled:opacity-30 px-1 text-[14px]"
-                          >↓</button>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* B. 자격증별 과목 순서 */}
+                {certOrder.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-[11px] text-[#ADADAD] font-medium mb-2">과목 학습 순서</p>
+                    {certOrder.map((certId) => {
+                      const cert = userCerts.find((c) => c.cert_id === certId)
+                      const subjs = subjectOrderByCert[certId] ?? []
+                      if (!cert || subjs.length === 0) return null
+                      return (
+                        <div key={certId} className="mb-3">
+                          <p className="text-[11px] font-bold text-[#1A1A1A] mb-1">{cert.cert_label}</p>
+                          {subjs.map((subj, idx) => (
+                            <div key={subj} className="flex items-center justify-between py-1.5 border-b border-[#F5F5F3] last:border-0 pl-2">
+                              <span className="text-[12px] text-[#1A1A1A]">{subj}</span>
+                              <div className="flex gap-1">
+                                <button onClick={() => moveSubject(certId, idx, 'up')} disabled={idx === 0}
+                                  className="text-[#ADADAD] disabled:opacity-30 px-1 text-[13px]">↑</button>
+                                <button onClick={() => moveSubject(certId, idx, 'down')} disabled={idx === subjs.length - 1}
+                                  className="text-[#ADADAD] disabled:opacity-30 px-1 text-[13px]">↓</button>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
+                    <button onClick={handleOrderSave}
+                      className="w-full py-2.5 rounded-2xl bg-[#1A1A1A] text-white text-[13px] font-bold mt-1">
+                      순서 저장
+                    </button>
                   </div>
                 )}
 
