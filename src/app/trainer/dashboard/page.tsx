@@ -1433,7 +1433,17 @@ function DashboardContent() {
                 .map((uc) => (
                   <button
                     key={uc.id}
-                    onClick={() => router.push('/trainer/dashboard?tab=classroom')}
+                    onClick={() => {
+                      const firstSubjName = uc.subjects?.[0]
+                      const card = firstSubjName
+                        ? subjectCards.find((c) => c.name === firstSubjName)
+                        : null
+                      if (card?.subjectId) {
+                        router.push(`/chapters/${card.subjectId}`)
+                      } else {
+                        router.push('/trainer/dashboard?tab=classroom')
+                      }
+                    }}
                     className="flex-shrink-0 bg-[#1A1A1A] rounded-2xl p-4 text-left active:opacity-90"
                     style={{ width: '72%', scrollSnapAlign: 'start', marginLeft: '1rem' }}
                   >
