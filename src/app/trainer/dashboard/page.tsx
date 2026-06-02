@@ -1162,7 +1162,11 @@ function DashboardContent() {
           <button
             onClick={() => {
               const first = subjectCards.find((c) => c.subjectId)
-              if (first?.subjectId) router.push(`/chapters/${first.subjectId}`)
+              if (first?.subjectId) {
+                router.push(`/chapters/${first.subjectId}`)
+              } else {
+                router.push('/trainer/dashboard?tab=classroom')
+              }
             }}
             className="w-full bg-[#1A1A1A] text-white rounded-2xl p-4 flex items-center gap-3 active:opacity-90"
           >
@@ -1906,6 +1910,9 @@ function DashboardContent() {
 
   // Admin 여부
   const isAdmin = ADMIN_EMAILS.includes(session?.user?.email ?? '')
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[admin check]', session?.user?.email, isAdmin)
+  }
 
   // 히어로 카드 버튼 상태 계산
   const nowForExam       = new Date()
