@@ -145,7 +145,7 @@ export default function LandingReportPage() {
             <div className="space-y-2.5 pt-1">
               {/* 카카오 */}
               <button
-                onClick={() => signIn('kakao', { callbackUrl: '/landing/survey' })}
+                onClick={() => signIn('kakao', { callbackUrl: '/trainer/dashboard' })}
                 className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl text-[14px] font-bold text-[#1A1A1A]"
                 style={{ backgroundColor: '#FEE500' }}
               >
@@ -157,7 +157,7 @@ export default function LandingReportPage() {
 
               {/* 구글 */}
               <button
-                onClick={() => signIn('google', { callbackUrl: '/landing/survey' })}
+                onClick={() => signIn('google', { callbackUrl: '/trainer/dashboard' })}
                 className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl border-2 border-[#E5E5E5] bg-white text-[14px] font-bold text-[#1A1A1A]"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24">
@@ -171,7 +171,7 @@ export default function LandingReportPage() {
 
               {/* 네이버 */}
               <button
-                onClick={() => signIn('naver', { callbackUrl: '/landing/survey' })}
+                onClick={() => signIn('naver', { callbackUrl: '/trainer/dashboard' })}
                 className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl text-[14px] font-bold text-white"
                 style={{ backgroundColor: '#03C75A' }}
               >
@@ -180,6 +180,15 @@ export default function LandingReportPage() {
                 </svg>
                 네이버로 계속하기
               </button>
+
+              <div className="flex justify-center">
+                <button
+                  onClick={() => router.push('/trainer/dashboard')}
+                  className="mt-3 text-[12px] text-[#ADADAD] underline"
+                >
+                  나중에 하기
+                </button>
+              </div>
             </div>
           </div>
         </div>
