@@ -504,6 +504,13 @@ function OralExamContent() {
                   <p className="text-[10px] text-[#00A651] mb-1">모범답안</p>
                   <p className="text-[13px] text-[#1A1A1A]">{currentQ.explanation ?? '(모범답안 없음)'}</p>
                 </div>
+                <div className="flex items-start gap-2 bg-[#FFFBEB] border border-[#FDE68A] rounded-2xl px-4 py-3 mb-3">
+                  <span className="text-[14px] flex-shrink-0">💡</span>
+                  <p className="text-[11px] text-[#92400E] leading-relaxed">
+                    현재 베타 서비스로 주관식 자동 채점은 준비 중입니다.<br />
+                    모범답안과 비교 후 양심껏 채점해 주세요 😊
+                  </p>
+                </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setActiveSelected(0)}
