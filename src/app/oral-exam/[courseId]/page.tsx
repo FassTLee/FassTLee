@@ -485,7 +485,7 @@ function OralExamContent() {
                 />
                 <button
                   disabled={!userAnswers[currentQ.id]?.trim()}
-                  onClick={() => setRevealedAnswers((prev) => new Set([...prev, currentQ.id]))}
+                  onClick={() => setRevealedAnswers((prev) => { const s = new Set(prev); s.add(currentQ.id); return s })}
                   className="w-full py-3 rounded-2xl bg-[#1A1A1A] text-white text-[14px] font-bold disabled:opacity-40"
                 >
                   모범답안 확인
