@@ -214,12 +214,20 @@ export default function TestPage() {
               <p className="text-[13px] font-medium text-[#1A1A1A] mb-2 line-clamp-2">{qItem.question}</p>
               <div className="flex items-center gap-2">
                 <span className="text-[11px] text-[#ADADAD]">내 답:</span>
-                {answers[idx] !== undefined ? (
-                  <span className="text-[12px] font-bold text-[#1A1A1A]">
-                    {cleanOption(qItem.options[answers[idx]])}
+                {qItem.question_type === 'oral' ? (
+                  <span className="text-[12px] text-[#1A1A1A]">
+                    {userAnswers[qItem.id]?.trim()
+                      ? userAnswers[qItem.id]
+                      : <span className="text-[#FF3B30]">미답변</span>}
                   </span>
                 ) : (
-                  <span className="text-[12px] text-[#FF3B30]">미답변</span>
+                  answers[idx] !== undefined ? (
+                    <span className="text-[12px] font-bold text-[#1A1A1A]">
+                      {cleanOption(qItem.options[answers[idx]])}
+                    </span>
+                  ) : (
+                    <span className="text-[12px] text-[#FF3B30]">미답변</span>
+                  )
                 )}
               </div>
             </div>
