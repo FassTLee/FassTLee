@@ -21,7 +21,8 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 /** Remove leading numeric/alpha prefixes. Keeps circled numbers ①②③④⑤ intact. */
-function cleanOption(opt: string): string {
+function cleanOption(opt: string | null | undefined): string {
+  if (!opt) return ''
   return opt
     .replace(/^\s*[①②③④⑤⑥⑦⑧⑨⑩]\s*/, '')
     .replace(/^\s*\d+[.)、]\s*/, '')
