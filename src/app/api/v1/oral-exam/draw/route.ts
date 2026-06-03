@@ -12,6 +12,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url)
   const courseId = searchParams.get('courseId')
+  const count    = parseInt(searchParams.get('count') ?? '3')
 
   if (!courseId) {
     return NextResponse.json({ error: 'courseId required' }, { status: 400 })
@@ -34,8 +35,7 @@ export async function GET(req: NextRequest) {
     .from('chapter_questions')
     .select('id, question, options, chapter_id')
     .in('chapter_id', chapterIds)
-    .eq('question_type', 'basic')
-    .not('options', 'eq', '[]')
+    .eq('question_type', 'oral')
 
   if (qErr || !questions?.length) {
     return NextResponse.json({ questions: [] })
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 
   // 3. 셔플 후 3개 추출
   const shuffled = [...questions].sort(() => Math.random() - 0.5)
-  const picked = shuffled.slice(0, 3).map((q) => ({
+  const picked = shuffled.slice(0, count).map((q) => ({
     id:        q.id,
     question:  q.question,
     options:   Array.isArray(q.options) ? q.options : [],
