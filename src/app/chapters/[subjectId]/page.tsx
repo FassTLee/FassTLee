@@ -78,6 +78,26 @@ export default function ChaptersPage() {
     fetchStats(userId)
   }, [session?.user?.id, status]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 포커스/탭 복귀 시 chapter_stats 재fetch
+  useEffect(() => {
+    const handleFocus = () => {
+      if (status === 'authenticated' && session?.user?.id) {
+        fetchStats(session.user.id)
+      }
+    }
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') handleFocus()
+    }
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [status, session?.user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const fetchStats = async (userId: string) => {
     try {
       const res  = await fetch(
