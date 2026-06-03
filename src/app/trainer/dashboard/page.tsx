@@ -341,6 +341,8 @@ function DashboardContent() {
   const [surveyStep, setSurveyStep]         = useState(0)
   const [surveyQ1, setSurveyQ1]             = useState('')
   const [surveyQ2, setSurveyQ2]             = useState('')
+  const [surveyQ1Temp, setSurveyQ1Temp]     = useState('')
+  const [surveyQ2Temp, setSurveyQ2Temp]     = useState('')
   const [surveyStars, setSurveyStars]       = useState(0)
   const [surveyText, setSurveyText]         = useState('')
   const [surveyConsent, setSurveyConsent]   = useState(false)
@@ -3101,14 +3103,25 @@ function DashboardContent() {
                 <p className="text-[12px] text-[#ADADAD] mb-4">1 / 4</p>
                 {['학습 슬라이드', '챕터 테스트', '오답노트', 'D-Day 플랜'].map(opt => (
                   <button key={opt}
-                    onClick={() => { setSurveyQ1(opt); setSurveyStep(1) }}
-                    className="w-full text-left px-4 py-3 mb-2 rounded-2xl border border-[#E5E5E5] text-[13px] font-medium active:bg-[#F5F5F3]">
+                    onClick={() => {
+                      setSurveyQ1Temp(opt)
+                      setTimeout(() => {
+                        setSurveyQ1(opt)
+                        setSurveyStep(1)
+                        setSurveyQ2Temp('')
+                      }, 350)
+                    }}
+                    className={`w-full text-left px-4 py-3 mb-2 rounded-2xl text-[13px] font-medium transition-colors ${
+                      surveyQ1Temp === opt
+                        ? 'border-[1.5px] border-[#00A651] bg-[#f0fbf4]'
+                        : 'border border-[#E5E5E5]'
+                    }`}>
                     {opt}
                   </button>
                 ))}
                 <button onClick={() => setShowSurveyPopup(false)}
-                  className="w-full py-2 text-[12px] text-[#ADADAD] mt-1">
-                  나중에 하기
+                  className="w-full py-2 text-[12px] text-[#ADADAD] mt-2 text-center">
+                  다음에 하기
                 </button>
               </div>
             )}
@@ -3120,13 +3133,24 @@ function DashboardContent() {
                 <p className="text-[12px] text-[#ADADAD] mb-4">2 / 4</p>
                 {['너무 어려워요', '적당해요', '쉬워요', '모르겠어요'].map(opt => (
                   <button key={opt}
-                    onClick={() => { setSurveyQ2(opt); setSurveyStep(2) }}
-                    className="w-full text-left px-4 py-3 mb-2 rounded-2xl border border-[#E5E5E5] text-[13px] font-medium active:bg-[#F5F5F3]">
+                    onClick={() => {
+                      setSurveyQ2Temp(opt)
+                      setTimeout(() => {
+                        setSurveyQ2(opt)
+                        setSurveyStep(2)
+                      }, 350)
+                    }}
+                    className={`w-full text-left px-4 py-3 mb-2 rounded-2xl text-[13px] font-medium transition-colors ${
+                      surveyQ2Temp === opt
+                        ? 'border-[1.5px] border-[#00A651] bg-[#f0fbf4]'
+                        : 'border border-[#E5E5E5]'
+                    }`}>
                     {opt}
                   </button>
                 ))}
-                <button onClick={() => setSurveyStep(0)}
-                  className="w-full py-2 text-[12px] text-[#ADADAD] mt-1">
+                <button
+                  onClick={() => { setSurveyQ1Temp(surveyQ1); setSurveyStep(0) }}
+                  className="w-full py-2 text-[12px] text-[#ADADAD] mt-2 text-center">
                   이전
                 </button>
               </div>
