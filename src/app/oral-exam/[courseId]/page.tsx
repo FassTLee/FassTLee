@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { ChevronLeft, X, CheckCircle2, XCircle, RotateCcw, BookOpen } from 'lucide-react'
 
 // ── 상수 ──────────────────────────────────────────────
@@ -12,6 +12,7 @@ const _MAIN_Q = 3   // 메인 모의고사 문제 수 (API 서버에서 3문제 
 interface OralQuestion {
   id: string
   question: string
+  explanation: string | null
   /** 실제 표시되는 보기 순서 (리뷰 시 셔플됨) */
   options: string[]
   /** options[i] 의 원본 인덱스 → submit 시 사용 */
@@ -67,11 +68,13 @@ function ProgressDots({ total, current, phase }: {
 }
 
 // ══════════════════════════════════════════════════════
-export default function OralExamPage() {
+function OralExamContent() {
   const { status } = useSession()
-  const router  = useRouter()
-  const params  = useParams()
-  const courseId = params.courseId as string
+  const router       = useRouter()
+  const params       = useParams()
+  const searchParams = useSearchParams()
+  const courseId     = params.courseId as string
+  const isPreview    = searchParams.get('preview') === 'true'
 
   // ── 데이터 로드 ────────────────────────────────────
   const [questions,  setQuestions]  = useState<OralQuestion[]>([])
@@ -79,11 +82,15 @@ export default function OralExamPage() {
   const [fetchError, setFetchError] = useState(false)
   const [nextExamDate, setNextExamDate] = useState<string | null>(null)
 
+  // ── oral 자기평가 state ──────────────────────────
+  const [userAnswers,     setUserAnswers]     = useState<Record<string, string>>({})
+  const [revealedAnswers, setRevealedAnswers] = useState<Set<string>>(new Set())
+
   // ── 메인 세션 상태 ─────────────────────────────────
   const [phase,       setPhase]       = useState<'draw' | 'answer' | 'result'>('draw')
   const [qIdx,        setQIdx]        = useState(0)
   const [selectedOpt, setSelectedOpt] = useState<number | null>(null)
-  const [submitting,  setSubmitting]  = useState(false)
+  const [submitting,  _setSubmitting]  = useState(false)
   const [results,     setResults]     = useState<QResult[]>([])
 
   // ── 리뷰 세션 상태 ─────────────────────────────────
@@ -97,28 +104,31 @@ export default function OralExamPage() {
   // ── 팝업 ──────────────────────────────────────────
   const [showExitConfirm, setShowExitConfirm] = useState(false)
 
-  // ── Auth guard ────────────────────────────────────
+  // ── Auth guard (preview 시 skip) ────────────────
   useEffect(() => {
-    if (status === 'unauthenticated') router.replace('/landing')
-  }, [status, router])
+    if (!isPreview && status === 'unauthenticated') router.replace('/landing')
+  }, [status, router, isPreview])
 
   // ── 문제 fetch ────────────────────────────────────
   useEffect(() => {
-    if (status !== 'authenticated') return
-    fetch(`/api/v1/oral-exam/draw?courseId=${courseId}`)
+    if (!isPreview && status !== 'authenticated') return
+    if (isPreview && status === 'loading') return
+    const url = `/api/v1/oral-exam/draw?courseId=${courseId}${isPreview ? '&count=2' : ''}`
+    fetch(url)
       .then((r) => r.json())
       .then((d) => {
         if (!d.questions?.length) { setFetchError(true); setLoading(false); return }
         setQuestions(
-          d.questions.map((q: { id: string; question: string; options: string[] }) => ({
+          d.questions.map((q: { id: string; question: string; options: string[]; explanation?: string }) => ({
             ...q,
+            explanation: q.explanation ?? null,
             originalIndices: q.options.map((_, i) => i),
           })),
         )
         setLoading(false)
       })
       .catch(() => { setFetchError(true); setLoading(false) })
-  }, [status, courseId])
+  }, [status, courseId, isPreview])
 
   // ── 다음 모의고사 일정 fetch (없으면 무시) ───────────
   useEffect(() => {
@@ -147,47 +157,32 @@ export default function OralExamPage() {
   const currentQ = activeQs[activeQIdx]
   const totalQ   = activeQs.length
 
-  // ── 제출 ──────────────────────────────────────────
-  const handleSubmit = async () => {
+  // ── 제출 (자기평가 기반) ──────────────────────────
+  const handleSubmit = () => {
     if (activeSelected === null || !currentQ || submitting) return
-    setSubmitting(true)
 
-    // 표시 인덱스 → 원본 인덱스 변환
-    const originalIdx = currentQ.originalIndices[activeSelected]
+    const correct = activeSelected === 0   // 알았다=true, 오답노트=false
 
-    try {
-      const res  = await fetch('/api/v1/oral-exam/submit', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ questionId: currentQ.id, selectedIndex: originalIdx }),
-      })
-      const data = await res.json()
+    const result: QResult = {
+      question:      currentQ,
+      selectedIndex: activeSelected,
+      correct,
+      answerIndex:   0,
+      explanation:   currentQ.explanation,
+    }
 
-      const result: QResult = {
-        question:      currentQ,
-        selectedIndex: originalIdx,
-        correct:       data.correct,
-        answerIndex:   data.answerIndex,
-        explanation:   data.explanation ?? null,
-      }
-
-      if (reviewMode) {
-        const next = [...reviewResults, result]
-        setReviewResults(next)
-        setReviewSelected(null)
-        if (reviewQIdx >= totalQ - 1) setReviewPhase('result')
-        else { setReviewQIdx((i) => i + 1); setReviewPhase('draw') }
-      } else {
-        const next = [...results, result]
-        setResults(next)
-        setSelectedOpt(null)
-        if (qIdx >= totalQ - 1) setPhase('result')
-        else { setQIdx((i) => i + 1); setPhase('draw') }
-      }
-    } catch {
-      // 네트워크 오류 시 retryable — 현재는 무시
-    } finally {
-      setSubmitting(false)
+    if (reviewMode) {
+      const next = [...reviewResults, result]
+      setReviewResults(next)
+      setReviewSelected(null)
+      if (reviewQIdx >= totalQ - 1) setReviewPhase('result')
+      else { setReviewQIdx((i) => i + 1); setReviewPhase('draw') }
+    } else {
+      const next = [...results, result]
+      setResults(next)
+      setSelectedOpt(null)
+      if (qIdx >= totalQ - 1) setPhase('result')
+      else { setQIdx((i) => i + 1); setPhase('draw') }
     }
   }
 
@@ -353,10 +348,10 @@ export default function OralExamPage() {
         {/* 하단 버튼 */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E5E5E5] px-5 pb-8 pt-4 flex gap-3">
           <button
-            onClick={() => router.push(courseId ? `/chapters/${courseId}` : '/trainer/dashboard')}
+            onClick={() => isPreview ? router.back() : router.push(courseId ? `/chapters/${courseId}` : '/trainer/dashboard')}
             className="flex-1 flex items-center justify-center gap-2 py-3.5 border-2 border-[#E5E5E5] rounded-2xl text-[14px] font-bold text-[#6B6B6B]"
           >
-            <BookOpen size={16} /> 강의실
+            <BookOpen size={16} /> {isPreview ? '닫기' : '강의실'}
           </button>
           {!isReview && (
             <button
@@ -392,8 +387,19 @@ export default function OralExamPage() {
 
   // ════════════════════════════════════════════════
   // ── 문제 뽑기 / 답변 화면 ───────────────────────
+  const isNextDisabled =
+    activeSelected === null || !revealedAnswers.has(currentQ?.id ?? '')
+
   return (
     <div className="min-h-screen bg-[#F5F5F3] flex flex-col">
+
+      {/* preview 배너 */}
+      {isPreview && (
+        <div className="bg-[#1A1A1A] text-white text-[11px] text-center py-[7px] flex items-center justify-center gap-2">
+          <span className="w-[5px] h-[5px] rounded-full bg-[#00A651] inline-block flex-shrink-0" />
+          체험 모드 · 2문제 미리보기 · 기록 저장 안 됨
+        </div>
+      )}
 
       {/* 헤더 */}
       <div className="bg-white border-b border-[#E5E5E5] px-5 pt-12 pb-4">
@@ -425,9 +431,16 @@ export default function OralExamPage() {
         {activePhase === 'draw' && (
           <div className="flex-1 flex flex-col items-center justify-center gap-6">
             {/* 빈 슬롯 카드 */}
-            <div className="w-full max-w-sm bg-white rounded-3xl border-2 border-dashed border-[#E5E5E5] h-44 flex flex-col items-center justify-center gap-2">
-              <div className="text-[32px]">🎴</div>
-              <p className="text-[13px] text-[#ADADAD]">문제가 여기에 표시돼요</p>
+            <div className="w-full max-w-sm bg-white rounded-3xl border-2 border-dashed border-[#E5E5E5] h-44 flex flex-col items-center justify-center">
+              <div className="w-9 h-9 rounded-full bg-[#F5F5F3] flex items-center justify-center mx-auto mb-2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ADADAD" strokeWidth="1.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </div>
+              <p className="text-[12px] text-[#ADADAD]">문제가 여기에 표시돼요</p>
+              <p className="text-[10px] text-[#ADADAD] opacity-60 mt-1">버튼을 눌러 문제를 뽑아보세요</p>
             </div>
 
             <button
@@ -459,34 +472,61 @@ export default function OralExamPage() {
               </p>
             </div>
 
-            {/* 보기 */}
-            <div className="space-y-2.5 flex-1">
-              {currentQ.options.map((opt, i) => {
-                const selected = activeSelected === i
-                return (
+            {/* ① 답변 입력 단계 */}
+            {!revealedAnswers.has(currentQ.id) && (
+              <>
+                <textarea
+                  value={userAnswers[currentQ.id] ?? ''}
+                  onChange={(e) => setUserAnswers((prev) => ({ ...prev, [currentQ.id]: e.target.value }))}
+                  placeholder="답변을 입력하세요..."
+                  rows={4}
+                  className="w-full border border-[#E5E5E5] rounded-2xl px-4 py-3 text-[13px] outline-none resize-none"
+                />
+                <button
+                  disabled={!userAnswers[currentQ.id]?.trim()}
+                  onClick={() => setRevealedAnswers((prev) => new Set([...prev, currentQ.id]))}
+                  className="w-full py-3 rounded-2xl bg-[#1A1A1A] text-white text-[14px] font-bold disabled:opacity-40"
+                >
+                  모범답안 확인
+                </button>
+              </>
+            )}
+
+            {/* ② 모범답안 확인 후 */}
+            {revealedAnswers.has(currentQ.id) && (
+              <>
+                <div className="bg-[#F5F5F3] rounded-2xl px-4 py-3 mb-2">
+                  <p className="text-[10px] text-[#ADADAD] mb-1">내 답변</p>
+                  <p className="text-[13px] text-[#1A1A1A]">{userAnswers[currentQ.id]}</p>
+                </div>
+                <div className="bg-[#f0fbf4] border border-[#C0DD97] rounded-2xl px-4 py-3 mb-3">
+                  <p className="text-[10px] text-[#00A651] mb-1">모범답안</p>
+                  <p className="text-[13px] text-[#1A1A1A]">{currentQ.explanation ?? '(모범답안 없음)'}</p>
+                </div>
+                <div className="flex gap-2">
                   <button
-                    key={i}
-                    onClick={() => setActiveSelected(i)}
-                    className={`w-full flex items-start gap-3 px-4 py-4 rounded-2xl border-2 text-left transition-all ${
-                      selected
-                        ? 'border-[#1A1A1A] bg-[#1A1A1A]/5'
-                        : 'border-[#E5E5E5] bg-white'
+                    onClick={() => setActiveSelected(0)}
+                    className={`flex-1 py-3 rounded-2xl text-[13px] font-bold border ${
+                      activeSelected === 0
+                        ? 'bg-[#00A651] text-white border-[#00A651]'
+                        : 'border-[#E5E5E5] text-[#1A1A1A]'
                     }`}
                   >
-                    <span className={`text-[13px] font-black flex-shrink-0 w-5 ${
-                      selected ? 'text-[#1A1A1A]' : 'text-[#ADADAD]'
-                    }`}>
-                      {optionLabel[i]}.
-                    </span>
-                    <span className={`flex-1 text-[14px] font-medium leading-relaxed ${
-                      selected ? 'text-[#1A1A1A]' : 'text-[#6B6B6B]'
-                    }`}>
-                      {cleanOpt(opt)}
-                    </span>
+                    알았다 ✓
                   </button>
-                )
-              })}
-            </div>
+                  <button
+                    onClick={() => setActiveSelected(1)}
+                    className={`flex-1 py-3 rounded-2xl text-[13px] font-bold border ${
+                      activeSelected === 1
+                        ? 'bg-[#FF3B30] text-white border-[#FF3B30]'
+                        : 'border-[#E5E5E5] text-[#1A1A1A]'
+                    }`}
+                  >
+                    오답노트 저장
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -496,9 +536,9 @@ export default function OralExamPage() {
         <div className="flex-shrink-0 p-5 bg-white border-t border-[#E5E5E5]">
           <button
             onClick={handleSubmit}
-            disabled={activeSelected === null || submitting}
+            disabled={isNextDisabled || submitting}
             className={`w-full py-4 rounded-2xl text-[16px] font-black transition-all flex items-center justify-center gap-2 ${
-              activeSelected !== null && !submitting
+              !isNextDisabled && !submitting
                 ? 'bg-[#00A651] text-white'
                 : 'bg-[#E5E5E5] text-[#ADADAD] cursor-not-allowed'
             }`}
@@ -541,5 +581,17 @@ export default function OralExamPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function OralExamPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <OralExamContent />
+    </Suspense>
   )
 }
