@@ -47,6 +47,11 @@ export default function ReportPage() {
   const [subjectId, setSubjectId]         = useState<string | null>(null)
   const [loading, setLoading]             = useState(true)
   const [showSignupPopup, setShowSignupPopup] = useState(false)
+  const [accessCodeUsed, setAccessCodeUsed]   = useState<string | null>(null)
+  const [showCodePopup, setShowCodePopup]     = useState(false)
+  const [codeInput, setCodeInput]             = useState('')
+  const [codeError, setCodeError]             = useState<string | null>(null)
+  const [codeSubmitting, setCodeSubmitting]   = useState(false)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -68,6 +73,10 @@ export default function ReportPage() {
 
   const fetchAll = async (userId: string | null) => {
     await Promise.all([fetchLessonStat(userId), fetchNextChapter()])
+    fetch('/api/v1/profile-me', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((pm) => { if (pm?.accessCodeUsed) setAccessCodeUsed(pm.accessCodeUsed) })
+      .catch(() => {})
     setLoading(false)
   }
 
@@ -81,6 +90,29 @@ export default function ReportPage() {
     if (siblings) {
       const idx = siblings.findIndex((c) => c.id === chapterId)
       if (idx !== -1 && idx + 1 < siblings.length) setNextChapterId(siblings[idx + 1].id)
+    }
+  }
+
+  const handleCodeSubmit = async () => {
+    if (!codeInput.trim() || codeSubmitting) return
+    setCodeSubmitting(true)
+    setCodeError(null)
+    try {
+      const res  = await fetch('/api/v1/access-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: codeInput.trim().toUpperCase() }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setCodeError(data.error ?? '오류가 발생했습니다'); return }
+      setAccessCodeUsed(codeInput.trim().toUpperCase())
+      setShowCodePopup(false)
+      setCodeInput('')
+      router.push(`/review/${chapterId}`)
+    } catch {
+      setCodeError('네트워크 오류가 발생했습니다')
+    } finally {
+      setCodeSubmitting(false)
     }
   }
 
@@ -203,7 +235,10 @@ export default function ReportPage() {
           <>
             {/* 오답 있음: 오답노트 primary + 다음챕터/강의실 row */}
             <button
-              onClick={() => router.push(`/review/${chapterId}`)}
+              onClick={() => {
+                if (!accessCodeUsed) { setShowCodePopup(true); return }
+                router.push(`/review/${chapterId}`)
+              }}
               className="w-full py-4 bg-[#1A1A1A] rounded-2xl text-[15px] font-bold text-white"
             >
               오답노트 확인하기
@@ -254,6 +289,45 @@ export default function ReportPage() {
           callbackUrl={`/report/${chapterId}`}
           onClose={() => setShowSignupPopup(false)}
         />
+      )}
+
+      {/* 이용 코드 입력 팝업 */}
+      {showCodePopup && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-6">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6">
+            <div className="text-center mb-5">
+              <div className="text-[44px] mb-3">🎁</div>
+              <h2 className="text-[18px] font-black text-[#1A1A1A] mb-2">Kinepia 무료 이용권</h2>
+              <p className="text-[13px] text-[#6B6B6B] leading-relaxed">
+                코드를 입력하면 6월 30일까지<br />모든 과목을 무료로 이용할 수 있습니다.
+              </p>
+            </div>
+            <input
+              type="text"
+              value={codeInput}
+              onChange={(e) => { setCodeInput(e.target.value.toUpperCase()); setCodeError(null) }}
+              placeholder="코드를 입력하세요"
+              className="w-full px-4 py-3 border-2 border-[#E5E5E5] rounded-2xl text-[15px] font-bold tracking-widest text-center mb-2 focus:outline-none focus:border-[#1A1A1A]"
+              onKeyDown={(e) => e.key === 'Enter' && handleCodeSubmit()}
+            />
+            {codeError && (
+              <p className="text-[12px] text-[#E24B4A] text-center mb-2">{codeError}</p>
+            )}
+            <button
+              onClick={handleCodeSubmit}
+              disabled={!codeInput.trim() || codeSubmitting}
+              className="w-full py-3.5 bg-[#1A1A1A] disabled:bg-[#E5E5E5] disabled:text-[#ADADAD] text-white rounded-2xl text-[15px] font-bold mt-1"
+            >
+              {codeSubmitting ? '확인 중...' : '코드 입력하기'}
+            </button>
+            <button
+              onClick={() => { setShowCodePopup(false); setCodeInput(''); setCodeError(null) }}
+              className="w-full py-2.5 mt-2 text-[13px] text-[#ADADAD] text-center"
+            >
+              닫기
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )
