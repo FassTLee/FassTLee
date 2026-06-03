@@ -194,7 +194,7 @@ export default function LessonPage() {
     )
     setQuestions(allQ)
 
-    const oralQs = (qs ?? []).filter(q => q.question_type === 'oral')
+    const oralQs = (qs ?? []).filter(q => q.question_type === 'oral' || q.question_type === 'theory')
     const slideArray = oralQs.map(q => ({
       id: q.id,
       question: q.question,
