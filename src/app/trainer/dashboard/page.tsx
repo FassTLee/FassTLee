@@ -1204,7 +1204,7 @@ function DashboardContent() {
 
       <div className="flex flex-col items-center mt-6 mb-2 px-4">
         <span className="text-[9px] text-[#ADADAD] mb-1 self-start">광고</span>
-        <KakaoAdFit unit="DAN-tyVXseZl4nT47hHT" width={320} height={50} />
+        {tab === 'home' && <KakaoAdFit unit="DAN-tyVXseZl4nT47hHT" width={320} height={50} />}
       </div>
 
       {/* ② Daily 학습/테스트 */}
@@ -1881,7 +1881,7 @@ function DashboardContent() {
 
             <div className="flex flex-col items-center mt-6 mb-2 px-4">
               <span className="text-[9px] text-[#ADADAD] mb-1 self-start">광고</span>
-              <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
+              {tab === 'classroom' && <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />}
             </div>
 
             {/* 강의 추가하기 버튼 (최대 3개 미만일 때만) */}
@@ -2072,7 +2072,7 @@ function DashboardContent() {
               </div>
               <div className="flex flex-col items-center mt-6 mb-2 px-4">
                 <span className="text-[9px] text-[#ADADAD] mb-1 self-start">광고</span>
-                <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
+                {tab === 'exam' && <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />}
               </div>
             </>
           ) : (
@@ -2943,7 +2943,7 @@ function DashboardContent() {
         {/* ── 5. 광고 ── */}
         <div className="flex flex-col items-center mt-6 mb-2 px-4">
           <span className="text-[9px] text-[#ADADAD] mb-1 self-start">광고</span>
-          <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
+          {tab === 'profile' && <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />}
         </div>
 
         {/* ── 6. 최근 학습 활동 (collapsible) ── */}
