@@ -199,6 +199,7 @@ function OralExamContent() {
         return {
           id:              r.question.id,
           question:        r.question.question,
+          explanation:     r.question.explanation,
           options:         items,
           // 셔플된 위치 i → r.question.originalIndices[indices[i]] → 원본 인덱스
           originalIndices: indices.map((i) => r.question.originalIndices[i]),
