@@ -53,6 +53,7 @@ export default function ChaptersPage() {
   const [codeInput, setCodeInput]           = useState('')
   const [codeError, setCodeError]           = useState<string | null>(null)
   const [codeSubmitting, setCodeSubmitting] = useState(false)
+  const [theoryChapters, setTheoryChapters] = useState<Set<string>>(new Set())
 
   const isSubscribed = !!accessCodeUsed
 
@@ -179,6 +180,18 @@ export default function ChaptersPage() {
         )
       }
 
+      // theory 슬라이드 보유 여부 확인
+      const chapterIds = allChapters.map((c) => c.id)
+      const { data: theoryCheck } = await supabase
+        .from('chapter_questions')
+        .select('chapter_id')
+        .in('chapter_id', chapterIds)
+        .in('question_type', ['theory', 'oral'])
+        .limit(1000)
+
+      const theorySet = new Set((theoryCheck ?? []).map((t) => t.chapter_id))
+      setTheoryChapters(theorySet)
+
       setChapters(allChapters)
       clearTimeout(timeoutId)
       setLoading(false)
@@ -266,8 +279,9 @@ export default function ChaptersPage() {
           visibleChapters.map((ch, idx) => {
             const stat     = statsMap[ch.id]
             console.log('[chapters] card:', ch.id, statsMap[ch.id])
-            const isLocked = !isSubscribed && idx >= FREE_LIMIT
-            const isWeak   = stat && stat.wrong_rate >= 40
+            const isLocked     = !isSubscribed && idx >= FREE_LIMIT
+            const isComingSoon = !theoryChapters.has(ch.id)
+            const isWeak       = stat && stat.wrong_rate >= 40
 
             /* ── Status (3단계) ── */
             let statusLabel = ''
@@ -314,10 +328,14 @@ export default function ChaptersPage() {
                     <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
                   </div>
                 )}
-              <div className="w-full rounded-2xl border border-[#E5E5E5] bg-white flex items-center active:bg-[#F5F5F3]">
+              <div className={`w-full rounded-2xl border border-[#E5E5E5] bg-white flex items-center active:bg-[#F5F5F3] relative${isComingSoon ? ' opacity-50' : ''}`}>
+                {isComingSoon && (
+                  <span className="absolute top-2 right-2 px-2 py-0.5 bg-[#E5E5E5] text-[#ADADAD] text-[10px] font-bold rounded-full">준비 중</span>
+                )}
                 {/* 메인 영역 (클릭 → 레슨 진입) */}
                 <button
                   onClick={() => {
+                    if (isComingSoon) { return }
                     if (isLocked) { setShowCodePopup(true); return }
                     localStorage.setItem('kinepia_current_subject_id', subjectId)
                     router.push(`/lesson/${ch.id}`)
@@ -342,7 +360,9 @@ export default function ChaptersPage() {
                       {isWeak && !isLocked && <Flame size={13} className="text-[#E24B4A] flex-shrink-0" />}
                     </div>
 
-                    {isLocked ? (
+                    {isComingSoon ? (
+                      <span className="text-[10px] text-[#ADADAD]">🔒 준비 중</span>
+                    ) : isLocked ? (
                       <span className="text-[10px] text-[#ADADAD]">🔒 구독 후 이용 가능</span>
                     ) : stat && (stat.test_attempts ?? 0) >= 1 ? (
                       <button

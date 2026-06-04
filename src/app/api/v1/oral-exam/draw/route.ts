@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
   // 2. chapter_questions 에서 문제 조회 (answer_index 제외)
   const { data: questions, error: qErr } = await supabaseAdmin
     .from('chapter_questions')
-    .select('id, question, options, chapter_id')
+    .select('id, question, options, chapter_id, explanation')
     .in('chapter_id', chapterIds)
     .eq('question_type', 'oral')
 

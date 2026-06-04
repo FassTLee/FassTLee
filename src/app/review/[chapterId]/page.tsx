@@ -13,10 +13,12 @@ interface AnswerRecord {
   questionId:   string
   question:     string
   options:      string[]
-  answer_index: number
-  selected:     number
-  correct:      boolean
-  explanation:  string | null
+  answer_index:  number
+  selected:      number
+  correct:       boolean
+  explanation:   string | null
+  question_type?: string
+  user_answer?:  string
 }
 
 interface TestResult {
@@ -98,36 +100,49 @@ export default function ReviewPage() {
                 </p>
               </div>
 
-              {/* 선택지 */}
-              <div className="space-y-1.5 mb-3">
-                {r.options.map((opt, oi) => (
-                  <div
-                    key={oi}
-                    className={`px-3 py-2 rounded-xl text-[12px] ${
-                      oi === r.answer_index
-                        ? 'bg-[#63992215] text-[#639922] font-semibold'
-                        : oi === r.selected
-                        ? 'bg-[#E24B4A10] text-[#E24B4A] line-through'
-                        : 'text-[#ADADAD]'
-                    }`}
-                  >
-                    {oi === r.answer_index && (
-                      <span className="text-[10px] font-bold mr-1">✓ 정답</span>
-                    )}
-                    {oi === r.selected && oi !== r.answer_index && (
-                      <span className="text-[10px] font-bold mr-1">내 선택</span>
-                    )}
-                    {opt}
-                  </div>
-                ))}
-              </div>
-
-              {/* 해설 */}
-              {r.explanation && (
-                <div className="bg-[#F5F5F3] rounded-xl p-3">
-                  <p className="text-[11px] font-bold text-[#ADADAD] mb-1">해설</p>
+              {/* 선택지 / 주관식 */}
+              {r.question_type === 'oral' ? (
+                <div className="mt-2 text-sm">
+                  <p className="text-[11px] font-bold text-[#ADADAD] mb-1">내 답변</p>
+                  <p className="text-[12px] text-[#1A1A1A] leading-relaxed mb-3">
+                    {r.user_answer?.trim() ? r.user_answer : <span className="text-[#FF3B30]">미답변</span>}
+                  </p>
+                  <p className="text-[11px] font-bold text-[#00A651] mb-1">모범답안</p>
                   <p className="text-[12px] text-[#1A1A1A] leading-relaxed">{r.explanation}</p>
                 </div>
+              ) : (
+                <>
+                  <div className="space-y-1.5 mb-3">
+                    {r.options.map((opt, oi) => (
+                      <div
+                        key={oi}
+                        className={`px-3 py-2 rounded-xl text-[12px] ${
+                          oi === r.answer_index
+                            ? 'bg-[#63992215] text-[#639922] font-semibold'
+                            : oi === r.selected
+                            ? 'bg-[#E24B4A10] text-[#E24B4A] line-through'
+                            : 'text-[#ADADAD]'
+                        }`}
+                      >
+                        {oi === r.answer_index && (
+                          <span className="text-[10px] font-bold mr-1">✓ 정답</span>
+                        )}
+                        {oi === r.selected && oi !== r.answer_index && (
+                          <span className="text-[10px] font-bold mr-1">내 선택</span>
+                        )}
+                        {opt}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 해설 */}
+                  {r.explanation && (
+                    <div className="bg-[#F5F5F3] rounded-xl p-3">
+                      <p className="text-[11px] font-bold text-[#ADADAD] mb-1">해설</p>
+                      <p className="text-[12px] text-[#1A1A1A] leading-relaxed">{r.explanation}</p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           ))

@@ -220,6 +220,35 @@ export default function ReportPage() {
           </div>
         )}
 
+        {/* ─── 문항별 결과 요약 ─── */}
+        {result && result.records.length > 0 && (
+          <div className="bg-white rounded-2xl p-5 border border-[#E5E5E5] mt-3">
+            <div className="text-[14px] font-bold text-[#1A1A1A] mb-3">📊 문항별 결과</div>
+            <div className="grid grid-cols-10 gap-1.5">
+              {result.records.map((r, i) => (
+                <div
+                  key={i}
+                  className={`aspect-square rounded-lg flex items-center justify-center text-[11px] font-black ${
+                    r.correct
+                      ? 'bg-[#639922]/15 text-[#639922]'
+                      : 'bg-[#E24B4A]/15 text-[#E24B4A]'
+                  }`}
+                >
+                  {r.correct ? '○' : '✕'}
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#F5F5F3]">
+              <span className="text-[12px] text-[#639922] font-semibold">
+                ✓ 정답 {result.records.filter(r => r.correct).length}개
+              </span>
+              <span className="text-[12px] text-[#E24B4A] font-semibold">
+                ✗ 오답 {result.records.filter(r => !r.correct).length}개
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* ── 전체 정답 배지 ── */}
         {score !== null && wrong.length === 0 && (
           <div className="bg-[#63992210] border border-[#63992230] rounded-2xl p-5 text-center">

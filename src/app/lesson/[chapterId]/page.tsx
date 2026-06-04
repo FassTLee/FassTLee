@@ -695,6 +695,13 @@ export default function LessonPage() {
             {/* Handle */}
             <div className="w-10 h-1 bg-[#E5E5E5] rounded-full mx-auto mb-5" />
 
+            <button
+              onClick={() => setShowMiniQuiz(false)}
+              className="absolute top-6 right-6 text-[12px] text-[#888] flex items-center gap-1"
+            >
+              📖 학습 내용 보기
+            </button>
+
             <h2 className="text-[18px] font-black text-[#1A1A1A] mb-4">확인 퀴즈 💡</h2>
             <p className="text-[15px] font-semibold text-[#1A1A1A] mb-5 leading-snug">
               {miniQ.text}

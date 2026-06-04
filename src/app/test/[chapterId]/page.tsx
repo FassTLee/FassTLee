@@ -132,16 +132,18 @@ export default function TestPage() {
       const isOral = q.question_type === 'oral'
       const sel    = answers[idx] ?? -1
       return {
-        questionId:   q.id,
-        question:     q.question,
-        options:      q.options,
-        answer_index: q.answer_index,
-        selected:     sel,
-        correct:      isOral ? sel === 0 : sel === q.answer_index,
-        explanation:  q.explanation ?? '',
+        questionId:    q.id,
+        question:      q.question,
+        options:       q.options,
+        answer_index:  q.answer_index,
+        selected:      sel,
+        correct:       isOral ? sel === 0 : sel === q.answer_index,
+        explanation:   q.explanation ?? '',
+        question_type: q.question_type,
+        user_answer:   q.question_type === 'oral' ? (userAnswers[q.id] ?? '') : '',
       }
     })
-    localStorage.setItem(RESULT_KEY, JSON.stringify({ chapterId, records: finalRecords }))
+    localStorage.setItem(RESULT_KEY, JSON.stringify({ chapterId, records: finalRecords, userAnswers }))
     fetch('/api/v1/test-complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

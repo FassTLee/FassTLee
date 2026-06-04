@@ -516,6 +516,10 @@ function DashboardContent() {
         setCertTypeInput(data.cert_type)
         setProfileCert(data.cert_type)
       }
+      if (data.cert_type && data.cert_type !== localStorage.getItem('kinepia_cert_type')) {
+        localStorage.removeItem('kinepia_selected_subjects')
+        selectedNames = []
+      }
       if (data.region)            setRegionInput(String(data.region))
       if (data.daily_study_hours) setDailyHoursInput(String(data.daily_study_hours))
       if (data.daily_study_time)  setStudyTimeInput(data.daily_study_time)
@@ -650,8 +654,15 @@ function DashboardContent() {
 
     // Subject cards (needed for home + classroom)
     if (selectedNames.length > 0) {
-      const { data: dbSubjs } = await supabase
-        .from('subjects').select('id, name').in('name', selectedNames)
+      const CATEGORY_ID_MAP: Record<string, string> = {
+        '건강운동관리사': '410d8994-8574-448a-9a6e-1c383bb2a009',
+      }
+      const categoryIdForSubj = CATEGORY_ID_MAP[loadedCertType ?? certTypeInput ?? '']
+      const subjQuery = supabase.from('subjects').select('id, name').in('name', selectedNames)
+      const { data: dbSubjs } = categoryIdForSubj
+        ? await subjQuery.eq('category_id', categoryIdForSubj)
+        : await subjQuery
+      console.log('[subjects] categoryIdForSubj:', categoryIdForSubj, '| dbSubjs:', dbSubjs)
       const cards: SubjectCard[] = selectedNames.map((name) => {
         const meta = SUBJECT_META[name] ?? { icon: '📚', desc: '' }
         const db   = (dbSubjs ?? []).find((d: { id: string; name: string }) => d.name === name)
