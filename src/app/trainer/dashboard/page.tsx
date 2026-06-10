@@ -2468,6 +2468,7 @@ function DashboardContent() {
                           <button
                             className="px-4 py-2 rounded-xl text-[12px] font-bold border-2 border-[#F5A623] text-[#F5A623] bg-transparent active:opacity-80"
                             onClick={() => {
+                              if (!_accessCodeUsed) { setShowCodePopup(true); return }
                               setOralPickerTarget({ weekNum: week.weekNum, slot, weekDates: week.dates })
                               setShowOralDatePicker(true)
                             }}
