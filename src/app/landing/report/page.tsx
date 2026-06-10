@@ -169,7 +169,7 @@ export default function LandingReportPage() {
                 구글로 계속하기
               </button>
 
-              {/* 네이버 */}
+              {/* 네이버 로그인 */}
               <button
                 onClick={() => signIn('naver', { callbackUrl: '/trainer/dashboard' })}
                 className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl text-[14px] font-bold text-white"

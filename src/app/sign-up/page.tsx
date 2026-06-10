@@ -43,6 +43,7 @@ export default function SignUpPage() {
               카카오로 계속하기
             </button>
 
+            {/* 네이버 로그인 */}
             <button
               onClick={() => signIn('naver', { callbackUrl })}
               className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl text-[14px] font-semibold text-white hover:opacity-90 transition-opacity"

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from 'react'
 import Image from 'next/image'
-import { useSession, signOut } from 'next-auth/react'
+import { useSession, signOut, signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import {
@@ -22,7 +22,7 @@ const STYLE_KEY     = 'kinepia_learning_style'
 const ADMIN_EMAILS  = ['shotace@naver.com', 'prehabex@naver.com']
 
 const CERT_LABELS: Record<string, string> = {
-  'health-exercise-manager':       '건강운동관리사',
+  'health-exercise-manager':       '운동건강관리사',
   'sports-instructor-2':           '2급 생활스포츠지도사',
   'sports-instructor':             '생활스포츠지도사',
   'exercise-prescriptionist':      '건강운동관리사',
@@ -31,9 +31,9 @@ const CERT_LABELS: Record<string, string> = {
 }
 
 const CERT_ICONS: Record<string, string> = {
-  '건강운동관리사':       '🏋️',
-  '2급 생활스포츠지도사': '🏅',
-  '생활스포츠지도사':     '🎽',
+  '건강운동관리사':                '🏅',
+  '2급 생활스포츠지도사 필기':      '📝',
+  '2급 생활스포츠지도사 구술/실기': '🏋️',
 }
 
 // 구술/실기 보디빌딩 과목 → courseId 매핑
@@ -84,6 +84,14 @@ const SUBJECT_META: Record<string, { icon: string; desc: string }> = {
   '스포츠윤리':    { icon: '⚖️', desc: '페어플레이·반도핑' },
   '운동역학':      { icon: '⚙️', desc: '운동의 물리적 원리' },
   '스포츠사회학':  { icon: '🏟️', desc: '스포츠와 사회' },
+  '도핑 규정':        { icon: '💊', desc: '도핑 검사·금지 약물' },
+  '보디빌딩 경기 규정': { icon: '🏆', desc: '경기 규정·심사 기준' },
+  '복장 및 포징 규정': { icon: '👔', desc: '복장·포징 규정' },
+  '생활체육 지도 방법': { icon: '🎽', desc: '지도법·코칭 이론' },
+  '스포츠 인권':      { icon: '⚖️', desc: '인권·페어플레이' },
+  '운동영양학':       { icon: '🥩', desc: '영양소·식이 전략' },
+  '응급처치':         { icon: '🚑', desc: '응급처치·안전 관리' },
+  '협회 규정':        { icon: '📋', desc: '협회 규정·절차' },
 }
 
 const STYLE_META: Record<string, { emoji: string; label: string; desc: string; color: string }> = {
@@ -176,6 +184,42 @@ interface OralExamRegistration {
   created_at: string
 }
 
+function MarqueeText({ text, className }: { text: string; className?: string }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [overflow, setOverflow] = useState(false)
+
+  useEffect(() => {
+    const measure = () => {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      if (ctx && containerRef.current) {
+        const style = window.getComputedStyle(containerRef.current)
+        ctx.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`
+        const textWidth = ctx.measureText(text).width
+        const containerWidth = containerRef.current.clientWidth
+        setOverflow(textWidth > containerWidth)
+      }
+    }
+    const raf = requestAnimationFrame(() => {
+      requestAnimationFrame(measure)
+    })
+    return () => cancelAnimationFrame(raf)
+  }, [text])
+
+  return (
+    <div ref={containerRef} className="overflow-hidden max-w-[120px]">
+      {overflow ? (
+        <div className="flex animate-marquee whitespace-nowrap">
+          <span className={className}>{text}&nbsp;&nbsp;&nbsp;&nbsp;</span>
+          <span className={className}>{text}&nbsp;&nbsp;&nbsp;&nbsp;</span>
+        </div>
+      ) : (
+        <span className={className}>{text}</span>
+      )}
+    </div>
+  )
+}
+
 // ─────────────────────────────────────────────────────────────────────
 /* Wrap in Suspense so useSearchParams works in App Router */
 export default function DashboardPage() {
@@ -193,6 +237,15 @@ export default function DashboardPage() {
 function DashboardContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
+
+  // 주요 페이지 prefetch — 이동 시 즉시 로드
+  useEffect(() => {
+    router.prefetch('/lesson/[chapterId]')
+    router.prefetch('/test/[chapterId]')
+    router.prefetch('/chapters/[subjectId]')
+    router.prefetch('/oral-exam/[courseId]')
+  }, [router])
+
   const searchParams = useSearchParams()
   const tabParam = (searchParams.get('tab') ?? 'home') as Tab
 
@@ -203,8 +256,8 @@ function DashboardContent() {
 
   /* Sync tab when URL search param changes (BottomTabBar navigation) */
   useEffect(() => {
-    // profile 탭은 로그인 필요
-    if (tabParam === 'profile' && !session) {
+    // classroom · exam · profile 탭은 로그인 필요
+    if ((tabParam === 'profile' || tabParam === 'classroom' || tabParam === 'exam') && !session) {
       setShowLoginPrompt(true)
       return
     }
@@ -336,6 +389,8 @@ function DashboardContent() {
   const [savingProfile, setSavingProfile]     = useState(false)
 
   // ── 이용 설문 팝업 ──────────────────────────────────────────────────
+  const [subjectStarStats, setSubjectStarStats] = useState<Record<string, { fire: number; star: number }>>({})
+
   const [showSurveyPopup, setShowSurveyPopup]                   = useState(false)
   const [hasShownSurveyThisSession, setHasShownSurveyThisSession] = useState(false)
   const [surveyStep, setSurveyStep]         = useState(0)
@@ -343,10 +398,14 @@ function DashboardContent() {
   const [surveyQ2, setSurveyQ2]             = useState('')
   const [surveyQ1Temp, setSurveyQ1Temp]     = useState('')
   const [surveyQ2Temp, setSurveyQ2Temp]     = useState('')
-  const [surveyStars, setSurveyStars]       = useState(0)
-  const [surveyText, setSurveyText]         = useState('')
-  const [surveyConsent, setSurveyConsent]   = useState(false)
-  const [surveyLoading, setSurveyLoading]   = useState(false)
+  const [surveyStars, setSurveyStars]           = useState(0)
+  const [surveyText, setSurveyText]             = useState('')
+  const [surveyFeedback, setSurveyFeedback]     = useState('')
+  const [surveyConsent, setSurveyConsent]       = useState(false)
+  const [surveyLoading, setSurveyLoading]       = useState(false)
+  const [surveyDone, setSurveyDone]             = useState(false)
+  const [showToast, setShowToast]               = useState(false)
+  const [toastMessage, setToastMessage]         = useState('')
 
   // ── Init ────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -355,8 +414,39 @@ function DashboardContent() {
       setLoading(false)  // 비로그인도 대시보드 렌더링 허용
       return
     }
+    if ((session as { error?: string } | null)?.error === 'RefreshTokenExpired') {
+      signOut({ callbackUrl: '/landing' })
+      return
+    }
     initCommon()
-  }, [status, router]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [status, session, router]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── 구술/실기 과목별 star_rating 집계 ──────────────────────────────────
+  useEffect(() => {
+    const fetchSubjectStarStats = async () => {
+      try {
+        const courseIds = Object.values(BODYBUILD_COURSES)
+        const { data } = await supabase
+          .from('chapter_questions')
+          .select('star_rating, chapters!inner(title, course_id)')
+          .in('chapters.course_id', courseIds)
+          .in('star_rating', [4, 5])
+        if (!data) return
+        const acc: Record<string, { fire: number; star: number }> = {}
+        for (const row of data) {
+          const chapter = row.chapters as unknown as { title: string; course_id: string } | null
+          if (!chapter) continue
+          // 챕터 타이틀 끝의 숫자(공백+숫자) 제거 → 과목명
+          const subjectName = chapter.title.replace(/\s*\d+$/, '').trim()
+          if (!acc[subjectName]) acc[subjectName] = { fire: 0, star: 0 }
+          if (row.star_rating === 5) acc[subjectName].fire += 1
+          else if (row.star_rating === 4) acc[subjectName].star += 1
+        }
+        setSubjectStarStats(acc)
+      } catch { /* ignore */ }
+    }
+    fetchSubjectStarStats()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (tab === 'classroom' && !classroomLoaded) loadClassroom()
@@ -458,7 +548,8 @@ function DashboardContent() {
     if (pm.certType)  { loadedCertType = pm.certType as string; setProfileCert(pm.certType as string); setCertTypeInput(pm.certType as string) }
     if (pm.examDate)  { loadedExamDate = pm.examDate as string; setProfileExamDate(pm.examDate as string); setExamDateInput(pm.examDate as string) }
     if (pm.accessCodeUsed) setAccessCodeUsed(String(pm.accessCodeUsed))
-    if (session && pm.codePopupShown === false) setShowCodePopup(true)
+    // 코드 팝업 — 챕터 1 테스트 완료 후로 이동
+    // if (session && pm.codePopupShown === false) setShowCodePopup(true)
     surveyCompletedRef.current = Boolean(pm.surveyCompleted)
     const localLessonStyle = localStorage.getItem(STYLE_KEY)
     console.log('[stylePopup] pm.learningStyle:', pm.learningStyle, '| localStorage:', localLessonStyle,
@@ -469,6 +560,18 @@ function DashboardContent() {
       console.log('[stylePopup] → 팝업 없음. resolved:', resolved)
       setProfileLearningStyle(resolved)
       sessionStorage.removeItem('kinepia_style_pending')
+
+      // DB → localStorage 동기화: DB에 값 있고 localStorage에 없을 때
+      if (pm.learningStyle && !localLessonStyle) {
+        const dbStyle = pm.learningStyle as string
+        localStorage.setItem(STYLE_KEY, dbStyle)
+        // learning_type은 style과 동일값으로 역매핑 (memorizer→memorizer, conceptualizer→conceptualizer)
+        if (!localStorage.getItem('kinepia_learning_type')) {
+          localStorage.setItem('kinepia_learning_type', dbStyle)
+        }
+        console.log('[stylePopup] DB → localStorage 동기화:', dbStyle)
+      }
+
       if (!pm.learningStyle && localLessonStyle) {
         console.log('[stylePopup] DB 없음, localStorage 있음 → 백그라운드 동기화 시도')
         fetch('/api/v1/learning-style', {
@@ -499,54 +602,78 @@ function DashboardContent() {
         localStorage.setItem(SUBJECTS_KEY, JSON.stringify(selectedNames))
       }
     }
+
+    // certType 기반 자동 조회 (user_certifications에 데이터 없는 경우 폴백)
+    if (selectedNames.length === 0 && loadedCertType) {
+      try {
+        const certKey = Object.entries(CERT_LABELS).find(([, v]) => v === loadedCertType)?.[0] ?? ''
+        if (certKey) {
+          const csRes  = await fetch(`/api/v1/certification-subjects?certKey=${encodeURIComponent(certKey)}`)
+          const csData = await csRes.json()
+          const autoNames: string[] = (csData.subjects ?? []).map((s: { name: string }) => s.name)
+          if (autoNames.length > 0) {
+            selectedNames = autoNames
+            localStorage.setItem(SUBJECTS_KEY, JSON.stringify(autoNames))
+          }
+        }
+      } catch { /* ignore */ }
+    }
+
     setSubjects(selectedNames)
 
-    // ② profile-settings (userId 기반, exam_date 2차 로드 — profile-me보다 우선)
-    try {
-      const res  = await fetch(`/api/v1/profile-settings?userId=${encodeURIComponent(userId)}`, { cache: 'no-store' })
-      const data = await res.json()
-      console.log('[initCommon] profile-settings:', data)
-      if (data.exam_target_date) {
-        loadedExamDate = data.exam_target_date
-        setExamDateInput(data.exam_target_date)
-        setProfileExamDate(data.exam_target_date)
-      }
-      if (data.cert_type) {
-        loadedCertType = data.cert_type
-        setCertTypeInput(data.cert_type)
-        setProfileCert(data.cert_type)
-      }
-      if (data.cert_type && data.cert_type !== localStorage.getItem('kinepia_cert_type')) {
-        localStorage.removeItem('kinepia_selected_subjects')
-        selectedNames = []
-      }
-      if (data.region)            setRegionInput(String(data.region))
-      if (data.daily_study_hours) setDailyHoursInput(String(data.daily_study_hours))
-      if (data.daily_study_time)  setStudyTimeInput(data.daily_study_time)
-      if (data.daily_study_count) setStudyCountInput(data.daily_study_count)
-      if (data.study_time_slot)   setStudyTimeSlotInput(data.study_time_slot)
-      if (data.push_enabled !== undefined && data.push_enabled !== null)
-        _setPushEnabled(Boolean(data.push_enabled))
-    } catch (e) { console.warn('[initCommon] profile-settings 실패', e) }
+    // ② profile-settings + user-goals 병렬 조회
+    const [psRes, ugRes] = await Promise.allSettled([
+      fetch(`/api/v1/profile-settings?userId=${encodeURIComponent(userId)}`, { cache: 'no-store' }),
+      fetch(`/api/v1/user-goals?userId=${encodeURIComponent(userId)}`),
+    ])
+
+    // profile-settings 처리
+    if (psRes.status === 'fulfilled') {
+      try {
+        const data = await psRes.value.json()
+        console.log('[initCommon] profile-settings:', data)
+        if (data.exam_target_date) {
+          loadedExamDate = data.exam_target_date
+          setExamDateInput(data.exam_target_date)
+          setProfileExamDate(data.exam_target_date)
+        }
+        if (data.cert_type) {
+          loadedCertType = data.cert_type
+          setCertTypeInput(data.cert_type)
+          setProfileCert(data.cert_type)
+        }
+        if (data.cert_type) {
+          localStorage.setItem('kinepia_cert_type', data.cert_type)
+        }
+        if (data.region)            setRegionInput(String(data.region))
+        if (data.daily_study_hours) setDailyHoursInput(String(data.daily_study_hours))
+        if (data.daily_study_time)  setStudyTimeInput(data.daily_study_time)
+        if (data.daily_study_count) setStudyCountInput(data.daily_study_count)
+        if (data.study_time_slot)   setStudyTimeSlotInput(data.study_time_slot)
+        if (data.push_enabled !== undefined && data.push_enabled !== null)
+          _setPushEnabled(Boolean(data.push_enabled))
+      } catch (e) { console.warn('[initCommon] profile-settings 파싱 실패', e) }
+    } else { console.warn('[initCommon] profile-settings 실패', psRes.reason) }
 
     // ③ D-Day goals — user-goals 테이블에서도 exam_date 폴백 확인
-    try {
-      const res  = await fetch(`/api/v1/user-goals?userId=${encodeURIComponent(userId)}`)
-      const data = await res.json()
-      const goals: DayGoal[] = data.goals ?? []
-      setDdayGoals(goals)
-      // profile-me / profile-settings 모두 exam_date 반환 못한 경우 user-goals로 폴백
-      if (!loadedExamDate && goals.length > 0) {
-        const latest = goals[goals.length - 1]
-        console.log('[initCommon] user-goals 폴백 exam_target_date:', latest.exam_target_date)
-        setProfileExamDate(latest.exam_target_date)
-        setExamDateInput(latest.exam_target_date)
-        if (!loadedCertType && latest.cert_type) {
-          setProfileCert(latest.cert_type)
-          setCertTypeInput(latest.cert_type)
+    if (ugRes.status === 'fulfilled') {
+      try {
+        const data = await ugRes.value.json()
+        const goals: DayGoal[] = data.goals ?? []
+        setDdayGoals(goals)
+        // profile-me / profile-settings 모두 exam_date 반환 못한 경우 user-goals로 폴백
+        if (!loadedExamDate && goals.length > 0) {
+          const latest = goals[goals.length - 1]
+          console.log('[initCommon] user-goals 폴백 exam_target_date:', latest.exam_target_date)
+          setProfileExamDate(latest.exam_target_date)
+          setExamDateInput(latest.exam_target_date)
+          if (!loadedCertType && latest.cert_type) {
+            setProfileCert(latest.cert_type)
+            setCertTypeInput(latest.cert_type)
+          }
         }
-      }
-    } catch (e) { console.warn('[initCommon] user-goals 실패', e) }
+      } catch (e) { console.warn('[initCommon] user-goals 파싱 실패', e) }
+    } else { console.warn('[initCommon] user-goals 실패', ugRes.reason) }
 
     // ④ localStorage 폴백 — 모든 DB 조회 실패 시 마지막 안전망
     if (!loadedExamDate) {
@@ -654,15 +781,27 @@ function DashboardContent() {
 
     // Subject cards (needed for home + classroom)
     if (selectedNames.length > 0) {
-      const CATEGORY_ID_MAP: Record<string, string> = {
-        '건강운동관리사': '410d8994-8574-448a-9a6e-1c383bb2a009',
+      // cert_id로 직접 category_id 매핑 (resolvedCertLabel 타이밍 이슈 방지)
+      const CERT_ID_CATEGORY_MAP: Record<string, string> = {
+        'exercise-prescriptionist': '410d8994-8574-448a-9a6e-1c383bb2a009',
       }
-      const categoryIdForSubj = CATEGORY_ID_MAP[loadedCertType ?? certTypeInput ?? '']
+      const currentCertId = Array.isArray(certsData.data) && certsData.data.length > 0
+        ? certsData.data[0].cert_id
+        : ''
+      const categoryIdForSubj = CERT_ID_CATEGORY_MAP[currentCertId] ?? undefined
+      // ── 기존 코드 (타이밍 이슈로 대체됨) ──
+      // const CATEGORY_ID_MAP: Record<string, string> = {
+      //   '건강운동관리사': '410d8994-8574-448a-9a6e-1c383bb2a009',
+      // }
+      // const resolvedCertLabel = loadedCertType ?? certTypeInput
+      //   ?? (Array.isArray(certsData.data) && certsData.data.length > 0
+      //     ? CERT_LABELS[certsData.data[0].cert_id] ?? ''
+      //     : '')
+      // const categoryIdForSubj = CATEGORY_ID_MAP[resolvedCertLabel] ?? undefined
       const subjQuery = supabase.from('subjects').select('id, name').in('name', selectedNames)
       const { data: dbSubjs } = categoryIdForSubj
         ? await subjQuery.eq('category_id', categoryIdForSubj)
         : await subjQuery
-      console.log('[subjects] categoryIdForSubj:', categoryIdForSubj, '| dbSubjs:', dbSubjs)
       const cards: SubjectCard[] = selectedNames.map((name) => {
         const meta = SUBJECT_META[name] ?? { icon: '📚', desc: '' }
         const db   = (dbSubjs ?? []).find((d: { id: string; name: string }) => d.name === name)
@@ -671,6 +810,7 @@ function DashboardContent() {
       setSubjectCards(cards)
 
       // 과목별 진도율 계산 (강의실 탭용)
+      let _todayCourseChaps: { id: string; title: string; order_index: number | null }[] = []
       try {
         const subjectIds = cards.filter((c) => c.subjectId).map((c) => c.subjectId!)
         if (subjectIds.length > 0) {
@@ -678,8 +818,18 @@ function DashboardContent() {
             .from('courses').select('id, subject_id').in('subject_id', subjectIds)
           const allCourseIds = (allCourses ?? []).map((c) => c.id)
           if (allCourseIds.length > 0) {
-            const { data: allChaps } = await supabase
-              .from('chapters').select('id, course_id').in('course_id', allCourseIds)
+            // courses 조회 결과 기반으로 chapters + todayChapter courses 병렬 조회
+            const firstSubjectId = cards.find((c) => c.subjectId)?.subjectId
+            const firstCourseIds = (allCourses ?? [])
+              .filter((c) => c.subject_id === firstSubjectId)
+              .map((c) => c.id)
+            const [{ data: allChaps }, { data: todayCourseChapsData }] = await Promise.all([
+              supabase.from('chapters').select('id, course_id').in('course_id', allCourseIds),
+              firstCourseIds.length > 0
+                ? supabase.from('chapters').select('id, title, order_index').in('course_id', firstCourseIds)
+                : Promise.resolve({ data: [] }),
+            ])
+            _todayCourseChaps = todayCourseChapsData ?? []
             const completedSet = new Set(
               stats.filter((s) => s.lesson_completed === true || (s.latest_score ?? s.avg_score) >= 80).map((s) => s.chapter_id)
             )
@@ -704,13 +854,10 @@ function DashboardContent() {
       const firstCard = cards.find((c) => c.subjectId)
       if (firstCard?.subjectId) {
         try {
-          const { data: courses } = await supabase
-            .from('courses').select('id').eq('subject_id', firstCard.subjectId)
-          const cIds = (courses ?? []).map((c) => c.id)
-          if (cIds.length > 0) {
-            const { data: chaps } = await supabase
-              .from('chapters').select('id, title, order_index').in('course_id', cIds)
-            const sortedChaps = (chaps ?? []).sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+          // todayCourseChaps — 이미 위에서 병렬 조회한 결과 재사용 (별도 쿼리 제거)
+          const chaps = _todayCourseChaps ?? []
+          if (chaps.length > 0) {
+            const sortedChaps = chaps.sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
             const completedIds = new Set(
               (stats ?? []).filter((s) => s.lesson_completed === true || (s.latest_score ?? s.avg_score) >= 80).map((s) => s.chapter_id)
             )
@@ -746,14 +893,14 @@ function DashboardContent() {
       }
     }
 
-    // Phone 등록 여부 확인 → 미등록 + 미dismissal 시 모달 노출
-    try {
-      const phoneRes  = await fetch('/api/v1/update-phone')
-      const phoneData = await phoneRes.json()
-      if (!phoneData.registered && !sessionStorage.getItem('phone_modal_dismissed')) {
-        setShowPhoneModal(true)
-      }
-    } catch { /* ignore */ }
+    // 휴대폰 번호 팝업 — 결제 연동 시점에 재활성화 예정
+    // try {
+    //   const phoneRes  = await fetch('/api/v1/update-phone')
+    //   const phoneData = await phoneRes.json()
+    //   if (!phoneData.registered && !sessionStorage.getItem('phone_modal_dismissed')) {
+    //     setShowPhoneModal(true)
+    //   }
+    // } catch { /* ignore */ }
 
     // 건강운동관리사 과목 동적 조회 (certification_subjects DB 기준)
     try {
@@ -764,12 +911,31 @@ function DashboardContent() {
       }
     } catch { /* ignore */ }
 
+    // 챕터 1 테스트 완료 후 코드 팝업 표시 (sessionStorage 체크)
+    if (session && sessionStorage.getItem('kinepia_show_code_popup') === 'true') {
+      sessionStorage.removeItem('kinepia_show_code_popup')
+      setShowCodePopup(true)
+    }
+
     setLoading(false)
   }
 
   const loadClassroom = async () => {
-    // user_certifications 최신 로드 (강의실 탭 진입 시 갱신)
     const uid = session?.user?.id ?? ''
+
+    // 이미 로드된 경우 — stats만 재fetch하고 나머지 건너뜀
+    if (classroomLoaded) {
+      if (uid) {
+        try {
+          const statsRes = await fetch(`/api/v1/report?userId=${encodeURIComponent(uid)}`, { cache: 'no-store' })
+          const statsData = await statsRes.json()
+          setAllStats(statsData.chapter_stats ?? [])
+        } catch { /* ignore */ }
+      }
+      return
+    }
+
+    // 1. user_certifications 최신 로드 (강의실 탭 최초 진입 시만)
     if (uid) {
       try {
         const ucRes  = await fetch(`/api/v1/user-certifications?userId=${uid}`)
@@ -944,15 +1110,24 @@ function DashboardContent() {
   }
 
   const handleOrderSave = async () => {
-    localStorage.setItem('kinepia_subject_order', JSON.stringify(subjectOrderByCert))
-    const updates = certOrder.map((certId, idx) =>
-      supabase
-        .from('user_certifications')
-        .update({ order_index: idx })
-        .eq('cert_id', certId)
-        .eq('user_id', session?.user?.id ?? '')
-    )
-    await Promise.all(updates)
+    try {
+      localStorage.setItem('kinepia_subject_order', JSON.stringify(subjectOrderByCert))
+      const updates = certOrder.map((certId, idx) =>
+        supabase
+          .from('user_certifications')
+          .update({ order_index: idx })
+          .eq('cert_id', certId)
+          .eq('user_id', session?.user?.id ?? '')
+      )
+      await Promise.all(updates)
+      setToastMessage('학습 순서가 저장되었습니다.')
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 2500)
+    } catch {
+      setToastMessage('저장에 실패했습니다. 다시 시도해주세요.')
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 2500)
+    }
   }
 
   const handleSurveySubmit = async () => {
@@ -966,12 +1141,16 @@ function DashboardContent() {
           userId:        session?.user?.id,
           starRating:    surveyStars,
           reviewText:    surveyText,
-          surveyAnswers: { q1: surveyQ1, q2: surveyQ2 },
+          surveyAnswers: { q1: surveyQ1, q2: surveyQ2, feedback: surveyFeedback },
           isPublic:      surveyConsent,
         }),
       })
       surveyCompletedRef.current = true
-      setShowSurveyPopup(false)
+      setSurveyDone(true)
+      setTimeout(() => {
+        setShowSurveyPopup(false)
+        setSurveyDone(false)
+      }, 1800)
     } finally {
       setSurveyLoading(false)
     }
@@ -1492,7 +1671,7 @@ function DashboardContent() {
               {/* 강의 추가하기 카드 (최대 3개 미만일 때만) */}
               {userCerts.length < 3 && (
                 <button
-                  onClick={() => router.push('/select-cert')}
+                  onClick={() => { if (!session) { setShowLoginPrompt(true); return }; router.push('/select-cert') }}
                   className="flex-shrink-0 rounded-2xl border-2 border-dashed border-[#E5E5E5] bg-white flex flex-col items-center justify-center gap-2 active:bg-[#F5F5F3]"
                   style={{ width: '44%', scrollSnapAlign: 'start', minHeight: '130px', marginRight: '1rem' }}
                 >
@@ -1541,7 +1720,7 @@ function DashboardContent() {
               ) : null}
               {/* 자격증 추가하기 카드 */}
               <button
-                onClick={() => router.push('/select-cert')}
+                onClick={() => { if (!session) { setShowLoginPrompt(true); return }; router.push('/select-cert') }}
                 className="flex-shrink-0 rounded-2xl border-2 border-dashed border-[#E5E5E5] bg-white flex flex-col items-center justify-center gap-2 active:bg-[#F5F5F3]"
                 style={{
                   width: displayCert ? '44%' : '75%',
@@ -1562,158 +1741,146 @@ function DashboardContent() {
       </div>
 
       {/* ⑤ 내 학습 활동 내역 */}
-      {allStats.length > 0 ? (
-        <div className="px-4 py-2 space-y-3 pb-4">
-          <p className="text-[12px] font-bold text-[#ADADAD] uppercase tracking-wider">내 학습 활동 내역</p>
+      <div className="px-4 py-2 space-y-3 pb-4">
+        <p className="text-[12px] font-bold text-[#ADADAD] uppercase tracking-wider">내 학습 활동 내역</p>
 
-          {/* 1. 학습 캘린더 (잔디밭) */}
-          <div
-            className="bg-white rounded-2xl border border-[#E5E5E5] p-4"
-            onTouchStart={(e) => { calTouchStartX.current = e.touches[0].clientX }}
-            onTouchEnd={(e) => {
-              if (calTouchStartX.current === null) return
-              const dx = e.changedTouches[0].clientX - calTouchStartX.current
-              calTouchStartX.current = null
-              if (dx > 50)  moveCalMonth(-1)  // 오른쪽 스와이프 → 이전 달
-              else if (dx < -50) moveCalMonth(1)  // 왼쪽 스와이프 → 다음 달
-            }}
-          >
-            {/* 월 이동 헤더 */}
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => moveCalMonth(-1)}
-                  className="w-6 h-6 flex items-center justify-center text-[#ADADAD] hover:text-[#1A1A1A] text-[14px] font-bold"
-                >◀</button>
-                <p className="text-[15px] font-black text-[#1A1A1A]">
-                  {calYear}년 {calMonth}월
-                </p>
-                <button
-                  onClick={() => moveCalMonth(1)}
-                  className="w-6 h-6 flex items-center justify-center text-[#ADADAD] hover:text-[#1A1A1A] text-[14px] font-bold"
-                >▶</button>
-              </div>
-              <p className="text-[11px] text-[#ADADAD]">
-                {streak > 0 ? `🔥 ${streak}일 연속` : '오늘 학습해보세요'}
+        {/* 1. 학습 캘린더 (잔디밭) */}
+        <div
+          className="bg-white rounded-2xl border border-[#E5E5E5] p-4"
+          onTouchStart={(e) => { calTouchStartX.current = e.touches[0].clientX }}
+          onTouchEnd={(e) => {
+            if (calTouchStartX.current === null) return
+            const dx = e.changedTouches[0].clientX - calTouchStartX.current
+            calTouchStartX.current = null
+            if (dx > 50)  moveCalMonth(-1)  // 오른쪽 스와이프 → 이전 달
+            else if (dx < -50) moveCalMonth(1)  // 왼쪽 스와이프 → 다음 달
+          }}
+        >
+          {/* 월 이동 헤더 */}
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => moveCalMonth(-1)}
+                className="w-6 h-6 flex items-center justify-center text-[#ADADAD] hover:text-[#1A1A1A] text-[14px] font-bold"
+              >◀</button>
+              <p className="text-[15px] font-black text-[#1A1A1A]">
+                {calYear}년 {calMonth}월
               </p>
+              <button
+                onClick={() => moveCalMonth(1)}
+                className="w-6 h-6 flex items-center justify-center text-[#ADADAD] hover:text-[#1A1A1A] text-[14px] font-bold"
+              >▶</button>
             </div>
-            <p className="text-[11px] text-[#ADADAD] mb-3">🌱 학습 캘린더</p>
-            {/* 요일 헤더 */}
-            <div className="grid grid-cols-7 gap-[3px] mb-1">
-              {['월', '화', '수', '목', '금', '토', '일'].map((d) => (
-                <div key={d} className="text-center text-[9px] font-bold text-[#ADADAD]">{d}</div>
-              ))}
+            <p className="text-[11px] text-[#ADADAD]">
+              {streak > 0 ? `🔥 ${streak}일 연속` : '오늘 학습해보세요'}
+            </p>
+          </div>
+          <p className="text-[11px] text-[#ADADAD] mb-3">🌱 학습 캘린더</p>
+          {/* 요일 헤더 */}
+          <div className="grid grid-cols-7 gap-[3px] mb-1">
+            {['월', '화', '수', '목', '금', '토', '일'].map((d) => (
+              <div key={d} className="text-center text-[9px] font-bold text-[#ADADAD]">{d}</div>
+            ))}
+          </div>
+          {/* 잔디밭 그리드 */}
+          <div className="grid grid-cols-7 gap-[3px]">
+            {calCells.map((cell, i) => (
+              <div
+                key={i}
+                className={`aspect-square rounded-[3px] ${cell.empty ? '' : cell.isToday ? 'ring-[1.5px] ring-[#1A1A1A] ring-offset-0' : cell.hasHundred ? 'ring-[1.5px] ring-[#FFD54F] ring-offset-0' : ''}`}
+                style={{ backgroundColor: cell.empty ? 'transparent' : getCellColor(cell) }}
+              />
+            ))}
+          </div>
+          {/* 범례 */}
+          <div className="flex items-center gap-3 mt-2.5 justify-end">
+            {([
+              { color: '#E5E5E5', label: '없음' },
+              { color: '#C4E49A', label: '~59점' },
+              { color: '#7DBA5A', label: '60~79' },
+              { color: '#00A651', label: '80점↑' },
+            ] as const).map(({ color, label }) => (
+              <div key={label} className="flex items-center gap-1">
+                <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: color }} />
+                <span className="text-[9px] text-[#ADADAD]">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 2. 주간 요약 */}
+        <div className="grid grid-cols-2 gap-2.5">
+          {/* 이번 주 */}
+          <div className="bg-white rounded-2xl border border-[#E5E5E5] p-3.5">
+            <p className="text-[10px] font-bold text-[#ADADAD] mb-2">이번 주</p>
+            <p className="text-[24px] font-black text-[#1A1A1A] leading-none">{thisWeekCount}
+              <span className="text-[12px] font-semibold text-[#ADADAD] ml-1">챕터</span>
+            </p>
+            {thisWeekAvg > 0 && (
+              <p className="text-[12px] font-bold text-[#00A651] mt-1.5">평균 {thisWeekAvg}점</p>
+            )}
+            {allStats.length > 0 && lastWeekCount > 0 && (
+              <p className={`text-[10px] mt-1 font-semibold ${
+                thisWeekCount >= lastWeekCount ? 'text-[#00A651]' : 'text-[#E24B4A]'
+              }`}>
+                {thisWeekCount >= lastWeekCount ? '↑' : '↓'} {Math.abs(thisWeekCount - lastWeekCount)}챕터
+              </p>
+            )}
+          </div>
+          {/* 지난 주 */}
+          <div className="bg-[#F5F5F3] rounded-2xl border border-[#E5E5E5] p-3.5">
+            <p className="text-[10px] font-bold text-[#ADADAD] mb-2">지난 주</p>
+            <p className="text-[24px] font-black text-[#1A1A1A] leading-none">{lastWeekCount}
+              <span className="text-[12px] font-semibold text-[#ADADAD] ml-1">챕터</span>
+            </p>
+            {lastWeekAvg > 0 && (
+              <p className="text-[12px] font-semibold text-[#ADADAD] mt-1.5">평균 {lastWeekAvg}점</p>
+            )}
+          </div>
+        </div>
+
+        {/* 3. 취약 과목 알림 */}
+        {allStats.length === 0 ? (
+          <div className="text-[12px] text-[#ADADAD] text-center py-4">
+            아직 학습 기록이 없어요.<br/>
+            학습을 시작하면 활동 내역이 표시됩니다.
+          </div>
+        ) : weakSubjects.length === 0 ? (
+          <div className="text-[12px] text-[#ADADAD] text-center py-4">
+            아직 테스트 데이터가 없어요.<br/>
+            챕터 테스트를 완료하면 취약 과목이 표시됩니다.
+          </div>
+        ) : (
+          <div className="bg-[#FFF8F0] rounded-2xl border border-[#F5A623]/30 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-[15px]">⚠️</span>
+              <p className="text-[13px] font-bold text-[#1A1A1A]">집중 학습이 필요한 과목</p>
             </div>
-            {/* 잔디밭 그리드 */}
-            <div className="grid grid-cols-7 gap-[3px]">
-              {calCells.map((cell, i) => (
-                <div
-                  key={i}
-                  className={`aspect-square rounded-[3px] ${cell.empty ? '' : cell.isToday ? 'ring-[1.5px] ring-[#1A1A1A] ring-offset-0' : cell.hasHundred ? 'ring-[1.5px] ring-[#FFD54F] ring-offset-0' : ''}`}
-                  style={{ backgroundColor: cell.empty ? 'transparent' : getCellColor(cell) }}
-                />
-              ))}
-            </div>
-            {/* 범례 */}
-            <div className="flex items-center gap-3 mt-2.5 justify-end">
-              {([
-                { color: '#E5E5E5', label: '없음' },
-                { color: '#C4E49A', label: '~59점' },
-                { color: '#7DBA5A', label: '60~79' },
-                { color: '#00A651', label: '80점↑' },
-              ] as const).map(({ color, label }) => (
-                <div key={label} className="flex items-center gap-1">
-                  <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: color }} />
-                  <span className="text-[9px] text-[#ADADAD]">{label}</span>
+            <div className="space-y-2.5">
+              {weakSubjects.map(({ name, avg }) => (
+                <div key={name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-[14px] flex-shrink-0">{SUBJECT_META[name]?.icon ?? '📚'}</span>
+                    <span className="text-[13px] font-semibold text-[#1A1A1A] truncate">{name}</span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                    <div className="w-16 h-1.5 bg-[#F0E8DC] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#F5A623] rounded-full"
+                        style={{ width: `${avg}%` }}
+                      />
+                    </div>
+                    <span className="text-[12px] font-black text-[#F5A623] w-8 text-right">{avg}점</span>
+                  </div>
                 </div>
               ))}
             </div>
+            <p className="text-[10px] text-[#ADADAD] mt-3 leading-relaxed">
+              정답률 60% 미만 — 해당 과목 챕터를 다시 학습해보세요
+            </p>
           </div>
-
-          {/* 2. 주간 요약 */}
-          {(thisWeekCount > 0 || lastWeekCount > 0) && (
-            <div className="grid grid-cols-2 gap-2.5">
-              {/* 이번 주 */}
-              <div className="bg-white rounded-2xl border border-[#E5E5E5] p-3.5">
-                <p className="text-[10px] font-bold text-[#ADADAD] mb-2">이번 주</p>
-                <p className="text-[24px] font-black text-[#1A1A1A] leading-none">{thisWeekCount}
-                  <span className="text-[12px] font-semibold text-[#ADADAD] ml-1">챕터</span>
-                </p>
-                {thisWeekAvg > 0 && (
-                  <p className="text-[12px] font-bold text-[#00A651] mt-1.5">평균 {thisWeekAvg}점</p>
-                )}
-                {lastWeekCount > 0 && (
-                  <p className={`text-[10px] mt-1 font-semibold ${
-                    thisWeekCount >= lastWeekCount ? 'text-[#00A651]' : 'text-[#E24B4A]'
-                  }`}>
-                    {thisWeekCount >= lastWeekCount ? '↑' : '↓'} {Math.abs(thisWeekCount - lastWeekCount)}챕터
-                  </p>
-                )}
-              </div>
-              {/* 지난 주 */}
-              <div className="bg-[#F5F5F3] rounded-2xl border border-[#E5E5E5] p-3.5">
-                <p className="text-[10px] font-bold text-[#ADADAD] mb-2">지난 주</p>
-                <p className="text-[24px] font-black text-[#1A1A1A] leading-none">{lastWeekCount}
-                  <span className="text-[12px] font-semibold text-[#ADADAD] ml-1">챕터</span>
-                </p>
-                {lastWeekAvg > 0 && (
-                  <p className="text-[12px] font-semibold text-[#ADADAD] mt-1.5">평균 {lastWeekAvg}점</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* 3. 취약 과목 알림 */}
-          {weakSubjects.length === 0 && allStats.length > 0 && (
-            <div className="text-[12px] text-[#ADADAD] text-center py-4">
-              아직 테스트 데이터가 없어요.<br/>
-              챕터 테스트를 완료하면 취약 과목이 표시됩니다.
-            </div>
-          )}
-          {weakSubjects.length > 0 && (
-            <div className="bg-[#FFF8F0] rounded-2xl border border-[#F5A623]/30 p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-[15px]">⚠️</span>
-                <p className="text-[13px] font-bold text-[#1A1A1A]">집중 학습이 필요한 과목</p>
-              </div>
-              <div className="space-y-2.5">
-                {weakSubjects.map(({ name, avg }) => (
-                  <div key={name} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-[14px] flex-shrink-0">{SUBJECT_META[name]?.icon ?? '📚'}</span>
-                      <span className="text-[13px] font-semibold text-[#1A1A1A] truncate">{name}</span>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                      <div className="w-16 h-1.5 bg-[#F0E8DC] rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-[#F5A623] rounded-full"
-                          style={{ width: `${avg}%` }}
-                        />
-                      </div>
-                      <span className="text-[12px] font-black text-[#F5A623] w-8 text-right">{avg}점</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <p className="text-[10px] text-[#ADADAD] mt-3 leading-relaxed">
-                정답률 60% 미만 — 해당 과목 챕터를 다시 학습해보세요
-              </p>
-            </div>
-          )}
-        </div>
-      ) : subjectCards.length === 0 ? (
-        <div className="mx-4 my-2 bg-white rounded-2xl border border-[#E5E5E5] p-8 text-center">
-          <div className="text-[40px] mb-3">📚</div>
-          <p className="text-[15px] font-bold text-[#1A1A1A] mb-1">아직 학습 이력이 없어요</p>
-          <p className="text-[12px] text-[#ADADAD] mb-5">강의실에서 과목을 선택해 학습을 시작해보세요!</p>
-          <button
-            onClick={() => router.push('/trainer/dashboard?tab=classroom')}
-            className="px-5 py-2.5 bg-[#00A651] text-white rounded-xl text-[13px] font-bold"
-          >
-            강의실 바로가기
-          </button>
-        </div>
-      ) : null}
+        )}
+      </div>
     </div>
     )
   }
@@ -1722,7 +1889,7 @@ function DashboardContent() {
   // ② CLASSROOM TAB
   // ══════════════════════════════════════════════════════════════════
   const renderClassroom = () => {
-    const fallbackRequired = certKey === 'health-exercise-manager'
+    const fallbackRequired = certKey === 'exercise-prescriptionist'
       ? healthCertSubjects.map((s) => s.name)
       : (REQUIRED_SUBJECTS[certKey] ?? [])
     const effectiveRequired = dbRequiredNames.length > 0 ? dbRequiredNames : fallbackRequired
@@ -1785,14 +1952,7 @@ function DashboardContent() {
 
     return (
       <div className="overflow-y-auto p-4 pb-[130px] space-y-4" style={{ height: 'calc(100dvh - 56px)' }}>
-        <style>{`
-          @keyframes marquee {
-            0%   { transform: translateX(0%); }
-            30%  { transform: translateX(0%); }
-            70%  { transform: translateX(-50%); }
-            100% { transform: translateX(-50%); }
-          }
-        `}</style>
+
         <div className="pt-8">
           <h2 className="text-[20px] font-black text-[#1A1A1A]">강의실</h2>
         </div>
@@ -1817,11 +1977,10 @@ function DashboardContent() {
                         {CERT_ICONS[uc.cert_label] ?? '🏅'}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="overflow-hidden">
-                          <p className="text-[15px] font-black text-[#1A1A1A] truncate max-w-[160px]">
-                            {uc.cert_label}
-                          </p>
-                        </div>
+                        <MarqueeText
+                          text={uc.cert_label}
+                          className="text-[15px] font-black text-[#1A1A1A] whitespace-nowrap"
+                        />
                         <p className="text-[11px] text-[#ADADAD]">
                           {uc.cert_id === 'sports-instructor-2-practical' ? '보디빌딩' : uc.subjects.length > 0 ? `${uc.subjects.length}개 과목 수강 중` : '과목을 선택해주세요'}
                         </p>
@@ -1867,11 +2026,30 @@ function DashboardContent() {
                             className={`w-full px-4 py-3.5 flex items-center gap-3 text-left active:bg-[#F5F5F3] ${idx < Object.keys(BODYBUILD_COURSES).length - 1 ? 'border-b border-[#F0F0EE]' : ''}`}
                           >
                             <div className="w-9 h-9 rounded-xl bg-[#F5F5F3] flex items-center justify-center text-[18px] flex-shrink-0">
-                              🏋️
+                              {SUBJECT_META[subjectName]?.icon ?? '📚'}
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-[13px] font-bold text-[#1A1A1A] truncate">{subjectName}</p>
-                              <p className="text-[10px] text-[#ADADAD] mt-0.5">챕터 학습</p>
+                              {(() => {
+                                const ss = subjectStarStats[subjectName]
+                                if (ss && (ss.fire > 0 || ss.star > 0)) {
+                                  return (
+                                    <div className="flex gap-1 mt-0.5 flex-wrap">
+                                      {ss.fire > 0 && (
+                                        <span className="bg-[#FAECE7] text-[#993C1D] text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+                                          🔥 필수 {ss.fire}
+                                        </span>
+                                      )}
+                                      {ss.star > 0 && (
+                                        <span className="bg-[#FAEEDA] text-[#854F0B] text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+                                          ⭐ 단골 {ss.star}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )
+                                }
+                                return <p className="text-[10px] text-[#ADADAD] mt-0.5">챕터 학습</p>
+                              })()}
                             </div>
                             <ChevronRight size={14} className="text-[#ADADAD] flex-shrink-0" />
                           </button>
@@ -1900,7 +2078,7 @@ function DashboardContent() {
             {/* 강의 추가하기 버튼 (최대 3개 미만일 때만) */}
             {userCerts.length < 3 && (
               <button
-                onClick={() => router.push('/select-cert')}
+                onClick={() => { if (!session) { setShowLoginPrompt(true); return }; router.push('/select-cert') }}
                 className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-[#E5E5E5] text-[13px] text-[#ADADAD]"
               >
                 <Plus size={16} /> 강의 추가하기
@@ -1914,7 +2092,7 @@ function DashboardContent() {
             <p className="text-[16px] font-black text-[#1A1A1A] mb-2">학습할 자격증을 선택해주세요</p>
             <p className="text-[13px] text-[#ADADAD] mb-6">자격증과 과목을 선택하면<br />맞춤 강의가 제공됩니다</p>
             <button
-              onClick={() => router.push('/select-cert')}
+              onClick={() => { if (!session) { setShowLoginPrompt(true); return }; router.push('/select-cert') }}
               className="flex items-center gap-2 px-6 py-3.5 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold"
             >
               <Plus size={18} /> 강의 추가하기
@@ -1981,7 +2159,7 @@ function DashboardContent() {
             </div>
 
             <button
-              onClick={() => router.push('/select-cert')}
+              onClick={() => { if (!session) { setShowLoginPrompt(true); return }; router.push('/select-cert') }}
               className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-[#E5E5E5] text-[13px] text-[#ADADAD]"
             >
               <Plus size={16} /> 강의 추가하기
@@ -2019,6 +2197,9 @@ function DashboardContent() {
     { round: 4, date: '5월 23일 (토)', dateValue: '2026-05-23' },
     { round: 5, date: '5월 30일 (토)', dateValue: '2026-05-30' },
     { round: 6, date: '6월 6일 (토)',  dateValue: '2026-06-06' },
+    { round: 7, date: '6월 10일 (수)', dateValue: '2026-06-10' },
+    { round: 8, date: '6월 11일 (목)', dateValue: '2026-06-11' },
+    { round: 9, date: '6월 12일 (금)', dateValue: '2026-06-12' },
   ]
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -2143,13 +2324,14 @@ function DashboardContent() {
             w === -1 ? `${dateRange} (지난 주)` :
                        dateRange
 
+          const weekEndStr = weekEnd.toISOString().split('T')[0]
           weeks.push({
             weekNum,
             label,
             range: dateRange,
             dates,
             isCurrent: w === 0,
-            isPast: w < 0,
+            isPast: weekEndStr < todayStr,
           })
         }
         return weeks
@@ -2190,7 +2372,7 @@ function DashboardContent() {
           ) : (
             <div className="space-y-4">
               {/* 모의고사 체험하기 카드 */}
-              <div className="mx-4 mb-4 bg-white border border-[#00A651] rounded-2xl flex items-center justify-between px-4 py-3">
+              <div className="mb-4 bg-white border border-[#00A651] rounded-2xl flex items-center justify-between px-4 py-3">
                 <div>
                   <p className="text-[13px] font-bold text-[#1A1A1A]">모의고사 체험하기</p>
                   <p className="text-[11px] text-[#ADADAD]">랜덤 2문항 · 등록 없이 무료</p>
@@ -2222,7 +2404,8 @@ function DashboardContent() {
 
                       let slotButton: JSX.Element
 
-                      if (reg?.is_completed) {
+                      if (week.isPast && reg?.is_completed) {
+                        // 1. 지난 주 + 완료
                         slotButton = (
                           <button
                             disabled
@@ -2231,15 +2414,33 @@ function DashboardContent() {
                             완료 ✓
                           </button>
                         )
-                      } else if (reg && isToday) {
+                      } else if (week.isPast) {
+                        // 2. 지난 주 (reg 유무 무관)
                         slotButton = (
+                          <button
+                            disabled
+                            className="px-4 py-2 rounded-xl text-[12px] font-bold bg-[#F5F5F3] text-[#ADADAD]"
+                          >
+                            기간 종료
+                          </button>
+                        )
+                      } else if (reg && isToday) {
+                        // 3. 오늘 시험 당일
+                        const [h, m] = reg.start_time.split(':').map(Number)
+                        const startMin = h * 60 + m
+                        const nowMin = new Date().getHours() * 60 + new Date().getMinutes()
+                        const isExamOver = nowMin >= startMin + 10
+                        slotButton = isExamOver ? (
+                          <button
+                            disabled
+                            className="px-4 py-2 rounded-xl text-[12px] font-bold text-[#ADADAD] bg-[#F5F5F3]"
+                          >
+                            시험 종료
+                          </button>
+                        ) : (
                           <button
                             className="px-4 py-2 rounded-xl text-[12px] font-bold bg-[#00A651] text-white active:opacity-80"
                             onClick={() => {
-                              const [h, m] = reg.start_time.split(':').map(Number)
-                              const startMin = h * 60 + m
-                              const now = new Date()
-                              const nowMin = now.getHours() * 60 + now.getMinutes()
                               if (isAdmin || (nowMin >= startMin && nowMin < startMin + 10)) {
                                 router.push('/oral-exam/b28e78c8-8443-4013-bfef-dbe655c72994')
                               } else {
@@ -2251,6 +2452,7 @@ function DashboardContent() {
                           </button>
                         )
                       } else if (reg && !isToday) {
+                        // 4. 신청 완료 (오늘 아님)
                         slotButton = (
                           <button
                             className="px-4 py-2 rounded-xl text-[12px] font-bold border-2 border-[#00A651] bg-[#00A651]/10 text-[#00A651]"
@@ -2259,16 +2461,8 @@ function DashboardContent() {
                             신청 완료
                           </button>
                         )
-                      } else if (!reg && week.isPast) {
-                        slotButton = (
-                          <button
-                            disabled
-                            className="px-4 py-2 rounded-xl text-[12px] font-bold bg-[#F5F5F3] text-[#ADADAD]"
-                          >
-                            기간 종료
-                          </button>
-                        )
                       } else {
+                        // 5. 미신청
                         slotButton = (
                           <button
                             className="px-4 py-2 rounded-xl text-[12px] font-bold border-2 border-[#F5A623] text-[#F5A623] bg-transparent active:opacity-80"
@@ -2417,7 +2611,13 @@ function DashboardContent() {
             <Calendar size={11} className="inline mr-1" />전체 일정
           </p>
           <div className="space-y-2">
-            {EXAM_DATES.map((e) => {
+            {[...EXAM_DATES].sort((a, b) => {
+  const aPast = new Date(a.dateValue) < today
+  const bPast = new Date(b.dateValue) < today
+  if (aPast && !bPast) return 1
+  if (!aPast && bPast) return -1
+  return a.round - b.round
+}).map((e) => {
               const isNext  = nextExam?.round === e.round
               const isPast  = new Date(e.dateValue) < today
               const isToday = new Date(e.dateValue).getTime() === today.getTime()
@@ -2496,7 +2696,7 @@ function DashboardContent() {
 
     // 자격증/과목 섹션용 (DB 우선, 하드코딩 폴백)
     const displayCertName   = certLabel || profileCert || ''
-    const fallbackRequiredP = certKey === 'health-exercise-manager'
+    const fallbackRequiredP = certKey === 'exercise-prescriptionist'
       ? healthCertSubjects.map((s) => s.name)
       : (REQUIRED_SUBJECTS[certKey] ?? [])
     const effectiveReqP     = dbRequiredNames.length > 0 ? dbRequiredNames : fallbackRequiredP
@@ -2508,7 +2708,7 @@ function DashboardContent() {
     const selectedCertKeyGoal = Object.entries(CERT_LABELS).find(([, v]) => v === certTypeInput)?.[0] ?? ''
     const goalRequiredFromDB  = dbGoalSubjects.filter((s) => s.is_required).map((s) => s.name)
     const goalOptionalFromDB  = dbGoalSubjects.filter((s) => !s.is_required).map((s) => s.name)
-    const fallbackGoalSubs    = selectedCertKeyGoal === 'health-exercise-manager'
+    const fallbackGoalSubs    = selectedCertKeyGoal === 'exercise-prescriptionist'
       ? healthCertSubjects.map((s) => s.name)
       : (selectedCertKeyGoal ? (REQUIRED_SUBJECTS[selectedCertKeyGoal] ?? []) : [])
     const goalRequiredSubs    = goalRequiredFromDB.length > 0 ? goalRequiredFromDB : fallbackGoalSubs
@@ -2606,7 +2806,7 @@ function DashboardContent() {
             <p className="text-[13px] font-bold text-[#1A1A1A] mb-1">무료 이용권 코드 입력</p>
             <p className="text-[11px] text-[#ADADAD] mb-3">코드를 입력하면 모든 과목을 무료로 이용할 수 있어요.</p>
             <button
-              onClick={() => router.push('/chapters/access')}
+              onClick={() => setShowCodePopup(true)}
               className="text-[12px] font-bold text-[#00A651] border border-[#00A651]/30 bg-[#00A651]/5 px-3 py-2 rounded-xl"
             >
               코드 입력하러 가기
@@ -2665,9 +2865,9 @@ function DashboardContent() {
                           </div>
                           <div className="flex gap-1">
                             <button onClick={() => moveCert(idx, 'up')} disabled={idx === 0}
-                              className="text-[#ADADAD] disabled:opacity-30 px-1 text-[14px]">↑</button>
+                              className="w-[26px] h-[26px] flex items-center justify-center border border-[#E0E0E0] rounded-[6px] text-[#888] disabled:opacity-30 text-[12px]">↑</button>
                             <button onClick={() => moveCert(idx, 'down')} disabled={idx === certOrder.length - 1}
-                              className="text-[#ADADAD] disabled:opacity-30 px-1 text-[14px]">↓</button>
+                              className="w-[26px] h-[26px] flex items-center justify-center border border-[#E0E0E0] rounded-[6px] text-[#888] disabled:opacity-30 text-[12px]">↓</button>
                           </div>
                         </div>
                       )
@@ -2691,9 +2891,9 @@ function DashboardContent() {
                               <span className="text-[12px] text-[#1A1A1A]">{subj}</span>
                               <div className="flex gap-1">
                                 <button onClick={() => moveSubject(certId, idx, 'up')} disabled={idx === 0}
-                                  className="text-[#ADADAD] disabled:opacity-30 px-1 text-[13px]">↑</button>
+                                  className="w-[26px] h-[26px] flex items-center justify-center border border-[#E0E0E0] rounded-[6px] text-[#888] disabled:opacity-30 text-[12px]">↑</button>
                                 <button onClick={() => moveSubject(certId, idx, 'down')} disabled={idx === subjs.length - 1}
-                                  className="text-[#ADADAD] disabled:opacity-30 px-1 text-[13px]">↓</button>
+                                  className="w-[26px] h-[26px] flex items-center justify-center border border-[#E0E0E0] rounded-[6px] text-[#888] disabled:opacity-30 text-[12px]">↓</button>
                               </div>
                             </div>
                           ))}
@@ -2763,7 +2963,7 @@ function DashboardContent() {
                   <p className="text-[10px] text-[#ADADAD] mb-1.5">목표 자격증</p>
                   <div className="flex flex-wrap gap-1.5">
                     {[
-                      { key: 'health-exercise-manager', label: '건강운동관리사' },
+                      { key: 'exercise-prescriptionist', label: '건강운동관리사' },
                       { key: 'sports-instructor-2',     label: '2급 생활스포츠지도사' },
                     ].map(({ key, label }) => (
                       <button
@@ -3107,6 +3307,20 @@ function DashboardContent() {
           <div className="bg-white rounded-t-3xl w-full max-w-md mx-auto p-6 pb-10">
             <div className="w-10 h-1 bg-[#E5E5E5] rounded-full mx-auto mb-5" />
 
+            {surveyDone ? (
+              <div className="flex flex-col items-center py-6">
+                <div className="w-[52px] h-[52px] rounded-full bg-[#e8f7ef] flex items-center justify-center mb-4">
+                  <span className="text-[#1a9e5c] text-[24px]">✓</span>
+                </div>
+                <p className="text-[16px] font-medium text-[#1A1A1A] mb-2">
+                  설문에 응해주셔서 감사해요
+                </p>
+                <p className="text-[13px] text-[#888] text-center leading-relaxed">
+                  소중한 의견이 Kinepia를<br/>더 좋게 만드는 데 도움이 됩니다.
+                </p>
+              </div>
+            ) : (
+            <>
             {/* Q1 */}
             {surveyStep === 0 && (
               <div>
@@ -3167,11 +3381,35 @@ function DashboardContent() {
               </div>
             )}
 
-            {/* Q3 별점 */}
+            {/* Q3 (step 2) 개선사항 자유 서술 */}
             {surveyStep === 2 && (
               <div>
+                <p className="text-[16px] font-bold mb-1">Kinepia에 필요한 기능이나 개선사항을 자유롭게 작성해주세요</p>
+                <p className="text-[12px] text-[#ADADAD] mb-3">3 / 5</p>
+                <textarea
+                  value={surveyFeedback}
+                  onChange={e => setSurveyFeedback(e.target.value)}
+                  placeholder="자유롭게 작성해주세요"
+                  rows={4}
+                  className="w-full border border-[#E5E5E5] rounded-2xl px-4 py-3 text-[13px] outline-none resize-none mb-3"
+                />
+                <button
+                  onClick={() => setSurveyStep(3)}
+                  className="w-full py-3 rounded-2xl bg-[#1A1A1A] text-white text-[14px] font-bold mb-2">
+                  다음
+                </button>
+                <button onClick={() => setSurveyStep(1)}
+                  className="w-full py-2 text-[12px] text-[#ADADAD]">
+                  이전
+                </button>
+              </div>
+            )}
+
+            {/* Q4 (step 3) 별점 */}
+            {surveyStep === 3 && (
+              <div>
                 <p className="text-[16px] font-bold mb-1">별점으로 평가해주세요</p>
-                <p className="text-[12px] text-[#ADADAD] mb-4">3 / 4</p>
+                <p className="text-[12px] text-[#ADADAD] mb-4">4 / 5</p>
                 <div className="flex justify-center gap-3 mb-6">
                   {[1,2,3,4,5].map(n => (
                     <button key={n}
@@ -3182,23 +3420,23 @@ function DashboardContent() {
                   ))}
                 </div>
                 <button
-                  onClick={() => surveyStars > 0 && setSurveyStep(3)}
+                  onClick={() => surveyStars > 0 && setSurveyStep(4)}
                   disabled={!surveyStars}
                   className="w-full py-3 rounded-2xl bg-[#1A1A1A] text-white text-[14px] font-bold disabled:opacity-40 mb-2">
                   다음
                 </button>
-                <button onClick={() => setSurveyStep(1)}
+                <button onClick={() => setSurveyStep(2)}
                   className="w-full py-2 text-[12px] text-[#ADADAD]">
                   이전
                 </button>
               </div>
             )}
 
-            {/* Q4 자유 서술 + 동의 */}
-            {surveyStep === 3 && (
+            {/* Q5 (step 4) 한 문장 표현 + 동의 */}
+            {surveyStep === 4 && (
               <div>
                 <p className="text-[16px] font-bold mb-1">Kinepia를 한 문장으로 표현해주세요</p>
-                <p className="text-[12px] text-[#ADADAD] mb-3">4 / 4</p>
+                <p className="text-[12px] text-[#ADADAD] mb-3">5 / 5</p>
                 <textarea
                   value={surveyText}
                   onChange={e => setSurveyText(e.target.value)}
@@ -3221,11 +3459,13 @@ function DashboardContent() {
                   className="w-full py-3 rounded-2xl bg-[#00A651] text-white text-[14px] font-bold disabled:opacity-40 mb-2">
                   {surveyLoading ? '제출 중...' : '완료'}
                 </button>
-                <button onClick={() => setSurveyStep(2)}
+                <button onClick={() => setSurveyStep(3)}
                   className="w-full py-2 text-[12px] text-[#ADADAD]">
                   이전
                 </button>
               </div>
+            )}
+            </>
             )}
           </div>
         </div>
@@ -3631,14 +3871,27 @@ function DashboardContent() {
               <p className="text-[13px] text-[#6B6B6B] leading-relaxed">무료로 시작하고 학습 기록을 저장하세요</p>
             </div>
             <button
-              onClick={() => router.push('/landing')}
-              className="w-full py-4 bg-[#1A1A1A] text-white rounded-2xl text-[15px] font-bold"
+              onClick={() => signIn('google', { callbackUrl: '/trainer/dashboard' })}
+              className="w-full flex items-center justify-center gap-2 py-3 mb-3 border border-[#E5E5E5] rounded-2xl text-[14px] font-medium"
             >
-              로그인 / 회원가입
+              <span>🔍</span> 구글로 시작하기
+            </button>
+            <button
+              onClick={() => signIn('kakao', { callbackUrl: '/trainer/dashboard' })}
+              className="w-full flex items-center justify-center gap-2 py-3 mb-3 bg-[#FEE500] rounded-2xl text-[14px] font-medium text-[#1A1A1A]"
+            >
+              <span>💬</span> 카카오로 시작하기
+            </button>
+            {/* 네이버 로그인 */}
+            <button
+              onClick={() => signIn('naver', { callbackUrl: '/trainer/dashboard' })}
+              className="w-full flex items-center justify-center gap-2 py-3 mb-4 bg-[#03C75A] rounded-2xl text-[14px] font-medium text-white"
+            >
+              <span>N</span> 네이버로 시작하기
             </button>
             <button
               onClick={() => setShowLoginPrompt(false)}
-              className="w-full py-2.5 mt-2 text-[13px] text-[#ADADAD] text-center"
+              className="w-full py-2.5 text-[13px] text-[#ADADAD] text-center"
             >
               나중에 하기
             </button>
@@ -3687,7 +3940,7 @@ function DashboardContent() {
 
       {/* ── 학습 유형 검사 팝업 ── */}
       {/* 로그인 상태 + profile-me 응답 완료(undefined 아님) + learning_style 미설정(null)인 경우에만 표시 */}
-      {session && profileLearningStyle === null && (
+      {false && session && profileLearningStyle === null && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-6">
           <div className="w-full max-w-sm bg-white rounded-3xl p-7 text-center">
             <div className="text-[44px] mb-4">🧠</div>
@@ -3804,6 +4057,15 @@ function DashboardContent() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {showToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-[#111111] text-white
+          text-[13px] font-medium px-5 py-3 rounded-2xl shadow-lg z-[100]
+          whitespace-nowrap flex items-center gap-2">
+          <span className="text-[#4ade80] text-[15px]">✓</span>
+          {toastMessage}
         </div>
       )}
     </div>

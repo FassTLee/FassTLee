@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from 'react'
 import { useSession, signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { ChevronRight } from 'lucide-react'
+import { track } from '@vercel/analytics'
 import Image from 'next/image'
 
 const STYLE_KEY      = 'kinepia_learning_style'
@@ -131,6 +132,7 @@ function SurveyContent() {
       const newVotes = [...votes, type]
 
       if (current < QUESTIONS.length - 1) {
+        track('survey_step_completed', { step: current + 1 })
         setVotes(newVotes)
         setCurrent(current + 1)
         setSelected(null)
@@ -236,6 +238,7 @@ function SurveyContent() {
               <span>💬</span> 카카오로 시작하기
             </button>
 
+            {/* 네이버 로그인 */}
             <button
               onClick={() => signIn('naver', { callbackUrl: '/trainer/dashboard' })}
               className="w-full flex items-center justify-center gap-2 py-3 mb-4 bg-[#03C75A] rounded-2xl text-[14px] font-medium text-white"
@@ -306,7 +309,10 @@ function SurveyContent() {
           )}
 
           <button
-            onClick={() => router.replace('/landing/report')}
+            onClick={() => {
+              track('survey_abandoned', { step: current + 1 })
+              router.replace('/')
+            }}
             className="mt-10 w-full py-3 text-[12px] text-[#ADADAD]"
           >
             건너뛰기 <ChevronRight size={12} className="inline" />

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn, useSession } from 'next-auth/react'
 import { Check, ChevronRight } from 'lucide-react'
 import { AppFooter } from '@/components/common/AppFooter'
@@ -85,7 +85,25 @@ const PLANS = [
 
 export default function LandingContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { status } = useSession()
+
+  useEffect(() => {
+    const ua = navigator.userAgent.toLowerCase()
+    const isInApp = /kakaotalk|naver|instagram|fban|fbav|line|wechat/i.test(ua)
+    if (isInApp) {
+      const url = window.location.href
+      // iOS
+      if (/iphone|ipad/i.test(ua)) {
+        window.location.href = url.replace(/^https?:\/\//, 'googlechrome://')
+        setTimeout(() => { window.location.href = url }, 1000)
+      }
+      // Android
+      else {
+        window.location.href = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end`
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -107,9 +125,10 @@ export default function LandingContent() {
     }
   }
 
-  const handleGoogleSignIn = () => { removeExitListeners(); signIn('google', { callbackUrl: '/trainer/dashboard' }) }
-  const handleKakaoSignIn  = () => { removeExitListeners(); signIn('kakao',  { callbackUrl: '/trainer/dashboard' }) }
-  const handleNaverSignIn  = () => { removeExitListeners(); signIn('naver',  { callbackUrl: '/trainer/dashboard' }) }
+  const callbackUrl = searchParams.get('callbackUrl') ?? '/trainer/dashboard'
+  const handleGoogleSignIn = () => { removeExitListeners(); signIn('google', { callbackUrl }) }
+  const handleKakaoSignIn  = () => { removeExitListeners(); signIn('kakao',  { callbackUrl }) }
+  const handleNaverSignIn  = () => { removeExitListeners(); signIn('naver',  { callbackUrl }) }
 
   // 이탈 감지: guest 데이터가 있고 비로그인 상태일 때
   // popstate 차단은 Next.js App Router 내부 popstate 이벤트와 충돌하므로 제거
@@ -165,7 +184,7 @@ export default function LandingContent() {
           {/* Cert list */}
           <div className="space-y-2.5 mb-8 pb-8 border-b border-white/10">
             {[
-              { name: '건강운동관리사', sub: '필기 8과목', available: false },
+              { name: '건강운동관리사', sub: '필기 8과목', available: true },
               { name: '2급 생활스포츠지도사 (보디빌딩)', sub: '구술/실기', available: true },
               { name: '2급 생활스포츠지도사 필기', sub: '준비중', available: false },
               { name: '1급 생활스포츠지도사', sub: '필기 · 준비중', available: false },
@@ -214,6 +233,7 @@ export default function LandingContent() {
               <span className="text-[14px] font-black">K</span>
               카카오
             </button>
+            {/* 네이버 로그인 */}
             <button
               onClick={handleNaverSignIn}
               onMouseEnter={() => router.prefetch('/trainer/dashboard')}
@@ -597,6 +617,7 @@ export default function LandingContent() {
             >
               <span className="font-black text-[13px]">K</span> 카카오
             </button>
+            {/* 네이버 로그인 */}
             <button
               onClick={handleNaverSignIn}
               onMouseEnter={() => router.prefetch('/trainer/dashboard')}
