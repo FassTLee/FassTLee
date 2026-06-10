@@ -415,7 +415,7 @@ function DashboardContent() {
       return
     }
     if ((session as { error?: string } | null)?.error === 'RefreshTokenExpired') {
-      signOut({ callbackUrl: '/landing' })
+      signOut({ callbackUrl: '/' })
       return
     }
     initCommon()
@@ -3273,7 +3273,7 @@ function DashboardContent() {
                   취소
                 </button>
                 <button
-                  onClick={() => signOut({ callbackUrl: '/landing' })}
+                  onClick={() => signOut({ callbackUrl: '/' })}
                   className="flex-1 py-3 rounded-xl bg-[#E24B4A] text-white text-[14px] font-bold"
                 >
                   로그아웃
