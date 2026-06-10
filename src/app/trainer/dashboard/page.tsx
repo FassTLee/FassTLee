@@ -2530,7 +2530,7 @@ function DashboardContent() {
           <div className="bg-[#1A1A1A] rounded-2xl p-5 text-white text-center">
             <div className="text-[36px] mb-2">💪</div>
             <p className="text-[16px] font-black text-white leading-snug">
-              시험 당일입니다!
+              곧 시험입니다, 끝까지 힘내세요
             </p>
             <p className="text-[13px] text-white/70 mt-2 leading-relaxed">
               지금까지 준비한 실력을 믿으세요
