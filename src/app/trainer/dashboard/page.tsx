@@ -2546,7 +2546,10 @@ function DashboardContent() {
             {!registeredRounds.includes(nextExam.round) ? (
               /* 미신청 → 오렌지 아웃라인 */
               <button
-                onClick={() => { setExamRound(nextExam.round); setShowSubjectConfirmModal(true) }}
+                onClick={() => {
+                  if (!_accessCodeUsed) { setShowCodePopup(true); return }
+                  setExamRound(nextExam.round); setShowSubjectConfirmModal(true)
+                }}
                 className="mt-4 w-full py-3 rounded-xl text-[14px] font-bold text-[#F5A623] border-2 border-[#F5A623] bg-transparent"
               >
                 신청하기
@@ -2657,7 +2660,10 @@ function DashboardContent() {
                       </span>
                     ) : (
                       <button
-                        onClick={() => { setExamRound(e.round); setShowSubjectConfirmModal(true) }}
+                        onClick={() => {
+                          if (!_accessCodeUsed) { setShowCodePopup(true); return }
+                          setExamRound(e.round); setShowSubjectConfirmModal(true)
+                        }}
                         className={`text-[10px] font-bold px-3 py-1.5 rounded-lg border border-[#00A651] ${
                           isNext ? 'bg-[#00A651] text-white' : 'bg-white text-[#00A651]'
                         }`}
