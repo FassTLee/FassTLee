@@ -256,13 +256,14 @@ function DashboardContent() {
 
   /* Sync tab when URL search param changes (BottomTabBar navigation) */
   useEffect(() => {
+    if (status === 'loading') return
     // classroom · exam · profile 탭은 로그인 필요
     if ((tabParam === 'profile' || tabParam === 'classroom' || tabParam === 'exam') && !session) {
       setShowLoginPrompt(true)
       return
     }
     setTab(tabParam)
-  }, [tabParam, session])
+  }, [tabParam, session, status])
   const [loading, setLoading] = useState(true)
 
   /* ── Common ──────────────────────────────────────────────────────── */
