@@ -11,7 +11,7 @@ const SUBJECT_PASS_Q = 8    // 40% of 20
 
 // 8과목 순서 (실제 시험 교시 순)
 const SUBJECT_ORDER = [
-  '운동생리학', '건강체력평가', '운동처방론', '운동부하검사',
+  '운동생리학', '건강·체력평가', '운동처방론', '운동부하검사',
   '운동상해',   '기능해부학',  '병태생리학', '스포츠심리학',
 ]
 
@@ -54,8 +54,56 @@ export default function ExamPage() {
   const [overviewSubjectIdx, setOverviewSubjectIdx] = useState(0)
   const [fetchError, setFetchError]   = useState(false)
 
+  // ── access code 게이트 ───────────────────────────────────────────
+  const [accessCodeChecked, setAccessCodeChecked] = useState<'checking' | 'granted' | 'locked'>('checking')
+  const [showCodePopup, setShowCodePopup]   = useState(false)
+  const [codeInput, setCodeInput]           = useState('')
+  const [codeError, setCodeError]           = useState<string | null>(null)
+  const [codeSubmitting, setCodeSubmitting] = useState(false)
+
   const timerRef      = useRef<ReturnType<typeof setInterval> | null>(null)
   const submittingRef = useRef(false)
+
+  // ── access code 확인 ─────────────────────────────────────────────
+  useEffect(() => {
+    fetch('/api/v1/profile-me', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.access_code_used) {
+          setAccessCodeChecked('granted')
+        } else {
+          setAccessCodeChecked('locked')
+          setShowCodePopup(true)
+        }
+      })
+      .catch(() => {
+        // 호출 실패 시 안전하게 차단
+        setAccessCodeChecked('locked')
+        setShowCodePopup(true)
+      })
+  }, [])
+
+  const handleCodeSubmit = async () => {
+    if (!codeInput.trim() || codeSubmitting) return
+    setCodeSubmitting(true)
+    setCodeError(null)
+    try {
+      const res  = await fetch('/api/v1/access-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: codeInput.trim().toUpperCase() }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setCodeError(data.error ?? '오류가 발생했습니다'); return }
+      setAccessCodeChecked('granted')
+      setShowCodePopup(false)
+      setCodeInput('')
+    } catch {
+      setCodeError('네트워크 오류가 발생했습니다')
+    } finally {
+      setCodeSubmitting(false)
+    }
+  }
 
   // ── 문제 로드 ────────────────────────────────────────────────────
   useEffect(() => {
@@ -184,11 +232,57 @@ export default function ExamPage() {
   }
 
   // ══════════════════════════════════════════════════════════════════
-  // LOADING
-  if (step === 'loading') {
+  // LOADING (문제 로드 중 or access code 확인 중)
+  if (step === 'loading' || accessCodeChecked === 'checking') {
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  // ACCESS CODE 팝업 (locked 상태)
+  if (accessCodeChecked === 'locked') {
+    return (
+      <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
+        {showCodePopup && (
+          <div className="fixed inset-0 bg-black/60 z-[70] flex items-center justify-center px-6">
+            <div className="w-full max-w-sm bg-white rounded-3xl p-6">
+              <div className="text-center mb-5">
+                <div className="text-[44px] mb-3">🎁</div>
+                <h2 className="text-[18px] font-black text-[#1A1A1A] mb-2">Kinepia 무료 이용권</h2>
+                <p className="text-[13px] text-[#6B6B6B] leading-relaxed">
+                  모의고사는 이용권 코드 입력 후 사용할 수 있습니다.
+                </p>
+              </div>
+              <input
+                type="text"
+                value={codeInput}
+                onChange={(e) => { setCodeInput(e.target.value.toUpperCase()); setCodeError(null) }}
+                placeholder="코드를 입력하세요"
+                className="w-full px-4 py-3 border-2 border-[#E5E5E5] rounded-2xl text-[15px] font-bold tracking-widest text-center mb-2 focus:outline-none focus:border-[#1A1A1A]"
+                onKeyDown={(e) => e.key === 'Enter' && handleCodeSubmit()}
+              />
+              {codeError && (
+                <p className="text-[12px] text-[#E24B4A] text-center mb-2">{codeError}</p>
+              )}
+              <button
+                onClick={handleCodeSubmit}
+                disabled={!codeInput.trim() || codeSubmitting}
+                className="w-full py-3.5 bg-[#1A1A1A] disabled:bg-[#E5E5E5] disabled:text-[#ADADAD] text-white rounded-2xl text-[15px] font-bold mt-1"
+              >
+                {codeSubmitting ? '확인 중...' : '코드 입력하기'}
+              </button>
+              <button
+                onClick={() => router.back()}
+                className="w-full py-2.5 mt-2 text-[13px] text-[#ADADAD] text-center"
+              >
+                돌아가기
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     )
   }
