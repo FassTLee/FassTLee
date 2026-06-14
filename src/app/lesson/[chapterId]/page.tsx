@@ -202,15 +202,6 @@ export default function LessonPage() {
   }, [session?.user?.id, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    console.log('slides:', slides.length, 'questions:', questions.length)
-    console.log('questions detail:', JSON.stringify(questions.map(q => ({
-      id: q.id,
-      answer_index: q.answer_index,
-      options_count: q.options?.length
-    }))))
-  }, [slides, questions])
-
-  useEffect(() => {
     setCheckedSentences([])
   }, [slideIndex])
 
@@ -537,13 +528,6 @@ export default function LessonPage() {
     ? rawPoints
     : splitSentences(currentSlide?.explanation ?? '')
 
-  console.log('[allChecked debug]', {
-    slidesLen: slides.length,
-    sentencesLen: sentences.length,
-    checkedLen: checkedSentences.length,
-    checkedValues: checkedSentences,
-    every: checkedSentences.every(Boolean)
-  })
   const allChecked = slides.length > 0 && sentences.length === 0
     ? false
     : sentences.length > 0
