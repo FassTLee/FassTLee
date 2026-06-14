@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { ChevronLeft, ChevronRight as ArrowRight, Check, Zap } from 'lucide-react'
+import { track } from '@vercel/analytics'
 import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
 // Zap used in completion screen
 
@@ -14,7 +15,7 @@ const SUBJECT_KEY = 'kinepia_current_subject_id'
 const MODE_KEY    = 'lesson_slide_mode'
 
 const CERT_LABELS: Record<string, string> = {
-  'health-exercise-manager': '건강운동관리사',
+  'exercise-prescriptionist': '건강운동관리사',
   'sports-instructor-2':     '2급 생활스포츠지도사',
   'sports-instructor':       '생활스포츠지도사',
 }
@@ -39,6 +40,9 @@ interface Slide {
   key_points: string[]
   image_url: string | null
   reference_text: string | null
+  exam_years: number[] | null
+  star_rating: number | null
+  question_type: string | null
 }
 
 interface MiniQ {
@@ -99,9 +103,11 @@ export default function LessonPage() {
   const [certLabel, setCertLabel]       = useState('')
   const [subjectId, setSubjectId]       = useState<string | null>(null)
   const [loading, setLoading]           = useState(true)
+  const [lessonSessionId, setLessonSessionId] = useState<string | null>(null)
 
   /* ── Slide navigation ───────────────────────── */
   const [slideIndex, setSlideIndex]       = useState(0)
+  const slideEnterTimeRef = useRef<number>(Date.now())
   const [slideMode, setSlideMode]         = useState<'manual' | 'auto'>('manual')
   const [checkedSentences, setCheckedSentences] = useState<boolean[]>([])
   const [autoProgress, setAutoProgress]   = useState(0)
@@ -114,9 +120,32 @@ export default function LessonPage() {
   const [showComplete, setShowComplete]   = useState(false)
   const pendingSlideIdxRef                = useRef(0)
 
+  useEffect(() => {
+    if (!lessonSessionId || !session?.user?.id) return
+    const handleUnload = () => {
+      navigator.sendBeacon(
+        '/api/v1/chapter-session-log',
+        JSON.stringify({
+          userId:      session.user.id,
+          chapterId,
+          action:      'exit',
+          sessionId:   lessonSessionId,
+          pageType:    'lesson',
+          isCompleted: showComplete,
+          exitPoint:   showMiniQuiz ? 'mini_quiz' : `slide_${slideIndex}`,
+        })
+      )
+    }
+    window.addEventListener('beforeunload', handleUnload)
+    return () => window.removeEventListener('beforeunload', handleUnload)
+  }, [lessonSessionId, session?.user?.id, slideIndex, showMiniQuiz, showComplete]) // eslint-disable-line react-hooks/exhaustive-deps
+
   /* ── Mini quiz session score ────────────────── */
   const miniCorrectRef = useRef(0)
   const miniTotalRef   = useRef(0)
+
+  /* ── Related questions bottom sheet ─────────── */
+  const [showRelatedQuestions, setShowRelatedQuestions] = useState(false)
 
   /* ── Swipe (touch + mouse) ──────────────────── */
   const [toastMsg, setToastMsg]     = useState<string | null>(null)
@@ -154,11 +183,42 @@ export default function LessonPage() {
     }).catch(() => {})
   }, [session?.user?.id, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    const userId = session?.user?.id
+    if (!userId || !chapterId) return
+    fetch('/api/v1/chapter-session-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        chapterId,
+        action: 'enter',
+        pageType: 'lesson',
+      }),
+    })
+      .then((r) => r.json())
+      .then((data) => { if (data.sessionId) setLessonSessionId(data.sessionId) })
+      .catch(() => {})
+  }, [session?.user?.id, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    console.log('slides:', slides.length, 'questions:', questions.length)
+    console.log('questions detail:', JSON.stringify(questions.map(q => ({
+      id: q.id,
+      answer_index: q.answer_index,
+      options_count: q.options?.length
+    }))))
+  }, [slides, questions])
+
+  useEffect(() => {
+    setCheckedSentences([])
+  }, [slideIndex])
+
   const fetchData = async () => {
     const [{ data: ch }, { data: qs }] = await Promise.all([
       supabase.from('chapters').select('id, title, course_id, video_url, audio_url, image_url').eq('id', chapterId).single(),
       supabase.from('chapter_questions')
-        .select('id, chapter_id, question, options, answer_index, explanation, order_index, question_type, image_url, reference_text, key_points')
+        .select('id, chapter_id, question, options, answer_index, explanation, order_index, question_type, image_url, reference_text, key_points, exam_years, star_rating')
         .eq('chapter_id', chapterId),
     ])
 
@@ -202,9 +262,13 @@ export default function LessonPage() {
       key_points: Array.isArray(q.key_points) ? q.key_points : [],
       image_url: q.image_url ?? null,
       reference_text: q.reference_text ?? null,
+      exam_years: Array.isArray(q.exam_years) ? q.exam_years : null,
+      star_rating: q.star_rating ?? null,
+      question_type: q.question_type ?? null,
     }))
     setSlides(slideArray)
 
+    track('lesson_started', { chapterId })
     setLoading(false)
   }
 
@@ -213,6 +277,24 @@ export default function LessonPage() {
     if (timerRef.current) clearInterval(timerRef.current)
     if (slideMode !== 'auto' || showMiniQuiz || loading) return
 
+    // 슬라이드 체류시간 로깅
+    const now = Date.now()
+    const duration = Math.round((now - slideEnterTimeRef.current) / 1000)
+    const prevSlide = slides[slideIndex]
+    if (prevSlide && duration > 0 && session?.user?.id) {
+      fetch('/api/v1/lesson-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: session.user.id,
+          chapterId,
+          slideId: prevSlide.id,
+          durationSeconds: duration,
+          slideIndex,
+        }),
+      }).catch(() => {})
+    }
+    slideEnterTimeRef.current = now
     setAutoProgress(0)
     timerRef.current = setInterval(() => {
       setAutoProgress((p) => Math.min(p + 2, 100)) // 100ms × 50 = 5 s
@@ -241,6 +323,22 @@ export default function LessonPage() {
         }),
       })
         .catch(() => {})
+      track('lesson_completed', { chapterId })
+      if (lessonSessionId && session?.user?.id) {
+        fetch('/api/v1/chapter-session-log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId:      session.user.id,
+            chapterId,
+            action:      'exit',
+            sessionId:   lessonSessionId,
+            pageType:    'lesson',
+            isCompleted: true,
+            exitPoint:   'lesson_complete',
+          }),
+        }).catch(() => {})
+      }
       setShowComplete(true)
     } else {
       setSlideIndex(pendingSlideIdxRef.current + 1)
@@ -254,7 +352,9 @@ export default function LessonPage() {
     pendingSlideIdxRef.current = fromIdx
 
     // 현재 슬라이드에 해당하는 문제 사용
-    const q = questions.find((q) => q.id === slides[fromIdx]?.id) ?? questions[fromIdx % Math.max(questions.length, 1)]
+    const q = questions.find((q) => q.id === slides[fromIdx]?.id)
+           ?? questions[fromIdx % Math.max(questions.length, 1)]
+           ?? slides[fromIdx]
     if (!q) {
       // 문제 데이터 없으면 퀴즈 건너뛰고 바로 진행
       if (fromIdx >= slides.length - 1) {
@@ -267,9 +367,48 @@ export default function LessonPage() {
       return
     }
 
-    if (q.answer_index === null) {
-      if (fromIdx >= slides.length - 1) { advanceFromQuiz() }
-      else { setSlideIndex(fromIdx + 1); setCheckedSentences([]); setAutoProgress(0) }
+    // slides fallback 사용 시 answer_index가 없으면 oral 분기로 강제 이동
+    if (q.answer_index === undefined || q.answer_index === null) {
+      // oral 문제 — key_points/sentences로 2지선다 생성
+      const currentPoints = Array.isArray(q.key_points) && q.key_points.filter(p => p.length > 1).length > 0
+        ? q.key_points.filter(p => p.length > 1)
+        : splitSentences(q.explanation ?? '')
+
+      if (currentPoints.length === 0) {
+        if (fromIdx >= slides.length - 1) { advanceFromQuiz() }
+        else { setSlideIndex(fromIdx + 1); setCheckedSentences([]); setAutoProgress(0) }
+        return
+      }
+
+      // 정답: 현재 슬라이드의 key_points 중 랜덤 1개
+      const correct = currentPoints[Math.floor(Math.random() * currentPoints.length)]
+
+      // 오답: 다른 슬라이드의 key_points 중 랜덤 1개
+      const otherSlides = slides.filter((_, i) => i !== fromIdx)
+      let wrongOpt = ''
+      for (const other of otherSlides.sort(() => Math.random() - 0.5)) {
+        const otherPoints = Array.isArray(other.key_points) && other.key_points.filter(p => p.length > 1).length > 0
+          ? other.key_points.filter(p => p.length > 1)
+          : splitSentences(other.explanation ?? '')
+        const candidate = otherPoints.find(p => p !== correct)
+        if (candidate) { wrongOpt = candidate; break }
+      }
+
+      if (!wrongOpt) {
+        if (fromIdx >= slides.length - 1) { advanceFromQuiz() }
+        else { setSlideIndex(fromIdx + 1); setCheckedSentences([]); setAutoProgress(0) }
+        return
+      }
+
+      const aIsCorrect = Math.random() > 0.5
+      setMiniQ({
+        id:          q.id,
+        text:        '다음 중 올바른 설명은?',
+        explanation: correct,
+        options:     aIsCorrect ? [correct, wrongOpt] : [wrongOpt, correct],
+        answerIdx:   aIsCorrect ? 0 : 1,
+      })
+      setShowMiniQuiz(true)
       return
     }
     const correct = q.options[q.answer_index]
@@ -350,6 +489,7 @@ export default function LessonPage() {
     if (Math.abs(delta) < 50) return
     if (delta < 0 && slideIndex < slides.length - 1) {
       if (slideMode === 'manual' && !allChecked) { showToast('모든 항목을 체크해주세요'); return }
+      if (showMiniQuiz) return
       triggerMiniQuiz(slideIndex)
     } else if (delta > 0 && slideIndex > 0) {
       setSlideIndex((si) => si - 1); setCheckedSentences([]); setAutoProgress(0)
@@ -363,14 +503,15 @@ export default function LessonPage() {
   /* mouse (PC) */
   const onMouseDown  = (e: React.MouseEvent) => onDragStart(e.clientX)
   const onMouseUp    = (e: React.MouseEvent) => onDragEnd(e.clientX)
-  const onMouseLeave = () => { isDragging.current = false }
+  const onMouseLeave = () => { isDragging.current = false; dragStartX.current = 0 }
 
   /* arrow button helpers */
   const goPrev = () => { if (slideIndex > 0) { setSlideIndex((si) => si - 1); setCheckedSentences([]); setAutoProgress(0) } }
   const goNext = () => {
     if (slideIndex < slides.length - 1) {
       if (slideMode === 'manual' && !allChecked) { showToast('모든 항목을 체크해주세요'); return }
-      setSlideIndex((si) => si + 1); setCheckedSentences([]); setAutoProgress(0)
+      if (showMiniQuiz) return
+      triggerMiniQuiz(slideIndex)
     }
   }
 
@@ -395,7 +536,19 @@ export default function LessonPage() {
   const sentences = rawPoints.length > 0
     ? rawPoints
     : splitSentences(currentSlide?.explanation ?? '')
-  const allChecked = sentences.length === 0 || (checkedSentences.length === sentences.length && checkedSentences.every(Boolean))
+
+  console.log('[allChecked debug]', {
+    slidesLen: slides.length,
+    sentencesLen: sentences.length,
+    checkedLen: checkedSentences.length,
+    checkedValues: checkedSentences,
+    every: checkedSentences.every(Boolean)
+  })
+  const allChecked = slides.length > 0 && sentences.length === 0
+    ? false
+    : sentences.length > 0
+      && checkedSentences.length === sentences.length
+      && checkedSentences.every((v) => v === true)
 
   /* ════════════════════════════════════════════════════ */
   return (
@@ -562,7 +715,8 @@ export default function LessonPage() {
                           onClick={() => {
                             if (slideMode !== 'manual') return
                             setCheckedSentences((prev) => {
-                              const next = [...prev]
+                              const next = new Array(sentences.length).fill(false)
+                              prev.forEach((v, idx) => { next[idx] = v })
                               next[i] = !next[i]
                               return next
                             })
@@ -772,7 +926,14 @@ export default function LessonPage() {
 
                 {miniSelected === miniQ.answerIdx ? (
                   <button
-                    onClick={advanceFromQuiz}
+                    onClick={() => {
+                      const pendingSlide = slides[pendingSlideIdxRef.current]
+                      if (pendingSlide?.exam_years && pendingSlide.exam_years.length > 0) {
+                        setShowRelatedQuestions(true)
+                      } else {
+                        advanceFromQuiz()
+                      }
+                    }}
                     className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold"
                   >
                     {pendingSlideIdxRef.current >= slides.length - 1 ? '학습 완료 🎉' : '다음 슬라이드 →'}
@@ -793,7 +954,14 @@ export default function LessonPage() {
                       다시 학습하기
                     </button>
                     <button
-                      onClick={advanceFromQuiz}
+                      onClick={() => {
+                        const pendingSlide = slides[pendingSlideIdxRef.current]
+                        if (pendingSlide?.exam_years && pendingSlide.exam_years.length > 0) {
+                          setShowRelatedQuestions(true)
+                        } else {
+                          advanceFromQuiz()
+                        }
+                      }}
                       className="w-full py-3.5 border-2 border-[#E5E5E5] text-[#6B6B6B] rounded-2xl text-[14px] font-semibold"
                     >
                       그래도 계속하기
@@ -812,6 +980,72 @@ export default function LessonPage() {
           </div>
         </div>
       )}
+
+      {/* ══════════ Related Questions Bottom Sheet ══════════ */}
+      {showRelatedQuestions && (() => {
+        const pendingSlide = slides[pendingSlideIdxRef.current]
+        return (
+          <div className="fixed inset-0 z-[60] flex flex-col justify-end">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/60"
+              onClick={() => { setShowRelatedQuestions(false); advanceFromQuiz() }}
+            />
+
+            <div className="relative bg-white rounded-t-2xl px-5 pt-5 pb-10 max-h-[80vh] overflow-y-auto">
+              {/* Handle */}
+              <div className="w-9 h-1 bg-gray-200 rounded-full mx-auto mb-4" />
+
+              {/* 제목 */}
+              <p className="text-[14px] font-bold text-[#1A1A1A] mb-1">이 내용에서 출제된 문제</p>
+              {pendingSlide?.question && (
+                <p className="text-[12px] text-[#ADADAD] mb-4 leading-snug">{pendingSlide.question}</p>
+              )}
+
+              {/* 문제 카드 목록 */}
+              <div className="space-y-3 mb-6">
+                {/* 현재 슬라이드 자체가 oral 문제 카드 역할 */}
+                {pendingSlide && (
+                  <div className="rounded-xl border border-[#E5E5E5] bg-white p-4">
+                    {/* 뱃지 */}
+                    {pendingSlide.star_rating === 5 && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full mb-2"
+                        style={{ backgroundColor: '#FAECE7', color: '#993C1D' }}>
+                        🔥 필수 학습
+                      </span>
+                    )}
+                    {pendingSlide.star_rating === 4 && (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full mb-2"
+                        style={{ backgroundColor: '#FAEEDA', color: '#854F0B' }}>
+                        ⭐ 단골 출제
+                      </span>
+                    )}
+                    {/* 출제 연도 */}
+                    {pendingSlide.exam_years && pendingSlide.exam_years.length > 0 && (
+                      <p className="text-[11px] text-[#5F5E5A] mb-1.5">
+                        출제 연도: {pendingSlide.exam_years.join(', ')}년
+                      </p>
+                    )}
+                    {/* 문제 텍스트 */}
+                    <p className="text-[13px] text-[#1A1A1A] leading-relaxed">{pendingSlide.question}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* 하단 버튼 */}
+              <button
+                onClick={() => {
+                  setShowRelatedQuestions(false)
+                  advanceFromQuiz()
+                }}
+                className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold"
+              >
+                {pendingSlideIdxRef.current >= slides.length - 1 ? '학습 완료 🎉' : '다음 슬라이드로 →'}
+              </button>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
