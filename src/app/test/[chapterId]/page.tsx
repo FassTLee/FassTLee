@@ -5,13 +5,14 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { ChevronLeft } from 'lucide-react'
+import { track } from '@vercel/analytics'
 import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
 
 const RESULT_KEY = 'kinepia_test_result'
 const CERT_KEY   = 'kinepia_selected_cert'
 
 const CERT_LABELS: Record<string, string> = {
-  'health-exercise-manager': '건강운동관리사',
+  'exercise-prescriptionist': '건강운동관리사',
   'sports-instructor-2':     '2급 생활스포츠지도사',
   'sports-instructor':       '생활스포츠지도사',
 }
@@ -39,6 +40,8 @@ interface Question {
   image_url: string | null
   reference_text: string | null
   question_type: string | null
+  exam_years: number[] | null
+  star_rating: number | null
 }
 
 interface AnswerRecord {
@@ -69,6 +72,7 @@ export default function TestPage() {
   const [countdown, setCountdown]         = useState(3)
   const [userAnswers, setUserAnswers]         = useState<Record<string, string>>({})
   const [revealedAnswers, setRevealedAnswers] = useState<Set<string>>(new Set())
+  const [sessionId, setSessionId] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -77,6 +81,23 @@ export default function TestPage() {
     if (cert && CERT_LABELS[cert]) setCertLabel(CERT_LABELS[cert])
     fetchQuestions()
   }, [status, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 챕터 테스트 진입 로깅
+  useEffect(() => {
+    if (!session?.user?.id || !chapterId) return
+    fetch('/api/v1/chapter-session-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: session.user.id,
+        chapterId,
+        action: 'enter',
+      }),
+    })
+      .then((r) => r.json())
+      .then((data) => { if (data.sessionId) setSessionId(data.sessionId) })
+      .catch(() => {})
+  }, [session?.user?.id, chapterId])
 
   // 전면 광고 카운트다운
   useEffect(() => {
@@ -89,20 +110,23 @@ export default function TestPage() {
   const fetchQuestions = async () => {
     const { data: basicData } = await supabase
       .from('chapter_questions')
-      .select('id, question, options, answer_index, explanation, image_url, reference_text, question_type')
+      .select('id, question, options, answer_index, explanation, image_url, reference_text, question_type, exam_years, star_rating')
       .eq('chapter_id', chapterId)
       .eq('question_type', 'basic')
       .not('answer_index', 'is', null)
 
     const { data: oralData } = await supabase
       .from('chapter_questions')
-      .select('id, question, options, answer_index, explanation, image_url, reference_text, question_type')
+      .select('id, question, options, answer_index, explanation, image_url, reference_text, question_type, exam_years, star_rating')
       .eq('chapter_id', chapterId)
       .eq('question_type', 'oral')
+      .not('exam_years', 'is', null)
+      .neq('exam_years', '[]')
 
     const basicQ = shuffle(basicData ?? []).slice(0, 5)
     const oralQ  = shuffle(oralData  ?? []).slice(0, 5)
     setQuestions([...basicQ, ...oralQ])
+    track('chapter_test_started', { chapterId })
     setLoading(false)
   }
 
@@ -144,20 +168,58 @@ export default function TestPage() {
       }
     })
     localStorage.setItem(RESULT_KEY, JSON.stringify({ chapterId, records: finalRecords, userAnswers }))
+    const correctCount = finalRecords.filter((r) => r.correct).length
+    const score = Math.round((correctCount / finalRecords.length) * 100)
+    track('chapter_test_completed', { chapterId, score })
+    // 3. 챕터 테스트 완료 로깅 (chapter_session_logs)
+    if (sessionId) {
+      fetch('/api/v1/chapter-session-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: session?.user?.id ?? '',
+          chapterId,
+          action: 'exit',
+          sessionId,
+          isCompleted: true,
+          exitPoint: 'test_submit',
+        }),
+      }).catch(() => {})
+    }
+
+    // 4. 서버에 테스트 결과 전송 (fire-and-forget)
     fetch('/api/v1/test-complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chapterId,
         subjectId: localStorage.getItem('kinepia_current_subject_id') ?? '',
-        records: finalRecords.map((r) => ({ questionId: r.questionId, correct: r.correct })),
+        records: finalRecords.map((r) => ({ questionId: r.questionId, correct: r.correct, selected: r.selected, answer_index: r.answer_index })),
         userId: session?.user?.id ?? '',
       }),
     }).catch(() => {})
+    // 4. 챕터 1 테스트 완료 시 코드 팝업 트리거
     if (session) {
-      setReportUrl(`/report/${chapterId}`)
+      const isFirstChapter = localStorage.getItem('kinepia_code_popup_triggered') !== 'true'
+      if (isFirstChapter) {
+        localStorage.setItem('kinepia_code_popup_triggered', 'true')
+        // profile-me의 codePopupShown 확인 후 미입력 시 팝업 표시
+        fetch('/api/v1/profile-me', { cache: 'no-store' })
+          .then((r) => r.json())
+          .then((pm) => {
+            if (pm.codePopupShown === false) {
+              sessionStorage.setItem('kinepia_show_code_popup', 'true')
+            }
+          })
+          .catch(() => {})
+      }
+    }
+
+    // 5. 로그인 여부에 따라 이동 처리
+    if (session) {
+      setReportUrl(`/report/${chapterId}`)   // → 광고 화면 먼저 표시 후 이동
     } else {
-      router.replace(`/report/${chapterId}`)
+      router.replace(`/report/${chapterId}`) // → 바로 리포트 이동
     }
   }
 
@@ -259,6 +321,14 @@ export default function TestPage() {
     )
   }
 
+  // ── 2026-06-15 수정: 문제 0개 챕터 크래시 방어 ──
+  if (!loading && questions.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
+        <p className="text-[14px] text-[#ADADAD]">준비된 문제가 없습니다.</p>
+      </div>
+    )
+  }
   const q        = questions[current]
   const isOral   = q.question_type === 'oral'
   const progress = ((current + 1) / questions.length) * 100
@@ -319,6 +389,25 @@ export default function TestPage() {
         {/* 지문 */}
         <div className="mb-4">
           <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-2">Q{current + 1}</p>
+          {isOral && (
+            <div className="flex flex-wrap items-center gap-1.5 mb-2">
+              {q.star_rating === 5 && (
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#FAECE7', color: '#993C1D' }}>
+                  🔥 필수 학습
+                </span>
+              )}
+              {q.star_rating === 4 && (
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#FAEEDA', color: '#854F0B' }}>
+                  ⭐ 단골 출제
+                </span>
+              )}
+              {q.exam_years && q.exam_years.length > 0 && (
+                <span className="text-[11px] text-[#5F5E5A]">
+                  출제 [{q.exam_years.join(', ')}]
+                </span>
+              )}
+            </div>
+          )}
           <p className="text-[17px] font-bold text-[#1A1A1A] leading-snug">{q.question}</p>
         </div>
 
