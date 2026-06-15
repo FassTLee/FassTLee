@@ -368,6 +368,8 @@ function DashboardContent() {
   const [codeError, setCodeError]               = useState<string | null>(null)
   const [codeSubmitting, setCodeSubmitting]     = useState(false)
   const [_accessCodeUsed, setAccessCodeUsed]     = useState<string | null>(null)
+  // ── 2026-06-15 수정: 이용코드 만료일 state 추가 ──
+  const [_codeExpiresAt, setCodeExpiresAt] = useState<string | null>(null)
 
   /* ── 학습 유형 검사 팝업 ─────────────────────────────────────────── */
   // undefined = profile-me 로딩 중, null = 스타일 미설정(팝업 표시), string = 설정됨
@@ -426,23 +428,39 @@ function DashboardContent() {
   useEffect(() => {
     const fetchSubjectStarStats = async () => {
       try {
-        const courseIds = Object.values(BODYBUILD_COURSES)
+        const HEALTH_COURSE_IDS: Record<string, string> = {
+          '7dec5e5f-35fa-406c-97db-723eb0d84fdf': '건강·체력평가',
+          '07b01337-b77e-4073-bde5-ca7d9a485b61': '기능해부학',
+          'cc3ae50d-3dda-4a4d-9aaf-1b0e83907ce6': '병태생리학',
+          '92f36a3a-6ea3-4753-b1ff-360a3db5c245': '스포츠심리학',
+          '61c77ae0-3d4c-4e68-b3e6-31a0bacf13aa': '운동부하검사',
+          '12f7e736-17df-4630-983f-af991ef45506': '운동상해',
+          'c66591ba-8085-4d66-9a8e-bd6728bbc58b': '운동생리학',
+          '47b3aca5-1c9a-4543-82ef-bba905d2bf0f': '운동처방론',
+        }
+        const allCourseIds = [
+          ...Object.values(BODYBUILD_COURSES),
+          ...Object.keys(HEALTH_COURSE_IDS),
+        ]
         const { data } = await supabase
           .from('chapter_questions')
-          .select('star_rating, chapters!inner(title, course_id)')
-          .in('chapters.course_id', courseIds)
+          .select('star_rating, chapters!inner(course_id)')
+          .in('chapters.course_id', allCourseIds)
           .in('star_rating', [4, 5])
         if (!data) return
         const acc: Record<string, { fire: number; star: number }> = {}
         for (const row of data) {
-          const chapter = row.chapters as unknown as { title: string; course_id: string } | null
+          const chapter = row.chapters as unknown as { course_id: string } | null
           if (!chapter) continue
-          // 챕터 타이틀 끝의 숫자(공백+숫자) 제거 → 과목명
-          const subjectName = chapter.title.replace(/\s*\d+$/, '').trim()
+          const subjectName =
+            Object.entries(BODYBUILD_COURSES).find(([, id]) => id === chapter.course_id)?.[0]
+            ?? HEALTH_COURSE_IDS[chapter.course_id]
+          if (!subjectName) continue
           if (!acc[subjectName]) acc[subjectName] = { fire: 0, star: 0 }
           if (row.star_rating === 5) acc[subjectName].fire += 1
           else if (row.star_rating === 4) acc[subjectName].star += 1
         }
+        console.log('[starStats keys]', Object.keys(acc))
         setSubjectStarStats(acc)
       } catch { /* ignore */ }
     }
@@ -451,7 +469,7 @@ function DashboardContent() {
 
   useEffect(() => {
     if (tab === 'classroom' && !classroomLoaded) loadClassroom()
-  }, [tab]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tab, classroomLoaded]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* certification_subjects — certKey 변경 시 필수/선택 목록 재조회 */
   useEffect(() => {
@@ -530,7 +548,7 @@ function DashboardContent() {
           ? fetch(`/api/v1/user-certifications?userId=${encodeURIComponent(userId)}`)
           : Promise.resolve(new Response(JSON.stringify({}))),
         userId
-          ? fetch(`/api/v1/report?userId=${encodeURIComponent(userId)}`)
+          ? fetch(`/api/v1/report?userId=${encodeURIComponent(userId)}`, { cache: 'no-store' })
           : Promise.resolve(new Response(JSON.stringify({}))),
       ])
       ;[pm, certsData, statsRawData] = await Promise.all([
@@ -549,6 +567,8 @@ function DashboardContent() {
     if (pm.certType)  { loadedCertType = pm.certType as string; setProfileCert(pm.certType as string); setCertTypeInput(pm.certType as string) }
     if (pm.examDate)  { loadedExamDate = pm.examDate as string; setProfileExamDate(pm.examDate as string); setExamDateInput(pm.examDate as string) }
     if (pm.accessCodeUsed) setAccessCodeUsed(String(pm.accessCodeUsed))
+    // ── 2026-06-15 수정: 만료일 초기화 ──
+    if (pm.codeExpiresAt) setCodeExpiresAt(String(pm.codeExpiresAt))
     // 코드 팝업 — 챕터 1 테스트 완료 후로 이동
     // if (session && pm.codePopupShown === false) setShowCodePopup(true)
     surveyCompletedRef.current = Boolean(pm.surveyCompleted)
@@ -808,6 +828,7 @@ function DashboardContent() {
         const db   = (dbSubjs ?? []).find((d: { id: string; name: string }) => d.name === name)
         return { name, icon: meta.icon, desc: meta.desc, subjectId: db?.id ?? null }
       })
+      console.log('[main cards]', cards.map((c: { name: string; subjectId: string | null }) => c.name))
       setSubjectCards(cards)
 
       // 과목별 진도율 계산 (강의실 탭용)
@@ -831,9 +852,16 @@ function DashboardContent() {
                 : Promise.resolve({ data: [] }),
             ])
             _todayCourseChaps = todayCourseChapsData ?? []
+            // ── 2026-06-12 수정: 완료 기준을 lesson_completed === true로 단순화 (점수 무관) ──
             const completedSet = new Set(
-              stats.filter((s) => s.lesson_completed === true || (s.latest_score ?? s.avg_score) >= 80).map((s) => s.chapter_id)
+              stats.filter((s) => s.lesson_completed === true)
+                   .map((s) => s.chapter_id)
             )
+            // ── 기존 코드 (점수 80점 미만 시 완료 미반영 이슈) ──
+            // const completedSet = new Set(
+            //   stats.filter((s) => s.lesson_completed === true || (s.latest_score ?? s.avg_score) >= 80)
+            //        .map((s) => s.chapter_id)
+            // )
             const progressMap: Record<string, { total: number; completed: number }> = {}
             for (const card of cards) {
               if (!card.subjectId) continue
@@ -846,6 +874,32 @@ function DashboardContent() {
                 completed: chaps.filter((c) => completedSet.has(c.id)).length,
               }
             }
+
+            // ── 기존 코드 (allChaps 재사용 — 보디빌딩 course_id 미포함으로 항상 skip됨) ──
+            // for (const [name, courseId] of Object.entries(BODYBUILD_COURSES)) {
+            //   const chaps = (allChaps ?? []).filter((c) => c.course_id === courseId)
+            //   if (chaps.length === 0) continue
+            //   progressMap[name] = {
+            //     total: chaps.length,
+            //     completed: chaps.filter((c) => completedSet.has(c.id)).length,
+            //   }
+            // }
+
+            // ── 2026-06-12 수정: 보디빌딩 chapters 별도 fetch (allCourseIds에 미포함) ──
+            const { data: bdChaps } = await supabase
+              .from('chapters').select('id, course_id')
+              .in('course_id', Object.values(BODYBUILD_COURSES))
+            for (const [name, courseId] of Object.entries(BODYBUILD_COURSES)) {
+              const chaps = (bdChaps ?? []).filter((c) => c.course_id === courseId)
+              if (chaps.length === 0) continue
+              progressMap[name] = {
+                total: chaps.length,
+                completed: chaps.filter((c) => completedSet.has(c.id)).length,
+              }
+              console.log('[bd progress]', name, 'total:', chaps.length, 'completed:', chaps.filter(c => completedSet.has(c.id)).length)
+            }
+
+            console.log('[main progressMap keys]', Object.keys(progressMap))
             setSubjectProgress(progressMap)
           }
         }
@@ -925,6 +979,7 @@ function DashboardContent() {
     const uid = session?.user?.id ?? ''
 
     // 이미 로드된 경우 — stats만 재fetch하고 나머지 건너뜀
+    console.log('[loadClassroom early return]', classroomLoaded)
     if (classroomLoaded) {
       if (uid) {
         try {
@@ -937,7 +992,8 @@ function DashboardContent() {
     }
 
     // 1. user_certifications 최신 로드 (강의실 탭 최초 진입 시만)
-    if (uid) {
+    // ── 2026-06-13 수정: userCerts가 이미 로드된 경우 재fetch 생략 ──
+    if (uid && userCerts.length === 0) {
       try {
         const ucRes  = await fetch(`/api/v1/user-certifications?userId=${uid}`)
         const ucData = await ucRes.json()
@@ -946,6 +1002,16 @@ function DashboardContent() {
         }
       } catch { /* ignore */ }
     }
+    // ── 기존 코드 (항상 재fetch — handleOrderSave 저장 결과 덮어씀) ──
+    // if (uid) {
+    //   try {
+    //     const ucRes  = await fetch(`/api/v1/user-certifications?userId=${uid}`)
+    //     const ucData = await ucRes.json()
+    //     if (Array.isArray(ucData.data) && ucData.data.length > 0) {
+    //       setUserCerts(ucData.data as UserCertification[])
+    //     }
+    //   } catch { /* ignore */ }
+    // }
 
     // Refresh subject cards if not loaded yet
     if (subjectCards.length === 0 && subjects.length === 0) {
@@ -958,15 +1024,82 @@ function DashboardContent() {
           localStorage.setItem(SUBJECTS_KEY, JSON.stringify(names))
           const { data: dbSubjs } = await supabase
             .from('subjects').select('id, name').in('name', names)
+          console.log('[fallback 진입]', names, dbSubjs)
           setSubjectCards(names.map((name) => {
             const meta = SUBJECT_META[name] ?? { icon: '📚', desc: '' }
             const db   = (dbSubjs ?? []).find((d: { id: string; name: string }) => d.name === name)
             return { name, icon: meta.icon, desc: meta.desc, subjectId: db?.id ?? null }
           }))
+
+          // fallback 경로 progressMap 계산
+          try {
+            const fallbackCards = names.map((name: string) => {
+              const subj = (dbSubjs ?? []).find((s: { name: string; id: string }) => s.name === name)
+              return { name, subjectId: subj?.id ?? null }
+            })
+            const fallbackSubjectIds = fallbackCards
+              .map((c: { subjectId: string | null }) => c.subjectId)
+              .filter(Boolean) as string[]
+
+            if (fallbackSubjectIds.length > 0) {
+              const { data: fbCourses } = await supabase
+                .from('courses')
+                .select('id, subject_id')
+                .in('subject_id', fallbackSubjectIds)
+
+              const fbCourseIds = (fbCourses ?? []).map((c: { id: string }) => c.id)
+
+              if (fbCourseIds.length > 0) {
+                const { data: fbChaps } = await supabase
+                  .from('chapters')
+                  .select('id, course_id')
+                  .in('course_id', fbCourseIds)
+
+                const currentStats = allStats ?? recentStats ?? []
+                const completedSet = new Set(
+                  currentStats
+                    .filter((s) => s.lesson_completed === true || (s.latest_score ?? s.avg_score) >= 80)
+                    .map((s) => s.chapter_id)
+                )
+
+                const fbProgressMap: Record<string, { total: number; completed: number }> = {}
+                for (const card of fallbackCards) {
+                  if (!card.subjectId) continue
+                  const courseIds = (fbCourses ?? [])
+                    .filter((c: { subject_id: string }) => c.subject_id === card.subjectId)
+                    .map((c: { id: string }) => c.id)
+                  const chaps = (fbChaps ?? []).filter((c: { course_id: string }) => courseIds.includes(c.course_id))
+                  fbProgressMap[card.name] = {
+                    total: chaps.length,
+                    completed: chaps.filter((c: { id: string }) => completedSet.has(c.id)).length,
+                  }
+                }
+
+                // BODYBUILD_COURSES 별도 진행률 추가
+                const { data: bdChaps } = await supabase
+                  .from('chapters')
+                  .select('id, course_id')
+                  .in('course_id', Object.values(BODYBUILD_COURSES))
+
+                for (const [name, courseId] of Object.entries(BODYBUILD_COURSES)) {
+                  const chaps = (bdChaps ?? []).filter((c: { course_id: string }) => c.course_id === courseId)
+                  if (chaps.length === 0) continue
+                  fbProgressMap[name] = {
+                    total: chaps.length,
+                    completed: chaps.filter((c: { id: string }) => completedSet.has(c.id)).length,
+                  }
+                }
+
+                console.log('[fallback progressMap keys]', Object.keys(fbProgressMap))
+                setSubjectProgress(fbProgressMap)
+              }
+            }
+          } catch { /* ignore */ }
         }
       } catch { /* ignore */ }
     }
 
+    console.log('[loadClassroom 본 실행]')
     try {
       const res  = await fetch('/api/v1/video-bookmarks')
       const data = await res.json()
@@ -1110,17 +1243,31 @@ function DashboardContent() {
     setSubjectOrderByCert((prev) => ({ ...prev, [certId]: subjects }))
   }
 
+  // ── 2026-06-13 수정: 클라이언트 supabase → API route PUT으로 교체 (RLS 우회) ──
   const handleOrderSave = async () => {
     try {
       localStorage.setItem('kinepia_subject_order', JSON.stringify(subjectOrderByCert))
-      const updates = certOrder.map((certId, idx) =>
-        supabase
-          .from('user_certifications')
-          .update({ order_index: idx })
-          .eq('cert_id', certId)
-          .eq('user_id', session?.user?.id ?? '')
+      const res = await fetch('/api/v1/user-certifications', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ certOrder }),
+      })
+      if (!res.ok) throw new Error('Update failed')
+      // ── 2026-06-13 수정: 배열 순서 + order_index 값 모두 갱신 ──
+      setUserCerts(prev =>
+        prev.map(cert => ({
+          ...cert,
+          order_index: certOrder.indexOf(cert.cert_id)
+        }))
       )
-      await Promise.all(updates)
+      // ── 기존 코드 (배열 순서만 변경 — order_index 값 미갱신) ──
+      // setUserCerts(prev =>
+      //   [...prev].sort((a, b) => {
+      //     const aIdx = certOrder.indexOf(a.cert_id)
+      //     const bIdx = certOrder.indexOf(b.cert_id)
+      //     return aIdx - bIdx
+      //   })
+      // )
       setToastMessage('학습 순서가 저장되었습니다.')
       setShowToast(true)
       setTimeout(() => setShowToast(false), 2500)
@@ -1130,6 +1277,12 @@ function DashboardContent() {
       setTimeout(() => setShowToast(false), 2500)
     }
   }
+  // ── 기존 코드 (클라이언트 supabase 직접 호출 — RLS 차단) ──
+  // const updates = certOrder.map((certId, idx) =>
+  //   supabase.from('user_certifications').update({ order_index: idx })
+  //   .eq('cert_id', certId).eq('user_id', session?.user?.id ?? '')
+  // )
+  // await Promise.all(updates)
 
   const handleSurveySubmit = async () => {
     if (!surveyStars) return
@@ -1927,10 +2080,10 @@ function DashboardContent() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-bold text-[#1A1A1A] truncate">{name}</p>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
               {progress !== undefined ? (
                 <>
-                  <div className="flex-1 h-1.5 bg-[#F0F0EE] rounded-full overflow-hidden">
+                  <div className="flex-1 h-1.5 bg-[#F0F0EE] rounded-full overflow-hidden" style={{ minWidth: 40 }}>
                     <div
                       className="h-full bg-[#00A651] rounded-full transition-all"
                       style={{ width: `${pct}%` }}
@@ -1941,6 +2094,24 @@ function DashboardContent() {
               ) : (
                 <span className="text-[10px] text-[#ADADAD]">학습 시작 전</span>
               )}
+              {(() => {
+                const ss = subjectStarStats[name]
+                if (!ss || (ss.fire === 0 && ss.star === 0)) return null
+                return (
+                  <div className="flex gap-1 flex-shrink-0">
+                    {ss.fire > 0 && (
+                      <span className="bg-[#FAECE7] text-[#993C1D] text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+                        🔥{ss.fire}
+                      </span>
+                    )}
+                    {ss.star > 0 && (
+                      <span className="bg-[#FAEEDA] text-[#854F0B] text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+                        ⭐{ss.star}
+                      </span>
+                    )}
+                  </div>
+                )
+              })()}
             </div>
           </div>
           {card?.subjectId
@@ -1970,7 +2141,11 @@ function DashboardContent() {
                     <button
                       onClick={() => {
                         if (!session) { setShowLoginPrompt(true); return }
-                        setExpandedCertId((prev) => prev === uc.id ? null : uc.id)
+                        const newId = expandedCertId === uc.id ? null : uc.id
+                        setExpandedCertId(newId)
+                        if (newId !== null && newId !== expandedCertId) {
+                          setClassroomLoaded(false)
+                        }
                       }}
                       className="flex-1 px-4 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
                     >
@@ -2031,26 +2206,43 @@ function DashboardContent() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-[13px] font-bold text-[#1A1A1A] truncate">{subjectName}</p>
-                              {(() => {
-                                const ss = subjectStarStats[subjectName]
-                                if (ss && (ss.fire > 0 || ss.star > 0)) {
+                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                {(() => {
+                                  const progress = subjectProgress[subjectName]
+                                  const pct = progress && progress.total > 0
+                                    ? Math.round((progress.completed / progress.total) * 100)
+                                    : 0
+                                  const ss = subjectStarStats[subjectName]
                                   return (
-                                    <div className="flex gap-1 mt-0.5 flex-wrap">
-                                      {ss.fire > 0 && (
-                                        <span className="bg-[#FAECE7] text-[#993C1D] text-[10px] font-medium px-1.5 py-0.5 rounded-full">
-                                          🔥 필수 {ss.fire}
-                                        </span>
+                                    <>
+                                      {progress !== undefined ? (
+                                        <>
+                                          <div className="flex-1 h-1 bg-[#F0F0EE] rounded-full overflow-hidden" style={{ minWidth: 40 }}>
+                                            <div className="h-full bg-[#00A651] rounded-full" style={{ width: `${pct}%` }} />
+                                          </div>
+                                          <span className="text-[10px] text-[#ADADAD] flex-shrink-0 font-semibold">{pct}%</span>
+                                        </>
+                                      ) : (
+                                        <span className="text-[10px] text-[#ADADAD]">학습 시작 전</span>
                                       )}
-                                      {ss.star > 0 && (
-                                        <span className="bg-[#FAEEDA] text-[#854F0B] text-[10px] font-medium px-1.5 py-0.5 rounded-full">
-                                          ⭐ 단골 {ss.star}
-                                        </span>
+                                      {ss && (ss.fire > 0 || ss.star > 0) && (
+                                        <div className="flex gap-1 flex-shrink-0">
+                                          {ss.fire > 0 && (
+                                            <span className="bg-[#FAECE7] text-[#993C1D] text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+                                              🔥{ss.fire}
+                                            </span>
+                                          )}
+                                          {ss.star > 0 && (
+                                            <span className="bg-[#FAEEDA] text-[#854F0B] text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+                                              ⭐{ss.star}
+                                            </span>
+                                          )}
+                                        </div>
                                       )}
-                                    </div>
+                                    </>
                                   )
-                                }
-                                return <p className="text-[10px] text-[#ADADAD] mt-0.5">챕터 학습</p>
-                              })()}
+                                })()}
+                              </div>
                             </div>
                             <ChevronRight size={14} className="text-[#ADADAD] flex-shrink-0" />
                           </button>
@@ -2811,14 +3003,28 @@ function DashboardContent() {
         <div>
           <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">이용 코드</p>
           <div className="bg-white rounded-2xl border border-[#E5E5E5] px-4 py-4">
-            <p className="text-[13px] font-bold text-[#1A1A1A] mb-1">무료 이용권 코드 입력</p>
-            <p className="text-[11px] text-[#ADADAD] mb-3">코드를 입력하면 모든 과목을 무료로 이용할 수 있어요.</p>
-            <button
-              onClick={() => setShowCodePopup(true)}
-              className="text-[12px] font-bold text-[#00A651] border border-[#00A651]/30 bg-[#00A651]/5 px-3 py-2 rounded-xl"
-            >
-              코드 입력하러 가기
-            </button>
+            <p className="text-[13px] font-bold text-[#1A1A1A] mb-1">이용권 코드</p>
+            {_accessCodeUsed ? (
+              <div>
+                <p className="text-[12px] text-[#00A651] font-bold mb-0.5">✓ 코드 등록 완료</p>
+                {_codeExpiresAt && (
+                  // ── 2026-06-15 수정: 만료일 노출 추가 ──
+                  <p className="text-[11px] text-[#ADADAD]">
+                    {new Date(_codeExpiresAt).toLocaleDateString('ko-KR')} 까지 이용 가능
+                  </p>
+                )}
+              </div>
+            ) : (
+              <>
+                <p className="text-[11px] text-[#ADADAD] mb-3">코드를 입력하면 모든 과목을 무료로 이용할 수 있어요.</p>
+                <button
+                  onClick={() => setShowCodePopup(true)}
+                  className="text-[12px] font-bold text-[#00A651] border border-[#00A651]/30 bg-[#00A651]/5 px-3 py-2 rounded-xl"
+                >
+                  코드 입력하러 가기
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -3914,8 +4120,9 @@ function DashboardContent() {
             <div className="text-center mb-5">
               <div className="text-[44px] mb-3">🎁</div>
               <h2 className="text-[18px] font-black text-[#1A1A1A] mb-2">Kinepia 무료 이용권</h2>
+              {/* ── 2026-06-15 수정: 하드코딩 날짜 제거 ── */}
               <p className="text-[13px] text-[#6B6B6B] leading-relaxed">
-                코드를 입력하면 6월 30일까지<br />모든 과목을 무료로 이용할 수 있습니다.
+                이용 가능한 코드를 입력하세요.
               </p>
             </div>
             <input
