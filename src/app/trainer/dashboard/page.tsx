@@ -3006,7 +3006,7 @@ function DashboardContent() {
             <p className="text-[13px] font-bold text-[#1A1A1A] mb-1">이용권 코드</p>
             {_accessCodeUsed ? (
               <div>
-                <p className="text-[12px] text-[#00A651] font-bold mb-0.5">✓ 코드 등록 완료</p>
+                <p className="text-[12px] text-[#00A651] font-bold mb-0.5">✓ 코드 등록 완료 ({_accessCodeUsed})</p>
                 {_codeExpiresAt && (
                   // ── 2026-06-15 수정: 만료일 노출 추가 ──
                   <p className="text-[11px] text-[#ADADAD]">
@@ -4119,7 +4119,8 @@ function DashboardContent() {
           <div className="w-full max-w-sm bg-white rounded-3xl p-6">
             <div className="text-center mb-5">
               <div className="text-[44px] mb-3">🎁</div>
-              <h2 className="text-[18px] font-black text-[#1A1A1A] mb-2">Kinepia 무료 이용권</h2>
+              {/* ── 2026-06-15 수정: 팝업 제목 변경 ── */}
+              <h2 className="text-[18px] font-black text-[#1A1A1A] mb-2">Kinepia 이용권 코드</h2>
               {/* ── 2026-06-15 수정: 하드코딩 날짜 제거 ── */}
               <p className="text-[13px] text-[#6B6B6B] leading-relaxed">
                 이용 가능한 코드를 입력하세요.
