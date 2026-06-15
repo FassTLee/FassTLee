@@ -3004,17 +3004,35 @@ function DashboardContent() {
           <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">이용 코드</p>
           <div className="bg-white rounded-2xl border border-[#E5E5E5] px-4 py-4">
             <p className="text-[13px] font-bold text-[#1A1A1A] mb-1">이용권 코드</p>
+            {/* ── 2026-06-15 수정: 만료 여부 분기 처리 (P0-9) ── */}
             {_accessCodeUsed ? (
-              <div>
-                <p className="text-[12px] text-[#00A651] font-bold mb-0.5">✓ 코드 등록 완료 ({_accessCodeUsed})</p>
-                {_codeExpiresAt && (
-                  // ── 2026-06-15 수정: 만료일 노출 추가 ──
-                  <p className="text-[11px] text-[#ADADAD]">
-                    {new Date(_codeExpiresAt).toLocaleDateString('ko-KR')} 까지 이용 가능
+              _codeExpiresAt && new Date(_codeExpiresAt) < new Date() ? (
+                // 만료된 경우
+                <div>
+                  <p className="text-[12px] text-[#E24B4A] font-bold mb-0.5">⚠ 이용권 만료 ({_accessCodeUsed})</p>
+                  <p className="text-[11px] text-[#ADADAD] mb-3">
+                    {new Date(_codeExpiresAt).toLocaleDateString('ko-KR')} 에 만료됨
                   </p>
-                )}
-              </div>
+                  <button
+                    onClick={() => setShowCodePopup(true)}
+                    className="text-[12px] font-bold text-[#00A651] border border-[#00A651]/30 bg-[#00A651]/5 px-3 py-2 rounded-xl"
+                  >
+                    새 코드 입력하러 가기
+                  </button>
+                </div>
+              ) : (
+                // 이용 중인 경우
+                <div>
+                  <p className="text-[12px] text-[#00A651] font-bold mb-0.5">✓ 코드 등록 완료 ({_accessCodeUsed})</p>
+                  {_codeExpiresAt && (
+                    <p className="text-[11px] text-[#ADADAD]">
+                      {new Date(_codeExpiresAt).toLocaleDateString('ko-KR')} 까지 이용 가능
+                    </p>
+                  )}
+                </div>
+              )
             ) : (
+              // 미등록인 경우
               <>
                 <p className="text-[11px] text-[#ADADAD] mb-3">코드를 입력하면 모든 과목을 무료로 이용할 수 있어요.</p>
                 <button
