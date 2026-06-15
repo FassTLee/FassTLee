@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { ChevronRight, Check } from 'lucide-react'
+import { track } from '@vercel/analytics'
 
 // ================================================================
 // 온보딩 서베이 — 로그인 직후 최초 1회만 표시
@@ -84,6 +85,7 @@ export default function OnboardingPage() {
     } catch {
       // Supabase 미설정 시 무시 — localStorage는 항상 저장
     }
+    track('onboarding_completed')
     localStorage.setItem(ONBOARDING_KEY, '1')
     router.replace(DESTINATION)
   }
@@ -215,8 +217,10 @@ export default function OnboardingPage() {
             <button
               onClick={() => {
                 if (step < 3) {
+                  track('onboarding_step_completed', { step })
                   setStep((s) => (s + 1) as Step)
                 } else {
+                  track('onboarding_step_completed', { step })
                   handleSubmit()
                 }
               }}

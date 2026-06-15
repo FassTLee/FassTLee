@@ -8,6 +8,17 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      keyframes: {
+        marquee: {
+          '0%':   { transform: 'translateX(0%)' },
+          '30%':  { transform: 'translateX(0%)' },
+          '70%':  { transform: 'translateX(-50%)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
+      },
+      animation: {
+        marquee: 'marquee 4s linear infinite',
+      },
       colors: {
         origin: "#E24B4A",
         insertion: "#378ADD",

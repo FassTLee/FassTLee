@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, ChevronRight, ChevronDown, Lock } from 'lucide-react'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { track } from '@vercel/analytics'
 
 const CERT_KEY = 'kinepia_selected_cert'
 
@@ -41,7 +42,7 @@ const CERT_META: Record<string, {
   health_exercise_manager: {
     icon: '💊',
     desc: '운동건강 통합 관리 과정',
-    certId: 'health-exercise-manager',
+    certId: 'exercise-prescriptionist',
     color: '#7C3AED',
   },
 }
@@ -57,6 +58,8 @@ export default function SelectCertPage() {
   useEffect(() => {
     if (status === 'loading') return
     if (status === 'unauthenticated') { router.replace('/landing'); return }
+
+    track('cert_page_viewed')
 
     if (isSupabaseConfigured) {
       supabase
@@ -83,6 +86,7 @@ export default function SelectCertPage() {
       .from('user_certifications')
       .select('cert_id')
       .eq('user_id', session.user.id)
+      .eq('is_active', true)
       .then(({ data }) => {
         if (data) setExistingCertIds(data.map((d: { cert_id: string }) => d.cert_id))
       })
@@ -96,6 +100,7 @@ export default function SelectCertPage() {
       return
     }
 
+    track('cert_selected', { cert: slug })
     localStorage.setItem(CERT_KEY, certId)
     router.push('/select-subject')
   }
@@ -128,7 +133,7 @@ export default function SelectCertPage() {
       {/* 툴팁 */}
       {tooltip && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 bg-[#1A1A1A] text-white text-[12px] font-semibold px-4 py-2 rounded-full shadow-lg">
-          준비 중입니다 🚧
+          {tooltip}
         </div>
       )}
 
@@ -169,15 +174,15 @@ export default function SelectCertPage() {
                 {isOpen && (
                   <div className="bg-white border-2 border-t-[1px] border-[#2563EB] rounded-b-2xl overflow-hidden divide-y divide-[#F0F0EE]">
                     <button
-                      onClick={() => handleSelect('sports-instructor-2-written')}
-                      className="w-full px-5 py-4 flex items-center gap-3 text-left active:bg-[#F5F5F3]"
+                      onClick={() => showTooltip('2급 생활스포츠지도사 필기는 준비 중입니다')}
+                      className="w-full px-5 py-4 flex items-center gap-3 text-left opacity-40 cursor-not-allowed"
                     >
                       <span className="text-[22px] flex-shrink-0">📝</span>
                       <div className="flex-1 min-w-0">
                         <p className="text-[14px] font-bold text-[#1A1A1A]">필기</p>
-                        <p className="text-[11px] text-[#6B6B6B]">7과목 중 5과목 선택</p>
+                        <p className="text-[11px] text-[#6B6B6B]">준비 중</p>
                       </div>
-                      <ChevronRight size={16} className="text-[#ADADAD] flex-shrink-0" />
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E5E5E5] text-[#ADADAD]">Coming Soon</span>
                     </button>
                     <button
                       onClick={() => handleSelect('sports-instructor-2-practical')}

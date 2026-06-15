@@ -33,9 +33,11 @@ export async function GET(req: NextRequest) {
   // 2. chapter_questions 에서 문제 조회 (answer_index 제외)
   const { data: questions, error: qErr } = await supabaseAdmin
     .from('chapter_questions')
-    .select('id, question, options, chapter_id, explanation')
+    .select('id, question, options, chapter_id, explanation, exam_years, star_rating')
     .in('chapter_id', chapterIds)
     .eq('question_type', 'oral')
+    .not('exam_years', 'is', null)
+    .neq('exam_years', '[]')
 
   if (qErr || !questions?.length) {
     return NextResponse.json({ questions: [] })
@@ -44,10 +46,13 @@ export async function GET(req: NextRequest) {
   // 3. 셔플 후 3개 추출
   const shuffled = [...questions].sort(() => Math.random() - 0.5)
   const picked = shuffled.slice(0, count).map((q) => ({
-    id:        q.id,
-    question:  q.question,
-    options:   Array.isArray(q.options) ? q.options : [],
-    chapterId: q.chapter_id,
+    id:          q.id,
+    question:    q.question,
+    options:     Array.isArray(q.options) ? q.options : [],
+    chapterId:   q.chapter_id,
+    explanation: q.explanation ?? null,
+    exam_years:  Array.isArray(q.exam_years) ? q.exam_years : [],
+    star_rating: q.star_rating ?? null,
   }))
 
   return NextResponse.json({ questions: picked })

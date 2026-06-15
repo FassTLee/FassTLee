@@ -157,7 +157,10 @@ export default function StyleTestPage() {
         const res = await fetch('/api/v1/learning-style', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ learning_style: lessonStyle }),
+          body: JSON.stringify({
+            learning_style: lessonStyle,
+            learning_style_answers: newVotes,
+          }),
         })
         const json = await res.json()
         if (!json.saved) {
@@ -240,7 +243,7 @@ export default function StyleTestPage() {
           <button
             onClick={() => {
               sessionStorage.setItem('kinepia_style_dismissed', '1')
-              router.replace('/select-subject')
+              router.replace('/trainer/dashboard')
             }}
             className="mt-10 w-full py-3 text-[12px] text-[#ADADAD]"
           >

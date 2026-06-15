@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Check, AlertCircle, ChevronLeft, Plus } from 'lucide-react'
+import { track } from '@vercel/analytics'
 
 const CERT_KEY       = 'kinepia_selected_cert'
 const SUBJECTS_KEY   = 'kinepia_selected_subjects'
@@ -25,35 +26,6 @@ interface CertConfig {
 }
 
 const CERT_CONFIG: Record<string, CertConfig> = {
-  'health-exercise-manager': {
-    label: '건강운동관리사',
-    mode: 'all-required',
-    subjects: [
-      { name: '운동생리학',   icon: '🫀', desc: '심폐기능·에너지 대사·운동 적응' },
-      { name: '건강·체력평가', icon: '📊', desc: '체력검사, 측정 방법, 평가 기준' },
-      { name: '운동처방론',   icon: '📋', desc: 'FITT 원칙, 대상별 운동 처방' },
-      { name: '운동부하검사', icon: '🏃', desc: '심전도, 운동부하 프로토콜' },
-      { name: '운동상해',     icon: '🩹', desc: '스포츠 손상, 응급처치, 재활' },
-      { name: '기능해부학',   icon: '🦴', desc: '근육·뼈대·관절의 기능과 구조' },
-      { name: '병태생리학',   icon: '🔬', desc: '질환의 발생 원리와 병태 기전' },
-      { name: '스포츠심리학', icon: '🧠', desc: '동기, 루틴, 심리기술 훈련' },
-    ],
-    additional: [
-      { name: '건강교육론',     icon: '🏫', desc: '건강증진 교육 이론과 실제' },
-      { name: '노인체육론',     icon: '👴', desc: '노인 대상 체육 지도 원리' },
-      { name: '스포츠교육학',   icon: '📚', desc: '교수법, 코칭 이론' },
-      { name: '스포츠사회학',   icon: '🏟️', desc: '스포츠와 사회의 관계' },
-      { name: '스포츠영양학',   icon: '🥗', desc: '영양소와 운동 수행 능력' },
-      { name: '스포츠윤리',     icon: '⚖️', desc: '페어플레이·도덕·반도핑' },
-      { name: '운동역학',       icon: '⚙️', desc: '운동의 물리적 원리' },
-      { name: '유아체육론',     icon: '👶', desc: '유아 발달과 체육 활동' },
-      { name: '장애인스포츠론', icon: '♿', desc: '장애인 스포츠 이론·실제' },
-      { name: '체육측정평가론', icon: '📏', desc: '측정 도구·통계·평가 방법' },
-      { name: '트레이닝론',     icon: '💪', desc: '훈련 원리와 프로그래밍' },
-      { name: '특수체육론',     icon: '🎯', desc: '특수 집단 체육 지도' },
-      { name: '한국체육사',     icon: '🏛️', desc: '한국 체육의 역사적 흐름' },
-    ],
-  },
   'sports-instructor': {
     label: '생활스포츠지도사',
     mode: 'select-n',
@@ -305,7 +277,9 @@ export default function SelectSubjectPage() {
       }
     }
 
-    router.replace('/trainer/dashboard')
+    // 3. 대시보드 강의실 탭으로 이동
+    track('subject_selected')
+    router.replace('/trainer/dashboard?tab=classroom')
   }
 
   // ── 로딩 ───────────────────────────────────────────────────────

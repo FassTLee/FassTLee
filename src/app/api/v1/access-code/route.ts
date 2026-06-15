@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
   // 4. user_access_codes INSERT (중복 방지)
   const { error: insertError } = await supabaseAdmin
     .from('user_access_codes')
-    .insert({ user_id: userId, code: upperCode, access_code_id: accessCode.id })
+    .insert({ user_id: userId, code_id: accessCode.id })
 
   if (insertError) {
     if (insertError.code === '23505') {

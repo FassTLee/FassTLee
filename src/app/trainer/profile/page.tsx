@@ -12,13 +12,13 @@ const SUBJECTS_KEY = 'kinepia_selected_subjects'
 const CERT_KEY     = 'kinepia_selected_cert'
 
 const CERT_LABELS: Record<string, string> = {
-  'health-exercise-manager': '건강운동관리사',
+  'exercise-prescriptionist': '건강운동관리사',
   'sports-instructor':       '생활스포츠지도사',
   'sports-instructor-2':     '🥈 2급 생활스포츠지도사',
 }
 
 const REQUIRED_SUBJECTS: Record<string, string[]> = {
-  'health-exercise-manager': [
+  'exercise-prescriptionist': [
     '운동생리학', '기능해부학', '건강·체력평가', '운동처방론',
     '운동부하검사', '운동상해', '병태생리학', '스포츠심리학',
   ],

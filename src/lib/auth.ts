@@ -1,6 +1,5 @@
 import { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
-import KakaoProvider from 'next-auth/providers/kakao'
 import NaverProvider from 'next-auth/providers/naver'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 import { v5 as uuidv5 } from 'uuid'
@@ -21,10 +20,54 @@ export const authOptions: NextAuthOptions = {
         },
       },
     }),
-    KakaoProvider({
-      clientId:     process.env.KAKAO_CLIENT_ID     ?? '',
-      clientSecret: process.env.KAKAO_CLIENT_SECRET ?? '',
-    }),
+    {
+      id: 'kakao',
+      name: 'Kakao',
+      type: 'oauth',
+      authorization: {
+        url: 'https://kauth.kakao.com/oauth/authorize',
+        params: { scope: 'profile_nickname profile_image' },
+      },
+      token: {
+        url: 'https://kauth.kakao.com/oauth/token',
+        async request(context) {
+          const response = await fetch('https://kauth.kakao.com/oauth/token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              grant_type:    'authorization_code',
+              client_id:     process.env.KAKAO_CLIENT_ID     ?? '',
+              client_secret: process.env.KAKAO_CLIENT_SECRET ?? '',
+              code:          context.params.code             ?? '',
+              redirect_uri:  context.provider.callbackUrl,
+            }),
+            signal: AbortSignal.timeout(10000),
+          })
+          const tokens = await response.json()
+          return { tokens }
+        },
+      },
+      userinfo: {
+        url: 'https://kapi.kakao.com/v2/user/me',
+        async request(context) {
+          const response = await fetch('https://kapi.kakao.com/v2/user/me', {
+            headers: { Authorization: `Bearer ${context.tokens.access_token}` },
+            signal: AbortSignal.timeout(10000),
+          })
+          return response.json()
+        },
+      },
+      profile(profile) {
+        return {
+          id:    String(profile.id),
+          name:  profile.kakao_account?.profile?.nickname          ?? null,
+          email: profile.kakao_account?.email                      ?? null,
+          image: profile.kakao_account?.profile?.profile_image_url ?? null,
+        }
+      },
+      clientId:     process.env.KAKAO_CLIENT_ID,
+      clientSecret: process.env.KAKAO_CLIENT_SECRET,
+    },
     NaverProvider({
       clientId:     process.env.NAVER_CLIENT_ID     ?? '',
       clientSecret: process.env.NAVER_CLIENT_SECRET ?? '',
@@ -94,16 +137,26 @@ export const authOptions: NextAuthOptions = {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const stableId = (user as any).stableId as string | undefined
 
-        // email로 profiles에서 Supabase UUID 조회 (fallback)
+        // stableId → email 순으로 profiles에서 Supabase UUID 조회
         let supabaseId: string | null = stableId ?? null
-        if (!supabaseId && isSupabaseAdminConfigured && user.email) {
-          const { data: profile } = await supabaseAdmin
-            .from('profiles')
-            .select('id')
-            .eq('email', user.email)
-            .single()
-          supabaseId = profile?.id ?? null
-          console.log(`[Auth] jwt supabaseId=${supabaseId} email=${user.email}`)
+        if (!supabaseId && isSupabaseAdminConfigured) {
+          if (stableId) {
+            const { data: profile } = await supabaseAdmin
+              .from('profiles')
+              .select('id')
+              .eq('id', stableId)
+              .single()
+            supabaseId = profile?.id ?? null
+            console.log(`[Auth] jwt supabaseId=${supabaseId} stableId=${stableId}`)
+          } else if (user.email) {
+            const { data: profile } = await supabaseAdmin
+              .from('profiles')
+              .select('id')
+              .eq('email', user.email)
+              .single()
+            supabaseId = profile?.id ?? null
+            console.log(`[Auth] jwt supabaseId=${supabaseId} email=${user.email}`)
+          }
         }
 
         if (stableId) token.userId = stableId

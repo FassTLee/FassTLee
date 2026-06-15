@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
@@ -140,6 +142,31 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ data: inserted as UserCertification })
+}
+
+// ── 2026-06-13 추가: order_index 일괄 업데이트 (supabaseAdmin 사용) ──
+export async function PUT(req: NextRequest) {
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const { certOrder } = await req.json()
+  if (!Array.isArray(certOrder)) {
+    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
+  }
+  const updates = certOrder.map((certId: string, idx: number) =>
+    supabaseAdmin
+      .from('user_certifications')
+      .update({ order_index: idx })
+      .eq('cert_id', certId)
+      .eq('user_id', session.user.id)
+  )
+  const results = await Promise.all(updates)
+  const failed = results.filter(r => r.error)
+  if (failed.length > 0) {
+    return NextResponse.json({ error: 'Update failed' }, { status: 500 })
+  }
+  return NextResponse.json({ ok: true })
 }
 
 // ── PATCH /api/v1/user-certifications — 제거 (is_active = false) ──

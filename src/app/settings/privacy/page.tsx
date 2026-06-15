@@ -2,10 +2,27 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import { Shield, Trash2, Download, ChevronLeft, AlertTriangle, Check } from 'lucide-react'
+
+function maskEmail(email: string | null | undefined): string {
+  if (!email) return '미제공'
+  const [local, domain] = email.split('@')
+  if (!domain) return '미제공'
+  const masked = local.slice(0, 3) + '***'
+  return `${masked}@${domain}`
+}
+
+function providerLabel(provider: string | null | undefined): string {
+  if (provider === 'google') return 'Google 계정'
+  if (provider === 'kakao')  return 'Kakao 계정'
+  if (provider === 'naver')  return 'Naver 계정'
+  return '소셜 계정'
+}
 
 export default function PrivacySettingsPage() {
   const router = useRouter()
+  const { data: session } = useSession()
   const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm' | 'deleting' | 'done'>('idle')
   const [confirmText, setConfirmText] = useState('')
 
@@ -72,8 +89,16 @@ export default function PrivacySettingsPage() {
           <h2 className="text-[15px] font-bold text-[#1A1A1A] mb-4">📋 수집 중인 정보</h2>
           <div className="space-y-3">
             {[
-              { label: '이름', value: '박트레이너', source: 'Google 계정' },
-              { label: '이메일', value: 'tra***@fitdoor.com', source: 'Google 계정 (마스킹)' },
+              {
+                label:  '이름',
+                value:  session?.user?.name ?? '미설정',
+                source: providerLabel((session?.user as { provider?: string })?.provider),
+              },
+              {
+                label:  '이메일',
+                value:  maskEmail(session?.user?.email),
+                source: providerLabel((session?.user as { provider?: string })?.provider) + ' (마스킹)',
+              },
               { label: '학습 진도', value: '로컬 저장', source: 'Zustand (브라우저)' },
               { label: '테스트 결과', value: '저장됨', source: 'Supabase (암호화)' },
             ].map((item, i) => (

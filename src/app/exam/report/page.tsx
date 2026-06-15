@@ -43,9 +43,8 @@ export default function ExamReportPage() {
   const { status } = useSession()
   const [result, setResult] = useState<ExamResult | null>(null)
   const [expandedSubject, setExpandedSubject] = useState<number | null>(null)
-
-  // isSubscribed: 구독 여부 (추후 실제 구독 상태로 교체)
-  const isSubscribed = false
+  const [accessCodeUsed, setAccessCodeUsed] = useState<string | null>(null)
+  const isSubscribed = !!accessCodeUsed
 
   useEffect(() => {
     if (status === 'loading') return
@@ -58,6 +57,13 @@ export default function ExamReportPage() {
     } catch {
       router.replace('/exam')
     }
+
+    fetch('/api/v1/profile-me')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.access_code_used) setAccessCodeUsed(d.access_code_used)
+      })
+      .catch(() => {})
   }, [status]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!result) {

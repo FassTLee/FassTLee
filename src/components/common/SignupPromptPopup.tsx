@@ -48,18 +48,6 @@ export function SignupPromptPopup({ onClose, callbackUrl = '/landing/survey' }: 
 
         {/* 버튼 */}
         <div className="space-y-2.5 pt-1">
-          {/* 카카오 */}
-          <button
-            onClick={() => signIn('kakao', { callbackUrl })}
-            className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl text-[14px] font-bold text-[#1A1A1A]"
-            style={{ backgroundColor: '#FEE500' }}
-          >
-            <svg width="18" height="18" viewBox="0 0 512 512" fill="#1A1A1A">
-              <path d="M256 32C114.6 32 0 125.1 0 240c0 72.3 45.3 136 114.3 174.6-4.9 18.1-18.2 65.4-20.9 75.7-.3.9-.6 2.1.3 2.9.9.8 2 .4 2 .4 2.6-.4 105.5-69.4 115.3-76.1C219.9 419.5 237.7 421 256 421c141.4 0 256-93.1 256-208S397.4 32 256 32z"/>
-            </svg>
-            카카오로 시작하기
-          </button>
-
           {/* 구글 */}
           <button
             onClick={() => signIn('google', { callbackUrl })}
@@ -73,6 +61,32 @@ export function SignupPromptPopup({ onClose, callbackUrl = '/landing/survey' }: 
             </svg>
             구글로 시작하기
           </button>
+
+          {/* 카카오 */}
+          <button
+            onClick={() => signIn('kakao', { callbackUrl })}
+            className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl text-[14px] font-bold text-[#1A1A1A]"
+            style={{ backgroundColor: '#FEE500' }}
+          >
+            <svg width="18" height="18" viewBox="0 0 512 512" fill="#1A1A1A">
+              <path d="M256 32C114.6 32 0 125.1 0 240c0 72.3 45.3 136 114.3 174.6-4.9 18.1-18.2 65.4-20.9 75.7-.3.9-.6 2.1.3 2.9.9.8 2 .4 2 .4 2.6-.4 105.5-69.4 115.3-76.1C219.9 419.5 237.7 421 256 421c141.4 0 256-93.1 256-208S397.4 32 256 32z"/>
+            </svg>
+            카카오로 시작하기
+          </button>
+
+          {/* 네이버 로그인 — 검수 중 임시 비활성화 */}
+          {false && (
+          <button
+            onClick={() => signIn('naver', { callbackUrl })}
+            className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl text-[14px] font-bold text-white"
+            style={{ backgroundColor: '#03C75A' }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+              <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/>
+            </svg>
+            네이버로 시작하기
+          </button>
+          )}
 
           {/* 나중에 */}
           <button

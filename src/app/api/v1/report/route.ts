@@ -17,9 +17,12 @@ export async function GET(req: NextRequest) {
   const [{ data: chapterStats, error: chapterErr }, { data: questionStats, error: questionErr }] = await Promise.all([
     supabaseAdmin
       .from('chapter_stats')
-      .select('chapter_id, subject_id, avg_score, wrong_rate, total_attempts, last_attempt_at, lesson_completed, mini_quiz_correct, mini_quiz_total, lesson_completed_at, latest_score, best_score, test_attempts')
+      // ── 2026-06-13 수정: order 기준 컬럼 updated_at select에 추가 ──
+      .select('chapter_id, subject_id, avg_score, wrong_rate, total_attempts, last_attempt_at, lesson_completed, mini_quiz_correct, mini_quiz_total, lesson_completed_at, latest_score, best_score, test_attempts, total_questions, updated_at')
+      // ── 기존 코드 (updated_at 누락) ──
+      // .select('chapter_id, subject_id, avg_score, wrong_rate, total_attempts, last_attempt_at, lesson_completed, mini_quiz_correct, mini_quiz_total, lesson_completed_at, latest_score, best_score, test_attempts, total_questions')
       .eq('user_id', userId)
-      .order('last_attempt_at', { ascending: false })
+      .order('updated_at', { ascending: false, nullsFirst: false })
       .limit(1000),
     supabaseAdmin
       .from('question_stats')
@@ -36,5 +39,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     chapter_stats:  chapterStats  ?? [],
     question_stats: questionStats ?? [],
+  }, {
+    headers: { 'Cache-Control': 'no-store' },
   })
 }

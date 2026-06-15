@@ -17,6 +17,8 @@ interface OralQuestion {
   options: string[]
   /** options[i] 의 원본 인덱스 → submit 시 사용 */
   originalIndices: number[]
+  exam_years: number[]
+  star_rating: number | null
 }
 
 interface QResult {
@@ -119,10 +121,12 @@ function OralExamContent() {
       .then((d) => {
         if (!d.questions?.length) { setFetchError(true); setLoading(false); return }
         setQuestions(
-          d.questions.map((q: { id: string; question: string; options: string[]; explanation?: string }) => ({
+          d.questions.map((q: { id: string; question: string; options: string[]; explanation?: string; exam_years?: number[]; star_rating?: number | null }) => ({
             ...q,
-            explanation: q.explanation ?? null,
+            explanation:     q.explanation  ?? null,
             originalIndices: q.options.map((_, i) => i),
+            exam_years:      q.exam_years   ?? [],
+            star_rating:     q.star_rating  ?? null,
           })),
         )
         setLoading(false)
@@ -203,6 +207,8 @@ function OralExamContent() {
           options:         items,
           // 셔플된 위치 i → r.question.originalIndices[indices[i]] → 원본 인덱스
           originalIndices: indices.map((i) => r.question.originalIndices[i]),
+          exam_years:      r.question.exam_years,
+          star_rating:     r.question.star_rating,
         }
       })
 
@@ -256,7 +262,7 @@ function OralExamContent() {
         {/* 헤더 */}
         <div className="bg-white border-b border-[#E5E5E5] px-5 pt-12 pb-4 flex items-center gap-3">
           <button
-            onClick={() => router.push(courseId ? `/chapters/${courseId}` : '/trainer/dashboard')}
+            onClick={() => router.push('/trainer/dashboard?tab=classroom')}
             className="w-8 h-8 flex items-center justify-center"
           >
             <X size={20} className="text-[#6B6B6B]" />
@@ -349,7 +355,7 @@ function OralExamContent() {
         {/* 하단 버튼 */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E5E5E5] px-5 pb-8 pt-4 flex gap-3">
           <button
-            onClick={() => isPreview ? router.back() : router.push(courseId ? `/chapters/${courseId}` : '/trainer/dashboard')}
+            onClick={() => isPreview ? router.back() : router.push('/trainer/dashboard?tab=classroom')}
             className="flex-1 flex items-center justify-center gap-2 py-3.5 border-2 border-[#E5E5E5] rounded-2xl text-[14px] font-bold text-[#6B6B6B]"
           >
             <BookOpen size={16} /> {isPreview ? '닫기' : '강의실'}
@@ -468,6 +474,23 @@ function OralExamContent() {
                 </div>
                 <span className="text-[11px] text-[#ADADAD] font-medium">구술 문제</span>
               </div>
+              <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                {currentQ.star_rating === 5 && (
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#FAECE7', color: '#993C1D' }}>
+                    🔥 필수 학습
+                  </span>
+                )}
+                {currentQ.star_rating === 4 && (
+                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-full" style={{ backgroundColor: '#FAEEDA', color: '#854F0B' }}>
+                    ⭐ 단골 출제
+                  </span>
+                )}
+                {currentQ.exam_years.length > 0 && (
+                  <span className="text-[11px] text-[#5F5E5A]">
+                    출제 [{currentQ.exam_years.join(', ')}]
+                  </span>
+                )}
+              </div>
               <p className="text-[15px] font-bold text-[#1A1A1A] leading-snug">
                 {currentQ.question}
               </p>
@@ -579,7 +602,7 @@ function OralExamContent() {
                 계속하기
               </button>
               <button
-                onClick={() => router.push(courseId ? `/chapters/${courseId}` : '/trainer/dashboard')}
+                onClick={() => router.push('/trainer/dashboard?tab=classroom')}
                 className="flex-1 py-3 bg-[#E24B4A] rounded-xl text-[13px] font-bold text-white"
               >
                 종료

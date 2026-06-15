@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   const userId = getUserId(token)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { learning_style } = await req.json()
+  const { learning_style, learning_style_answers } = await req.json()
   if (learning_style !== 'memorizer' && learning_style !== 'conceptualizer') {
     return NextResponse.json({ error: 'Invalid learning_style' }, { status: 400 })
   }
@@ -42,8 +42,9 @@ export async function POST(req: NextRequest) {
     .from('profiles')
     .update({
       learning_style,
-      style_tested_at:     new Date().toISOString(),
+      style_tested_at:      new Date().toISOString(),
       onboarding_completed: true,
+      ...(learning_style_answers ? { learning_style_answers } : {}),
     })
     .eq('id', userId)
     .select('id')

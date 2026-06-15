@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { ChevronLeft, ChevronRight, BookOpen, Flame, Check, Lock } from 'lucide-react'
+import { ChevronLeft, BookOpen, Flame, Check, Lock } from 'lucide-react'
 import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
 
 interface Chapter {
@@ -31,6 +31,7 @@ interface ChapterStat {
   latest_score?: number | null
   best_score?: number | null
   test_attempts?: number
+  total_questions?: number | null
 }
 
 const FREE_LIMIT = 3
@@ -46,6 +47,7 @@ export default function ChaptersPage() {
   const [subject, setSubject] = useState<Subject | null>(null)
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [statsMap, setStatsMap] = useState<Record<string, ChapterStat>>({})
+  const [chapterStarMap, setChapterStarMap] = useState<Record<string, { fire: number; star: number }>>({})
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [accessCodeUsed, setAccessCodeUsed] = useState<string | null>(null)
@@ -53,7 +55,7 @@ export default function ChaptersPage() {
   const [codeInput, setCodeInput]           = useState('')
   const [codeError, setCodeError]           = useState<string | null>(null)
   const [codeSubmitting, setCodeSubmitting] = useState(false)
-  const [theoryChapters, setTheoryChapters] = useState<Set<string>>(new Set())
+
 
   const isSubscribed = !!accessCodeUsed
 
@@ -67,14 +69,16 @@ export default function ChaptersPage() {
       .then((pm) => { if (pm.accessCodeUsed) setAccessCodeUsed(pm.accessCodeUsed) })
       .catch(() => {})
     fetchData()
-    const userId = session?.user?.id
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const userId = session?.user?.id ?? (session?.user as any)?.supabaseId ?? (session?.user as any)?.stableId
     console.log('[chapters] fetchStats userId:', userId)
     if (userId) fetchStats(userId)
   }, [status, subjectId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // userId가 늦게 확보되는 경우 추가 보장
   useEffect(() => {
-    const userId = session?.user?.id
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const userId = session?.user?.id ?? (session?.user as any)?.supabaseId ?? (session?.user as any)?.stableId
     if (!userId || status !== 'authenticated') return
     fetchStats(userId)
   }, [session?.user?.id, status]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -82,8 +86,10 @@ export default function ChaptersPage() {
   // 포커스/탭 복귀 시 chapter_stats 재fetch
   useEffect(() => {
     const handleFocus = () => {
-      if (status === 'authenticated' && session?.user?.id) {
-        fetchStats(session.user.id)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const uid = session?.user?.id ?? (session?.user as any)?.supabaseId ?? (session?.user as any)?.stableId
+      if (status === 'authenticated' && uid) {
+        fetchStats(uid)
       }
     }
     const handleVisibility = () => {
@@ -101,18 +107,22 @@ export default function ChaptersPage() {
 
   const fetchStats = async (userId: string) => {
     try {
-      const res  = await fetch(
-        `/api/v1/report?userId=${encodeURIComponent(userId)}`,
-        { cache: 'no-store' }          // 매번 최신 데이터 fetch
-      )
-      const data = await res.json()
-      console.log('[chapters] chapter_stats count:', data.chapter_stats?.length, data.chapter_stats)
+      const { data, error } = await supabase
+        .from('chapter_stats')
+        .select('chapter_id, subject_id, avg_score, wrong_rate, total_attempts, last_attempt_at, lesson_completed, mini_quiz_correct, mini_quiz_total, lesson_completed_at, latest_score, best_score, test_attempts, total_questions')
+        .eq('user_id', userId)
+        .order('updated_at', { ascending: false, nullsFirst: false })
+
+      if (error) {
+        console.log('[chapters] fetchStats error:', error)
+        return
+      }
+
       const map: Record<string, ChapterStat> = {}
-      for (const s of (data.chapter_stats ?? []) as ChapterStat[]) {
+      for (const s of (data ?? []) as ChapterStat[]) {
         map[s.chapter_id] = s
       }
       setStatsMap(map)
-      console.log('[chapters] statsMap:', JSON.stringify(map))
     } catch (e) {
       console.log('[chapters] fetchStats error:', e)
     }
@@ -190,9 +200,30 @@ export default function ChaptersPage() {
         .limit(1000)
 
       const theorySet = new Set((theoryCheck ?? []).map((t) => t.chapter_id))
-      setTheoryChapters(theorySet)
+      // theory/oral 슬라이드가 있는 챕터만 표시 (없는 챕터는 숨김)
+      const visibleByTheory = allChapters.filter((c) => theorySet.has(c.id))
+      const finalChapters = visibleByTheory.length > 0 ? visibleByTheory : allChapters
+      setChapters(finalChapters)
 
-      setChapters(allChapters)
+      // 챕터별 star_rating 집계
+      if (finalChapters.length > 0) {
+        const finalIds = finalChapters.map((c) => c.id)
+        const { data: starData } = await supabase
+          .from('chapter_questions')
+          .select('chapter_id, star_rating')
+          .in('chapter_id', finalIds)
+          .in('star_rating', [4, 5])
+        if (starData) {
+          const starAcc: Record<string, { fire: number; star: number }> = {}
+          for (const row of starData) {
+            if (!starAcc[row.chapter_id]) starAcc[row.chapter_id] = { fire: 0, star: 0 }
+            if (row.star_rating === 5) starAcc[row.chapter_id].fire += 1
+            else if (row.star_rating === 4) starAcc[row.chapter_id].star += 1
+          }
+          setChapterStarMap(starAcc)
+        }
+      }
+
       clearTimeout(timeoutId)
       setLoading(false)
     } catch {
@@ -277,48 +308,48 @@ export default function ChaptersPage() {
           </div>
         ) : (
           visibleChapters.map((ch, idx) => {
-            const stat     = statsMap[ch.id]
-            console.log('[chapters] card:', ch.id, statsMap[ch.id])
+            const stat         = statsMap[ch.id]
             const isLocked     = !isSubscribed && idx >= FREE_LIMIT
-            const isComingSoon = !theoryChapters.has(ch.id)
             const isWeak       = stat && stat.wrong_rate >= 40
 
-            /* ── Status (3단계) ── */
-            let statusLabel = ''
-            let statusColor = 'text-[#ADADAD]'
-            let badgeBg     = 'bg-[#F5F5F3]'
+            /* ── Badge (좌측 아이콘) ── */
+            let badgeBg   = 'bg-[#F5F5F3]'
             let badgeNode: React.ReactNode = (
               <span className="text-[#ADADAD] text-[13px] font-bold">{idx + 1}</span>
             )
 
-            if (stat) {
-              const testAttempts = stat.test_attempts ?? 0
-              const latestScore  = stat.latest_score  ?? 0
+            /* ── 점수 색상 ── */
+            let scoreColor     = '#ADADAD'
+            let scoreBorder    = 'border-[#ADADAD]'
+            const testAttempts = stat?.test_attempts ?? 0
+            const latestScore  = stat?.latest_score  ?? 0
 
-              if (testAttempts >= 1) {
-                // Stage 3: 테스트 응시 완료
-                statusLabel = `${latestScore}점`
-                if (latestScore >= 80) {
-                  statusColor = 'text-[#639922]'
-                  badgeBg     = 'bg-[#63992215]'
-                  badgeNode   = <Check size={16} className="text-[#639922]" />
-                } else if (latestScore >= 60) {
-                  statusColor = 'text-[#F5A623]'
-                  badgeBg     = 'bg-[#F5A62315]'
-                  badgeNode   = <span className="text-[#F5A623] text-[13px] font-bold">{idx + 1}</span>
-                } else {
-                  statusColor = 'text-[#E24B4A]'
-                  badgeBg     = 'bg-[#E24B4A]/10'
-                  badgeNode   = <span className="text-[#E24B4A] text-[13px] font-bold">{idx + 1}</span>
-                }
+            if (stat && testAttempts >= 1) {
+              if (latestScore >= 80) {
+                scoreColor  = '#639922'
+                scoreBorder = 'border-[#639922]'
+                badgeBg     = 'bg-[#63992215]'
+                badgeNode   = <Check size={16} className="text-[#639922]" />
+              } else if (latestScore >= 60) {
+                scoreColor  = '#F5A623'
+                scoreBorder = 'border-[#F5A623]'
+                badgeBg     = 'bg-[#F5A62315]'
+                badgeNode   = <span className="text-[#F5A623] text-[13px] font-bold">{idx + 1}</span>
               } else {
-                // Stage 2: 챕터 입장, 테스트 미완료
-                statusLabel = '학습 중'
-                statusColor = 'text-[#378ADD]'
-                badgeBg     = 'bg-[#378ADD]/10'
-                badgeNode   = <span className="text-[#378ADD] text-[13px] font-bold">{idx + 1}</span>
+                scoreColor  = '#E24B4A'
+                scoreBorder = 'border-[#E24B4A]'
+                badgeBg     = 'bg-[#E24B4A]/10'
+                badgeNode   = <span className="text-[#E24B4A] text-[13px] font-bold">{idx + 1}</span>
               }
+            } else if (stat && testAttempts === 0) {
+              badgeBg   = 'bg-[#378ADD]/10'
+              badgeNode = <span className="text-[#378ADD] text-[13px] font-bold">{idx + 1}</span>
             }
+
+            /* ── 오답수 계산 ── */
+            const wrongCount = stat && testAttempts >= 1
+              ? Math.round((stat.wrong_rate / 100) * (stat.total_questions ?? 10))
+              : 0
 
             return (
               <div key={ch.id}>
@@ -328,14 +359,11 @@ export default function ChaptersPage() {
                     <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
                   </div>
                 )}
-              <div className={`w-full rounded-2xl border border-[#E5E5E5] bg-white flex items-center active:bg-[#F5F5F3] relative${isComingSoon ? ' opacity-50' : ''}`}>
-                {isComingSoon && (
-                  <span className="absolute top-2 right-2 px-2 py-0.5 bg-[#E5E5E5] text-[#ADADAD] text-[10px] font-bold rounded-full">준비 중</span>
-                )}
+              <div className={`w-full rounded-2xl border border-[#E5E5E5] bg-white flex items-center relative ${isLocked ? 'opacity-50' : ''}`}>
+
                 {/* 메인 영역 (클릭 → 레슨 진입) */}
                 <button
                   onClick={() => {
-                    if (isComingSoon) { return }
                     if (isLocked) { setShowCodePopup(true); return }
                     localStorage.setItem('kinepia_current_subject_id', subjectId)
                     router.push(`/lesson/${ch.id}`)
@@ -346,56 +374,95 @@ export default function ChaptersPage() {
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
                     isLocked ? 'bg-[#F5F5F3]' : badgeBg
                   }`}>
-                    {isLocked
-                      ? <Lock size={15} className="text-[#ADADAD]" />
-                      : badgeNode
-                    }
+                    {isLocked ? <Lock size={15} className="text-[#ADADAD]" /> : badgeNode}
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-0.5">
-                      <span className={`text-[14px] font-bold truncate ${isLocked || !stat ? 'text-[#ADADAD]' : 'text-[#1A1A1A]'}`}>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-[14px] font-bold truncate ${isLocked ? 'text-[#ADADAD]' : 'text-[#1A1A1A]'}`}>
                         {ch.title}
                       </span>
                       {isWeak && !isLocked && <Flame size={13} className="text-[#E24B4A] flex-shrink-0" />}
                     </div>
-
-                    {isComingSoon ? (
-                      <span className="text-[10px] text-[#ADADAD]">🔒 준비 중</span>
-                    ) : isLocked ? (
+                    {isLocked ? (
                       <span className="text-[10px] text-[#ADADAD]">🔒 구독 후 이용 가능</span>
-                    ) : stat && (stat.test_attempts ?? 0) >= 1 ? (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          router.push(`/report/${ch.id}`)
-                        }}
-                        className={`flex items-center gap-0.5 text-[11px] font-bold ${statusColor}`}
-                      >
-                        {statusLabel}
-                        <ChevronRight size={10} />
-                      </button>
-                    ) : statusLabel ? (
-                      <span className={`text-[10px] font-bold ${statusColor}`}>{statusLabel}</span>
+                    ) : (() => {
+                      const cs = chapterStarMap[ch.id]
+                      if (!cs || (cs.fire === 0 && cs.star === 0)) return null
+                      return (
+                        <div className="flex gap-1 mt-0.5 flex-wrap">
+                          {cs.fire > 0 && (
+                            <span className="bg-[#FAECE7] text-[#993C1D] text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+                              🔥 {cs.fire}
+                            </span>
+                          )}
+                          {cs.star > 0 && (
+                            <span className="bg-[#FAEEDA] text-[#854F0B] text-[10px] font-medium px-1.5 py-0.5 rounded-full">
+                              ⭐ {cs.star}
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })()}
+                  </div>
+                </button>
+
+                {/* 우측 버튼 영역 */}
+                {!isLocked && (
+                  <div className="flex items-center gap-0 pr-3 flex-shrink-0">
+                    {stat && testAttempts >= 1 ? (
+                      /* ── 테스트 완료: 리포트 버튼 + 구분선 + 재학습 버튼 ── */
+                      <>
+                        {/* 리포트 버튼 */}
+                        <button
+                          onClick={() => router.push(`/report/${ch.id}`)}
+                          className={`flex flex-col items-center justify-center px-3 py-2 rounded-xl border ${scoreBorder} min-w-[52px]`}
+                          style={{ borderColor: scoreColor }}
+                        >
+                          <span className="text-[13px] font-bold leading-none" style={{ color: scoreColor }}>{latestScore}점</span>
+                          {wrongCount > 0 ? (
+                            <span className="text-[11px] font-semibold leading-none mt-0.5" style={{ color: scoreColor }}>오답 {wrongCount}</span>
+                          ) : (
+                            <span className="text-[11px] font-semibold leading-none mt-0.5 text-[#ADADAD]">오답 없음</span>
+                          )}
+                        </button>
+
+                        {/* 구분선 */}
+                        <div className="w-px h-8 bg-[#E5E5E5] mx-2" />
+
+                        {/* 재학습 버튼 */}
+                        <button
+                          onClick={() => {
+                            localStorage.setItem('kinepia_current_subject_id', subjectId)
+                            router.push(`/lesson/${ch.id}`)
+                          }}
+                          className="flex flex-col items-center justify-center px-3 py-2 rounded-xl border"
+                          style={{ borderColor: scoreColor }}
+                        >
+                          <span className="text-[13px] font-bold leading-none" style={{ color: scoreColor }}>재학습</span>
+                          <span className="text-[11px] font-semibold leading-none mt-0.5 text-[#ADADAD]">다시풀기</span>
+                        </button>
+                      </>
                     ) : (
-                      <span className="text-[10px] font-bold text-[#00A651]">시작하기</span>
+                      /* ── 미완료: 시작하기 버튼 ── */
+                      <button
+                        onClick={() => {
+                          localStorage.setItem('kinepia_current_subject_id', subjectId)
+                          router.push(`/lesson/${ch.id}`)
+                        }}
+                        className="flex flex-col items-center justify-center px-3 py-2 rounded-xl border border-[#639922]"
+                      >
+                        <span className="text-[13px] font-bold leading-none text-[#639922]">시작</span>
+                        <span className="text-[11px] font-semibold leading-none mt-0.5 text-[#ADADAD]">하기</span>
+                      </button>
                     )}
                   </div>
-
-                  {!isLocked && <ChevronRight size={16} className="text-[#ADADAD] flex-shrink-0" />}
-                </button>
+                )}
 
               </div>
               </div>
             )
           })
-        )}
-        {/* AdFit 배너 — 챕터 목록 최하단 */}
-        {visibleChapters.length > 0 && (
-          <div className="flex flex-col items-center pt-8 pb-4 px-4">
-            <span className="text-[9px] text-[#ADADAD] mb-1 self-start">광고</span>
-            <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
-          </div>
         )}
       </div>
 

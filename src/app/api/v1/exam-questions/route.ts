@@ -46,10 +46,32 @@ export async function GET(req: NextRequest) {
   // 2. For each subject, query chapter_questions by subject_id column
   const subjects = await Promise.all(
     subjectList.map(async ({ id: subjectId, name }) => {
+      // 1) subject_id → course_id
+      const { data: courseRows } = await supabaseAdmin
+        .from('courses')
+        .select('id')
+        .eq('subject_id', subjectId)
+        .eq('certification_id', cert_id)
+
+      const courseIds = courseRows?.map((c) => c.id) ?? []
+      if (!courseIds.length) return { name, questions: [] }
+
+      // 2) course_id → chapter_id
+      const { data: chapterRows } = await supabaseAdmin
+        .from('chapters')
+        .select('id')
+        .in('course_id', courseIds)
+
+      const chapterIds = chapterRows?.map((c) => c.id) ?? []
+      if (!chapterIds.length) return { name, questions: [] }
+
+      // 3) chapter_id → 문제 조회
       const { data: questions } = await supabaseAdmin
         .from('chapter_questions')
-        .select('id, question, options, answer_index, explanation')
-        .eq('subject_id', subjectId)
+        .select('id, question, options, answer_index, explanation, exam_years, star_rating')
+        .in('chapter_id', chapterIds)
+        .not('answer_index', 'is', null)
+        .eq('question_type', 'basic')
 
       if (!questions?.length) return { name, questions: [] }
 
@@ -61,7 +83,9 @@ export async function GET(req: NextRequest) {
           question:     q.question,
           options:      Array.isArray(q.options) ? q.options : [],
           answer_index: q.answer_index,
-          explanation:  q.explanation ?? null,
+          explanation:  q.explanation  ?? null,
+          exam_years:   q.exam_years   ?? null,
+          star_rating:  q.star_rating  ?? null,
         })),
       }
     })

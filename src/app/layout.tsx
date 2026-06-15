@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     images: [
       {
-        url: '/og-image.png',
+        url: '/assets/icons/app/og_image_v2.png',
         width: 1200,
         height: 630,
         alt: 'Kinepia',
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: TITLE,
     description: DESCRIPTION,
-    images: ['/og-image.png'],
+    images: ['/assets/icons/app/og_image_v2.png'],
   },
 
   // 파비콘
@@ -61,23 +61,6 @@ export const metadata: Metadata = {
     ],
   },
 
-  // PWA
-  manifest: '/manifest.json',
-
-  // iOS PWA
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'black-translucent',
-    title: 'Kinepia',
-    startupImage: [
-      { url: '/icon-512.png' },
-    ],
-  },
-
-  // Android Chrome PWA (mobile-web-app-capable)
-  other: {
-    'mobile-web-app-capable': 'yes',
-  },
 }
 
 export const viewport = {

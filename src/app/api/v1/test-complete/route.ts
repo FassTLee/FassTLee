@@ -5,7 +5,7 @@ import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
 
-interface Record { questionId: string; correct: boolean }
+interface Record { questionId: string; correct: boolean; selected?: number; answer_index?: number }
 
 export async function POST(req: NextRequest) {
   if (!isSupabaseAdminConfigured) {
@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
       latest_score:    score,
       best_score:      newBestScore,
       test_attempts:   newTestAttempts,
+      total_questions: total,
       last_attempt_at: new Date().toISOString(),
       updated_at:      new Date().toISOString(),
     },
@@ -104,6 +105,20 @@ export async function POST(req: NextRequest) {
       )
     })
   )
+
+  // ── wrong_answers insert (오답 레코드만) ──────────────────────────
+  const wrongRecords = records.filter((r) => !r.correct)
+  if (wrongRecords.length > 0) {
+    await supabaseAdmin.from('wrong_answers').insert(
+      wrongRecords.map((r) => ({
+        user_id:         userId,
+        chapter_id:      chapterId,
+        question_id:     String(r.questionId),
+        selected_option: String(r.selected    ?? ''),
+        correct_option:  String(r.answer_index ?? ''),
+      }))
+    )
+  }
 
   return NextResponse.json({ ok: true, saved: true })
 }
