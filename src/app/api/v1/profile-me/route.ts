@@ -20,7 +20,7 @@ export async function GET() {
     return NextResponse.json({ name: null, email: null })
   }
 
-  const { data, error } = await supabaseAdmin
+  const { data } = await supabaseAdmin
     .from('profiles')
     .select('name, email, avatar_url, cert_type, selected_cert, exam_target_date, learning_style, code_popup_shown, access_code_used, survey_completed')
     .eq('id', userId)
