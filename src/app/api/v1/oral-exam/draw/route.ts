@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
@@ -8,6 +10,12 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: NextRequest) {
   if (!isSupabaseAdminConfigured) {
     return NextResponse.json({ questions: [] })
+  }
+
+  // ── 2026-06-16 수정: P0-4 인증 추가 — 비인증 문제 조회 가능 보안 이슈 수정 ──
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
   const { searchParams } = new URL(req.url)

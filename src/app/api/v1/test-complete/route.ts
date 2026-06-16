@@ -18,9 +18,12 @@ export async function POST(req: NextRequest) {
     chapterId: string; subjectId: string; records: Record[]; userId?: string
   }
 
-  // 서버 session 우선, 없으면 클라이언트 userId fallback
-  const userId = session?.user?.id ?? body.userId
-  if (!chapterId || !userId || !Array.isArray(records)) {
+  // ── 기존 코드 (body.userId fallback → IDOR 취약점) ──
+  // const userId = session?.user?.id ?? body.userId
+  // ── 2026-06-16 수정: P0-3 session만 신뢰, 비로그인 시 skip ──
+  const userId = session?.user?.id
+  if (!userId) return NextResponse.json({ ok: true, saved: false })
+  if (!chapterId || !Array.isArray(records)) {
     return NextResponse.json({ ok: true, saved: false })
   }
 

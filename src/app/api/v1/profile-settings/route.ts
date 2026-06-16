@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get('userId')
+export async function GET() {
+  // ── 2026-06-16 수정: P0-1 인증 추가 — IDOR 보안 이슈 수정 ──
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const userId = session.user.id
   if (!userId || !isSupabaseAdminConfigured) {
     return NextResponse.json({
       exam_target_date: null, cert_type: null, region: null,
@@ -34,9 +41,15 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  // ── 2026-06-16 수정: P0-1 인증 추가 ──
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const userId = session.user.id
+
   const body = await req.json()
   const {
-    userId,
     exam_target_date, cert_type, region, daily_study_hours,
     daily_study_time, daily_study_count, study_time_slot,
     push_enabled, selected_subjects, code_popup_shown,

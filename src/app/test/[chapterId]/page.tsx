@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import { ChevronLeft } from 'lucide-react'
 import { track } from '@vercel/analytics'
 import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
@@ -31,27 +30,17 @@ function cleanOption(opt: string | null | undefined): string {
     .trim()
 }
 
+// ── 2026-06-16 수정: P0-3 answer_index는 서버 API에서 더 이상 내려오지 않음 (explanation은 복구됨) ──
 interface Question {
   id: string
   question: string
   options: string[]
-  answer_index: number
   explanation: string | null
   image_url: string | null
   reference_text: string | null
   question_type: string | null
   exam_years: number[] | null
   star_rating: number | null
-}
-
-interface AnswerRecord {
-  questionId: string
-  question: string
-  options: string[]
-  answer_index: number
-  selected: number
-  correct: boolean
-  explanation: string | null
 }
 
 export default function TestPage() {
@@ -107,24 +96,13 @@ export default function TestPage() {
     return () => clearTimeout(timer)
   }, [reportUrl, countdown]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── 2026-06-16 수정: P0-3 Supabase 직접 호출 → API 전환 (answer_index 클라이언트 노출 차단) ──
   const fetchQuestions = async () => {
-    const { data: basicData } = await supabase
-      .from('chapter_questions')
-      .select('id, question, options, answer_index, explanation, image_url, reference_text, question_type, exam_years, star_rating')
-      .eq('chapter_id', chapterId)
-      .eq('question_type', 'basic')
-      .not('answer_index', 'is', null)
-
-    const { data: oralData } = await supabase
-      .from('chapter_questions')
-      .select('id, question, options, answer_index, explanation, image_url, reference_text, question_type, exam_years, star_rating')
-      .eq('chapter_id', chapterId)
-      .eq('question_type', 'oral')
-      .not('exam_years', 'is', null)
-      .neq('exam_years', '[]')
-
-    const basicQ = shuffle(basicData ?? []).slice(0, 5)
-    const oralQ  = shuffle(oralData  ?? []).slice(0, 5)
+    const res = await fetch(`/api/v1/chapter-test?chapterId=${chapterId}`)
+    if (!res.ok) { setLoading(false); return }
+    const { basic, oral }: { basic: Question[]; oral: Question[] } = await res.json()
+    const basicQ = shuffle(basic ?? []).slice(0, 5)
+    const oralQ  = shuffle(oral  ?? []).slice(0, 5)
     setQuestions([...basicQ, ...oralQ])
     track('chapter_test_started', { chapterId })
     setLoading(false)
@@ -152,32 +130,23 @@ export default function TestPage() {
   }
 
   const handleSubmit = () => {
-    const finalRecords: AnswerRecord[] = questions.map((q, idx) => {
-      const isOral = q.question_type === 'oral'
-      const sel    = answers[idx] ?? -1
-      return {
-        questionId:    q.id,
-        question:      q.question,
-        options:       q.options,
-        answer_index:  q.answer_index,
-        selected:      sel,
-        correct:       isOral ? sel === 0 : sel === q.answer_index,
-        explanation:   q.explanation ?? '',
-        question_type: q.question_type,
-        user_answer:   q.question_type === 'oral' ? (userAnswers[q.id] ?? '') : '',
-      }
-    })
+    // ── 2026-06-16 수정: P0-3 클라이언트 채점 제거 — selected만 서버로 전송 ──
+    const finalRecords = questions.map((q, idx) => ({
+      questionId: q.id,
+      selected:   answers[idx] ?? -1,
+      user_answer: q.question_type === 'oral' ? (userAnswers[q.id] ?? '') : '',
+      question_type: q.question_type,
+    }))
     localStorage.setItem(RESULT_KEY, JSON.stringify({ chapterId, records: finalRecords, userAnswers }))
-    const correctCount = finalRecords.filter((r) => r.correct).length
-    const score = Math.round((correctCount / finalRecords.length) * 100)
-    track('chapter_test_completed', { chapterId, score })
+    track('chapter_test_completed', { chapterId })
     // 3. 챕터 테스트 완료 로깅 (chapter_session_logs)
     if (sessionId) {
       fetch('/api/v1/chapter-session-log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: session?.user?.id ?? '',
+          // ── 기존 코드 (죽은 파라미터 제거) ──
+          // userId: session?.user?.id ?? '',
           chapterId,
           action: 'exit',
           sessionId,
@@ -194,8 +163,9 @@ export default function TestPage() {
       body: JSON.stringify({
         chapterId,
         subjectId: localStorage.getItem('kinepia_current_subject_id') ?? '',
-        records: finalRecords.map((r) => ({ questionId: r.questionId, correct: r.correct, selected: r.selected, answer_index: r.answer_index })),
-        userId: session?.user?.id ?? '',
+        records: finalRecords,
+        // ── 기존 코드 (죽은 파라미터 제거) ──
+        // userId: session?.user?.id ?? '',
       }),
     }).catch(() => {})
     // 4. 챕터 1 테스트 완료 시 코드 팝업 트리거
@@ -321,14 +291,6 @@ export default function TestPage() {
     )
   }
 
-  // ── 2026-06-15 수정: 문제 0개 챕터 크래시 방어 ──
-  if (!loading && questions.length === 0) {
-    return (
-      <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <p className="text-[14px] text-[#ADADAD]">준비된 문제가 없습니다.</p>
-      </div>
-    )
-  }
   const q        = questions[current]
   const isOral   = q.question_type === 'oral'
   const progress = ((current + 1) / questions.length) * 100

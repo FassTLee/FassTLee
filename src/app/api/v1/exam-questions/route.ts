@@ -66,11 +66,13 @@ export async function GET(req: NextRequest) {
       if (!chapterIds.length) return { name, questions: [] }
 
       // 3) chapter_id → 문제 조회
+      // ── 2026-06-16 수정: P0-2 answer_index 제거 — 클라이언트 정답 노출 차단 (P1-12에서 서버사이드 채점으로 전환 예정) ──
       const { data: questions } = await supabaseAdmin
         .from('chapter_questions')
-        .select('id, question, options, answer_index, explanation, exam_years, star_rating')
+        .select('id, question, options, explanation, exam_years, star_rating')
         .in('chapter_id', chapterIds)
-        .not('answer_index', 'is', null)
+        // ── 기존 필터 유지하되 answer_index 의존 제거 ──
+        .not('exam_years', 'is', null)
         .eq('question_type', 'basic')
 
       if (!questions?.length) return { name, questions: [] }
@@ -82,7 +84,8 @@ export async function GET(req: NextRequest) {
           id:           q.id,
           question:     q.question,
           options:      Array.isArray(q.options) ? q.options : [],
-          answer_index: q.answer_index,
+          // ── 기존 코드 (answer_index 제거) ──
+          // answer_index: q.answer_index,
           explanation:  q.explanation  ?? null,
           exam_years:   q.exam_years   ?? null,
           star_rating:  q.star_rating  ?? null,

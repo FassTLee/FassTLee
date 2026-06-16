@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
@@ -12,9 +14,13 @@ async function getProfileId(userId: string): Promise<string | null> {
   return data?.id ?? null
 }
 
-export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get('userId')
-  if (!userId) return NextResponse.json({ goals: [] })
+export async function GET() {
+  // ── 2026-06-16 수정: P0-1 인증 추가 — IDOR 보안 이슈 수정 ──
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const userId = session.user.id
   if (!isSupabaseConfigured) return NextResponse.json({ goals: [] })
 
   const profileId = await getProfileId(userId)
@@ -30,9 +36,15 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  // ── 2026-06-16 수정: P0-1 인증 추가 — IDOR 보안 이슈 수정 ──
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const userId = session.user.id
+
   const body = await req.json()
-  const { userId, cert_type, exam_target_date } = body
-  if (!userId) return NextResponse.json({ ok: true, saved: false })
+  const { cert_type, exam_target_date } = body
   if (!isSupabaseConfigured) return NextResponse.json({ ok: true, saved: false })
   if (!cert_type || !exam_target_date) return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
 
@@ -50,9 +62,15 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  // ── 2026-06-16 수정: P0-1 인증 추가 — IDOR 보안 이슈 수정 ──
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const userId = session.user.id
+
   const body = await req.json()
-  const { userId, id } = body
-  if (!userId) return NextResponse.json({ ok: true })
+  const { id } = body
   if (!isSupabaseConfigured) return NextResponse.json({ ok: true })
 
   const profileId = await getProfileId(userId)

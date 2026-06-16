@@ -18,13 +18,14 @@ interface UserCertification {
   last_studied_at: string | null
 }
 
-// ── GET /api/v1/user-certifications?userId=<uuid> ─────────────────
-export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get('userId')
-
-  if (!userId) {
-    return NextResponse.json({ data: [] })
+// ── GET /api/v1/user-certifications ────────────────────────────────
+export async function GET() {
+  // ── 2026-06-16 수정: P0-1 인증 추가 — IDOR 보안 이슈 수정 ──
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
+  const userId = session.user.id
 
   if (!isSupabaseAdminConfigured) {
     return NextResponse.json({ data: [] })
@@ -51,8 +52,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
   }
 
+  // ── 2026-06-16 수정: P0-1 인증 추가 ──
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const userId = session.user.id
+
   let body: {
-    userId: string
     cert_id: string
     cert_label: string
     subjects: string[]
@@ -65,10 +72,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { userId, cert_id, cert_label, subjects, exam_type } = body
+  const { cert_id, cert_label, subjects, exam_type } = body
 
-  if (!userId || !cert_id) {
-    return NextResponse.json({ error: 'userId and cert_id are required' }, { status: 400 })
+  if (!cert_id) {
+    return NextResponse.json({ error: 'cert_id is required' }, { status: 400 })
   }
 
   // 동일 userId + cert_id + exam_type 중복 확인
@@ -175,16 +182,23 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
   }
 
-  let body: { userId: string; certId: string }
+  // ── 2026-06-16 수정: P0-1 인증 추가 ──
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const userId = session.user.id
+
+  let body: { certId: string }
   try {
     body = await req.json()
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { userId, certId } = body
-  if (!userId || !certId) {
-    return NextResponse.json({ error: 'userId and certId are required' }, { status: 400 })
+  const { certId } = body
+  if (!certId) {
+    return NextResponse.json({ error: 'certId is required' }, { status: 400 })
   }
 
   const { error } = await supabaseAdmin

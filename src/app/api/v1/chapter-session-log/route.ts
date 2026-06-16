@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 export const dynamic = 'force-dynamic'
 
@@ -6,10 +8,19 @@ export async function POST(req: NextRequest) {
   if (!isSupabaseAdminConfigured) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
   }
-  try {
-    const { userId, chapterId, action, sessionId, exitPoint, isCompleted, pageType } = await req.json()
 
-    if (!userId || !chapterId || !action) {
+  // ── 2026-06-16 수정: P0-1 인증 추가 — 행동 데이터 무결성 보호 (B안: 세션 없으면 skip) ──
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return NextResponse.json({ ok: true, skipped: true })
+  }
+
+  try {
+    // ── 기존 코드 (body userId → session userId로 대체) ──
+    // const { userId, chapterId, ... } = await req.json()
+    const { chapterId, action, sessionId, exitPoint, isCompleted, pageType } = await req.json()
+
+    if (!chapterId || !action) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -19,7 +30,7 @@ export async function POST(req: NextRequest) {
       const { error } = await supabaseAdmin
         .from('chapter_session_logs')
         .insert({
-          user_id:       userId,
+          user_id:       session.user.id,
           chapter_id:    chapterId,
           session_id:    newSessionId,
           session_start: new Date().toISOString(),
@@ -46,7 +57,7 @@ export async function POST(req: NextRequest) {
           exit_point:   exitPoint ?? null,
         })
         .eq('session_id', sessionId)
-        .eq('user_id', userId)
+        .eq('user_id', session.user.id)
       if (error) {
         console.error('[chapter-session-log] exit update error:', error)
         return NextResponse.json({ error: 'DB error' }, { status: 500 })

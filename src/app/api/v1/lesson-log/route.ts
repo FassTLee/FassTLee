@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
@@ -8,17 +10,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
   }
 
-  try {
-    const { userId, chapterId, slideId, durationSeconds, slideIndex } = await req.json()
+  // ── 2026-06-16 수정: P0-1 인증 추가 — 행동 데이터 무결성 보호 (B안: 세션 없으면 skip) ──
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return NextResponse.json({ ok: true, skipped: true })
+  }
 
-    if (!userId || !chapterId || !slideId) {
+  try {
+    // ── 기존 코드 (body userId → session userId로 대체) ──
+    // const { userId, chapterId, slideId, durationSeconds, slideIndex } = await req.json()
+    const { chapterId, slideId, durationSeconds, slideIndex } = await req.json()
+
+    if (!chapterId || !slideId) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
     const { error } = await supabaseAdmin
       .from('lesson_slide_logs')
       .insert({
-        user_id: userId,
+        user_id: session.user.id,
         chapter_id: chapterId,
         slide_index: slideIndex ?? 0,
         slide_retention_time: durationSeconds ?? 0,

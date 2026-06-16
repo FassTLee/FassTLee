@@ -1,10 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(req: NextRequest) {
-  const userId = req.nextUrl.searchParams.get('userId')
+export async function GET() {
+  // ── 2026-06-16 수정: P0-1 인증 추가 — IDOR 타인 데이터 조회 가능 보안 이슈 수정 ──
+  const session = await getServerSession(authOptions)
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const userId = session.user.id
+  // ── 기존 코드 (쿼리 파라미터 userId → session userId로 대체) ──
+  // const userId = req.nextUrl.searchParams.get('userId')
   if (!userId) {
     return NextResponse.json({ chapter_stats: [], question_stats: [] })
   }
@@ -12,9 +21,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ chapter_stats: [], question_stats: [] })
   }
 
-  console.log('[report] userId:', userId)
-
-  const [{ data: chapterStats, error: chapterErr }, { data: questionStats, error: questionErr }] = await Promise.all([
+  const [{ data: chapterStats }, { data: questionStats }] = await Promise.all([
     supabaseAdmin
       .from('chapter_stats')
       // ── 2026-06-13 수정: order 기준 컬럼 updated_at select에 추가 ──
@@ -30,11 +37,6 @@ export async function GET(req: NextRequest) {
       .eq('user_id', userId)
       .order('wrong_rate', { ascending: false }),
   ])
-
-  console.log('[report] chapterStats count:', chapterStats?.length, '| error:', chapterErr)
-  console.log('[report] raw data:', JSON.stringify(chapterStats?.map(s => s.chapter_id)))
-  console.log('[report] full data:', JSON.stringify(chapterStats))
-  console.log('[report] questionStats count:', questionStats?.length, '| error:', questionErr)
 
   return NextResponse.json({
     chapter_stats:  chapterStats  ?? [],
