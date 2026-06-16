@@ -132,7 +132,7 @@ export default function LessonPage() {
           sessionId:   lessonSessionId,
           pageType:    'lesson',
           isCompleted: showComplete,
-          exitPoint:   showMiniQuiz ? 'mini_quiz' : `slide_${slideIndex}`,
+          exitPoint:   showMiniQuiz ? 'mini_quiz' : 'slide',
         })
       )
     }

@@ -63,6 +63,39 @@ export default function TestPage() {
   const [revealedAnswers, setRevealedAnswers] = useState<Set<string>>(new Set())
   const [sessionId, setSessionId] = useState<string | null>(null)
 
+  // ── 2026-06-16 수정: 이탈 시 exit 누락 방지 — sendBeacon 추가 ──
+  useEffect(() => {
+    if (!sessionId || !session?.user?.id) return
+    const handleUnload = () => {
+      navigator.sendBeacon(
+        '/api/v1/chapter-session-log',
+        JSON.stringify({
+          chapterId,
+          action:      'exit',
+          sessionId,
+          isCompleted: false,
+          exitPoint:   'unload',
+          pageType:    'test',
+        })
+      )
+    }
+    window.addEventListener('beforeunload', handleUnload)
+    return () => window.removeEventListener('beforeunload', handleUnload)
+  }, [sessionId, session?.user?.id, chapterId])
+
+  // ── 2026-06-16 수정: 브라우저 뒤로가기 감지 → 이탈 확인 팝업 표시 ──
+  useEffect(() => {
+    if (!questions.length) return
+    const handlePopState = (e: PopStateEvent) => {
+      e.preventDefault()
+      history.pushState(null, '', window.location.href)
+      setShowExitConfirm(true)
+    }
+    history.pushState(null, '', window.location.href)
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [questions.length])
+
   useEffect(() => {
     if (status === 'loading') return
     if (status === 'unauthenticated') { router.replace('/landing'); return }
@@ -337,7 +370,30 @@ export default function TestPage() {
                 계속하기
               </button>
               <button
-                onClick={() => router.push(`/lesson/${chapterId}`)}
+                // ── 기존 코드 ──
+                // onClick={() => router.push(`/lesson/${chapterId}`)}
+                // ── 2026-06-16 수정: exit 로그 기록 + 챕터 목록으로 이동 ──
+                onClick={async () => {
+                  if (sessionId) {
+                    await fetch('/api/v1/chapter-session-log', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        chapterId,
+                        action:      'exit',
+                        sessionId,
+                        isCompleted: false,
+                        exitPoint:   'user_exit',
+                        pageType:    'test',
+                      }),
+                    }).catch(() => {})
+                  }
+                  // ── 더미 히스토리 엔트리 제거 후 이동 ──
+                  const subjectId = localStorage.getItem('kinepia_current_subject_id')
+                  const target = subjectId ? `/chapters/${subjectId}` : '/trainer/dashboard'
+                  history.replaceState(null, '', target)
+                  router.replace(target)
+                }}
                 className="flex-1 py-3 rounded-xl bg-[#E24B4A] text-white text-[14px] font-bold"
               >
                 나가기
