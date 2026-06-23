@@ -156,7 +156,8 @@ export default function HomeTab() {
         {/* D-Day + 스트릭 */}
         <div className="grid grid-cols-2 gap-2.5">
           {/* D-Day 카드 */}
-          {examDiff !== null ? (
+          {examDiff !== null && examDiff >= -7 ? (
+            /* 시험 전 ~ 시험 직후 7일: 검정 활성 카드 (D-{N} / D-Day / D+{N}) */
             <button
               onClick={() => setShowDDayModal(true)}
               className="bg-[#1A1A1A] rounded-2xl px-4 py-3 text-left"
@@ -173,12 +174,15 @@ export default function HomeTab() {
               </p>
             </button>
           ) : (
+            /* 미설정 또는 시험 후 7일 초과(만료): 점선 카드로 다음 시험일 설정 유도 */
             <button
               onClick={() => setShowDDayModal(true)}
               className="bg-[#F5F5F3] border border-dashed border-[#DADADA] rounded-2xl px-4 py-3 text-left"
             >
               <p className="text-[10px] text-[#ADADAD] font-bold mb-0.5">시험까지</p>
-              <p className="text-[13px] font-bold text-[#ADADAD]">시험일 설정하기</p>
+              <p className="text-[13px] font-bold text-[#ADADAD]">
+                {examDiff !== null ? '다음 시험일을 설정하세요' : '시험일 설정하기'}
+              </p>
               <p className="text-[10px] text-[#ADADAD]/60 mt-0.5">탭하여 추가</p>
             </button>
           )}
