@@ -157,7 +157,8 @@ export async function PUT(req: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  const { certOrder } = await req.json()
+  const userId = session.user.id
+  const { certOrder, subjectOrders } = await req.json()
   if (!Array.isArray(certOrder)) {
     return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
   }
@@ -166,13 +167,56 @@ export async function PUT(req: NextRequest) {
       .from('user_certifications')
       .update({ order_index: idx })
       .eq('cert_id', certId)
-      .eq('user_id', session.user.id)
+      .eq('user_id', userId)
   )
   const results = await Promise.all(updates)
   const failed = results.filter(r => r.error)
   if (failed.length > 0) {
     return NextResponse.json({ error: 'Update failed' }, { status: 500 })
   }
+
+  // ── 2026-06-24 추가: 과목(subjects) 재정렬 순서 DB 반영 ──
+  // 안전장치: 기존 subjects와 동일한 원소 집합일 때만 update (순서 변경만 허용)
+  if (subjectOrders && typeof subjectOrders === 'object') {
+    const { data: existingCerts, error: fetchError } = await supabaseAdmin
+      .from('user_certifications')
+      .select('cert_id, subjects')
+      .eq('user_id', userId)
+      .eq('is_active', true)
+
+    if (fetchError) {
+      console.error('[user-certifications PUT] subjects fetch error:', fetchError)
+      return NextResponse.json({ error: 'Update failed' }, { status: 500 })
+    }
+
+    // 순서 무관 집합 동일성 비교 (원소 추가/삭제 없이 순서만 바뀐 경우에만 허용)
+    const sameSet = (a: string[], b: string[]) => {
+      if (a.length !== b.length) return false
+      const sortedA = [...a].sort()
+      const sortedB = [...b].sort()
+      return sortedA.every((v, i) => v === sortedB[i])
+    }
+
+    const subjectUpdates = (existingCerts ?? [])
+      .map((row: { cert_id: string; subjects: string[] }) => {
+        const newOrder = subjectOrders[row.cert_id]
+        // 빈 배열 / 미존재 / 집합 불일치 → skip (순서 변경만 허용)
+        if (!Array.isArray(newOrder) || newOrder.length === 0) return null
+        if (!sameSet(row.subjects ?? [], newOrder)) return null
+        return supabaseAdmin
+          .from('user_certifications')
+          .update({ subjects: newOrder })
+          .eq('cert_id', row.cert_id)
+          .eq('user_id', userId)
+      })
+      .filter((u): u is NonNullable<typeof u> => u !== null)
+
+    const subjectResults = await Promise.all(subjectUpdates)
+    if (subjectResults.some(r => r.error)) {
+      return NextResponse.json({ error: 'Update failed' }, { status: 500 })
+    }
+  }
+
   return NextResponse.json({ ok: true })
 }
 

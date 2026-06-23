@@ -1255,14 +1255,16 @@ function DashboardContent() {
       const res = await fetch('/api/v1/user-certifications', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ certOrder }),
+        body: JSON.stringify({ certOrder, subjectOrders: subjectOrderByCert }),
       })
       if (!res.ok) throw new Error('Update failed')
       // ── 2026-06-13 수정: 배열 순서 + order_index 값 모두 갱신 ──
+      // ── 2026-06-24 수정: subjects 순서도 로컬 동기화 (DB 반영분 미러링) ──
       setUserCerts(prev =>
         prev.map(cert => ({
           ...cert,
-          order_index: certOrder.indexOf(cert.cert_id)
+          order_index: certOrder.indexOf(cert.cert_id),
+          subjects: subjectOrderByCert[cert.cert_id] ?? cert.subjects,
         }))
       )
       // ── 기존 코드 (배열 순서만 변경 — order_index 값 미갱신) ──
