@@ -114,7 +114,7 @@ export default function ReviewPage() {
               ) : (
                 <>
                   <div className="space-y-1.5 mb-3">
-                    {r.options.map((opt, oi) => (
+                    {(r.options ?? []).map((opt, oi) => (
                       <div
                         key={oi}
                         className={`px-3 py-2 rounded-xl text-[12px] ${
