@@ -51,13 +51,16 @@ export default function ChaptersPage() {
   const [loading, setLoading] = useState(true)
   const [fetchError, setFetchError] = useState<string | null>(null)
   const [accessCodeUsed, setAccessCodeUsed] = useState<string | null>(null)
+  // ── 2026-06-24 추가 (P0-8): 만료 코드 접근 차단용 만료일 ──
+  const [codeExpiresAt, setCodeExpiresAt] = useState<string | null>(null)
   const [showCodePopup, setShowCodePopup]   = useState(false)
   const [codeInput, setCodeInput]           = useState('')
   const [codeError, setCodeError]           = useState<string | null>(null)
   const [codeSubmitting, setCodeSubmitting] = useState(false)
 
 
-  const isSubscribed = !!accessCodeUsed
+  // ── 2026-06-24 수정 (P0-8): 코드 존재 + (만료일 없으면 무기한 허용 OR 만료일 미래)일 때만 구독 인정 ──
+  const isSubscribed = !!accessCodeUsed && (!codeExpiresAt || new Date(codeExpiresAt) > new Date())
 
   // ── 챕터 목록 + 통계 fetch: 페이지 진입마다 항상 실행 ─────────────────
   useEffect(() => {
@@ -66,7 +69,10 @@ export default function ChaptersPage() {
     // access_code_used 확인
     fetch('/api/v1/profile-me', { cache: 'no-store' })
       .then((r) => r.json())
-      .then((pm) => { if (pm.accessCodeUsed) setAccessCodeUsed(pm.accessCodeUsed) })
+      .then((pm) => {
+        if (pm.accessCodeUsed) setAccessCodeUsed(pm.accessCodeUsed)
+        if (pm.codeExpiresAt) setCodeExpiresAt(pm.codeExpiresAt)
+      })
       .catch(() => {})
     fetchData()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
