@@ -172,3 +172,20 @@ export interface OralExamRegistration {
   is_completed: boolean
   created_at: string
 }
+
+// ── 2026-06-24 추가 (P0-9): 이용 코드 결과 타입 + 날짜 포맷 ──
+export interface CodeInfo {
+  code: string
+  expiresAt: string | null
+}
+export interface CodeResultData {
+  status: 'upgraded' | 'kept' | 'duplicate'
+  enteredCode: CodeInfo
+  activeCode: CodeInfo
+  prevCode: CodeInfo | null
+}
+export const fmtCodeDate = (s: string | null | undefined): string => {
+  if (!s) return ''
+  const d = new Date(s)
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
+}

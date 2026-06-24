@@ -12,6 +12,7 @@ import ClassroomTab from './_components/ClassroomTab'
 import ExamTab from './_components/ExamTab'
 import ProfileTab from './_components/ProfileTab'
 import DashboardModals from './_components/DashboardModals'
+import type { CodeResultData } from './_components/constants'
 
 type Tab = 'home' | 'classroom' | 'exam' | 'profile'
 
@@ -375,6 +376,8 @@ function DashboardContent() {
   const [_accessCodeUsed, setAccessCodeUsed]     = useState<string | null>(null)
   // ── 2026-06-15 수정: 이용코드 만료일 state 추가 ──
   const [_codeExpiresAt, setCodeExpiresAt] = useState<string | null>(null)
+  // ── 2026-06-24 추가 (P0-9): 코드 입력 결과 안내 팝업 ──
+  const [codeResult, setCodeResult] = useState<CodeResultData | null>(null)
 
   /* ── 학습 유형 검사 팝업 ─────────────────────────────────────────── */
   // undefined = profile-me 로딩 중, null = 스타일 미설정(팝업 표시), string = 설정됨
@@ -1166,8 +1169,14 @@ function DashboardContent() {
       })
       const data = await res.json()
       if (!res.ok) { setCodeError(data.error ?? '오류가 발생했습니다'); return }
-      setAccessCodeUsed(codeInput.trim().toUpperCase())
+      // ── 2026-06-24 (P0-9): 활성 코드 동기화 + 결과 안내 팝업 ──
+      if (data.activeCode) {
+        setAccessCodeUsed(data.activeCode.code)
+        setCodeExpiresAt(data.activeCode.expiresAt ?? null)
+      }
+      setCodeResult(data as CodeResultData)
       setShowCodePopup(false)
+      setCodeInput('')
     } catch {
       setCodeError('네트워크 오류가 발생했습니다')
     } finally {
@@ -1430,6 +1439,7 @@ function DashboardContent() {
     showCodePopup, setShowCodePopup, codeInput, setCodeInput, codeError, setCodeError,
     codeSubmitting, setCodeSubmitting, _accessCodeUsed, setAccessCodeUsed,
     _codeExpiresAt, setCodeExpiresAt,
+    codeResult, setCodeResult,
     profileLearningStyle, setProfileLearningStyle,
     dbRequiredNames, setDbRequiredNames, dbGoalSubjects, setDbGoalSubjects,
     examDateInput, setExamDateInput, certTypeInput, setCertTypeInput,

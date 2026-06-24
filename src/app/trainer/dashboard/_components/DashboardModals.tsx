@@ -4,6 +4,7 @@ import { X, Trash2, Calendar, Plus } from 'lucide-react'
 import { signIn } from 'next-auth/react'
 import PhoneRegisterModal from '@/components/PhoneRegisterModal'
 import { useDashboard } from './DashboardContext'
+import { fmtCodeDate } from './constants'
 
 const EXAM_DATES = [
   { round: 1, date: '5월 2일 (토)',  dateValue: '2026-05-02' },
@@ -52,6 +53,7 @@ export default function DashboardModals() {
     showCodePopup, codeInput, setCodeInput,
     codeError, setCodeError, codeSubmitting,
     handleCodeSubmit, dismissCodePopup,
+    codeResult, setCodeResult,
     showDDayModal, setShowDDayModal,
     ddayGoals, ddayNewCert, setDdayNewCert,
     ddayNewDate, setDdayNewDate, savingDDay,
@@ -695,6 +697,73 @@ export default function DashboardModals() {
               className="w-full py-2.5 mt-2 text-[13px] text-[#ADADAD] text-center"
             >
               나중에 입력할게요
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── 2026-06-24 (P0-9): 코드 입력 결과 안내 팝업 ── */}
+      {codeResult && (
+        <div className="fixed inset-0 bg-black/60 z-[71] flex items-center justify-center px-6">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6 text-center">
+            {codeResult.status === 'upgraded' && (
+              <>
+                <div className="text-[44px] mb-3">🎉</div>
+                <h2 className="text-[18px] font-black text-[#1A1A1A] mb-2">코드가 변경되었습니다</h2>
+                <p className="text-[13px] text-[#6B6B6B] mb-4">더 오래 이용할 수 있는 코드로 변경되었어요.</p>
+                <div className="bg-[#F5F5F3] rounded-2xl p-4 text-left space-y-2 mb-5">
+                  {codeResult.prevCode && (
+                    <div className="flex items-center justify-between text-[12px]">
+                      <span className="text-[#ADADAD]">이전</span>
+                      <span className="text-[#ADADAD] line-through">
+                        {codeResult.prevCode.code}{codeResult.prevCode.expiresAt && ` · ${fmtCodeDate(codeResult.prevCode.expiresAt)}`}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between text-[12px]">
+                    <span className="text-[#1A1A1A] font-bold">현재</span>
+                    <span className="text-[#00A651] font-bold">
+                      {codeResult.activeCode.code}{codeResult.activeCode.expiresAt && ` · ${fmtCodeDate(codeResult.activeCode.expiresAt)}까지`}
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
+            {codeResult.status === 'kept' && (
+              <>
+                <div className="text-[44px] mb-3">✅</div>
+                <h2 className="text-[18px] font-black text-[#1A1A1A] mb-2">현재 코드가 더 유효합니다</h2>
+                <p className="text-[13px] text-[#6B6B6B] mb-4">기존 코드의 이용 기간이 더 길어 그대로 유지했어요.</p>
+                <div className="bg-[#F5F5F3] rounded-2xl p-4 text-left space-y-2 mb-5">
+                  <div className="flex items-center justify-between text-[12px]">
+                    <span className="text-[#1A1A1A] font-bold">현재</span>
+                    <span className="text-[#00A651] font-bold">
+                      {codeResult.activeCode.code}{codeResult.activeCode.expiresAt && ` · ${fmtCodeDate(codeResult.activeCode.expiresAt)}까지`}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-[12px]">
+                    <span className="text-[#ADADAD]">입력</span>
+                    <span className="text-[#ADADAD]">
+                      {codeResult.enteredCode.code}{codeResult.enteredCode.expiresAt && ` · ${fmtCodeDate(codeResult.enteredCode.expiresAt)}`}
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
+            {codeResult.status === 'duplicate' && (
+              <>
+                <div className="text-[44px] mb-3">ℹ️</div>
+                <h2 className="text-[18px] font-black text-[#1A1A1A] mb-2">이미 사용 중인 코드입니다</h2>
+                <p className="text-[13px] text-[#6B6B6B] mb-5">
+                  {codeResult.enteredCode.code} 코드는 이미 등록되어 있어요.
+                </p>
+              </>
+            )}
+            <button
+              onClick={() => setCodeResult(null)}
+              className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-2xl text-[15px] font-bold"
+            >
+              확인
             </button>
           </div>
         </div>

@@ -11,6 +11,7 @@ import {
   CERT_LABELS,
   SUBJECT_META,
   CERT_EXAM_DATES,
+  fmtCodeDate,
 } from './constants'
 
 // ══════════════════════════════════════════════════════════════════
@@ -181,12 +182,16 @@ export default function ProfileTab() {
               ) : (
                 // 이용 중인 경우
                 <div>
-                  <p className="text-[12px] text-[#00A651] font-bold mb-0.5">✓ 코드 등록 완료 ({_accessCodeUsed})</p>
-                  {_codeExpiresAt && (
-                    <p className="text-[11px] text-[#ADADAD]">
-                      {new Date(_codeExpiresAt).toLocaleDateString('ko-KR')} 까지 이용 가능
-                    </p>
-                  )}
+                  <p className="text-[12px] text-[#00A651] font-bold mb-0.5">✓ 코드 등록 완료</p>
+                  <p className="text-[12px] font-bold text-[#1A1A1A] mb-3">
+                    {_accessCodeUsed}{_codeExpiresAt && ` · ${fmtCodeDate(_codeExpiresAt)}까지`}
+                  </p>
+                  <button
+                    onClick={() => setShowCodePopup(true)}
+                    className="text-[12px] font-bold text-[#00A651] border border-[#00A651]/30 bg-[#00A651]/5 px-3 py-2 rounded-xl"
+                  >
+                    새 코드 입력
+                  </button>
                 </div>
               )
             ) : (

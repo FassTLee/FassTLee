@@ -11,6 +11,7 @@ import type {
   TodayChapter,
   UserCertification,
   OralExamRegistration,
+  CodeResultData,
 } from './constants'
 
 type Dispatch<T> = React.Dispatch<React.SetStateAction<T>>
@@ -183,6 +184,8 @@ export interface DashboardContextType {
   setAccessCodeUsed: Dispatch<string | null>
   _codeExpiresAt: string | null
   setCodeExpiresAt: Dispatch<string | null>
+  codeResult: CodeResultData | null
+  setCodeResult: Dispatch<CodeResultData | null>
 
   /* ── 학습 유형 검사 팝업 ─────────────────────────────────────────── */
   profileLearningStyle: string | null | undefined

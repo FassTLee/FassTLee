@@ -29,12 +29,20 @@ export async function GET() {
   // ── 기존 코드 (운영 환경 console.log 제거) ──
   // console.log('[profile-me] data:', data, '| error:', error)
 
-  // ── 2026-06-15 수정: 이용코드 만료일 조회 추가 ──
-  const { data: codeData } = await supabaseAdmin
+  // ── 2026-06-24 수정 (P0-9): 활성 코드 = 만료일 가장 늦은 것 자동 선택 ──
+  const { data: codeRows } = await supabaseAdmin
     .from('user_access_codes')
-    .select('access_codes(expires_at)')
+    .select('access_codes(code, expires_at)')
     .eq('user_id', userId)
-    .single()
+
+  type CodeRow = { access_codes: { code: string; expires_at: string | null } | null }
+  const codeList = ((codeRows ?? []) as unknown as CodeRow[])
+    .map(r => r.access_codes)
+    .filter((c): c is { code: string; expires_at: string | null } => !!c)
+  const expVal = (e: string | null) => (e ? new Date(e).getTime() : Infinity)
+  const activeCodeRow = codeList.length > 0
+    ? codeList.reduce((best, cur) => (expVal(cur.expires_at) > expVal(best.expires_at) ? cur : best))
+    : null
 
   // cert_id → cert_label 변환 맵
   const CERT_ID_TO_LABEL: Record<string, string> = {
@@ -58,9 +66,9 @@ export async function GET() {
     examDate:      data?.exam_target_date ?? null,
     learningStyle:    data?.learning_style    ?? null,
     codePopupShown:   data?.code_popup_shown  ?? null,
-    accessCodeUsed:   data?.access_code_used  ?? null,
-    // ── 2026-06-15 수정: 이용코드 만료일 반환 추가 ──
-    codeExpiresAt:    (codeData?.access_codes as { expires_at?: string } | null)?.expires_at ?? null,
+    accessCodeUsed:   activeCodeRow?.code        ?? data?.access_code_used ?? null,
+    // ── 2026-06-24 수정 (P0-9): 활성 코드 만료일 ──
+    codeExpiresAt:    activeCodeRow?.expires_at  ?? null,
     surveyCompleted:  data?.survey_completed  ?? false,
   })
 }
