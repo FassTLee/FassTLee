@@ -12,7 +12,7 @@ interface QuestionRecord {
   id: string
   question: string
   options: string[]
-  answer_index: number
+  answer_index: number[]
   selected: number | null
   explanation: string | null
 }
@@ -175,7 +175,7 @@ export default function ExamReportPage() {
             <div className="space-y-2">
               {subjects.map((sub, idx) => {
                 const wrong = sub.questions.filter(
-                  (q) => q.selected !== null && q.selected !== q.answer_index
+                  (q) => q.selected !== null && q.selected !== q.answer_index?.[0]
                 )
                 const isOpen = expandedSubject === idx
 
@@ -217,7 +217,7 @@ export default function ExamReportPage() {
                                 <div
                                   key={oi}
                                   className={`px-3 py-2 rounded-xl text-[12px] ${
-                                    oi === q.answer_index
+                                    q.answer_index?.includes(oi)
                                       ? 'bg-[#63992215] text-[#639922] font-semibold'
                                       : oi === q.selected
                                       ? 'bg-[#E24B4A10] text-[#E24B4A] line-through'

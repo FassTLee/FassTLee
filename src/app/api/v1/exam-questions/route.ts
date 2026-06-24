@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
     .filter((s): s is { id: string; name: string } => s !== null)
     .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
 
-  // 2. For each subject, query chapter_questions by subject_id column
+  // 2. For each subject, query chapter_cards by subject_id column (content_type='exam', question_format='multiple_choice')
   const subjects = await Promise.all(
     subjectList.map(async ({ id: subjectId, name }) => {
       // 1) subject_id → course_id
@@ -68,12 +68,13 @@ export async function GET(req: NextRequest) {
       // 3) chapter_id → 문제 조회
       // ── 2026-06-16 수정: P0-2 answer_index 제거 — 클라이언트 정답 노출 차단 (P1-12에서 서버사이드 채점으로 전환 예정) ──
       const { data: questions } = await supabaseAdmin
-        .from('chapter_questions')
+        .from('chapter_cards')
         .select('id, question, options, explanation, exam_years, star_rating')
         .in('chapter_id', chapterIds)
         // ── 기존 필터 유지하되 answer_index 의존 제거 ──
         .not('exam_years', 'is', null)
-        .eq('question_type', 'basic')
+        .eq('content_type', 'exam')
+        .eq('question_format', 'multiple_choice')
 
       if (!questions?.length) return { name, questions: [] }
 

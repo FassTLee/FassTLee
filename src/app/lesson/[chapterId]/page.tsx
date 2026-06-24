@@ -24,10 +24,11 @@ interface Question {
   id: string
   question: string
   options: string[]
-  answer_index: number | null
+  answer_index: number[] | null
   explanation: string | null
   difficulty?: string | null
-  question_type?: string | null
+  content_type?: string | null
+  question_format?: string | null
   image_url?: string | null
   reference_text?: string | null
   key_points?: string[] | null
@@ -42,7 +43,8 @@ interface Slide {
   reference_text: string | null
   exam_years: number[] | null
   star_rating: number | null
-  question_type: string | null
+  content_type: string | null
+  question_format: string | null
 }
 
 interface MiniQ {
@@ -208,8 +210,8 @@ export default function LessonPage() {
   const fetchData = async () => {
     const [{ data: ch }, { data: qs }] = await Promise.all([
       supabase.from('chapters').select('id, title, course_id, video_url, audio_url, image_url').eq('id', chapterId).single(),
-      supabase.from('chapter_questions')
-        .select('id, chapter_id, question, options, answer_index, explanation, order_index, question_type, image_url, reference_text, key_points, exam_years, star_rating')
+      supabase.from('chapter_cards')
+        .select('id, chapter_id, question, options, answer_index, explanation, order_index, content_type, question_format, image_url, reference_text, key_points, exam_years, star_rating')
         .eq('chapter_id', chapterId),
     ])
 
@@ -245,7 +247,7 @@ export default function LessonPage() {
     )
     setQuestions(allQ)
 
-    const oralQs = (qs ?? []).filter(q => q.question_type === 'oral' || q.question_type === 'theory')
+    const oralQs = (qs ?? []).filter(q => q.content_type === 'lesson' || q.question_format === 'short_answer')
     const slideArray = oralQs.map(q => ({
       id: q.id,
       question: q.question,
@@ -255,7 +257,8 @@ export default function LessonPage() {
       reference_text: q.reference_text ?? null,
       exam_years: Array.isArray(q.exam_years) ? q.exam_years : null,
       star_rating: q.star_rating ?? null,
-      question_type: q.question_type ?? null,
+      content_type: q.content_type ?? null,
+      question_format: q.question_format ?? null,
     }))
     setSlides(slideArray)
 
@@ -402,8 +405,8 @@ export default function LessonPage() {
       setShowMiniQuiz(true)
       return
     }
-    const correct = q.options[q.answer_index]
-    const wrongOptions = q.options.filter((_, i) => i !== q.answer_index)
+    const correct = q.options[q.answer_index?.[0] ?? 0]
+    const wrongOptions = q.options.filter((_, i) => !q.answer_index?.includes(i))
 
     // options 부족 시 퀴즈 건너뛰고 다음 슬라이드로
     if (!correct || wrongOptions.length === 0) {

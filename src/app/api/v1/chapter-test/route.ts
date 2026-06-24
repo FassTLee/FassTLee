@@ -26,17 +26,18 @@ export async function GET(req: NextRequest) {
 
   // ── 2026-06-16 수정: P0-3 explanation 복구 — 모범답안 텍스트는 정답 인덱스(answer_index)가 아니므로 노출 허용. 채점 고도화는 P2-12에서 진행
   const { data: basicData } = await supabaseAdmin
-    .from('chapter_questions')
-    .select('id, question, options, explanation, image_url, reference_text, question_type, exam_years, star_rating')
+    .from('chapter_cards')
+    .select('id, question, options, explanation, image_url, reference_text, content_type, question_format, exam_years, star_rating')
     .eq('chapter_id', chapterId)
-    .eq('question_type', 'basic')
+    .eq('content_type', 'exam')
+    .eq('question_format', 'multiple_choice')
     .not('answer_index', 'is', null)
 
   const { data: oralData } = await supabaseAdmin
-    .from('chapter_questions')
-    .select('id, question, options, explanation, image_url, reference_text, question_type, exam_years, star_rating')
+    .from('chapter_cards')
+    .select('id, question, options, explanation, image_url, reference_text, content_type, question_format, exam_years, star_rating')
     .eq('chapter_id', chapterId)
-    .eq('question_type', 'oral')
+    .eq('question_format', 'short_answer')
     .not('exam_years', 'is', null)
     .neq('exam_years', '[]')
 

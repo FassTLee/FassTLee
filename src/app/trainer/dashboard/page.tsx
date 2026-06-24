@@ -451,7 +451,7 @@ function DashboardContent() {
           ...Object.keys(HEALTH_COURSE_IDS),
         ]
         const { data } = await supabase
-          .from('chapter_questions')
+          .from('chapter_cards')
           .select('star_rating, chapters!inner(course_id)')
           .in('chapters.course_id', allCourseIds)
           .in('star_rating', [4, 5])

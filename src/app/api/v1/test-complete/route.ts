@@ -5,7 +5,7 @@ import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 
 export const dynamic = 'force-dynamic'
 
-interface Record { questionId: string; correct: boolean; selected?: number; answer_index?: number }
+interface Record { questionId: string; correct: boolean; selected?: number; answer_index?: number[] }
 
 export async function POST(req: NextRequest) {
   if (!isSupabaseAdminConfigured) {
@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
         chapter_id:      chapterId,
         question_id:     String(r.questionId),
         selected_option: String(r.selected    ?? ''),
-        correct_option:  String(r.answer_index ?? ''),
+        correct_option:  String(r.answer_index?.[0] ?? ''),
       }))
     )
   }

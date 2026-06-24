@@ -13,11 +13,12 @@ interface AnswerRecord {
   questionId:   string
   question:     string
   options:      string[]
-  answer_index:  number
+  answer_index:  number[]
   selected:      number
   correct:       boolean
   explanation:   string | null
-  question_type?: string
+  content_type?: string
+  question_format?: string | null
   user_answer?:  string
 }
 
@@ -101,7 +102,7 @@ export default function ReviewPage() {
               </div>
 
               {/* 선택지 / 주관식 */}
-              {r.question_type === 'oral' ? (
+              {r.question_format === 'short_answer' ? (
                 <div className="mt-2 text-sm">
                   <p className="text-[11px] font-bold text-[#ADADAD] mb-1">내 답변</p>
                   <p className="text-[12px] text-[#1A1A1A] leading-relaxed mb-3">
@@ -117,17 +118,17 @@ export default function ReviewPage() {
                       <div
                         key={oi}
                         className={`px-3 py-2 rounded-xl text-[12px] ${
-                          oi === r.answer_index
+                          r.answer_index?.includes(oi)
                             ? 'bg-[#63992215] text-[#639922] font-semibold'
                             : oi === r.selected
                             ? 'bg-[#E24B4A10] text-[#E24B4A] line-through'
                             : 'text-[#ADADAD]'
                         }`}
                       >
-                        {oi === r.answer_index && (
+                        {r.answer_index?.includes(oi) && (
                           <span className="text-[10px] font-bold mr-1">✓ 정답</span>
                         )}
-                        {oi === r.selected && oi !== r.answer_index && (
+                        {oi === r.selected && !r.answer_index?.includes(oi) && (
                           <span className="text-[10px] font-bold mr-1">내 선택</span>
                         )}
                         {opt}

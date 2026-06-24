@@ -22,7 +22,7 @@ function getOrCreateGuestId(): string {
 async function fetchDBQuestions(): Promise<TestQuestion[] | null> {
   try {
     const { data, error } = await supabase
-      .from('chapter_questions')
+      .from('chapter_cards')
       .select('id, question, options, answer_index, explanation')
       .limit(80)
     if (error || !data || data.length < TOTAL_Q) return null
@@ -34,7 +34,7 @@ async function fetchDBQuestions(): Promise<TestQuestion[] | null> {
         type: 'B' as const,
         question: q.question ?? '',
         options: Array.isArray(q.options) ? q.options : [],
-        correctIndex: q.answer_index ?? 0,
+        correctIndex: q.answer_index?.[0] ?? 0,
         explanation: q.explanation ?? '',
       }))
   } catch {

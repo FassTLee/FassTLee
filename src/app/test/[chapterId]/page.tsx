@@ -38,7 +38,8 @@ interface Question {
   explanation: string | null
   image_url: string | null
   reference_text: string | null
-  question_type: string | null
+  content_type: string | null
+  question_format: string | null
   exam_years: number[] | null
   star_rating: number | null
 }
@@ -167,8 +168,9 @@ export default function TestPage() {
     const finalRecords = questions.map((q, idx) => ({
       questionId: q.id,
       selected:   answers[idx] ?? -1,
-      user_answer: q.question_type === 'oral' ? (userAnswers[q.id] ?? '') : '',
-      question_type: q.question_type,
+      user_answer: q.question_format === 'short_answer' ? (userAnswers[q.id] ?? '') : '',
+      content_type: q.content_type,
+      question_format: q.question_format,
     }))
     localStorage.setItem(RESULT_KEY, JSON.stringify({ chapterId, records: finalRecords, userAnswers }))
     track('chapter_test_completed', { chapterId })
@@ -281,7 +283,7 @@ export default function TestPage() {
               <p className="text-[13px] font-medium text-[#1A1A1A] mb-2 line-clamp-2">{qItem.question}</p>
               <div className="flex items-center gap-2">
                 <span className="text-[11px] text-[#ADADAD]">내 답:</span>
-                {qItem.question_type === 'oral' ? (
+                {qItem.question_format === 'short_answer' ? (
                   <span className="text-[12px] text-[#1A1A1A]">
                     {userAnswers[qItem.id]?.trim()
                       ? userAnswers[qItem.id]
@@ -325,7 +327,7 @@ export default function TestPage() {
   }
 
   const q        = questions[current]
-  const isOral   = q.question_type === 'oral'
+  const isOral   = q.question_format === 'short_answer'
   const progress = ((current + 1) / questions.length) * 100
   // 하단 버튼 비활성 조건
   const isNextDisabled = selected === null || (isOral && !revealedAnswers.has(q.id))

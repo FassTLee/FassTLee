@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
   // 실제 정답 조회
   const { data: q, error } = await supabaseAdmin
-    .from('chapter_questions')
+    .from('chapter_cards')
     .select('answer_index, explanation, chapter_id')
     .eq('id', questionId)
     .single()
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Question not found' }, { status: 404 })
   }
 
-  const correct = selectedIndex === q.answer_index
+  const correct = q.answer_index?.includes(selectedIndex)
 
   // 오답이면 user_wrong_answers 에 저장 (테이블 미존재 시 조용히 무시)
   const userId = session?.user?.id
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
             question_id:    questionId,
             chapter_id:     q.chapter_id ?? null,
             selected_index: selectedIndex,
-            correct_index:  q.answer_index,
+            correct_index:  q.answer_index?.[0],
             wrong_count:    1,
             last_wrong_at:  new Date().toISOString(),
           },

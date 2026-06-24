@@ -6,7 +6,7 @@ import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 export const dynamic = 'force-dynamic'
 
 // GET /api/v1/oral-exam/draw?courseId=xxx
-// chapters → chapter_questions 에서 랜덤 3문제 추출 (answer_index 제외)
+// chapters → chapter_cards 에서 랜덤 3문제 추출 (question_format='short_answer', answer_index 제외)
 export async function GET(req: NextRequest) {
   if (!isSupabaseAdminConfigured) {
     return NextResponse.json({ questions: [] })
@@ -38,12 +38,12 @@ export async function GET(req: NextRequest) {
 
   const chapterIds = chapters.map((c) => c.id)
 
-  // 2. chapter_questions 에서 문제 조회 (answer_index 제외)
+  // 2. chapter_cards 에서 문제 조회 (question_format='short_answer', answer_index 제외)
   const { data: questions, error: qErr } = await supabaseAdmin
-    .from('chapter_questions')
+    .from('chapter_cards')
     .select('id, question, options, chapter_id, explanation, exam_years, star_rating')
     .in('chapter_id', chapterIds)
-    .eq('question_type', 'oral')
+    .eq('question_format', 'short_answer')
     .not('exam_years', 'is', null)
     .neq('exam_years', '[]')
 

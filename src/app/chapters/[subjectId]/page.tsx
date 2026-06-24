@@ -199,10 +199,10 @@ export default function ChaptersPage() {
       // theory 슬라이드 보유 여부 확인
       const chapterIds = allChapters.map((c) => c.id)
       const { data: theoryCheck } = await supabase
-        .from('chapter_questions')
+        .from('chapter_cards')
         .select('chapter_id')
         .in('chapter_id', chapterIds)
-        .in('question_type', ['theory', 'oral'])
+        .or('content_type.eq.lesson,question_format.eq.short_answer')
         .limit(1000)
 
       const theorySet = new Set((theoryCheck ?? []).map((t) => t.chapter_id))
@@ -215,7 +215,7 @@ export default function ChaptersPage() {
       if (finalChapters.length > 0) {
         const finalIds = finalChapters.map((c) => c.id)
         const { data: starData } = await supabase
-          .from('chapter_questions')
+          .from('chapter_cards')
           .select('chapter_id, star_rating')
           .in('chapter_id', finalIds)
           .in('star_rating', [4, 5])

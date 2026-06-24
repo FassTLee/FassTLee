@@ -15,7 +15,7 @@ interface AnswerRecord {
   questionId: string
   question: string
   options: string[]
-  answer_index: number
+  answer_index: number[]
   selected: number
   correct: boolean
   explanation: string | null

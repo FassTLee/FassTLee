@@ -19,7 +19,7 @@ interface ExamQuestion {
   id:           string
   question:     string
   options:      string[]
-  answer_index: number
+  answer_index: number[]
   explanation:  string | null
 }
 
@@ -110,7 +110,7 @@ export default function ExamPage() {
     setStep('submitting')
 
     const subjectResults = subjects.map((subj) => {
-      const correct = subj.questions.filter((q) => answers[q.id] === q.answer_index).length
+      const correct = subj.questions.filter((q) => answers[q.id] === q.answer_index?.[0]).length
       return {
         name:    subj.name,
         score:   correct,
@@ -123,7 +123,7 @@ export default function ExamPage() {
           answer_index: q.answer_index,
           explanation:  q.explanation,
           selected:     answers[q.id] ?? -1,
-          correct:      answers[q.id] === q.answer_index,
+          correct:      answers[q.id] === q.answer_index?.[0],
         })),
       }
     })
