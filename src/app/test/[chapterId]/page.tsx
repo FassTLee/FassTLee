@@ -57,6 +57,7 @@ export default function TestPage() {
   const [showReview, setShowReview]       = useState(false)
   const [loading, setLoading]             = useState(true)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
+  const [submitting, setSubmitting]           = useState(false)
   const [certLabel, setCertLabel]         = useState('')
   const [reportUrl, setReportUrl]         = useState<string | null>(null)
   const [countdown, setCountdown]         = useState(3)
@@ -163,8 +164,12 @@ export default function TestPage() {
     setSelected(answers[prevIdx] ?? null)
   }
 
-  const handleSubmit = () => {
-    // ── 2026-06-16 수정: P0-3 클라이언트 채점 제거 — selected만 서버로 전송 ──
+  // ── 2026-06-25 수정: P1-12 서버사이드 채점 — test-complete await 후 scoredRecords 저장 ──
+  const handleSubmit = async () => {
+    if (submitting) return
+    setSubmitting(true)
+
+    // 클라이언트는 selected만 전송 (정답/채점은 서버가 수행)
     const finalRecords = questions.map((q, idx) => ({
       questionId: q.id,
       selected:   answers[idx] ?? -1,
@@ -172,16 +177,15 @@ export default function TestPage() {
       content_type: q.content_type,
       question_format: q.question_format,
     }))
-    localStorage.setItem(RESULT_KEY, JSON.stringify({ chapterId, records: finalRecords, userAnswers }))
+
     track('chapter_test_completed', { chapterId })
-    // 3. 챕터 테스트 완료 로깅 (chapter_session_logs)
+
+    // 1. 챕터 테스트 완료 로깅 (fire-and-forget, 채점과 무관)
     if (sessionId) {
       fetch('/api/v1/chapter-session-log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          // ── 기존 코드 (죽은 파라미터 제거) ──
-          // userId: session?.user?.id ?? '',
           chapterId,
           action: 'exit',
           sessionId,
@@ -191,19 +195,30 @@ export default function TestPage() {
       }).catch(() => {})
     }
 
-    // 4. 서버에 테스트 결과 전송 (fire-and-forget)
-    fetch('/api/v1/test-complete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chapterId,
-        subjectId: localStorage.getItem('kinepia_current_subject_id') ?? '',
-        records: finalRecords,
-        // ── 기존 코드 (죽은 파라미터 제거) ──
-        // userId: session?.user?.id ?? '',
-      }),
-    }).catch(() => {})
-    // 4. 챕터 1 테스트 완료 시 코드 팝업 트리거
+    // 2. 서버사이드 채점 (await) → scoredRecords로 localStorage 저장
+    try {
+      const res = await fetch('/api/v1/test-complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chapterId,
+          subjectId: localStorage.getItem('kinepia_current_subject_id') ?? '',
+          records: finalRecords,
+        }),
+      })
+      const data = await res.json()
+      if (res.ok && Array.isArray(data?.scoredRecords)) {
+        localStorage.setItem(RESULT_KEY, JSON.stringify({ chapterId, records: data.scoredRecords }))
+      } else {
+        throw new Error('scoring response invalid')
+      }
+    } catch (err) {
+      // 채점 실패 시 fallback — 최소한 review 진입은 가능하도록 클라이언트 records 저장
+      console.error('[test-complete] scoring failed, fallback to local records', err)
+      localStorage.setItem(RESULT_KEY, JSON.stringify({ chapterId, records: finalRecords, userAnswers }))
+    }
+
+    // 3. 챕터 1 테스트 완료 시 코드 팝업 트리거
     if (session) {
       const isFirstChapter = localStorage.getItem('kinepia_code_popup_triggered') !== 'true'
       if (isFirstChapter) {
@@ -220,7 +235,7 @@ export default function TestPage() {
       }
     }
 
-    // 5. 로그인 여부에 따라 이동 처리
+    // 4. 로그인 여부에 따라 이동 처리
     if (session) {
       setReportUrl(`/report/${chapterId}`)   // → 광고 화면 먼저 표시 후 이동
     } else {
@@ -311,15 +326,17 @@ export default function TestPage() {
               setSelected(answers[target] ?? null)
               setShowReview(false)
             }}
-            className="w-full py-3 rounded-2xl border border-[#E5E5E5] text-[14px] font-bold text-[#1A1A1A]"
+            disabled={submitting}
+            className="w-full py-3 rounded-2xl border border-[#E5E5E5] text-[14px] font-bold text-[#1A1A1A] disabled:opacity-60"
           >
             다시 검토하기
           </button>
           <button
             onClick={handleSubmit}
-            className="w-full py-3 rounded-2xl bg-[#00A651] text-white text-[14px] font-bold"
+            disabled={submitting}
+            className="w-full py-3 rounded-2xl bg-[#00A651] text-white text-[14px] font-bold disabled:opacity-60"
           >
-            제출하기
+            {submitting ? '채점 중...' : '제출하기'}
           </button>
         </div>
       </div>
