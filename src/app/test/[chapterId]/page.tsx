@@ -336,7 +336,7 @@ export default function TestPage() {
             disabled={submitting}
             className="w-full py-3 rounded-2xl bg-[#00A651] text-white text-[14px] font-bold disabled:opacity-60"
           >
-            {submitting ? '채점 중...' : '제출하기'}
+            제출하기
           </button>
         </div>
       </div>

@@ -63,8 +63,11 @@ export async function POST(req: NextRequest) {
   const scoredRecords: ScoredRecord[] = records.map((r) => {
     const card = cardMap.get(String(r.questionId))
     const isShortAnswer = r.question_format === 'short_answer'
-    // 주관식은 자동채점 불가(P2-12에서 처리), 카드 없으면 오답 처리
-    const correct = !!card && !isShortAnswer && r.selected === card.answer_index?.[0]
+    // 주관식: 자기평가 반영 (selected=0 "알았다"→정답, 1 "오답노트"/미평가→오답)
+    // 객관식: 카드 정답과 selected 비교 (카드 없으면 오답)
+    const correct = isShortAnswer
+      ? r.selected === 0
+      : !!card && r.selected === card.answer_index?.[0]
     return {
       questionId:      String(r.questionId),
       question:        card?.question ?? '',
