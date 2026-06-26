@@ -86,13 +86,12 @@ export async function POST(req: NextRequest) {
     .from('exam_results')
     .insert({
       user_id:         session.user.id,
-      subjects:        scoredSubjects,
-      total_score:     totalScore,
+      subject_scores:  scoredSubjects,
+      score:           totalScore,
       total_questions: totalQuestions,
       passed,
       abandoned,
       time_remaining:  timeRemaining,
-      completed_at:    new Date().toISOString(),
     })
     .select('id')
     .single()
