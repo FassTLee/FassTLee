@@ -175,7 +175,7 @@ export default function ExamReportPage() {
             <div className="space-y-2">
               {subjects.map((sub, idx) => {
                 const wrong = sub.questions.filter(
-                  (q) => q.selected !== null && q.selected !== q.answer_index?.[0]
+                  (q) => q.selected !== null && q.selected !== -1 && q.selected !== q.answer_index?.[0]
                 )
                 const isOpen = expandedSubject === idx
 

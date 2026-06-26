@@ -6,8 +6,6 @@ import { useSession } from 'next-auth/react'
 import { ChevronLeft, ChevronRight, X, Clock } from 'lucide-react'
 
 const TOTAL_MINUTES  = 160
-const PASS_TOTAL     = 96   // 60% of 160
-const SUBJECT_PASS_Q = 8    // 40% of 20
 
 // 8과목 순서 (실제 시험 교시 순)
 const SUBJECT_ORDER = [
@@ -41,7 +39,7 @@ function cleanOption(opt: string): string {
 
 export default function ExamPage() {
   const router             = useRouter()
-  const { data: session }  = useSession()
+  useSession()
 
   const [step, setStep]               = useState<'loading' | 'intro' | 'exam' | 'submitting'>('loading')
   const [subjects, setSubjects]       = useState<ExamSubject[]>([])
@@ -109,49 +107,65 @@ export default function ExamPage() {
     if (timerRef.current) clearInterval(timerRef.current)
     setStep('submitting')
 
-    const subjectResults = subjects.map((subj) => {
-      const correct = subj.questions.filter((q) => answers[q.id] === q.answer_index?.[0]).length
-      return {
-        name:    subj.name,
-        score:   correct,
-        total:   subj.questions.length,
-        passed:  correct >= SUBJECT_PASS_Q,
-        answers: subj.questions.map((q) => ({
-          questionId:   q.id,
-          question:     q.question,
-          options:      q.options,
-          answer_index: q.answer_index,
-          explanation:  q.explanation,
-          selected:     answers[q.id] ?? -1,
-          correct:      answers[q.id] === q.answer_index?.[0],
-        })),
+    const abandoned = reason !== 'complete'
+
+    // id + selected만 서버로 전송 — 채점은 서버에서
+    const clientSubjects = subjects.map((subj) => ({
+      name:      subj.name,
+      questions: subj.questions.map((q) => ({
+        id:       q.id,
+        selected: answers[q.id] ?? -1,
+      })),
+    }))
+
+    let examData: object
+
+    try {
+      const res  = await fetch('/api/v1/exam-complete', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ subjects: clientSubjects, abandoned, timeRemaining: timeLeft }),
+      })
+      const json = await res.json()
+
+      if (!json.ok || !json.scoredSubjects) throw new Error(json.error ?? 'Server scoring failed')
+
+      examData = {
+        subjects:       json.scoredSubjects,
+        totalScore:     json.totalScore,
+        totalQuestions: json.totalQuestions,
+        passed:         json.passed,
+        abandoned,
+        timeRemaining:  timeLeft,
       }
-    })
-
-    const totalScore     = subjectResults.reduce((s, r) => s + r.score, 0)
-    const totalQuestions = subjectResults.reduce((s, r) => s + r.total, 0)
-    const hasSubjectFail = subjectResults.some((r) => !r.passed)
-    const passed         = !hasSubjectFail && totalScore >= PASS_TOTAL
-
-    const examData = {
-      subjects: subjectResults,
-      totalScore,
-      totalQuestions,
-      passed,
-      abandoned:     reason !== 'complete',
-      timeRemaining: timeLeft,
+    } catch (err) {
+      console.error('[exam] server scoring failed, using fallback:', err)
+      // 폴백: score 0, correct 전부 false
+      examData = {
+        subjects: subjects.map((subj) => ({
+          name:      subj.name,
+          score:     0,
+          total:     subj.questions.length,
+          passed:    false,
+          questions: subj.questions.map((q) => ({
+            id:           q.id,
+            question:     q.question,
+            options:      q.options,
+            answer_index: [],
+            explanation:  q.explanation,
+            selected:     answers[q.id] ?? -1,
+            correct:      false,
+          })),
+        })),
+        totalScore:     0,
+        totalQuestions: subjects.reduce((s, r) => s + r.questions.length, 0),
+        passed:         false,
+        abandoned,
+        timeRemaining:  timeLeft,
+      }
     }
 
     localStorage.setItem('examResult', JSON.stringify(examData))
-
-    try {
-      await fetch('/api/v1/exam-complete', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ ...examData, userId: session?.user?.id ?? null }),
-      })
-    } catch { /* 저장 실패해도 로컬스토리지에 결과 있음 */ }
-
     router.replace('/exam/report')
   }
 
