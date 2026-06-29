@@ -67,7 +67,8 @@ export async function POST(req: NextRequest) {
     // 객관식: 카드 정답과 selected 비교 (카드 없으면 오답)
     const correct = isShortAnswer
       ? r.selected === 0
-      : !!card && r.selected === card.answer_index?.[0]
+      : !!card && r.selected !== -1 && card.answer_index?.[0] != null && card.answer_index[0] !== -1
+          && r.selected === card.answer_index[0]
     return {
       questionId:      String(r.questionId),
       question:        card?.question ?? '',

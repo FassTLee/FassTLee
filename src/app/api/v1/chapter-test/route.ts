@@ -32,6 +32,7 @@ export async function GET(req: NextRequest) {
     .eq('content_type', 'exam')
     .eq('question_format', 'multiple_choice')
     .not('answer_index', 'is', null)
+    .not('answer_index', 'eq', '[-1]')
 
   const { data: oralData } = await supabaseAdmin
     .from('chapter_cards')

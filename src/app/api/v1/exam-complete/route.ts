@@ -54,7 +54,9 @@ export async function POST(req: NextRequest) {
   const scoredSubjects = subjects.map((subj) => {
     const questions = subj.questions.map((q) => {
       const card    = cardMap.get(q.id)
-      const correct = card ? q.selected === card.answer_index?.[0] : false
+      const correct = card && q.selected !== -1 && card.answer_index?.[0] != null && card.answer_index[0] !== -1
+        ? q.selected === card.answer_index[0]
+        : false
       return {
         id:           q.id,
         question:     card?.question    ?? '',
@@ -86,6 +88,7 @@ export async function POST(req: NextRequest) {
     .from('exam_results')
     .insert({
       user_id:         session.user.id,
+      round:           1,
       subject_scores:  scoredSubjects,
       score:           totalScore,
       total_questions: totalQuestions,
@@ -98,7 +101,14 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error('[exam-complete] insert error:', error)
-    return NextResponse.json({ ok: true, saved: false })
+    return NextResponse.json({
+      ok:             true,
+      saved:          false,
+      scoredSubjects,
+      totalScore,
+      totalQuestions,
+      passed,
+    })
   }
 
   return NextResponse.json({

@@ -73,6 +73,7 @@ export async function GET(req: NextRequest) {
         .in('chapter_id', chapterIds)
         // ── 기존 필터 유지하되 answer_index 의존 제거 ──
         .not('exam_years', 'is', null)
+        .not('answer_index', 'eq', '[-1]')
         .eq('content_type', 'exam')
         .eq('question_format', 'multiple_choice')
 
