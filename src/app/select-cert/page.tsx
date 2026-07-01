@@ -45,6 +45,12 @@ const CERT_META: Record<string, {
     certId: 'exercise-prescriptionist',
     color: '#7C3AED',
   },
+  'iipa-pilates-lv1': {
+    icon: '🧘',
+    desc: '필라테스 해부학 기초',
+    certId: 'iipa-pilates-lv1',
+    color: '#00A651',
+  },
 }
 
 export default function SelectCertPage() {

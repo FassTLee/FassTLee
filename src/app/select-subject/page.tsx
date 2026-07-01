@@ -124,6 +124,14 @@ const CERT_CONFIG: Record<string, CertConfig> = {
     ],
     additional: [],
   },
+  'iipa-pilates-lv1': {
+    label: 'IIPA 필라테스 지도자 자격증 Lv1',
+    mode: 'all-required',
+    subjects: [
+      { name: '필라테스 해부학', icon: '🦴', desc: '뼈·관절·근육 기초 해부학' },
+    ],
+    additional: [],
+  },
 }
 
 // ── 컴포넌트 ──────────────────────────────────────────────────────
@@ -320,7 +328,7 @@ export default function SelectSubjectPage() {
         <span className="text-[15px]">{isAllRequired ? '📌' : 'ℹ️'}</span>
         <p className={`text-[12px] font-semibold ${isAllRequired ? 'text-[#1A1A1A]' : 'text-[#378ADD]'}`}>
           {isAllRequired
-            ? '8개 과목 모두 필수 과목입니다'
+            ? `${config.subjects.length}개 과목 모두 필수 과목입니다`
             : `7개 과목 중 ${selectCount}개를 선택해주세요 (현재 ${mainSelected.length}/${selectCount})`
           }
         </p>
