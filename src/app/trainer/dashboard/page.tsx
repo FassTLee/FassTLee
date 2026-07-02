@@ -147,12 +147,6 @@ interface ActivityItem {
   bestScore: number | null
 }
 
-interface DayGoal {
-  id: string
-  cert_type: string
-  exam_target_date: string
-}
-
 interface TodayChapter {
   chapterId: string
   title: string
@@ -300,8 +294,7 @@ function DashboardContent() {
   const [playingIdx, setPlayingIdx]           = useState<number | null>(null)
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([])
 
-  /* ── D-Day goals ─────────────────────────────────────────────────── */
-  const [ddayGoals, setDdayGoals]         = useState<DayGoal[]>([])
+  /* ── D-Day (profiles.exam_target_date 단일 소스) ────────────────────── */
   const [showDDayModal, setShowDDayModal] = useState(false)
   const [ddayNewCert, setDdayNewCert]     = useState('건강운동관리사')
   const [ddayNewDate, setDdayNewDate]     = useState('')
@@ -650,10 +643,9 @@ function DashboardContent() {
 
     setSubjects(selectedNames)
 
-    // ② profile-settings + user-goals 병렬 조회
-    const [psRes, ugRes] = await Promise.allSettled([
+    // ② profile-settings 조회 (exam_target_date 등 학습 설정 — profiles 단일 소스)
+    const [psRes] = await Promise.allSettled([
       fetch(`/api/v1/profile-settings?userId=${encodeURIComponent(userId)}`, { cache: 'no-store' }),
-      fetch(`/api/v1/user-goals?userId=${encodeURIComponent(userId)}`),
     ])
 
     // profile-settings 처리
@@ -684,27 +676,7 @@ function DashboardContent() {
       } catch (e) { console.warn('[initCommon] profile-settings 파싱 실패', e) }
     } else { console.warn('[initCommon] profile-settings 실패', psRes.reason) }
 
-    // ③ D-Day goals — user-goals 테이블에서도 exam_date 폴백 확인
-    if (ugRes.status === 'fulfilled') {
-      try {
-        const data = await ugRes.value.json()
-        const goals: DayGoal[] = data.goals ?? []
-        setDdayGoals(goals)
-        // profile-me / profile-settings 모두 exam_date 반환 못한 경우 user-goals로 폴백
-        if (!loadedExamDate && goals.length > 0) {
-          const latest = goals[goals.length - 1]
-          console.log('[initCommon] user-goals 폴백 exam_target_date:', latest.exam_target_date)
-          setProfileExamDate(latest.exam_target_date)
-          setExamDateInput(latest.exam_target_date)
-          if (!loadedCertType && latest.cert_type) {
-            setProfileCert(latest.cert_type)
-            setCertTypeInput(latest.cert_type)
-          }
-        }
-      } catch (e) { console.warn('[initCommon] user-goals 파싱 실패', e) }
-    } else { console.warn('[initCommon] user-goals 실패', ugRes.reason) }
-
-    // ④ localStorage 폴백 — 모든 DB 조회 실패 시 마지막 안전망
+    // ③ localStorage 폴백 — 모든 DB 조회 실패 시 마지막 안전망
     if (!loadedExamDate) {
       const cached = localStorage.getItem('kinepia_exam_date')
       if (cached) {
@@ -1190,21 +1162,21 @@ function DashboardContent() {
     try {
       const userId = session?.user?.id ?? ''
 
-      // user-goals 테이블 저장 (기존)
-      const res  = await fetch('/api/v1/user-goals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, cert_type: ddayNewCert, exam_target_date: ddayNewDate }),
-      })
-      const data = await res.json()
-      if (data.goal) setDdayGoals((prev) => [...prev, data.goal])
-
-      // profiles.exam_date + cert_type 저장 → 대시보드 상단 D-Day 즉시 반영
-      await fetch('/api/v1/profile-settings', {
+      // profiles.exam_target_date + cert_type 저장 (단일 소스) → 대시보드 상단 D-Day 즉시 반영
+      const res = await fetch('/api/v1/profile-settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, exam_target_date: ddayNewDate, cert_type: ddayNewCert }),
       })
+
+      if (!res.ok) {
+        setToastMessage('D-Day 저장에 실패했습니다. 다시 시도해주세요.')
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 2500)
+        setSavingDDay(false)
+        return
+      }
+
       setProfileExamDate(ddayNewDate)
       setProfileCert(ddayNewCert)
       setExamDateInput(ddayNewDate)   // 내 정보 탭도 동기화
@@ -1214,31 +1186,45 @@ function DashboardContent() {
 
       setDdayNewDate('')
       setShowDDayModal(false)         // 모달 자동 닫힘
-    } catch { /* ignore */ }
+      setToastMessage('D-Day가 저장되었습니다.')
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 2500)
+    } catch {
+      setToastMessage('네트워크 오류로 D-Day를 저장하지 못했습니다.')
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 2500)
+    }
     setSavingDDay(false)
   }
 
-  const handleDeleteDDayGoal = async (id: string) => {
-    const newGoals = ddayGoals.filter((g) => g.id !== id)
-    setDdayGoals(newGoals)
+  const handleClearDDay = async () => {
+    const userId = session?.user?.id ?? ''
+    const prevExamDate = profileExamDate
+    setProfileExamDate(null)
+    setExamDateInput('')
     try {
-      const userId = session?.user?.id ?? ''
-      await fetch('/api/v1/user-goals', {
-        method: 'DELETE',
+      const res = await fetch('/api/v1/profile-settings', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, id }),
+        body: JSON.stringify({ userId, exam_target_date: null }),
       })
-      // 삭제 후 남은 goal이 없으면 profiles.exam_date도 초기화
-      if (newGoals.length === 0) {
-        await fetch('/api/v1/profile-settings', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId, exam_target_date: null }),
-        })
-        setProfileExamDate(null)
-        setExamDateInput('')
+      if (!res.ok) {
+        // 롤백 + 실패 알림
+        setProfileExamDate(prevExamDate)
+        setExamDateInput(prevExamDate ?? '')
+        setToastMessage('D-Day 초기화에 실패했습니다. 다시 시도해주세요.')
+        setShowToast(true)
+        setTimeout(() => setShowToast(false), 2500)
+        return
       }
-    } catch { /* ignore */ }
+      localStorage.removeItem('kinepia_exam_date')
+    } catch {
+      setProfileExamDate(prevExamDate)
+      setExamDateInput(prevExamDate ?? '')
+      setToastMessage('네트워크 오류로 D-Day를 초기화하지 못했습니다.')
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 2500)
+    }
   }
 
   const moveCert = (idx: number, dir: 'up' | 'down') => {
@@ -1416,7 +1402,7 @@ function DashboardContent() {
     heartedVideos, setHeartedVideos, subjectCards, setSubjectCards,
     recentStats, setRecentStats, allStats, setAllStats,
     chapterSubjectMap, setChapterSubjectMap, playingIdx, setPlayingIdx, videoRefs,
-    ddayGoals, setDdayGoals, showDDayModal, setShowDDayModal,
+    showDDayModal, setShowDDayModal,
     ddayNewCert, setDdayNewCert, ddayNewDate, setDdayNewDate, savingDDay, setSavingDDay,
     todayChapter, setTodayChapter, todayChapterState, setTodayChapterState,
     bookmarks, setBookmarks, classroomLoaded, setClassroomLoaded,
@@ -1456,7 +1442,7 @@ function DashboardContent() {
     surveyLoading, setSurveyLoading, surveyDone, setSurveyDone,
     showToast, setShowToast, toastMessage, setToastMessage,
     initCommon, loadClassroom, _handleHeartVideo, handleVideoTap,
-    dismissCodePopup, handleCodeSubmit, handleAddDDayGoal, handleDeleteDDayGoal,
+    dismissCodePopup, handleCodeSubmit, handleAddDDayGoal, handleClearDDay,
     moveCert, moveSubject, handleOrderSave, handleSurveySubmit, handleSaveProfile,
     _handleTogglePush, moveCalMonth,
   }

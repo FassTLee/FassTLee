@@ -7,7 +7,6 @@ import type {
   VideoBookmark,
   SubjectCard,
   ActivityItem,
-  DayGoal,
   TodayChapter,
   UserCertification,
   OralExamRegistration,
@@ -79,9 +78,7 @@ export interface DashboardContextType {
   setPlayingIdx: Dispatch<number | null>
   videoRefs: React.MutableRefObject<(HTMLVideoElement | null)[]>
 
-  /* ── D-Day goals ─────────────────────────────────────────────────── */
-  ddayGoals: DayGoal[]
-  setDdayGoals: Dispatch<DayGoal[]>
+  /* ── D-Day (profiles.exam_target_date 단일 소스) ────────────────────── */
   showDDayModal: boolean
   setShowDDayModal: Dispatch<boolean>
   ddayNewCert: string
@@ -259,7 +256,7 @@ export interface DashboardContextType {
   dismissCodePopup: () => Promise<void>
   handleCodeSubmit: () => Promise<void>
   handleAddDDayGoal: () => Promise<void>
-  handleDeleteDDayGoal: (id: string) => Promise<void>
+  handleClearDDay: () => Promise<void>
   moveCert: (idx: number, dir: 'up' | 'down') => void
   moveSubject: (certId: string, idx: number, dir: 'up' | 'down') => void
   handleOrderSave: () => Promise<void>

@@ -132,12 +132,6 @@ export interface ActivityItem {
   bestScore: number | null
 }
 
-export interface DayGoal {
-  id: string
-  cert_type: string
-  exam_target_date: string
-}
-
 export interface TodayChapter {
   chapterId: string
   title: string

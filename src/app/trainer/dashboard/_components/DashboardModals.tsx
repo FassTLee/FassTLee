@@ -55,9 +55,10 @@ export default function DashboardModals() {
     handleCodeSubmit, dismissCodePopup,
     codeResult, setCodeResult,
     showDDayModal, setShowDDayModal,
-    ddayGoals, ddayNewCert, setDdayNewCert,
+    profileExamDate, profileCert,
+    ddayNewCert, setDdayNewCert,
     ddayNewDate, setDdayNewDate, savingDDay,
-    handleAddDDayGoal, handleDeleteDDayGoal,
+    handleAddDDayGoal, handleClearDDay,
     showToast, toastMessage,
   } = useDashboard()
 
@@ -781,18 +782,18 @@ export default function DashboardModals() {
               </button>
             </div>
 
-            {/* 등록된 목록 */}
-            {ddayGoals.length > 0 && (
+            {/* 현재 설정된 D-Day */}
+            {profileExamDate && (
               <div className="space-y-2">
-                <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider">등록된 D-Day</p>
-                {ddayGoals.map((goal) => {
-                  const diff = Math.ceil((new Date(goal.exam_target_date).getTime() - Date.now()) / 86400000)
+                <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider">현재 D-Day</p>
+                {(() => {
+                  const diff = Math.ceil((new Date(profileExamDate).getTime() - Date.now()) / 86400000)
                   return (
-                    <div key={goal.id} className="flex items-center gap-3 bg-[#F5F5F3] rounded-xl px-3 py-2.5">
+                    <div className="flex items-center gap-3 bg-[#F5F5F3] rounded-xl px-3 py-2.5">
                       <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-bold text-[#1A1A1A] truncate">{goal.cert_type}</p>
+                        <p className="text-[12px] font-bold text-[#1A1A1A] truncate">{profileCert || '자격증 미지정'}</p>
                         <p className="text-[11px] text-[#6B6B6B]">
-                          {new Date(goal.exam_target_date).toLocaleDateString('ko-KR')}
+                          {new Date(profileExamDate).toLocaleDateString('ko-KR')}
                           {' · '}
                           <span className="font-bold text-[#00A651]">
                             {diff > 0 ? `D-${diff}` : diff === 0 ? 'D-Day' : `D+${Math.abs(diff)}`}
@@ -800,20 +801,22 @@ export default function DashboardModals() {
                         </p>
                       </div>
                       <button
-                        onClick={() => handleDeleteDDayGoal(goal.id)}
+                        onClick={handleClearDDay}
                         className="text-[#ADADAD] hover:text-[#E24B4A]"
                       >
                         <Trash2 size={14} />
                       </button>
                     </div>
                   )
-                })}
+                })()}
               </div>
             )}
 
-            {/* 새 D-Day 추가 */}
+            {/* D-Day 설정/변경 */}
             <div className="space-y-3">
-              <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider">새 D-Day 추가</p>
+              <p className="text-[11px] font-bold text-[#ADADAD] uppercase tracking-wider">
+                {profileExamDate ? 'D-Day 변경' : 'D-Day 설정'}
+              </p>
 
               {/* 자격증 선택 */}
               <div className="grid grid-cols-2 gap-2">
@@ -853,7 +856,7 @@ export default function DashboardModals() {
               >
                 {savingDDay
                   ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />저장 중...</>
-                  : <><Plus size={15} /> D-Day 등록</>
+                  : <><Plus size={15} /> {profileExamDate ? 'D-Day 저장' : 'D-Day 등록'}</>
                 }
               </button>
             </div>

@@ -56,13 +56,15 @@ export async function POST(req: NextRequest) {
   } = body
 
   if (!userId || !isSupabaseAdminConfigured) {
-    return NextResponse.json({ ok: true, saved: false })
+    return NextResponse.json({ error: 'Supabase not configured' }, { status: 500 })
   }
 
   const { error } = await supabaseAdmin
     .from('profiles')
     .update({
-      ...(exam_target_date !== undefined && exam_target_date !== null && { exam_target_date }),
+      // exam_target_date는 명시적으로 null을 보내 초기화(D-Day 삭제)할 수 있어야 하므로
+      // undefined(필드 미포함)일 때만 건드리지 않음 — null도 유효한 값으로 반영
+      ...(exam_target_date !== undefined && { exam_target_date }),
       ...(cert_type           !== undefined && { cert_type }),
       ...(region              !== undefined && { region }),
       ...(daily_study_hours   !== undefined && { daily_study_hours }),
@@ -77,7 +79,7 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error('[profile-settings POST] error:', error)
-    return NextResponse.json({ ok: true, saved: false })
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true, saved: true })
