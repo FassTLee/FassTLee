@@ -27,9 +27,9 @@ export function MarqueeText({ text, className }: { text: string; className?: str
   return (
     <div ref={containerRef} className="overflow-hidden max-w-[120px]">
       {overflow ? (
-        <div className="flex animate-marquee whitespace-nowrap">
-          <span className={className}>{text}&nbsp;&nbsp;&nbsp;&nbsp;</span>
-          <span className={className}>{text}&nbsp;&nbsp;&nbsp;&nbsp;</span>
+        <div className="flex w-max animate-marquee whitespace-nowrap">
+          <span className={`${className ?? ''} shrink-0`}>{text}&nbsp;&nbsp;&nbsp;&nbsp;</span>
+          <span className={`${className ?? ''} shrink-0`}>{text}&nbsp;&nbsp;&nbsp;&nbsp;</span>
         </div>
       ) : (
         <span className={className}>{text}</span>
