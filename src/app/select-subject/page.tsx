@@ -132,6 +132,14 @@ const CERT_CONFIG: Record<string, CertConfig> = {
     ],
     additional: [],
   },
+  'iipa-pilates-lv2': {
+    label: 'IIPA 필라테스 지도자 자격증 Lv2',
+    mode: 'all-required',
+    subjects: [
+      { name: '필라테스 해부학', icon: '🦴', desc: '뼈·관절·근육 기초 해부학' },
+    ],
+    additional: [],
+  },
 }
 
 // ── 컴포넌트 ──────────────────────────────────────────────────────

@@ -51,6 +51,12 @@ const CERT_META: Record<string, {
     certId: 'iipa-pilates-lv1',
     color: '#00A651',
   },
+  'iipa-pilates-lv2': {
+    icon: '🧘‍♀️',
+    desc: '필라테스 해부학 심화',
+    certId: 'iipa-pilates-lv2',
+    color: '#0EA5A4',
+  },
 }
 
 export default function SelectCertPage() {

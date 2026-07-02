@@ -101,7 +101,7 @@ export default function ClassroomTab() {
     expandedCertId,
     setExpandedCertId,
     setClassroomLoaded,
-    loadClassroom,
+    setUserCerts,
     router,
     subjectProgress,
     subjectStarStats,
@@ -168,13 +168,17 @@ export default function ClassroomTab() {
                       const userId = session?.user?.id ?? ''
                       if (!userId) return
                       try {
-                        await fetch('/api/v1/user-certifications', {
+                        const res = await fetch('/api/v1/user-certifications', {
                           method: 'PATCH',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ userId, certId: uc.id }),
                         })
+                        if (res.ok) {
+                          // 삭제 성공 시 로컬 state에서 즉시 제거 (loadClassroom은 최초 1회 이후
+                          // classroomLoaded===true면 userCerts를 재조회하지 않아 반영이 안 됨)
+                          setUserCerts((prev) => prev.filter((c) => c.id !== uc.id))
+                        }
                         setExpandedCertId(null)
-                        await loadClassroom()
                       } catch { /* ignore */ }
                     }}
                     className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#FFF0F0] flex-shrink-0"
