@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import { track } from '@vercel/analytics'
 import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
@@ -49,6 +49,8 @@ export default function TestPage() {
   const router = useRouter()
   const params = useParams()
   const chapterId = params.chapterId as string
+  const searchParams = useSearchParams()
+  const certId = searchParams.get('certId')
 
   const [questions, setQuestions]         = useState<Question[]>([])
   const [current, setCurrent]             = useState(0)
@@ -204,6 +206,7 @@ export default function TestPage() {
           chapterId,
           subjectId: localStorage.getItem('kinepia_current_subject_id') ?? '',
           records: finalRecords,
+          certId,
         }),
       })
       const data = await res.json()

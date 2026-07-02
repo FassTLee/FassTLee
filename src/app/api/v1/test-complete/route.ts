@@ -34,8 +34,8 @@ export async function POST(req: NextRequest) {
 
   const session = await getServerSession(authOptions)
   const body = await req.json()
-  const { chapterId, subjectId, records } = body as {
-    chapterId: string; subjectId: string; records: Record[]; userId?: string
+  const { chapterId, subjectId, records, certId } = body as {
+    chapterId: string; subjectId: string; records: Record[]; userId?: string; certId?: string | null
   }
 
   // ── 기존 코드 (body.userId fallback → IDOR 취약점) ──
@@ -87,12 +87,17 @@ export async function POST(req: NextRequest) {
   const correctCount = scoredRecords.filter((r) => r.correct).length
   const score        = total > 0 ? Math.round((correctCount / total) * 100) : 0
 
-  const { data: existing } = await supabaseAdmin
+  // certId가 있으면 그 자격증 문맥의 행만, 없으면 certification_id가 NULL인 행만 조회
+  // (같은 chapter_id를 여러 자격증이 공유하는 경우 진도를 분리 추적하기 위함)
+  let existingStatsQuery = supabaseAdmin
     .from('chapter_stats')
-    .select('total_attempts, total_correct, avg_score, best_score, test_attempts')
+    .select('id, total_attempts, total_correct, avg_score, best_score, test_attempts')
     .eq('user_id', userId)
     .eq('chapter_id', chapterId)
-    .maybeSingle()
+  existingStatsQuery = certId
+    ? existingStatsQuery.eq('certification_id', certId)
+    : existingStatsQuery.is('certification_id', null)
+  const { data: existing } = await existingStatsQuery.maybeSingle()
 
   const oldAttempts     = existing?.total_attempts  ?? 0
   const oldCorrect      = existing?.total_correct   ?? 0
@@ -109,11 +114,8 @@ export async function POST(req: NextRequest) {
   const newTestAttempts = oldTestAttempts + 1
   const newBestScore    = Math.max(score, oldBestScore)
 
-  await supabaseAdmin.from('chapter_stats').upsert(
-    {
-      user_id:         userId,
-      chapter_id:      chapterId,
-      subject_id:      subjectId ?? '',
+  if (existing) {
+    await supabaseAdmin.from('chapter_stats').update({
       total_attempts:  newAttempts,
       total_correct:   newCorrect,
       avg_score:       newAvg,
@@ -124,9 +126,25 @@ export async function POST(req: NextRequest) {
       total_questions: total,
       last_attempt_at: new Date().toISOString(),
       updated_at:      new Date().toISOString(),
-    },
-    { onConflict: 'user_id,chapter_id' }
-  )
+    }).eq('id', existing.id)
+  } else {
+    await supabaseAdmin.from('chapter_stats').insert({
+      user_id:          userId,
+      chapter_id:       chapterId,
+      subject_id:       subjectId ?? '',
+      certification_id: certId ?? null,
+      total_attempts:   newAttempts,
+      total_correct:    newCorrect,
+      avg_score:        newAvg,
+      wrong_rate:       newWrongRate,
+      latest_score:     score,
+      best_score:       newBestScore,
+      test_attempts:    newTestAttempts,
+      total_questions:  total,
+      last_attempt_at:  new Date().toISOString(),
+      updated_at:       new Date().toISOString(),
+    })
+  }
 
   await supabaseAdmin.from('chapter_test_history').insert({
     user_id:        userId,

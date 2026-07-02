@@ -43,6 +43,8 @@ export default function ChaptersPage() {
   const subjectId    = params.subjectId as string
   const searchParams   = useSearchParams()
   const courseIdFilter = searchParams.get('courseId')
+  const certIdFilter   = searchParams.get('certId')
+  const certQuery      = certIdFilter ? `?certId=${certIdFilter}` : ''
 
   const [subject, setSubject] = useState<Subject | null>(null)
   const [chapters, setChapters] = useState<Chapter[]>([])
@@ -79,7 +81,7 @@ export default function ChaptersPage() {
     const userId = session?.user?.id ?? (session?.user as any)?.supabaseId ?? (session?.user as any)?.stableId
     console.log('[chapters] fetchStats userId:', userId)
     if (userId) fetchStats(userId)
-  }, [status, subjectId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [status, subjectId, certIdFilter]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // userId가 늦게 확보되는 경우 추가 보장
   useEffect(() => {
@@ -87,7 +89,7 @@ export default function ChaptersPage() {
     const userId = session?.user?.id ?? (session?.user as any)?.supabaseId ?? (session?.user as any)?.stableId
     if (!userId || status !== 'authenticated') return
     fetchStats(userId)
-  }, [session?.user?.id, status]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [session?.user?.id, status, certIdFilter]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 포커스/탭 복귀 시 chapter_stats 재fetch
   useEffect(() => {
@@ -109,15 +111,23 @@ export default function ChaptersPage() {
       window.removeEventListener('focus', handleFocus)
       document.removeEventListener('visibilitychange', handleVisibility)
     }
-  }, [status, session?.user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [status, session?.user?.id, certIdFilter]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchStats = async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('chapter_stats')
         .select('chapter_id, subject_id, avg_score, wrong_rate, total_attempts, last_attempt_at, lesson_completed, mini_quiz_correct, mini_quiz_total, lesson_completed_at, latest_score, best_score, test_attempts, total_questions')
         .eq('user_id', userId)
-        .order('updated_at', { ascending: false, nullsFirst: false })
+
+      // certId가 있는 자격증(같은 챕터를 여러 자격증이 공유하는 경우, 예: IIPA Lv1/Lv2)만
+      // 그 자격증 문맥의 진도로 좁혀서 조회. certId가 없으면(레거시 자격증 — chapter_id 자체가
+      // 자격증 간 공유되지 않으므로 certification_id로 좁힐 필요가 없음) 기존과 동일하게
+      // user_id만으로 조회 — 백필로 certification_id가 채워진 기존 행도 그대로 잡혀야 하므로
+      // 여기서 certification_id 필터를 걸면 안 됨(걸면 기존 진도가 전부 안 보이게 됨)
+      if (certIdFilter) query = query.eq('certification_id', certIdFilter)
+
+      const { data, error } = await query.order('updated_at', { ascending: false, nullsFirst: false })
 
       if (error) {
         console.log('[chapters] fetchStats error:', error)
@@ -372,7 +382,7 @@ export default function ChaptersPage() {
                   onClick={() => {
                     if (isLocked) { setShowCodePopup(true); return }
                     localStorage.setItem('kinepia_current_subject_id', subjectId)
-                    router.push(`/lesson/${ch.id}`)
+                    router.push(`/lesson/${ch.id}${certQuery}`)
                   }}
                   className="flex-1 p-4 text-left flex items-center gap-4 min-w-0"
                 >
@@ -421,7 +431,7 @@ export default function ChaptersPage() {
                       <>
                         {/* 리포트 버튼 */}
                         <button
-                          onClick={() => router.push(`/report/${ch.id}`)}
+                          onClick={() => router.push(`/report/${ch.id}${certQuery}`)}
                           className={`flex flex-col items-center justify-center px-3 py-2 rounded-xl border ${scoreBorder} min-w-[52px]`}
                           style={{ borderColor: scoreColor }}
                         >
@@ -440,7 +450,7 @@ export default function ChaptersPage() {
                         <button
                           onClick={() => {
                             localStorage.setItem('kinepia_current_subject_id', subjectId)
-                            router.push(`/lesson/${ch.id}`)
+                            router.push(`/lesson/${ch.id}${certQuery}`)
                           }}
                           className="flex flex-col items-center justify-center px-3 py-2 rounded-xl border"
                           style={{ borderColor: scoreColor }}
@@ -454,7 +464,7 @@ export default function ChaptersPage() {
                       <button
                         onClick={() => {
                           localStorage.setItem('kinepia_current_subject_id', subjectId)
-                          router.push(`/lesson/${ch.id}`)
+                          router.push(`/lesson/${ch.id}${certQuery}`)
                         }}
                         className="flex flex-col items-center justify-center px-3 py-2 rounded-xl border border-[#639922]"
                       >

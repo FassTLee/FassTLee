@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { ChevronLeft, ChevronRight as ArrowRight, Check, Zap } from 'lucide-react'
 import { track } from '@vercel/analytics'
@@ -92,6 +92,9 @@ export default function LessonPage() {
   const router = useRouter()
   const params = useParams()
   const chapterId = params.chapterId as string
+  const searchParams = useSearchParams()
+  const certId = searchParams.get('certId')
+  const certQuery = certId ? `?certId=${certId}` : ''
 
   const [chapterTitle, setChapterTitle] = useState('')
   const [subjectName, setSubjectName]   = useState('')
@@ -181,9 +184,10 @@ export default function LessonPage() {
       body: JSON.stringify({
         chapterId,
         subjectId: localStorage.getItem(SUBJECT_KEY) ?? null,
+        certId,
       }),
     }).catch(() => {})
-  }, [session?.user?.id, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [session?.user?.id, chapterId, certId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const userId = session?.user?.id
@@ -314,6 +318,7 @@ export default function LessonPage() {
           miniQuizCorrect: miniCorrectRef.current,
           miniQuizTotal:   miniTotalRef.current,
           userId: session?.user?.id ?? '',
+          certId,
         }),
       })
         .catch(() => {})
@@ -454,6 +459,7 @@ export default function LessonPage() {
         questionId: miniQ.id,
         correct,
         userId: session?.user?.id ?? '',
+        certId,
       }),
     }).catch(() => {})
   }
@@ -765,7 +771,7 @@ export default function LessonPage() {
       <div className="flex-shrink-0 p-4 bg-white border-t border-[#E5E5E5]">
         {slides.length === 0 ? (
           <button
-            onClick={() => router.push(`/test/${chapterId}`)}
+            onClick={() => router.push(`/test/${chapterId}${certQuery}`)}
             className="w-full flex items-center justify-center gap-2 py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold"
           >
             <Zap size={18} /> 챕터 테스트
@@ -798,7 +804,7 @@ export default function LessonPage() {
             <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
           </div>
           <button
-            onClick={() => router.push(`/test/${chapterId}`)}
+            onClick={() => router.push(`/test/${chapterId}${certQuery}`)}
             className="w-full max-w-sm flex items-center justify-center gap-2 py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold"
           >
             <Zap size={18} /> 챕터 테스트

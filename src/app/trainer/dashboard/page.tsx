@@ -316,6 +316,7 @@ function DashboardContent() {
   const [subjectOrderByCert, setSubjectOrderByCert]                   = useState<Record<string, string[]>>({})
   const [subjectProgress, setSubjectProgress] = useState<Record<string, { total: number; completed: number }>>({})
   const [userCerts, setUserCerts]             = useState<UserCertification[]>([])
+  const [certSlugToId, setCertSlugToId]       = useState<Record<string, string>>({})
 
   /* ── 모의고사 ────────────────────────────────────────────────────── */
   const [selectedExamCert, setSelectedExamCert] = useState<string | null>(null)
@@ -535,6 +536,15 @@ function DashboardContent() {
 
     // userId: 이후 모든 API 호출에서 공통 사용
     const userId = session?.user?.id ?? ''
+
+    // cert_id(slug) → certifications.id(uuid) 매핑 로드 (chapter_stats.certification_id 용).
+    // 다른 로딩과 무관하므로 블로킹하지 않고 병렬로 진행
+    supabase.from('certifications').select('id, slug').then(({ data }) => {
+      if (!data) return
+      const map: Record<string, string> = {}
+      for (const c of data) map[c.slug] = c.id
+      setCertSlugToId(map)
+    })
 
     // ── 병렬 fetch: profile-me · user-certifications · chapter-stats ──
     // 세 API는 서로 의존 관계 없으므로 동시에 요청해 왕복 시간 단축
@@ -1411,7 +1421,7 @@ function DashboardContent() {
     expandedCertId, setExpandedCertId, certOpen, setCertOpen,
     methodOpen, setMethodOpen, activityOpen, setActivityOpen,
     certOrder, setCertOrder, subjectOrderByCert, setSubjectOrderByCert,
-    subjectProgress, setSubjectProgress, userCerts, setUserCerts,
+    subjectProgress, setSubjectProgress, userCerts, setUserCerts, certSlugToId,
     selectedExamCert, setSelectedExamCert, oralRegs, setOralRegs,
     oralLoading, setOralLoading, showOralDatePicker, setShowOralDatePicker,
     oralPickerTarget, setOralPickerTarget, oralPickerDate, setOralPickerDate,

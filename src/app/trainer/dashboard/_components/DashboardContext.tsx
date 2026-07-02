@@ -115,6 +115,10 @@ export interface DashboardContextType {
   setSubjectProgress: Dispatch<Record<string, { total: number; completed: number }>>
   userCerts: UserCertification[]
   setUserCerts: Dispatch<UserCertification[]>
+  // cert_id(user_certifications의 slug 문자열) → certifications.id(uuid) 매핑.
+  // chapter_stats.certification_id에 넣을 실제 uuid를 구하기 위함 — 매칭 안 되는
+  // 레거시 slug는 undefined를 반환하며, 그 경우 certId 없이 기존 동작 그대로 유지됨
+  certSlugToId: Record<string, string>
 
   /* ── 모의고사 ────────────────────────────────────────────────────── */
   selectedExamCert: string | null

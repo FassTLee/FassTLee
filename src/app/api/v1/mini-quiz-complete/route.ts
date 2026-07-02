@@ -12,12 +12,13 @@ export async function POST(req: NextRequest) {
 
   const session = await getServerSession(authOptions)
   const body = await req.json()
-  const { chapterId, subjectId, questionId, correct } = body as {
+  const { chapterId, subjectId, questionId, correct, certId } = body as {
     chapterId:  string
     subjectId:  string
     questionId: string
     correct:    boolean
     userId?:    string
+    certId?:    string | null
   }
 
   // 서버 session 우선, 없으면 클라이언트 userId fallback
@@ -27,26 +28,33 @@ export async function POST(req: NextRequest) {
   }
 
   // ── 1. chapter_stats: mini_quiz_correct / mini_quiz_total 업데이트 ────
-  const { data: existing } = await supabaseAdmin
+  // certId가 있으면 그 자격증 문맥의 행만, 없으면 certification_id가 NULL인 행만 조회
+  let existingQuery = supabaseAdmin
     .from('chapter_stats')
-    .select('mini_quiz_correct, mini_quiz_total')
+    .select('id, mini_quiz_correct, mini_quiz_total')
     .eq('user_id', userId)
     .eq('chapter_id', chapterId)
-    .maybeSingle()
+  existingQuery = certId ? existingQuery.eq('certification_id', certId) : existingQuery.is('certification_id', null)
+  const { data: existing } = await existingQuery.maybeSingle()
 
   const oldCorrect = existing?.mini_quiz_correct ?? 0
   const oldTotal   = existing?.mini_quiz_total   ?? 0
 
-  await supabaseAdmin.from('chapter_stats').upsert(
-    {
+  if (existing) {
+    await supabaseAdmin.from('chapter_stats').update({
+      mini_quiz_correct: oldCorrect + (correct ? 1 : 0),
+      mini_quiz_total:   oldTotal + 1,
+    }).eq('id', existing.id)
+  } else {
+    await supabaseAdmin.from('chapter_stats').insert({
       user_id:           userId,
       chapter_id:        chapterId,
       subject_id:        subjectId ?? '',
+      certification_id:  certId ?? null,
       mini_quiz_correct: oldCorrect + (correct ? 1 : 0),
       mini_quiz_total:   oldTotal + 1,
-    },
-    { onConflict: 'user_id,chapter_id' }
-  )
+    })
+  }
 
   // ── 2. question_stats: 문제별 정답률 업데이트 ──────────────────────────
   const { data: existingQ } = await supabaseAdmin

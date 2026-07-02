@@ -12,8 +12,8 @@ export async function POST(req: NextRequest) {
 
   const session = await getServerSession(authOptions)
   const body = await req.json()
-  const { chapterId, subjectId, miniQuizCorrect, miniQuizTotal } = body as {
-    chapterId: string; subjectId: string; miniQuizCorrect: number; miniQuizTotal: number; userId?: string
+  const { chapterId, subjectId, miniQuizCorrect, miniQuizTotal, certId } = body as {
+    chapterId: string; subjectId: string; miniQuizCorrect: number; miniQuizTotal: number; userId?: string; certId?: string | null
   }
 
   // 서버 session 우선, 없으면 클라이언트 userId fallback
@@ -24,14 +24,17 @@ export async function POST(req: NextRequest) {
 
   const now = new Date().toISOString()
 
-  const { data: existing } = await supabaseAdmin
+  // certId가 있으면 그 자격증 문맥의 행만, 없으면 certification_id가 NULL인 행만 조회
+  // (같은 chapter_id를 여러 자격증이 공유하는 경우 진도를 분리 추적하기 위함)
+  let existingQuery = supabaseAdmin
     .from('chapter_stats')
     .select('id')
     .eq('user_id', userId)
     .eq('chapter_id', chapterId)
-    .maybeSingle()
+  existingQuery = certId ? existingQuery.eq('certification_id', certId) : existingQuery.is('certification_id', null)
+  const { data: existing } = await existingQuery.maybeSingle()
 
-  console.log('[lesson-complete] userId:', userId, '| chapterId:', chapterId, '| existing:', !!existing)
+  console.log('[lesson-complete] userId:', userId, '| chapterId:', chapterId, '| certId:', certId, '| existing:', !!existing)
 
   if (existing) {
     const { data, error } = await supabaseAdmin
@@ -43,8 +46,7 @@ export async function POST(req: NextRequest) {
         lesson_completed_at: now,
         updated_at:          now,
       })
-      .eq('user_id', userId)
-      .eq('chapter_id', chapterId)
+      .eq('id', existing.id)
       .select()
     console.log('[lesson-complete] UPDATE data:', data, '| error:', error)
   } else {
@@ -53,6 +55,7 @@ export async function POST(req: NextRequest) {
         user_id:             userId,
         chapter_id:          chapterId,
         subject_id:          subjectId ?? '',
+        certification_id:    certId ?? null,
         total_attempts:      0,
         total_correct:       0,
         avg_score:           0,

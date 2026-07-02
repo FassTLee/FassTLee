@@ -16,9 +16,11 @@ import {
 function SubjectRow({
   name,
   hasBorder,
+  certId,
 }: {
   name: string
   hasBorder: boolean
+  certId?: string
 }) {
   const { subjectCards, subjectProgress, subjectStarStats, router } = useDashboard()
 
@@ -33,7 +35,7 @@ function SubjectRow({
       onClick={() => {
         if (card?.subjectId) {
           localStorage.setItem('kinepia_current_subject_id', card.subjectId)
-          router.push(`/chapters/${card.subjectId}`)
+          router.push(certId ? `/chapters/${card.subjectId}?certId=${certId}` : `/chapters/${card.subjectId}`)
         }
       }}
       disabled={!card?.subjectId}
@@ -96,6 +98,7 @@ export default function ClassroomTab() {
     dbRequiredNames,
     subjects,
     userCerts,
+    certSlugToId,
     session,
     setShowLoginPrompt,
     expandedCertId,
@@ -255,6 +258,7 @@ export default function ClassroomTab() {
                           key={name}
                           name={name}
                           hasBorder={idx < uc.subjects.length - 1}
+                          certId={certSlugToId[uc.cert_id]}
                         />
                       ))
                     ) : null}
@@ -327,7 +331,7 @@ export default function ClassroomTab() {
                           <span className="text-[10px] text-[#ADADAD]">· {requiredList.length}개</span>
                         </div>
                         {requiredList.map((name, idx) => (
-                          <SubjectRow key={name} name={name} hasBorder={idx < requiredList.length - 1 || optionalList.length > 0} />
+                          <SubjectRow key={name} name={name} hasBorder={idx < requiredList.length - 1 || optionalList.length > 0} certId={certSlugToId[certKey]} />
                         ))}
                       </div>
                     )}
@@ -338,14 +342,14 @@ export default function ClassroomTab() {
                           <span className="text-[10px] text-[#ADADAD]">· {optionalList.length}개</span>
                         </div>
                         {optionalList.map((name, idx) => (
-                          <SubjectRow key={name} name={name} hasBorder={idx < optionalList.length - 1} />
+                          <SubjectRow key={name} name={name} hasBorder={idx < optionalList.length - 1} certId={certSlugToId[certKey]} />
                         ))}
                       </div>
                     )}
                   </>
                 ) : (
                   subjects.map((name, idx) => (
-                    <SubjectRow key={name} name={name} hasBorder={idx < subjects.length - 1} />
+                    <SubjectRow key={name} name={name} hasBorder={idx < subjects.length - 1} certId={certSlugToId[certKey]} />
                   ))
                 )}
               </div>
