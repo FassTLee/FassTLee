@@ -96,6 +96,16 @@ export const CERT_EXAM_DATES: Record<number, string> = {
   2028: '2028-06-14',
 }
 
+// 오늘(포함) 이후로 가장 가까운 시험일 추천. 매핑된 미래 일정이 없으면 null.
+export const getNextExamDate = (): string | null => {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const upcoming = Object.values(CERT_EXAM_DATES)
+    .filter((d) => new Date(d) >= today)
+    .sort()
+  return upcoming[0] ?? null
+}
+
 
 export interface ChapterStat {
   chapter_id: string

@@ -13,6 +13,7 @@ import ExamTab from './_components/ExamTab'
 import ProfileTab from './_components/ProfileTab'
 import DashboardModals from './_components/DashboardModals'
 import type { CodeResultData } from './_components/constants'
+import { getNextExamDate } from './_components/constants'
 
 type Tab = 'home' | 'classroom' | 'exam' | 'profile'
 
@@ -347,15 +348,16 @@ function DashboardContent() {
     try { return JSON.parse(localStorage.getItem('kinepia_registered_rounds') ?? '[]') } catch { return [] }
   })
 
-  // D-Day 모달 열릴 때 건강운동관리사 기본 날짜 자동 추천
+  // D-Day 모달 열릴 때 기본 날짜 자동 추천
+  // 건강운동관리사: CERT_EXAM_DATES에서 오늘 이후 가장 가까운 실제 시험일을 계산
+  // 그 외(추천 일정 없음): 오늘 날짜를 기본값으로 표시
   useEffect(() => {
-    if (!showDDayModal) return
+    if (!showDDayModal || ddayNewDate) return
     const isHealthExercise =
       profileCert?.includes('건강운동관리사') ||
       certLabel?.includes('건강운동관리사')
-    if (isHealthExercise && !ddayNewDate) {
-      setDdayNewDate('2026-06-13')
-    }
+    const recommended = isHealthExercise ? getNextExamDate() : null
+    setDdayNewDate(recommended ?? new Date().toISOString().split('T')[0])
   }, [showDDayModal]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Phone Modal ─────────────────────────────────────────────────── */
