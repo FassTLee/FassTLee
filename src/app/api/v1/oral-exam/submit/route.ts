@@ -35,26 +35,26 @@ export async function POST(req: NextRequest) {
 
   const correct = q.answer_index?.includes(selectedIndex)
 
-  // 오답이면 user_wrong_answers 에 저장 (테이블 미존재 시 조용히 무시)
+  // 오답이면 user_wrong_answers 에 저장
   const userId = session?.user?.id
   if (!correct && userId) {
-    try {
-      await supabaseAdmin
-        .from('user_wrong_answers')
-        .upsert(
-          {
-            user_id:        userId,
-            question_id:    questionId,
-            chapter_id:     q.chapter_id ?? null,
-            selected_index: selectedIndex,
-            correct_index:  q.answer_index?.[0],
-            wrong_count:    1,
-            last_wrong_at:  new Date().toISOString(),
-          },
-          { onConflict: 'user_id,question_id' },
-        )
-    } catch {
-      // user_wrong_answers 테이블이 없을 경우 silently ignore
+    const { error: wrongAnswerError } = await supabaseAdmin
+      .from('user_wrong_answers')
+      .upsert(
+        {
+          user_id:        userId,
+          question_id:    questionId,
+          chapter_id:     q.chapter_id ?? null,
+          selected_index: selectedIndex,
+          correct_index:  q.answer_index?.[0],
+          wrong_count:    1,
+          last_wrong_at:  new Date().toISOString(),
+        },
+        { onConflict: 'user_id,question_id' },
+      )
+
+    if (wrongAnswerError) {
+      console.error('[oral-exam/submit] user_wrong_answers upsert error:', wrongAnswerError)
     }
   }
 
