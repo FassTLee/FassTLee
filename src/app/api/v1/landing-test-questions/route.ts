@@ -18,6 +18,8 @@ export async function GET() {
   const { data, error } = await supabaseAdmin
     .from('chapter_cards')
     .select('id, question, options')
+    .in('content_type', ['quiz', 'exam'])
+    .in('question_format', ['multiple_choice', 'true_false', 'multiple_select'])
     .limit(80)
 
   if (error || !data || data.length < TOTAL_Q) {
