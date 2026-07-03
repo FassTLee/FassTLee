@@ -35,26 +35,42 @@ export async function POST(req: NextRequest) {
 
   const correct = q.answer_index?.includes(selectedIndex)
 
-  // 오답이면 user_wrong_answers 에 저장
+  // 오답이면 user_wrong_answers 에 저장 (같은 문제 재오답 시 wrong_count 증가)
   const userId = session?.user?.id
   if (!correct && userId) {
-    const { error: wrongAnswerError } = await supabaseAdmin
+    const { data: existing } = await supabaseAdmin
       .from('user_wrong_answers')
-      .upsert(
-        {
-          user_id:        userId,
-          question_id:    questionId,
-          chapter_id:     q.chapter_id ?? null,
-          selected_index: selectedIndex,
-          correct_index:  q.answer_index?.[0],
-          wrong_count:    1,
-          last_wrong_at:  new Date().toISOString(),
-        },
-        { onConflict: 'user_id,question_id' },
-      )
+      .select('id, wrong_count')
+      .eq('user_id', userId)
+      .eq('question_id', questionId)
+      .maybeSingle()
+
+    const nowIso = new Date().toISOString()
+
+    const { error: wrongAnswerError } = existing
+      ? await supabaseAdmin
+          .from('user_wrong_answers')
+          .update({
+            selected_index: selectedIndex,
+            correct_index:  q.answer_index?.[0] ?? null,
+            wrong_count:    existing.wrong_count + 1,
+            last_wrong_at:  nowIso,
+          })
+          .eq('id', existing.id)
+      : await supabaseAdmin
+          .from('user_wrong_answers')
+          .insert({
+            user_id:        userId,
+            question_id:    questionId,
+            chapter_id:     q.chapter_id ?? null,
+            selected_index: selectedIndex,
+            correct_index:  q.answer_index?.[0] ?? null,
+            wrong_count:    1,
+            last_wrong_at:  nowIso,
+          })
 
     if (wrongAnswerError) {
-      console.error('[oral-exam/submit] user_wrong_answers upsert error:', wrongAnswerError)
+      console.error('[oral-exam/submit] user_wrong_answers save error:', wrongAnswerError)
     }
   }
 
