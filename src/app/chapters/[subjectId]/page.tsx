@@ -180,7 +180,26 @@ export default function ChaptersPage() {
         return
       }
 
-      const courseIds = (coursesData ?? []).map((c) => c.id)
+      let courseIds = (coursesData ?? []).map((c) => c.id)
+
+      // Step 2.5: certId가 있으면 course_certifications으로 한 번 더 좁힘
+      // (같은 subject를 여러 자격증이 공유하는 경우 — 예: IIPA Lv1/Lv2 — course
+      // 구성이 자격증마다 다를 수 있음). certId가 없으면 필터를 걸지 않고 기존과
+      // 동일하게 subject의 모든 course를 그대로 사용(레거시 자격증 하위 호환)
+      if (certIdFilter && courseIds.length > 0) {
+        const { data: mappedCourses, error: mapErr } = await supabase
+          .from('course_certifications')
+          .select('course_id')
+          .eq('certification_id', certIdFilter)
+          .in('course_id', courseIds)
+
+        if (!mapErr && mappedCourses) {
+          const allowedCourseIds = new Set(mappedCourses.map((m) => m.course_id))
+          courseIds = courseIds.filter((id) => allowedCourseIds.has(id))
+        }
+        // mapErr(예: 매핑 테이블 조회 실패) 시에는 안전하게 필터링을 건너뛰고
+        // 기존 courseIds(subject 전체)를 그대로 사용
+      }
 
       // Step 3: chapters
       let allChapters: Chapter[] = []
