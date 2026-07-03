@@ -3,12 +3,20 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
-import { LANDING_QUESTIONS, type TestResult, type TestQuestion } from '@/lib/landingTest'
-import { supabase } from '@/lib/supabase'
+import { LANDING_QUESTIONS, type TestResult } from '@/lib/landingTest'
 
 type Step = 'intro' | 'quiz' | 'loading' | 'major'
 
 const TOTAL_Q = 10
+
+// 퀴즈 진행 중에는 정답(correctIndex)/해설을 클라이언트가 알 필요가 없고
+// 알아서도 안 됨 — 채점은 서버(landing-test-grade)에서만 수행
+interface QuizQuestion {
+  id: string
+  question: string
+  imageUrl?: string
+  options: string[]
+}
 
 // ── helpers ─────────────────────────────────────────────────────
 
@@ -19,24 +27,19 @@ function getOrCreateGuestId(): string {
   return id
 }
 
-async function fetchDBQuestions(): Promise<TestQuestion[] | null> {
+function toQuizQuestion(q: { id: string; question: string; imageUrl?: string; options: string[] }): QuizQuestion {
+  return { id: q.id, question: q.question, imageUrl: q.imageUrl, options: q.options }
+}
+
+// chapter-test(P0-3)와 동일한 패턴: 서버 API에서 문제만 받아오고
+// answer_index/explanation은 클라이언트로 전송하지 않음
+async function fetchQuizQuestions(): Promise<QuizQuestion[] | null> {
   try {
-    const { data, error } = await supabase
-      .from('chapter_cards')
-      .select('id, question, options, answer_index, explanation')
-      .limit(80)
-    if (error || !data || data.length < TOTAL_Q) return null
-    return [...data]
-      .sort(() => Math.random() - 0.5)
-      .slice(0, TOTAL_Q)
-      .map((q) => ({
-        id: q.id,
-        type: 'B' as const,
-        question: q.question ?? '',
-        options: Array.isArray(q.options) ? q.options : [],
-        correctIndex: q.answer_index?.[0] ?? 0,
-        explanation: q.explanation ?? '',
-      }))
+    const res = await fetch('/api/v1/landing-test-questions')
+    if (!res.ok) return null
+    const { questions } = await res.json()
+    if (!Array.isArray(questions) || questions.length < TOTAL_Q) return null
+    return questions
   } catch {
     return null
   }
@@ -51,17 +54,18 @@ function LandingTestContent() {
   const [step, setStep]               = useState<Step>('intro')
   const [currentQ, setCurrentQ]       = useState(0)
   const [answers, setAnswers]         = useState<(number | null)[]>(Array(TOTAL_Q).fill(null))
-  const [activeQs, setActiveQs]       = useState<TestQuestion[]>(
-    [...LANDING_QUESTIONS, ...LANDING_QUESTIONS].slice(0, TOTAL_Q)
+  const [activeQs, setActiveQs]       = useState<QuizQuestion[]>(
+    [...LANDING_QUESTIONS, ...LANDING_QUESTIONS].slice(0, TOTAL_Q).map(toQuizQuestion)
   )
   const [questionsReady, setQuestionsReady]   = useState(false)
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [selectedMajor, setSelectedMajor]     = useState<boolean | null>(null)
   const [showMajorAlert, setShowMajorAlert]   = useState(false)
+  const [gradingFailed, setGradingFailed]     = useState(false)
 
   useEffect(() => {
     getOrCreateGuestId()
-    fetchDBQuestions().then((qs) => {
+    fetchQuizQuestions().then((qs) => {
       if (qs && qs.length === TOTAL_Q) setActiveQs(qs)
       setQuestionsReady(true)
     })
@@ -89,6 +93,52 @@ function LandingTestContent() {
   const selectedAnswer = answers[currentQ]
   const totalQ         = activeQs.length
 
+  // 마지막 문제 응답 후 서버에 채점 요청 (정답은 서버만 알고 있음, test-complete와 동일 패턴)
+  const submitForGrading = async (finalAnswers: (number | null)[]) => {
+    setGradingFailed(false)
+    const answerRecords = activeQs.map((aq, i) => ({ id: aq.id, selected: finalAnswers[i] }))
+    try {
+      const res = await fetch('/api/v1/landing-test-grade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers: answerRecords }),
+      })
+      if (!res.ok) throw new Error('grade request failed')
+      const graded = await res.json()
+
+      const result: TestResult = {
+        score:          graded.score,
+        totalQuestions: graded.totalQuestions,
+        answers:        finalAnswers.map((a) => a ?? -1),
+        weakAreas:      graded.weakAreas ?? [],
+        percentage:     graded.percentage,
+      }
+      localStorage.setItem('landingTestResult', JSON.stringify(result))
+      localStorage.setItem('landingTestQuestions', JSON.stringify(graded.scoredRecords))
+      sessionStorage.setItem('landingTestResult', JSON.stringify(result))
+
+      // guest 저장 (fire-and-forget)
+      const gid = getOrCreateGuestId()
+      fetch('/api/v1/guest-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          guest_id:        gid,
+          score:           result.score,
+          total_questions: result.totalQuestions,
+          correct_answers: result.score,
+          level_result:    String(result.percentage),
+          answers_json:    result.answers,
+        }),
+      }).catch(() => {})
+
+      setStep('loading')
+    } catch {
+      // 채점 서버 요청 실패 — 재시도 안내 배너 표시
+      setGradingFailed(true)
+    }
+  }
+
   const handleAnswer = (idx: number) => {
     if (answers[currentQ] !== null) return
     const newAnswers = [...answers]
@@ -99,40 +149,7 @@ function LandingTestContent() {
       if (currentQ < totalQ - 1) {
         setCurrentQ(currentQ + 1)
       } else {
-        // 마지막 문제 → 결과 계산 후 저장
-        let score = 0
-        const weakAreas: string[] = []
-        activeQs.forEach((aq, i) => {
-          if (newAnswers[i] === aq.correctIndex) { score++ }
-          else if (aq.weakArea) { weakAreas.push(aq.weakArea) }
-        })
-        const result: TestResult = {
-          score,
-          totalQuestions: totalQ,
-          answers: newAnswers.map((a) => a ?? -1),
-          weakAreas,
-          percentage: Math.round((score / totalQ) * 100),
-        }
-        localStorage.setItem('landingTestResult', JSON.stringify(result))
-        localStorage.setItem('landingTestQuestions', JSON.stringify(activeQs))
-        sessionStorage.setItem('landingTestResult', JSON.stringify(result))
-
-        // guest 저장 (fire-and-forget)
-        const gid = getOrCreateGuestId()
-        fetch('/api/v1/guest-test', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            guest_id:        gid,
-            score:           result.score,
-            total_questions: result.totalQuestions,
-            correct_answers: result.score,
-            level_result:    String(result.percentage),
-            answers_json:    result.answers,
-          }),
-        }).catch(() => {})
-
-        setStep('loading')
+        submitForGrading(newAnswers)
       }
     }, 350)
   }
@@ -334,6 +351,21 @@ function LandingTestContent() {
           </div>
         </div>
       </div>
+
+      {/* 채점 실패 재시도 배너 */}
+      {gradingFailed && (
+        <div className="max-w-sm mx-auto px-4 pt-4">
+          <div className="flex items-center justify-between gap-3 bg-[#FFF0F0] border border-[#E24B4A]/30 rounded-xl px-4 py-3">
+            <p className="text-[12px] text-[#E24B4A] font-medium">채점 중 오류가 발생했어요. 다시 시도해주세요.</p>
+            <button
+              onClick={() => submitForGrading(answers)}
+              className="flex-shrink-0 text-[12px] font-bold text-white bg-[#E24B4A] rounded-lg px-3 py-1.5"
+            >
+              재시도
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Question */}
       <div className="max-w-sm mx-auto px-4 py-6 space-y-4">
