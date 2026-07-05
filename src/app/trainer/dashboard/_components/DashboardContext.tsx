@@ -113,6 +113,10 @@ export interface DashboardContextType {
   setSubjectOrderByCert: Dispatch<Record<string, string[]>>
   subjectProgress: Record<string, { total: number; completed: number }>
   setSubjectProgress: Dispatch<Record<string, { total: number; completed: number }>>
+  // `${certification_id uuid}::${subjectName}` 키 — 같은 subject를 여러 자격증이
+  // 공유하는 경우(예: IIPA Lv1/Lv2) 자격증별로 분리된 진도율. 값이 없으면
+  // subjectProgress(과목 전체 합산)로 폴백
+  subjectProgressByCert: Record<string, { total: number; completed: number }>
   userCerts: UserCertification[]
   setUserCerts: Dispatch<UserCertification[]>
   // cert_id(user_certifications의 slug 문자열) → certifications.id(uuid) 매핑.

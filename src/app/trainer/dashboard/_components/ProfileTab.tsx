@@ -28,7 +28,7 @@ export default function ProfileTab() {
     dbGoalSubjects,
     examDateInput, setExamDateInput,
     subjectCards,
-    subjectProgress,
+    subjectProgress, subjectProgressByCert, certSlugToId,
     router,
     _accessCodeUsed, _codeExpiresAt,
     setShowCodePopup,
@@ -79,11 +79,14 @@ export default function ProfileTab() {
     const SubjectRowP = ({ name, hasBorder }: { name: string; hasBorder: boolean }) => {
       const card     = subjectCards.find((c) => c.name === name)
       const meta     = SUBJECT_META[name] ?? { icon: '📚', desc: '' }
-      const progress = subjectProgress[name]
+      const certId   = certSlugToId[certKey]
+      // certId가 있고 해당 자격증 기준 분리 진도율이 있으면 그걸 우선 사용 (예: IIPA Lv1/Lv2) —
+      // 없으면 과목 전체 합산인 subjectProgress로 폴백
+      const progress = (certId && subjectProgressByCert[`${certId}::${name}`]) ?? subjectProgress[name]
       const pct      = progress && progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0
       return (
         <button
-          onClick={() => { if (card?.subjectId) router.push(`/chapters/${card.subjectId}`) }}
+          onClick={() => { if (card?.subjectId) router.push(`/chapters/${card.subjectId}${certId ? `?certId=${certId}` : ''}`) }}
           disabled={!card?.subjectId}
           className={`w-full px-4 py-3 flex items-center gap-3 text-left active:bg-[#F5F5F3] disabled:opacity-60 ${hasBorder ? 'border-b border-[#F0F0EE]' : ''}`}
         >

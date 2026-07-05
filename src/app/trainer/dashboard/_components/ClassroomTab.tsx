@@ -22,11 +22,13 @@ function SubjectRow({
   hasBorder: boolean
   certId?: string
 }) {
-  const { subjectCards, subjectProgress, subjectStarStats, router } = useDashboard()
+  const { subjectCards, subjectProgress, subjectProgressByCert, subjectStarStats, router } = useDashboard()
 
   const card     = subjectCards.find((c) => c.name === name)
   const meta     = SUBJECT_META[name] ?? { icon: '📚', desc: '' }
-  const progress = subjectProgress[name]
+  // certId가 있고 해당 자격증 기준 분리 진도율이 있으면 그걸 우선 사용 (예: IIPA Lv1/Lv2) —
+  // 없으면 과목 전체 합산인 subjectProgress로 폴백
+  const progress = (certId && subjectProgressByCert[`${certId}::${name}`]) ?? subjectProgress[name]
   const pct      = progress && progress.total > 0
     ? Math.round((progress.completed / progress.total) * 100)
     : 0

@@ -551,7 +551,7 @@ export default function LessonPage() {
       <div className="bg-white border-b border-[#E5E5E5] px-5 pt-12 pb-4">
         <div className="flex items-center justify-between mb-3">
           <button
-            onClick={() => subjectId ? router.push(`/chapters/${subjectId}`) : router.back()}
+            onClick={() => subjectId ? router.push(`/chapters/${subjectId}${certQuery}`) : router.back()}
             className="flex items-center gap-1 text-[13px] text-[#6B6B6B]"
           >
             <ChevronLeft size={16} /> 챕터 목록

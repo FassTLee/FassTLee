@@ -315,6 +315,9 @@ function DashboardContent() {
   const [certOrder, setCertOrder]                                     = useState<string[]>([])
   const [subjectOrderByCert, setSubjectOrderByCert]                   = useState<Record<string, string[]>>({})
   const [subjectProgress, setSubjectProgress] = useState<Record<string, { total: number; completed: number }>>({})
+  // certId::subjectName 키 — 같은 subject를 여러 자격증이 공유하는 경우(예: IIPA Lv1/Lv2)
+  // 자격증별로 분리된 진도율. 값이 없으면 subjectProgress(과목 전체 합산)로 폴백
+  const [subjectProgressByCert, setSubjectProgressByCert] = useState<Record<string, { total: number; completed: number }>>({})
   const [userCerts, setUserCerts]             = useState<UserCertification[]>([])
   const [certSlugToId, setCertSlugToId]       = useState<Record<string, string>>({})
 
@@ -893,6 +896,61 @@ function DashboardContent() {
 
             console.log('[main progressMap keys]', Object.keys(progressMap))
             setSubjectProgress(progressMap)
+
+            // 자격증별 진도율 분리 계산 (같은 subject를 여러 자격증이 공유하는 경우 대비 —
+            // 예: IIPA Lv1/Lv2). course_certifications에 매핑이 등록된 자격증만 실제로
+            // course를 좁히고, 등록이 없는(미등록) 자격증은 기존처럼 subject 전체를 사용
+            try {
+              const activeCerts = (certsData.data ?? []).filter((c) => c.is_active !== false)
+              if (activeCerts.length > 0) {
+                const { data: certRows } = await supabase.from('certifications').select('id, slug')
+                const slugToId: Record<string, string> = {}
+                for (const c of (certRows ?? [])) slugToId[c.slug] = c.id
+
+                const certUuids = Array.from(new Set(
+                  activeCerts.map((c) => slugToId[c.cert_id]).filter((id): id is string => !!id)
+                ))
+
+                if (certUuids.length > 0) {
+                  const { data: ccRows } = await supabase
+                    .from('course_certifications')
+                    .select('course_id, certification_id')
+                    .in('certification_id', certUuids)
+                    .in('course_id', allCourseIds)
+
+                  const mappedCourseIdsByCert: Record<string, Set<string>> = {}
+                  for (const row of (ccRows ?? [])) {
+                    if (!mappedCourseIdsByCert[row.certification_id]) mappedCourseIdsByCert[row.certification_id] = new Set()
+                    mappedCourseIdsByCert[row.certification_id].add(row.course_id)
+                  }
+
+                  const progressByCertMap: Record<string, { total: number; completed: number }> = {}
+                  for (const uc of activeCerts) {
+                    const certUuid = slugToId[uc.cert_id]
+                    if (!certUuid) continue
+                    const mappedSet = mappedCourseIdsByCert[certUuid]
+                    for (const subjName of uc.subjects ?? []) {
+                      const card = cards.find((c) => c.name === subjName)
+                      if (!card?.subjectId) continue
+                      const fullCourseIds = (allCourses ?? [])
+                        .filter((c) => c.subject_id === card.subjectId)
+                        .map((c) => c.id)
+                      // 이 subject의 course 중 해당 자격증에 매핑된 게 하나라도 있을 때만 좁힘 —
+                      // 없으면(이 subject는 이 자격증의 매핑 대상이 아님) 전체 사용
+                      const intersected = mappedSet ? fullCourseIds.filter((id) => mappedSet.has(id)) : []
+                      const courseIds = intersected.length > 0 ? intersected : fullCourseIds
+                      const chaps = (allChaps ?? []).filter((c) => courseIds.includes(c.course_id))
+                      progressByCertMap[`${certUuid}::${subjName}`] = {
+                        total: chaps.length,
+                        completed: chaps.filter((c) => completedSet.has(c.id)).length,
+                      }
+                    }
+                  }
+                  console.log('[main progressByCertMap keys]', Object.keys(progressByCertMap))
+                  setSubjectProgressByCert(progressByCertMap)
+                }
+              }
+            } catch { /* ignore */ }
           }
         }
       } catch { /* ignore */ }
@@ -1084,6 +1142,63 @@ function DashboardContent() {
 
                 console.log('[fallback progressMap keys]', Object.keys(fbProgressMap))
                 setSubjectProgress(fbProgressMap)
+
+                // 자격증별 진도율 분리 계산 (메인 경로와 동일한 로직 — fallback 경로는
+                // userCerts state 타이밍을 신뢰할 수 없어 독립적으로 재fetch)
+                try {
+                  const ucRes  = await fetch(`/api/v1/user-certifications?userId=${uid}`)
+                  const ucData = await ucRes.json()
+                  const activeCerts: UserCertification[] = Array.isArray(ucData.data)
+                    ? ucData.data.filter((c: UserCertification) => c.is_active !== false)
+                    : []
+
+                  if (activeCerts.length > 0) {
+                    const { data: certRows } = await supabase.from('certifications').select('id, slug')
+                    const slugToId: Record<string, string> = {}
+                    for (const c of (certRows ?? [])) slugToId[c.slug] = c.id
+
+                    const certUuids = Array.from(new Set(
+                      activeCerts.map((c) => slugToId[c.cert_id]).filter((id): id is string => !!id)
+                    ))
+
+                    if (certUuids.length > 0) {
+                      const { data: ccRows } = await supabase
+                        .from('course_certifications')
+                        .select('course_id, certification_id')
+                        .in('certification_id', certUuids)
+                        .in('course_id', fbCourseIds)
+
+                      const mappedCourseIdsByCert: Record<string, Set<string>> = {}
+                      for (const row of (ccRows ?? [])) {
+                        if (!mappedCourseIdsByCert[row.certification_id]) mappedCourseIdsByCert[row.certification_id] = new Set()
+                        mappedCourseIdsByCert[row.certification_id].add(row.course_id)
+                      }
+
+                      const fbProgressByCertMap: Record<string, { total: number; completed: number }> = {}
+                      for (const uc of activeCerts) {
+                        const certUuid = slugToId[uc.cert_id]
+                        if (!certUuid) continue
+                        const mappedSet = mappedCourseIdsByCert[certUuid]
+                        for (const subjName of uc.subjects ?? []) {
+                          const card = fallbackCards.find((c: { name: string }) => c.name === subjName)
+                          if (!card?.subjectId) continue
+                          const fullCourseIds = (fbCourses ?? [])
+                            .filter((c: { subject_id: string }) => c.subject_id === card.subjectId)
+                            .map((c: { id: string }) => c.id)
+                          const intersected = mappedSet ? fullCourseIds.filter((id: string) => mappedSet.has(id)) : []
+                          const courseIds = intersected.length > 0 ? intersected : fullCourseIds
+                          const chaps = (fbChaps ?? []).filter((c: { course_id: string }) => courseIds.includes(c.course_id))
+                          fbProgressByCertMap[`${certUuid}::${subjName}`] = {
+                            total: chaps.length,
+                            completed: chaps.filter((c: { id: string }) => completedSet.has(c.id)).length,
+                          }
+                        }
+                      }
+                      console.log('[fallback progressByCertMap keys]', Object.keys(fbProgressByCertMap))
+                      setSubjectProgressByCert(fbProgressByCertMap)
+                    }
+                  }
+                } catch { /* ignore */ }
               }
             }
           } catch { /* ignore */ }
@@ -1421,7 +1536,7 @@ function DashboardContent() {
     expandedCertId, setExpandedCertId, certOpen, setCertOpen,
     methodOpen, setMethodOpen, activityOpen, setActivityOpen,
     certOrder, setCertOrder, subjectOrderByCert, setSubjectOrderByCert,
-    subjectProgress, setSubjectProgress, userCerts, setUserCerts, certSlugToId,
+    subjectProgress, setSubjectProgress, subjectProgressByCert, userCerts, setUserCerts, certSlugToId,
     selectedExamCert, setSelectedExamCert, oralRegs, setOralRegs,
     oralLoading, setOralLoading, showOralDatePicker, setShowOralDatePicker,
     oralPickerTarget, setOralPickerTarget, oralPickerDate, setOralPickerDate,

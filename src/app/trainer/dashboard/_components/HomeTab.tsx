@@ -16,7 +16,7 @@ export default function HomeTab() {
     profileExamDate, profileCert, profileName, profileAvatar, avatarError,
     certLabel, streak, studiedToday,
     recentStats, allStats, subjectCards, subjectProgress, chapterSubjectMap,
-    subjects, userCerts,
+    subjects, userCerts, certSlugToId,
     todayChapter, todayChapterState,
     playingIdx, videoRefs,
     calYear, calMonth, calTouchStartX,
@@ -267,7 +267,8 @@ export default function HomeTab() {
             onClick={() => {
               const first = subjectCards.find((c) => c.subjectId)
               if (first?.subjectId) {
-                router.push(`/chapters/${first.subjectId}`)
+                const certId = certSlugToId[userCerts[0]?.cert_id]
+                router.push(`/chapters/${first.subjectId}${certId ? `?certId=${certId}` : ''}`)
               } else {
                 router.push('/trainer/dashboard?tab=classroom')
               }
@@ -437,7 +438,8 @@ export default function HomeTab() {
                         ? subjectCards.find((c) => c.name === firstSubjName)
                         : null
                       if (card?.subjectId) {
-                        router.push(`/chapters/${card.subjectId}`)
+                        const certId = certSlugToId[uc.cert_id]
+                        router.push(`/chapters/${card.subjectId}${certId ? `?certId=${certId}` : ''}`)
                       } else {
                         router.push('/trainer/dashboard?tab=classroom')
                       }

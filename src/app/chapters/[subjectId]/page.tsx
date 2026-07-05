@@ -186,6 +186,13 @@ export default function ChaptersPage() {
       // (같은 subject를 여러 자격증이 공유하는 경우 — 예: IIPA Lv1/Lv2 — course
       // 구성이 자격증마다 다를 수 있음). certId가 없으면 필터를 걸지 않고 기존과
       // 동일하게 subject의 모든 course를 그대로 사용(레거시 자격증 하위 호환)
+      //
+      // ⚠️ course_certifications는 IIPA처럼 실제로 매핑을 등록해둔 자격증에만
+      // row가 있고, 그 외 자격증은 이 테이블에 row가 아예 없음(전체 미등록).
+      // mappedCourses가 빈 배열인 것이 "이 자격증엔 course가 없다"는 뜻인지
+      // "이 자격증은 애초에 course_certifications 매핑 대상이 아니다"라는 뜻인지
+      // 구분할 수 없으므로, 매핑된 row가 하나라도 있을 때만 좁히고 0건이면
+      // (미등록 자격증으로 간주해) 필터링을 건너뛰고 subject 전체를 그대로 사용
       if (certIdFilter && courseIds.length > 0) {
         const { data: mappedCourses, error: mapErr } = await supabase
           .from('course_certifications')
@@ -193,12 +200,12 @@ export default function ChaptersPage() {
           .eq('certification_id', certIdFilter)
           .in('course_id', courseIds)
 
-        if (!mapErr && mappedCourses) {
+        if (!mapErr && mappedCourses && mappedCourses.length > 0) {
           const allowedCourseIds = new Set(mappedCourses.map((m) => m.course_id))
           courseIds = courseIds.filter((id) => allowedCourseIds.has(id))
         }
-        // mapErr(예: 매핑 테이블 조회 실패) 시에는 안전하게 필터링을 건너뛰고
-        // 기존 courseIds(subject 전체)를 그대로 사용
+        // mapErr(조회 실패) 또는 mappedCourses.length === 0(미등록 자격증)일 때는
+        // 안전하게 필터링을 건너뛰고 기존 courseIds(subject 전체)를 그대로 사용
       }
 
       // Step 3: chapters

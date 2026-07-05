@@ -193,16 +193,34 @@ export default function SelectSubjectPage() {
       .select('id, name')
       .in('name', config.subjects.map((s) => s.name))
 
+    // cert slug(예: 'iipa-pilates-lv1') → certifications.id(uuid). 같은 subject를
+    // 여러 자격증이 공유하는 경우(예: IIPA Lv1/Lv2) course_certifications으로
+    // 이 자격증에 매핑된 course만 챕터 수에 반영하기 위함
+    const { data: certRow } = await supabase
+      .from('certifications').select('id').eq('slug', cert).single()
+    const certUuid = certRow?.id ?? null
+
     const withDb: SubjectWithDb[] = await Promise.all(
       config.subjects.map(async (s) => {
         const db = dbSubjects?.find((d) => d.name === s.name) ?? null
         let chapterCount = 0
         if (db) {
           const { data: courses } = await supabase.from('courses').select('id').eq('subject_id', db.id)
-          if (courses?.length) {
+          let courseIds = (courses ?? []).map((c) => c.id)
+          if (certUuid && courseIds.length > 0) {
+            const { data: mappedCourses } = await supabase
+              .from('course_certifications')
+              .select('course_id')
+              .eq('certification_id', certUuid)
+              .in('course_id', courseIds)
+            // 매핑된 course가 하나라도 있을 때만 좁힘 — 없으면(미등록 자격증) 전체 사용
+            const mappedIds = (mappedCourses ?? []).map((m) => m.course_id)
+            if (mappedIds.length > 0) courseIds = mappedIds
+          }
+          if (courseIds.length > 0) {
             const { count } = await supabase
               .from('chapters').select('id', { count: 'exact', head: true })
-              .in('course_id', courses.map((c) => c.id))
+              .in('course_id', courseIds)
             chapterCount = count ?? 0
           }
         }
