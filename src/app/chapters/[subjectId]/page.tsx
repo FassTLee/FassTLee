@@ -48,6 +48,9 @@ export default function ChaptersPage() {
 
   const [subject, setSubject] = useState<Subject | null>(null)
   const [chapters, setChapters] = useState<Chapter[]>([])
+  // course_id → course title — 챕터 목록을 단원(course) 단위로 그룹핑해 섹션
+  // 헤더로 보여주기 위함
+  const [courseTitleMap, setCourseTitleMap] = useState<Record<string, string>>({})
   const [statsMap, setStatsMap] = useState<Record<string, ChapterStat>>({})
   const [chapterStarMap, setChapterStarMap] = useState<Record<string, { fire: number; star: number }>>({})
   const [loading, setLoading] = useState(true)
@@ -168,10 +171,11 @@ export default function ChaptersPage() {
       setSubject({ id: subjectData.id, name: subjectData.name })
 
       // Step 2: 해당 subject의 courses (order_index — 여러 course를 합칠 때
-      // 1차 정렬 기준으로 사용하기 위해 함께 조회)
+      // 1차 정렬 기준으로 사용하기 위해 함께 조회. title — 챕터 목록 그룹핑
+      // 섹션 헤더에 표시하기 위해 함께 조회)
       const { data: coursesData, error: coursesErr } = await supabase
         .from('courses')
-        .select('id, order_index')
+        .select('id, title, order_index')
         .eq('subject_id', subjectId)
 
       if (coursesErr) {
@@ -183,7 +187,12 @@ export default function ChaptersPage() {
 
       let courseIds = (coursesData ?? []).map((c) => c.id)
       const courseOrderMap: Record<string, number> = {}
-      for (const c of (coursesData ?? [])) courseOrderMap[c.id] = c.order_index ?? 0
+      const courseTitleById: Record<string, string> = {}
+      for (const c of (coursesData ?? [])) {
+        courseOrderMap[c.id] = c.order_index ?? 0
+        courseTitleById[c.id] = c.title
+      }
+      setCourseTitleMap(courseTitleById)
 
       // Step 2.5: certId가 있으면 course_certifications으로 한 번 더 좁힘
       // (같은 subject를 여러 자격증이 공유하는 경우 — 예: IIPA Lv1/Lv2 — course
@@ -402,8 +411,17 @@ export default function ChaptersPage() {
               ? Math.round((stat.wrong_rate / 100) * (stat.total_questions ?? 10))
               : 0
 
+            /* ── 단원(course) 섹션 헤더 — 이전 챕터와 course가 다르면 표시 ── */
+            const showCourseHeader = idx === 0 || visibleChapters[idx - 1].course_id !== ch.course_id
+            const courseTitle = courseTitleMap[ch.course_id] ?? ''
+
             return (
               <div key={ch.id}>
+                {showCourseHeader && courseTitle && (
+                  <h2 className={`px-1 pb-2 text-[13px] font-black text-[#6B6B6B] ${idx !== 0 ? 'pt-5' : ''}`}>
+                    {courseTitle}
+                  </h2>
+                )}
                 {idx === 4 && visibleChapters.length > 5 && (
                   <div className="flex flex-col items-center my-6 px-4">
                     <span className="text-[9px] text-[#ADADAD] mb-1 self-start">광고</span>
