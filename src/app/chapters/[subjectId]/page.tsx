@@ -167,10 +167,11 @@ export default function ChaptersPage() {
 
       setSubject({ id: subjectData.id, name: subjectData.name })
 
-      // Step 2: 해당 subject의 courses
+      // Step 2: 해당 subject의 courses (order_index — 여러 course를 합칠 때
+      // 1차 정렬 기준으로 사용하기 위해 함께 조회)
       const { data: coursesData, error: coursesErr } = await supabase
         .from('courses')
-        .select('id')
+        .select('id, order_index')
         .eq('subject_id', subjectId)
 
       if (coursesErr) {
@@ -181,6 +182,8 @@ export default function ChaptersPage() {
       }
 
       let courseIds = (coursesData ?? []).map((c) => c.id)
+      const courseOrderMap: Record<string, number> = {}
+      for (const c of (coursesData ?? [])) courseOrderMap[c.id] = c.order_index ?? 0
 
       // Step 2.5: certId가 있으면 course_certifications으로 한 번 더 좁힘
       // (같은 subject를 여러 자격증이 공유하는 경우 — 예: IIPA Lv1/Lv2 — course
@@ -227,9 +230,15 @@ export default function ChaptersPage() {
           return
         }
 
-        allChapters = (chaptersData ?? []).sort(
-          (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
-        )
+        // 1차: course.order_index, 2차: chapter.order_index — 여러 course의
+        // 챕터가 합쳐질 때 chapter.order_index만으로 정렬하면(각 course마다
+        // 1부터 다시 시작하는 값이라) 서로 다른 course의 챕터끼리 뒤섞이므로
+        // course 순서를 우선 기준으로 둠
+        allChapters = (chaptersData ?? []).sort((a, b) => {
+          const courseOrderDiff = (courseOrderMap[a.course_id] ?? 0) - (courseOrderMap[b.course_id] ?? 0)
+          if (courseOrderDiff !== 0) return courseOrderDiff
+          return (a.order_index ?? 0) - (b.order_index ?? 0)
+        })
       }
 
       // theory 슬라이드 보유 여부 확인

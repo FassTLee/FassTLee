@@ -57,7 +57,11 @@ interface MiniQ {
 
 function splitSentences(text: string): string[] {
   return text
-    .split(/(?<=[.。!?])\s+/)
+    // 마침표/물음표/느낌표 뒤 공백을 문장 경계로 인식하되, 바로 뒤에 "("가 오면
+    // (교재 p.25) 같은 문장 중간 페이지 인용이므로 거기서 끊지 않고 앞 문장에
+    // 붙임. 원문자 목록(①②③...) 앞도 항목 경계로 인식 — 기존엔 마침표+공백만
+    // 인식해 원문자 목록 전체가 한 항목에 뭉쳐 나오는 문제가 있었음
+    .split(/(?<=[.。!?])\s+(?!\()|\s*(?=[①-⑳])/)
     .map((s) => s.replace(/[.。!?]$/, '').trim())
     .filter((s) => s.length > 1 && !/^\d+$/.test(s.trim()))
     .slice(0, 3)
@@ -66,8 +70,10 @@ function splitSentences(text: string): string[] {
 function parseExplanation(text: string): { prose: string; points: string[] } {
   if (!text) return { prose: '', points: [] }
 
-  // 번호 패턴 (1. 2. 3. 또는 1) 2) 등)
-  const parts = text.split(/\n?\s*\d+[.)]\s+/)
+  // 번호 목록 패턴(1. 2. 또는 1) 2) 등)은 "줄 시작"에 올 때만 목록 구분자로
+  // 인식(m 플래그 + ^). "(교재 p.25)" 같은 문장 중간 페이지 인용은 줄 시작이
+  // 아니므로 매치되지 않아 prose가 거기서 잘리지 않음
+  const parts = text.split(/^[ \t]*\d+[.)][ \t]+/m)
   const prose = parts[0].trim()
   const points = parts.slice(1)
     .map((p) => p.trim())
