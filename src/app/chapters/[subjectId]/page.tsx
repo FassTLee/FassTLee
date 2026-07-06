@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { ChevronLeft, BookOpen, Flame, Check, Lock } from 'lucide-react'
+import { ChevronLeft, ChevronRight, BookOpen, Flame, Check, Lock } from 'lucide-react'
 import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
 
 interface Chapter {
@@ -52,6 +52,8 @@ export default function ChaptersPage() {
   // course_id → course title — 챕터 목록을 단원(course) 단위로 그룹핑해 섹션
   // 헤더로 보여주기 위함
   const [courseTitleMap, setCourseTitleMap] = useState<Record<string, string>>({})
+  // 단원(course) 헤더 아코디언 펼침 상태 — 기본은 전체 접힘(빈 Set)
+  const [expandedCourseIds, setExpandedCourseIds] = useState<Set<string>>(new Set())
   const [statsMap, setStatsMap] = useState<Record<string, ChapterStat>>({})
   const [chapterStarMap, setChapterStarMap] = useState<Record<string, { fire: number; star: number }>>({})
   const [loading, setLoading] = useState(true)
@@ -361,6 +363,25 @@ export default function ChaptersPage() {
     (ch) => ch.course_id !== '376cc5f3-eeef-4117-89bf-229a3ce417ab'
   )
 
+  // 단원(course)별 진도율 — 이미 certId 기준으로 필터링된 visibleChapters/statsMap을
+  // 그대로 집계만 하는 것으로, 지난번 강의실 탭 진도율(subjectProgressByCert)과
+  // 완료 기준(lesson_completed === true)을 동일하게 재사용함(새 계산 로직 아님)
+  const courseProgressMap: Record<string, { total: number; completed: number }> = {}
+  for (const ch of visibleChapters) {
+    if (!courseProgressMap[ch.course_id]) courseProgressMap[ch.course_id] = { total: 0, completed: 0 }
+    courseProgressMap[ch.course_id].total += 1
+    if (statsMap[ch.id]?.lesson_completed === true) courseProgressMap[ch.course_id].completed += 1
+  }
+
+  const toggleCourse = (courseId: string) => {
+    setExpandedCourseIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(courseId)) next.delete(courseId)
+      else next.add(courseId)
+      return next
+    })
+  }
+
   return (
     <div className="min-h-screen bg-[#F5F5F3]">
       <div className="bg-white border-b border-[#E5E5E5] px-5 pt-12 pb-4">
@@ -431,14 +452,37 @@ export default function ChaptersPage() {
             /* ── 단원(course) 섹션 헤더 — 이전 챕터와 course가 다르면 표시 ── */
             const showCourseHeader = idx === 0 || visibleChapters[idx - 1].course_id !== ch.course_id
             const courseTitle = courseTitleMap[ch.course_id] ?? ''
+            const courseProgress = courseProgressMap[ch.course_id]
+            const coursePct = courseProgress && courseProgress.total > 0
+              ? Math.round((courseProgress.completed / courseProgress.total) * 100)
+              : 0
+            const isCourseExpanded = expandedCourseIds.has(ch.course_id)
 
             return (
               <div key={ch.id}>
                 {showCourseHeader && courseTitle && (
-                  <h2 className={`px-1 pb-2 text-[13px] font-black text-[#6B6B6B] ${idx !== 0 ? 'pt-5' : ''}`}>
-                    {courseTitle}
-                  </h2>
+                  <button
+                    onClick={() => toggleCourse(ch.course_id)}
+                    className={`w-full flex items-center gap-3 px-1 pb-2 text-left ${idx !== 0 ? 'pt-5' : ''}`}
+                  >
+                    <h2 className="text-[13px] font-black text-[#6B6B6B] flex-shrink-0">
+                      {courseTitle}
+                    </h2>
+                    <div className="flex-1 h-1.5 bg-[#E5E5E5] rounded-full overflow-hidden" style={{ minWidth: 40 }}>
+                      <div
+                        className="h-full bg-[#00A651] rounded-full transition-all"
+                        style={{ width: `${coursePct}%` }}
+                      />
+                    </div>
+                    <span className="text-[11px] text-[#ADADAD] font-semibold flex-shrink-0">{coursePct}%</span>
+                    <ChevronRight
+                      size={16}
+                      className={`text-[#ADADAD] flex-shrink-0 transition-transform ${isCourseExpanded ? 'rotate-90' : ''}`}
+                    />
+                  </button>
                 )}
+                {isCourseExpanded && (
+                  <>
                 {idx === 4 && visibleChapters.length > 5 && (
                   <div className="flex flex-col items-center my-6 px-4">
                     <span className="text-[9px] text-[#ADADAD] mb-1 self-start">광고</span>
@@ -546,6 +590,8 @@ export default function ChaptersPage() {
                 )}
 
               </div>
+                  </>
+                )}
               </div>
             )
           })
