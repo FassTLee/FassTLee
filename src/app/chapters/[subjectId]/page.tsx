@@ -35,6 +35,9 @@ interface ChapterStat {
 }
 
 const FREE_LIMIT = 3
+// IIPA Lv1 certification_id — "복습"/"신규" 라벨 판별용(course_certifications에
+// Lv1 매핑이 있으면 기존 단원1~6="복습", 없으면 Lv2 전용 신규 단원7·8="신규")
+const IIPA_LV1_CERT_ID = 'e52ea177-15cd-4a92-b624-391e69c160cb'
 
 export default function ChaptersPage() {
   const { data: session, status } = useSession()
@@ -54,6 +57,8 @@ export default function ChaptersPage() {
   const [courseTitleMap, setCourseTitleMap] = useState<Record<string, string>>({})
   // 단원(course) 헤더 아코디언 펼침 상태 — 기본은 전체 접힘(빈 Set)
   const [expandedCourseIds, setExpandedCourseIds] = useState<Set<string>>(new Set())
+  // course_certifications에 IIPA Lv1 매핑이 있는 course_id 집합 — "복습"/"신규" 라벨용
+  const [lv1MappedCourseIds, setLv1MappedCourseIds] = useState<Set<string>>(new Set())
   const [statsMap, setStatsMap] = useState<Record<string, ChapterStat>>({})
   const [chapterStarMap, setChapterStarMap] = useState<Record<string, { fire: number; star: number }>>({})
   const [loading, setLoading] = useState(true)
@@ -232,6 +237,18 @@ export default function ChaptersPage() {
         }
         // mapErr(조회 실패) 또는 mappedCourses.length === 0(미등록 자격증)일 때는
         // 안전하게 필터링을 건너뛰고 기존 courseIds(subject 전체)를 그대로 사용
+      }
+
+      // "복습"/"신규" 라벨: course_certifications에 IIPA Lv1 매핑이 있는지 확인
+      // (현재 보고 있는 자격증과 무관하게, 해당 course가 원래 단원1~6인지 신규
+      // 단원7·8인지를 나타내는 값이라 certIdFilter 조건과 별개로 항상 조회)
+      if (courseIds.length > 0) {
+        const { data: lv1Mapped } = await supabase
+          .from('course_certifications')
+          .select('course_id')
+          .eq('certification_id', IIPA_LV1_CERT_ID)
+          .in('course_id', courseIds)
+        setLv1MappedCourseIds(new Set((lv1Mapped ?? []).map((m) => m.course_id)))
       }
 
       // Step 3: chapters
@@ -457,6 +474,7 @@ export default function ChaptersPage() {
               ? Math.round((courseProgress.completed / courseProgress.total) * 100)
               : 0
             const isCourseExpanded = expandedCourseIds.has(ch.course_id)
+            const courseLevelLabel = lv1MappedCourseIds.has(ch.course_id) ? '복습' : '신규'
 
             return (
               <div key={ch.id}>
@@ -468,6 +486,11 @@ export default function ChaptersPage() {
                     <h2 className="text-[13px] font-black text-[#6B6B6B] flex-shrink-0">
                       {courseTitle}
                     </h2>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                      courseLevelLabel === '신규' ? 'bg-[#00A651]/10 text-[#00A651]' : 'bg-[#F5F5F3] text-[#ADADAD]'
+                    }`}>
+                      {courseLevelLabel}
+                    </span>
                     <div className="flex-1 h-1.5 bg-[#E5E5E5] rounded-full overflow-hidden" style={{ minWidth: 40 }}>
                       <div
                         className="h-full bg-[#00A651] rounded-full transition-all"
