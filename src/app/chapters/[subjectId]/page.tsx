@@ -47,6 +47,7 @@ export default function ChaptersPage() {
   const certQuery      = certIdFilter ? `?certId=${certIdFilter}` : ''
 
   const [subject, setSubject] = useState<Subject | null>(null)
+  const [certLabel, setCertLabel] = useState('')
   const [chapters, setChapters] = useState<Chapter[]>([])
   // course_id → course title — 챕터 목록을 단원(course) 단위로 그룹핑해 섹션
   // 헤더로 보여주기 위함
@@ -66,6 +67,17 @@ export default function ChaptersPage() {
 
   // ── 2026-06-24 수정 (P0-8): 코드 존재 + (만료일 없으면 무기한 허용 OR 만료일 미래)일 때만 구독 인정 ──
   const isSubscribed = !!accessCodeUsed && (!codeExpiresAt || new Date(codeExpiresAt) > new Date())
+
+  // ── 자격증 배지: certId(URL) 기준으로 조회 — course.certification_id가
+  // 아니라 URL의 certId를 기준으로 삼아야 함. 이 페이지는 여러 course(단원)를
+  // 한 subject로 합쳐서 보여주는데, course마다 certification_id(단일값)가
+  // 다를 수 있어(예: IIPA 골격계=Lv1) 특정 course 값을 기준으로 하면 지금
+  // 보고 있는 게 Lv1인지 Lv2인지와 다른 배지가 뜰 수 있음
+  useEffect(() => {
+    if (!certIdFilter) { setCertLabel(''); return }
+    supabase.from('certifications').select('name').eq('id', certIdFilter).single()
+      .then(({ data }) => { if (data?.name) setCertLabel(data.name) })
+  }, [certIdFilter])
 
   // ── 챕터 목록 + 통계 fetch: 페이지 진입마다 항상 실행 ─────────────────
   useEffect(() => {
@@ -355,6 +367,11 @@ export default function ChaptersPage() {
         <button onClick={() => router.push('/trainer/dashboard?tab=classroom')} className="flex items-center gap-1 text-[13px] text-[#6B6B6B] mb-3">
           <ChevronLeft size={16} /> 강의실로
         </button>
+        {certLabel && (
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#1A1A1A]/10 text-[#1A1A1A] inline-block mb-1">
+            {certLabel}
+          </span>
+        )}
         <h1 className="text-[22px] font-black text-[#1A1A1A]">{subject?.name ?? '챕터 목록'}</h1>
         <p className="text-[13px] text-[#6B6B6B] mt-1">{visibleChapters.length}개 챕터</p>
       </div>
