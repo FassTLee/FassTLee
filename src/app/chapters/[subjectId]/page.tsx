@@ -38,6 +38,9 @@ const FREE_LIMIT = 3
 // IIPA Lv1 certification_id — "복습"/"신규" 라벨 판별용(course_certifications에
 // Lv1 매핑이 있으면 기존 단원1~6="복습", 없으면 Lv2 전용 신규 단원7·8="신규")
 const IIPA_LV1_CERT_ID = 'e52ea177-15cd-4a92-b624-391e69c160cb'
+// "복습"/"신규" 라벨은 IIPA 필라테스 해부학에서만 의미가 있는 판별 기준이라,
+// 다른 subject(건강운동관리사, 2급생활 등)에서는 라벨 자체를 숨김
+const IIPA_ANATOMY_SUBJECT_ID = '7538c34d-5b36-4955-91fd-3f7fe4e7f244'
 
 export default function ChaptersPage() {
   const { data: session, status } = useSession()
@@ -390,6 +393,17 @@ export default function ChaptersPage() {
     if (statsMap[ch.id]?.lesson_completed === true) courseProgressMap[ch.course_id].completed += 1
   }
 
+  // course가 1개뿐인 subject(예: 건강운동관리사/2급생활스포츠지도사 대부분 과목)는
+  // 굳이 단원 그룹핑이 필요 없으므로 헤더/아코디언 없이 챕터를 바로 나열함.
+  // course가 2개 이상인 경우(IIPA, "보디빌딩 경기 규정" 등)만 기존 아코디언 유지
+  const distinctCourseIds = new Set(visibleChapters.map((ch) => ch.course_id))
+  const isSingleCourse = distinctCourseIds.size === 1
+  const singleCourseId = isSingleCourse ? visibleChapters[0]?.course_id : null
+  const singleCourseProgress = singleCourseId ? courseProgressMap[singleCourseId] : undefined
+  const singleCoursePct = singleCourseProgress && singleCourseProgress.total > 0
+    ? Math.round((singleCourseProgress.completed / singleCourseProgress.total) * 100)
+    : 0
+
   const toggleCourse = (courseId: string) => {
     setExpandedCourseIds((prev) => {
       const next = new Set(prev)
@@ -412,6 +426,17 @@ export default function ChaptersPage() {
         )}
         <h1 className="text-[22px] font-black text-[#1A1A1A]">{subject?.name ?? '챕터 목록'}</h1>
         <p className="text-[13px] text-[#6B6B6B] mt-1">{visibleChapters.length}개 챕터</p>
+        {isSingleCourse && visibleChapters.length > 0 && (
+          <div className="flex items-center gap-2 mt-2">
+            <div className="flex-1 h-1.5 bg-[#E5E5E5] rounded-full overflow-hidden" style={{ minWidth: 40 }}>
+              <div
+                className="h-full bg-[#00A651] rounded-full transition-all"
+                style={{ width: `${singleCoursePct}%` }}
+              />
+            </div>
+            <span className="text-[11px] text-[#ADADAD] font-semibold flex-shrink-0">{singleCoursePct}%</span>
+          </div>
+        )}
       </div>
 
       <div className="p-4 space-y-2">
@@ -466,14 +491,15 @@ export default function ChaptersPage() {
               ? Math.round((stat.wrong_rate / 100) * (stat.total_questions ?? 10))
               : 0
 
-            /* ── 단원(course) 섹션 헤더 — 이전 챕터와 course가 다르면 표시 ── */
-            const showCourseHeader = idx === 0 || visibleChapters[idx - 1].course_id !== ch.course_id
+            /* ── 단원(course) 섹션 헤더 — course가 2개 이상일 때만, 이전 챕터와
+               course가 다르면 표시. course가 1개뿐이면 헤더 없이 항상 펼침 ── */
+            const showCourseHeader = !isSingleCourse && (idx === 0 || visibleChapters[idx - 1].course_id !== ch.course_id)
             const courseTitle = courseTitleMap[ch.course_id] ?? ''
             const courseProgress = courseProgressMap[ch.course_id]
             const coursePct = courseProgress && courseProgress.total > 0
               ? Math.round((courseProgress.completed / courseProgress.total) * 100)
               : 0
-            const isCourseExpanded = expandedCourseIds.has(ch.course_id)
+            const isCourseExpanded = isSingleCourse || expandedCourseIds.has(ch.course_id)
             const courseLevelLabel = lv1MappedCourseIds.has(ch.course_id) ? '복습' : '신규'
 
             return (
@@ -486,11 +512,13 @@ export default function ChaptersPage() {
                     <h2 className="text-[13px] font-black text-[#6B6B6B] flex-shrink-0">
                       {courseTitle}
                     </h2>
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
-                      courseLevelLabel === '신규' ? 'bg-[#00A651]/10 text-[#00A651]' : 'bg-[#F5F5F3] text-[#ADADAD]'
-                    }`}>
-                      {courseLevelLabel}
-                    </span>
+                    {subjectId === IIPA_ANATOMY_SUBJECT_ID && (
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${
+                        courseLevelLabel === '신규' ? 'bg-[#00A651]/10 text-[#00A651]' : 'bg-[#F5F5F3] text-[#ADADAD]'
+                      }`}>
+                        {courseLevelLabel}
+                      </span>
+                    )}
                     <div className="flex-1 h-1.5 bg-[#E5E5E5] rounded-full overflow-hidden" style={{ minWidth: 40 }}>
                       <div
                         className="h-full bg-[#00A651] rounded-full transition-all"
