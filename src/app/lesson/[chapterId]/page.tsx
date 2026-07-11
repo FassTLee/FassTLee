@@ -32,6 +32,7 @@ interface Question {
   image_url?: string | null
   reference_text?: string | null
   key_points?: string[] | null
+  linked_quiz_id?: string | null
 }
 
 interface Slide {
@@ -45,6 +46,7 @@ interface Slide {
   star_rating: number | null
   content_type: string | null
   question_format: string | null
+  linked_quiz_id: string | null
 }
 
 interface MiniQ {
@@ -221,7 +223,7 @@ export default function LessonPage() {
     const [{ data: ch }, { data: qs }] = await Promise.all([
       supabase.from('chapters').select('id, title, course_id, video_url, audio_url, image_url').eq('id', chapterId).single(),
       supabase.from('chapter_cards')
-        .select('id, chapter_id, question, options, answer_index, explanation, order_index, content_type, question_format, image_url, reference_text, key_points, exam_years, star_rating')
+        .select('id, chapter_id, question, options, answer_index, explanation, order_index, content_type, question_format, image_url, reference_text, key_points, exam_years, star_rating, linked_quiz_id')
         .eq('chapter_id', chapterId),
     ])
 
@@ -269,6 +271,7 @@ export default function LessonPage() {
       star_rating: q.star_rating ?? null,
       content_type: q.content_type ?? null,
       question_format: q.question_format ?? null,
+      linked_quiz_id: q.linked_quiz_id ?? null,
     }))
     setSlides(slideArray)
 
@@ -353,81 +356,40 @@ export default function LessonPage() {
   }
 
   /* ── Mini quiz trigger ─────────────────────────────── */
+  // 슬라이드3(미니퀴즈) 건너뛰기 — linked_quiz_id가 없는 카드용 폴백.
+  // 슬라이드2(체크포인트) 완료 시점 기준으로 바로 다음 카드로 진행/완료 처리한다.
+  const skipMiniQuiz = (fromIdx: number) => {
+    if (fromIdx >= slides.length - 1) {
+      advanceFromQuiz()
+    } else {
+      setSlideIndex(fromIdx + 1)
+      setCheckedSentences([])
+      setAutoProgress(0)
+    }
+  }
+
   const triggerMiniQuiz = (fromIdx: number) => {
     pendingSlideIdxRef.current = fromIdx
 
-    // 현재 슬라이드에 해당하는 문제 사용
-    const q = questions.find((q) => q.id === slides[fromIdx]?.id)
-           ?? questions[fromIdx % Math.max(questions.length, 1)]
-           ?? slides[fromIdx]
-    if (!q) {
-      // 문제 데이터 없으면 퀴즈 건너뛰고 바로 진행
-      if (fromIdx >= slides.length - 1) {
-        advanceFromQuiz()
-      } else {
-        setSlideIndex(fromIdx + 1)
-        setCheckedSentences([])
-        setAutoProgress(0)
-      }
+    // linked_quiz_id로 정확히 지목된 카드만 사용 — 챕터 풀 순환/생성형 폴백 없음
+    const linkedQuizId = slides[fromIdx]?.linked_quiz_id
+    if (!linkedQuizId) {
+      skipMiniQuiz(fromIdx)
       return
     }
 
-    // slides fallback 사용 시 answer_index가 없으면 oral 분기로 강제 이동
-    if (q.answer_index === undefined || q.answer_index === null) {
-      // oral 문제 — key_points/sentences로 2지선다 생성
-      const currentPoints = Array.isArray(q.key_points) && q.key_points.filter(p => p.length > 1).length > 0
-        ? q.key_points.filter(p => p.length > 1)
-        : splitSentences(q.explanation ?? '')
-
-      if (currentPoints.length === 0) {
-        if (fromIdx >= slides.length - 1) { advanceFromQuiz() }
-        else { setSlideIndex(fromIdx + 1); setCheckedSentences([]); setAutoProgress(0) }
-        return
-      }
-
-      // 정답: 현재 슬라이드의 key_points 중 랜덤 1개
-      const correct = currentPoints[Math.floor(Math.random() * currentPoints.length)]
-
-      // 오답: 다른 슬라이드의 key_points 중 랜덤 1개
-      const otherSlides = slides.filter((_, i) => i !== fromIdx)
-      let wrongOpt = ''
-      for (const other of otherSlides.sort(() => Math.random() - 0.5)) {
-        const otherPoints = Array.isArray(other.key_points) && other.key_points.filter(p => p.length > 1).length > 0
-          ? other.key_points.filter(p => p.length > 1)
-          : splitSentences(other.explanation ?? '')
-        const candidate = otherPoints.find(p => p !== correct)
-        if (candidate) { wrongOpt = candidate; break }
-      }
-
-      if (!wrongOpt) {
-        if (fromIdx >= slides.length - 1) { advanceFromQuiz() }
-        else { setSlideIndex(fromIdx + 1); setCheckedSentences([]); setAutoProgress(0) }
-        return
-      }
-
-      const aIsCorrect = Math.random() > 0.5
-      setMiniQ({
-        id:          q.id,
-        text:        '다음 중 올바른 설명은?',
-        explanation: correct,
-        options:     aIsCorrect ? [correct, wrongOpt] : [wrongOpt, correct],
-        answerIdx:   aIsCorrect ? 0 : 1,
-      })
-      setShowMiniQuiz(true)
+    const q = questions.find((qq) => qq.id === linkedQuizId)
+    if (!q || q.answer_index === undefined || q.answer_index === null) {
+      skipMiniQuiz(fromIdx)
       return
     }
+
     const correct = q.options[q.answer_index?.[0] ?? 0]
     const wrongOptions = q.options.filter((_, i) => !q.answer_index?.includes(i))
 
     // options 부족 시 퀴즈 건너뛰고 다음 슬라이드로
     if (!correct || wrongOptions.length === 0) {
-      if (fromIdx >= slides.length - 1) {
-        advanceFromQuiz()
-      } else {
-        setSlideIndex(fromIdx + 1)
-        setCheckedSentences([])
-        setAutoProgress(0)
-      }
+      skipMiniQuiz(fromIdx)
       return
     }
 
