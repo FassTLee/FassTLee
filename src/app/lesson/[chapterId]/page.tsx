@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { ChevronLeft, ChevronRight as ArrowRight, Check, Zap } from 'lucide-react'
+import { ChevronLeft, ChevronRight as ArrowRight, Check, Zap, ZoomIn, X } from 'lucide-react'
 import { track } from '@vercel/analytics'
 import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
 // Zap used in completion screen
@@ -56,6 +56,9 @@ interface MiniQ {
   options: [string, string]
   answerIdx: 0 | 1
 }
+
+// 카드 내부 3슬라이드 위치: 0=학습내용 1=체크포인트 2=미니퀴즈
+type SubSlide = 0 | 1 | 2
 
 function splitSentences(text: string): string[] {
   return text
@@ -109,7 +112,6 @@ export default function LessonPage() {
   const [courseDesc, setCourseDesc]     = useState<string | null>(null)
   const [chapterVideoUrl, setChapterVideoUrl] = useState<string | null>(null)
   const [chapterAudioUrl, setChapterAudioUrl] = useState<string | null>(null)
-  const [chapterImageUrl, setChapterImageUrl] = useState<string | null>(null)
   const [questions, setQuestions]       = useState<Question[]>([])
   const [slides, setSlides]             = useState<Slide[]>([])
   const [style, setStyle]               = useState<'memorizer' | 'conceptualizer'>('conceptualizer')
@@ -120,18 +122,20 @@ export default function LessonPage() {
 
   /* ── Slide navigation ───────────────────────── */
   const [slideIndex, setSlideIndex]       = useState(0)
+  const [subSlide, setSubSlide]           = useState<SubSlide>(0)
   const slideEnterTimeRef = useRef<number>(Date.now())
   const [slideMode, setSlideMode]         = useState<'manual' | 'auto'>('manual')
   const [checkedSentences, setCheckedSentences] = useState<boolean[]>([])
   const [autoProgress, setAutoProgress]   = useState(0)
 
-  /* ── Mini quiz ──────────────────────────────── */
-  const [showMiniQuiz, setShowMiniQuiz]   = useState(false)
+  /* ── Image zoom overlay ─────────────────────── */
+  const [showImageZoom, setShowImageZoom] = useState(false)
+
+  /* ── Mini quiz (슬라이드3) ──────────────────── */
   const [miniQ, setMiniQ]                 = useState<MiniQ | null>(null)
   const [miniSelected, setMiniSelected]   = useState<0 | 1 | null>(null)
   const [miniConfirmed, setMiniConfirmed] = useState(false)
   const [showComplete, setShowComplete]   = useState(false)
-  const pendingSlideIdxRef                = useRef(0)
 
   useEffect(() => {
     if (!lessonSessionId || !session?.user?.id) return
@@ -145,13 +149,13 @@ export default function LessonPage() {
           sessionId:   lessonSessionId,
           pageType:    'lesson',
           isCompleted: showComplete,
-          exitPoint:   showMiniQuiz ? 'mini_quiz' : 'slide',
+          exitPoint:   subSlide === 2 ? 'mini_quiz' : 'slide',
         })
       )
     }
     window.addEventListener('beforeunload', handleUnload)
     return () => window.removeEventListener('beforeunload', handleUnload)
-  }, [lessonSessionId, session?.user?.id, slideIndex, showMiniQuiz, showComplete]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [lessonSessionId, session?.user?.id, slideIndex, subSlide, showComplete]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Mini quiz session score ────────────────── */
   const miniCorrectRef = useRef(0)
@@ -215,10 +219,6 @@ export default function LessonPage() {
       .catch(() => {})
   }, [session?.user?.id, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    setCheckedSentences([])
-  }, [slideIndex])
-
   const fetchData = async () => {
     const [{ data: ch }, { data: qs }] = await Promise.all([
       supabase.from('chapters').select('id, title, course_id, video_url, audio_url, image_url').eq('id', chapterId).single(),
@@ -231,7 +231,6 @@ export default function LessonPage() {
       setChapterTitle(ch.title)
       if (ch.video_url) setChapterVideoUrl(ch.video_url)
       if (ch.audio_url) setChapterAudioUrl(ch.audio_url)
-      if (ch.image_url) setChapterImageUrl(ch.image_url)
       if (ch.course_id) {
         const { data: course } = await supabase
           .from('courses').select('id, subject_id, description, certification_id').eq('id', ch.course_id).single()
@@ -282,7 +281,7 @@ export default function LessonPage() {
   /* ── Auto mode timer ───────────────────────────────── */
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current)
-    if (slideMode !== 'auto' || showMiniQuiz || loading) return
+    if (slideMode !== 'auto' || subSlide === 2 || loading) return
 
     // 슬라이드 체류시간 로깅
     const now = Date.now()
@@ -308,90 +307,72 @@ export default function LessonPage() {
     }, 100)
 
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
-  }, [slideMode, slideIndex, showMiniQuiz, loading])
+  }, [slideMode, slideIndex, subSlide, loading])
 
-  /* ── Post-quiz navigation ──────────────────────────── */
-  const advanceFromQuiz = () => {
-    setShowMiniQuiz(false)
+  /* ── 카드 이동 헬퍼 ─────────────────────────────────── */
+  const goToCard = (idx: number, sub: SubSlide = 0) => {
+    setSlideIndex(idx)
+    setSubSlide(sub)
+    setCheckedSentences([])
+    setAutoProgress(0)
+    setMiniQ(null)
     setMiniSelected(null)
     setMiniConfirmed(false)
-    setMiniQ(null)
-    if (pendingSlideIdxRef.current >= slides.length - 1) {
-      // 학습 완료 → DB 저장
-      fetch('/api/v1/lesson-complete', {
+  }
+
+  const completeLesson = () => {
+    fetch('/api/v1/lesson-complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chapterId,
+        subjectId: localStorage.getItem(SUBJECT_KEY) ?? '',
+        miniQuizCorrect: miniCorrectRef.current,
+        miniQuizTotal:   miniTotalRef.current,
+        userId: session?.user?.id ?? '',
+        certId,
+      }),
+    }).catch(() => {})
+    track('lesson_completed', { chapterId })
+    if (lessonSessionId && session?.user?.id) {
+      fetch('/api/v1/chapter-session-log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          userId:      session.user.id,
           chapterId,
-          subjectId: localStorage.getItem(SUBJECT_KEY) ?? '',
-          miniQuizCorrect: miniCorrectRef.current,
-          miniQuizTotal:   miniTotalRef.current,
-          userId: session?.user?.id ?? '',
-          certId,
+          action:      'exit',
+          sessionId:   lessonSessionId,
+          pageType:    'lesson',
+          isCompleted: true,
+          exitPoint:   'lesson_complete',
         }),
-      })
-        .catch(() => {})
-      track('lesson_completed', { chapterId })
-      if (lessonSessionId && session?.user?.id) {
-        fetch('/api/v1/chapter-session-log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId:      session.user.id,
-            chapterId,
-            action:      'exit',
-            sessionId:   lessonSessionId,
-            pageType:    'lesson',
-            isCompleted: true,
-            exitPoint:   'lesson_complete',
-          }),
-        }).catch(() => {})
-      }
-      setShowComplete(true)
+      }).catch(() => {})
+    }
+    setShowComplete(true)
+  }
+
+  const goToNextCard = () => {
+    if (slideIndex >= slides.length - 1) {
+      completeLesson()
     } else {
-      setSlideIndex(pendingSlideIdxRef.current + 1)
-      setCheckedSentences([])
-      setAutoProgress(0)
+      goToCard(slideIndex + 1, 0)
     }
   }
 
-  /* ── Mini quiz trigger ─────────────────────────────── */
-  // 슬라이드3(미니퀴즈) 건너뛰기 — linked_quiz_id가 없는 카드용 폴백.
-  // 슬라이드2(체크포인트) 완료 시점 기준으로 바로 다음 카드로 진행/완료 처리한다.
-  const skipMiniQuiz = (fromIdx: number) => {
-    if (fromIdx >= slides.length - 1) {
-      advanceFromQuiz()
-    } else {
-      setSlideIndex(fromIdx + 1)
-      setCheckedSentences([])
-      setAutoProgress(0)
-    }
-  }
-
-  const triggerMiniQuiz = (fromIdx: number) => {
-    pendingSlideIdxRef.current = fromIdx
-
-    // linked_quiz_id로 정확히 지목된 카드만 사용 — 챕터 풀 순환/생성형 폴백 없음
-    const linkedQuizId = slides[fromIdx]?.linked_quiz_id
-    if (!linkedQuizId) {
-      skipMiniQuiz(fromIdx)
-      return
-    }
+  // linked_quiz_id로 지목된 카드로 슬라이드3 데이터를 구성. 실패 시 false 반환
+  // (건너뛰기는 호출부에서 처리) — 챕터 풀 순환/생성형 폴백 없음
+  // TODO: 문제은행 확장(개념당 quiz 2~3개) 후, 재도전 시 미출제 문항 우선 출제로 전환
+  const buildMiniQuizFor = (idx: number): boolean => {
+    const linkedQuizId = slides[idx]?.linked_quiz_id
+    if (!linkedQuizId) return false
 
     const q = questions.find((qq) => qq.id === linkedQuizId)
-    if (!q || q.answer_index === undefined || q.answer_index === null) {
-      skipMiniQuiz(fromIdx)
-      return
-    }
+    if (!q || q.answer_index === undefined || q.answer_index === null) return false
 
     const correct = q.options[q.answer_index?.[0] ?? 0]
     const wrongOptions = q.options.filter((_, i) => !q.answer_index?.includes(i))
-
-    // options 부족 시 퀴즈 건너뛰고 다음 슬라이드로
-    if (!correct || wrongOptions.length === 0) {
-      skipMiniQuiz(fromIdx)
-      return
-    }
+    if (!correct || wrongOptions.length === 0) return false
 
     const wrongOpt = wrongOptions[Math.floor(Math.random() * wrongOptions.length)]
     const aIsCorrect = Math.random() > 0.5
@@ -402,13 +383,66 @@ export default function LessonPage() {
       options: aIsCorrect ? [correct, wrongOpt] : [wrongOpt, correct],
       answerIdx: aIsCorrect ? 0 : 1,
     })
-    setShowMiniQuiz(true)
+    setMiniSelected(null)
+    setMiniConfirmed(false)
+    return true
   }
 
-  const handleNextSlide = () => {
-    if (!allChecked && slideMode === 'manual') return
+  /* ── 슬라이드 전진(스와이프 좌 / 다음 버튼 / 화살표) ─── */
+  const advance = () => {
+    if (subSlide === 0) {
+      setSubSlide(1)
+      return
+    }
+    if (subSlide === 1) {
+      if (slideMode === 'manual' && !allChecked) { showToast('모든 항목을 체크해주세요'); return }
+      const hasQuiz = buildMiniQuizFor(slideIndex)
+      if (hasQuiz) {
+        setSubSlide(2)
+      } else {
+        // linked_quiz_id 없음(현재 IIPA는 없음, 타 자격증 확장 시 발생 가능)
+        // — 슬라이드3 건너뛰고 슬라이드2에서 바로 완료 처리
+        goToNextCard()
+      }
+      return
+    }
+    // subSlide === 2
+    if (!miniConfirmed) { showToast('문제를 풀어주세요'); return }
+    const slide = slides[slideIndex]
+    if (miniSelected === miniQ?.answerIdx && slide?.exam_years && slide.exam_years.length > 0) {
+      setShowRelatedQuestions(true)
+      return
+    }
+    goToNextCard()
+  }
+
+  /* ── 슬라이드 후진(스와이프 우 / 이전 버튼) ───────────── */
+  const goBack = () => {
+    if (subSlide > 0) {
+      setSubSlide((s) => (s === 2 ? 1 : 0))
+      return
+    }
+    if (slideIndex > 0) {
+      goToCard(slideIndex - 1, 0)
+    }
+  }
+
+  // 오답 후 "다시 학습하기" — 체크포인트(1)가 아니라 학습내용(0)부터 다시 보게 함
+  const retryFromWrong = () => {
+    setSubSlide(0)
     setCheckedSentences([])
-    triggerMiniQuiz(slideIndex)
+    setMiniQ(null)
+    setMiniSelected(null)
+    setMiniConfirmed(false)
+  }
+
+  const continueAfterWrong = () => {
+    const slide = slides[slideIndex]
+    if (slide?.exam_years && slide.exam_years.length > 0) {
+      setShowRelatedQuestions(true)
+    } else {
+      goToNextCard()
+    }
   }
 
   const handleMiniConfirm = () => {
@@ -453,14 +487,13 @@ export default function LessonPage() {
   const onDragEnd = (clientX: number) => {
     if (!isDragging.current) return
     isDragging.current = false
+    if (showComplete || showRelatedQuestions) return
     const delta = clientX - dragStartX.current
     if (Math.abs(delta) < 50) return
-    if (delta < 0 && slideIndex < slides.length - 1) {
-      if (slideMode === 'manual' && !allChecked) { showToast('모든 항목을 체크해주세요'); return }
-      if (showMiniQuiz) return
-      triggerMiniQuiz(slideIndex)
-    } else if (delta > 0 && slideIndex > 0) {
-      setSlideIndex((si) => si - 1); setCheckedSentences([]); setAutoProgress(0)
+    if (delta < 0) {
+      advance()
+    } else {
+      goBack()
     }
   }
 
@@ -472,16 +505,6 @@ export default function LessonPage() {
   const onMouseDown  = (e: React.MouseEvent) => onDragStart(e.clientX)
   const onMouseUp    = (e: React.MouseEvent) => onDragEnd(e.clientX)
   const onMouseLeave = () => { isDragging.current = false; dragStartX.current = 0 }
-
-  /* arrow button helpers */
-  const goPrev = () => { if (slideIndex > 0) { setSlideIndex((si) => si - 1); setCheckedSentences([]); setAutoProgress(0) } }
-  const goNext = () => {
-    if (slideIndex < slides.length - 1) {
-      if (slideMode === 'manual' && !allChecked) { showToast('모든 항목을 체크해주세요'); return }
-      if (showMiniQuiz) return
-      triggerMiniQuiz(slideIndex)
-    }
-  }
 
   if (loading) {
     return (
@@ -561,12 +584,22 @@ export default function LessonPage() {
         <h1 className="text-[18px] font-black text-[#1A1A1A]">{chapterTitle}</h1>
       </div>
 
-      {/* Slide counter */}
+      {/* Slide counter + sub-slide dots */}
       {slides.length > 0 && (
-        <div className="flex items-center justify-center pt-3">
+        <div className="flex flex-col items-center justify-center pt-3 gap-1.5">
           <span className="text-[12px] text-[#ADADAD]">
             {slides.length}개 중 {slideIndex + 1}번째
           </span>
+          <div className="flex items-center gap-1.5">
+            {([0, 1, 2] as const).map((i) => (
+              <div
+                key={i}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  subSlide === i ? 'w-5 bg-[#00A651]' : 'w-1.5 bg-[#E5E5E5]'
+                }`}
+              />
+            ))}
+          </div>
         </div>
       )}
 
@@ -584,15 +617,14 @@ export default function LessonPage() {
         {slides.length > 1 && (
           <>
             <button
-              onClick={goPrev}
-              disabled={slideIndex === 0}
+              onClick={goBack}
+              disabled={slideIndex === 0 && subSlide === 0}
               className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white border border-[#E5E5E5] flex items-center justify-center shadow-sm disabled:opacity-20 transition-opacity"
             >
               <ChevronLeft size={16} className="text-[#6B6B6B]" />
             </button>
             <button
-              onClick={goNext}
-              disabled={slideIndex === slides.length - 1}
+              onClick={advance}
               className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white border border-[#E5E5E5] flex items-center justify-center shadow-sm disabled:opacity-20 transition-opacity"
             >
               <ArrowRight size={16} className="text-[#6B6B6B]" />
@@ -615,105 +647,190 @@ export default function LessonPage() {
                 <div className="w-7 h-7 rounded-lg bg-[#00A651]/10 flex items-center justify-center text-[12px] font-black text-[#00A651] flex-shrink-0">
                   {slideIndex + 1}
                 </div>
-                <span className="text-[11px] text-[#ADADAD] font-medium">학습 내용</span>
+                <span className="text-[11px] text-[#ADADAD] font-medium">
+                  {subSlide === 0 ? '학습 내용' : subSlide === 1 ? '핵심 포인트 체크' : '확인 퀴즈'}
+                </span>
               </div>
 
               <p className="text-[15px] font-bold text-[#1A1A1A] mb-4 leading-snug flex-shrink-0">
                 {currentSlide ? toSlideTitle(currentSlide.question) : ''}
               </p>
 
-              <div className="flex-1 overflow-y-auto">
-                {/* 영상 */}
-                {chapterVideoUrl && (
-                  <div className="mb-3 rounded-xl overflow-hidden bg-[#1A1A1A]">
-                    <video
-                      src={chapterVideoUrl}
-                      controls
-                      playsInline
-                      className="w-full"
-                      style={{ maxHeight: '220px', objectFit: 'contain' }}
-                    />
-                  </div>
-                )}
+              {/* ── 슬라이드1: 학습 내용 (이미지 확대 가능) ── */}
+              {subSlide === 0 && (
+                <div className="flex-1 overflow-y-auto">
+                  {/* 영상 (챕터 단위) */}
+                  {chapterVideoUrl && (
+                    <div className="mb-3 rounded-xl overflow-hidden bg-[#1A1A1A]">
+                      <video
+                        src={chapterVideoUrl}
+                        controls
+                        playsInline
+                        className="w-full"
+                        style={{ maxHeight: '220px', objectFit: 'contain' }}
+                      />
+                    </div>
+                  )}
 
-                {/* 이미지 */}
-                {chapterImageUrl && !chapterVideoUrl && (
-                  <div className="mb-3 rounded-xl overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={chapterImageUrl}
-                      alt="학습 이미지"
-                      className="w-full object-contain rounded-xl"
-                      style={{ maxHeight: '220px' }}
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
-                    />
-                  </div>
-                )}
+                  {/* 이미지 (카드 단위 — 탭하면 확대) */}
+                  {currentSlide?.image_url && (
+                    <button
+                      type="button"
+                      onClick={() => setShowImageZoom(true)}
+                      className="mb-3 relative w-full rounded-xl overflow-hidden block"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={currentSlide.image_url}
+                        alt="학습 이미지"
+                        className="w-full object-contain rounded-xl"
+                        style={{ maxHeight: '220px' }}
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                      />
+                      <span className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full bg-black/60 text-white text-[10px] font-medium">
+                        <ZoomIn size={12} /> 확대
+                      </span>
+                    </button>
+                  )}
 
-                {/* 음성 */}
-                {chapterAudioUrl && (
-                  <div className="mb-3">
-                    <audio controls src={chapterAudioUrl} className="w-full" />
-                  </div>
-                )}
+                  {/* 음성 (챕터 단위) */}
+                  {chapterAudioUrl && (
+                    <div className="mb-3">
+                      <audio controls src={chapterAudioUrl} className="w-full" />
+                    </div>
+                  )}
 
-                {parsed.prose && (
-                  <div className="mb-4 p-3 bg-[#F5F5F3] rounded-xl">
-                    <p className="text-[11px] font-bold text-[#00A651] mb-2">📖 학습 내용</p>
-                    <p className="text-[13px] text-[#1A1A1A] leading-relaxed">{parsed.prose}</p>
-                  </div>
-                )}
-                {sentences.length > 0 && (
-                  <p className="text-[11px] font-bold text-[#ADADAD] mb-2">✅ 핵심 포인트 체크</p>
-                )}
-                {sentences.length > 0 ? (
-                  <div className="space-y-2">
-                    {sentences.map((sentence, i) => {
-                      const isChecked = checkedSentences[i] ?? false
+                  {parsed.prose && (
+                    <div className="p-3 bg-[#F5F5F3] rounded-xl">
+                      <p className="text-[11px] font-bold text-[#00A651] mb-2">📖 학습 내용</p>
+                      <p className="text-[13px] text-[#1A1A1A] leading-relaxed">{parsed.prose}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── 슬라이드2: 체크포인트 (전부 체크해야 다음 가능) ── */}
+              {subSlide === 1 && (
+                <div className="flex-1 overflow-y-auto">
+                  {sentences.length > 0 ? (
+                    <div className="space-y-2">
+                      {sentences.map((sentence, i) => {
+                        const isChecked = checkedSentences[i] ?? false
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => {
+                              if (slideMode !== 'manual') return
+                              setCheckedSentences((prev) => {
+                                const next = new Array(sentences.length).fill(false)
+                                prev.forEach((v, idx) => { next[idx] = v })
+                                next[i] = !next[i]
+                                return next
+                              })
+                            }}
+                            className={`w-full flex items-start gap-3 p-3 rounded-xl border-2 text-left transition-all ${
+                              isChecked ? 'border-[#639922] bg-[#63992210]' : 'border-[#E5E5E5] bg-[#F5F5F3]'
+                            }`}
+                          >
+                            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
+                              isChecked ? 'bg-[#639922] border-[#639922]' : 'border-[#ADADAD]'
+                            }`}>
+                              {isChecked && <Check size={11} className="text-white" />}
+                            </div>
+                            <span className={`text-[13px] leading-relaxed ${isChecked ? 'text-[#639922]' : 'text-[#1A1A1A]'}`}>
+                              {sentence}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-16 text-[#ADADAD] text-[13px]">
+                      내용을 준비 중입니다
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── 슬라이드3: 미니퀴즈 ── */}
+              {subSlide === 2 && miniQ && (
+                <div className="flex-1 overflow-y-auto">
+                  <p className="text-[14px] font-semibold text-[#1A1A1A] mb-5 leading-snug">
+                    {miniQ.text}
+                  </p>
+
+                  {/* 보기 A / B */}
+                  <div className="space-y-3 mb-5">
+                    {([0, 1] as const).map((idx) => {
+                      const label     = idx === 0 ? 'A' : 'B'
+                      const isCorrect = miniConfirmed && idx === miniQ.answerIdx
+                      const isWrong   = miniConfirmed && miniSelected === idx && idx !== miniQ.answerIdx
+                      const optionText = miniQ.options[idx].replace(/^[①②③④⑤]\s*/, '').trim()
                       return (
                         <button
-                          key={i}
-                          onClick={() => {
-                            if (slideMode !== 'manual') return
-                            setCheckedSentences((prev) => {
-                              const next = new Array(sentences.length).fill(false)
-                              prev.forEach((v, idx) => { next[idx] = v })
-                              next[i] = !next[i]
-                              return next
-                            })
-                          }}
-                          className={`w-full flex items-start gap-3 p-3 rounded-xl border-2 text-left transition-all ${
-                            isChecked ? 'border-[#639922] bg-[#63992210]' : 'border-[#E5E5E5] bg-[#F5F5F3]'
+                          key={idx}
+                          onClick={() => !miniConfirmed && setMiniSelected(idx)}
+                          className={`w-full flex items-start gap-3 px-4 py-4 rounded-2xl border-2 text-left transition-all ${
+                            miniConfirmed
+                              ? isCorrect
+                                ? 'border-[#639922] bg-[#63992210]'
+                                : isWrong
+                                  ? 'border-[#E24B4A] bg-[#E24B4A10]'
+                                  : 'border-[#E5E5E5] bg-[#F5F5F3] opacity-50'
+                              : miniSelected === idx
+                                ? 'border-[#00A651] bg-[#00A651]/5'
+                                : 'border-[#E5E5E5]'
                           }`}
                         >
-                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
-                            isChecked ? 'bg-[#639922] border-[#639922]' : 'border-[#ADADAD]'
+                          <span className={`text-[13px] font-black flex-shrink-0 w-5 ${
+                            miniConfirmed
+                              ? isCorrect ? 'text-[#639922]'
+                                : isWrong ? 'text-[#E24B4A]'
+                                : 'text-[#ADADAD]'
+                              : miniSelected === idx ? 'text-[#00A651]' : 'text-[#ADADAD]'
                           }`}>
-                            {isChecked && <Check size={11} className="text-white" />}
-                          </div>
-                          <span className={`text-[13px] leading-relaxed ${isChecked ? 'text-[#639922]' : 'text-[#1A1A1A]'}`}>
-                            {sentence}
+                            {label}.
+                          </span>
+                          <span className={`flex-1 text-[14px] font-medium leading-relaxed ${
+                            miniConfirmed
+                              ? isCorrect ? 'text-[#639922]'
+                                : isWrong ? 'text-[#E24B4A]'
+                                : 'text-[#ADADAD]'
+                              : 'text-[#1A1A1A]'
+                          }`}>
+                            {optionText}
                           </span>
                         </button>
                       )
                     })}
                   </div>
-                ) : (
-                  <div className="flex items-center justify-center h-16 text-[#ADADAD] text-[13px]">
-                    내용을 준비 중입니다
-                  </div>
-                )}
-              </div>
+
+                  {miniConfirmed && (
+                    <div className={`p-4 rounded-2xl ${
+                      miniSelected === miniQ.answerIdx ? 'bg-[#63992210] border border-[#63992230]' : 'bg-[#E24B4A10] border border-[#E24B4A20]'
+                    }`}>
+                      <p className={`text-[14px] font-bold mb-1.5 ${
+                        miniSelected === miniQ.answerIdx ? 'text-[#639922]' : 'text-[#E24B4A]'
+                      }`}>
+                        {miniSelected === miniQ.answerIdx ? '정확해요! ✅' : '아쉬워요!'}
+                      </p>
+                      {miniQ.explanation && (
+                        <p className="text-[12px] text-[#1A1A1A] leading-relaxed">{miniQ.explanation}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Progress bars */}
+            {/* Progress bars — 이전 카드로만 이동 (건너뛰기 방지) */}
             <div className="flex items-center gap-1.5 px-1 py-3 flex-shrink-0">
               {slides.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => {
-                    if (i > slideIndex && slideMode === 'manual' && !allChecked) { showToast('모든 항목을 체크해주세요'); return }
-                    setSlideIndex(i); setCheckedSentences([]); setAutoProgress(0)
+                    if (i > slideIndex) { showToast('아직 도달하지 않은 카드예요'); return }
+                    goToCard(i, 0)
                   }}
                   className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${
                     i <= slideIndex ? 'bg-green-500' : 'bg-gray-200'
@@ -726,7 +843,7 @@ export default function LessonPage() {
       </div>
 
       {/* Auto timer bar */}
-      {slideMode === 'auto' && !showMiniQuiz && slides.length > 0 && (
+      {slideMode === 'auto' && subSlide !== 2 && slides.length > 0 && (
         <div className="h-1 bg-[#E5E5E5] flex-shrink-0">
           <div
             className="h-full bg-[#00A651] transition-none"
@@ -744,20 +861,60 @@ export default function LessonPage() {
           >
             <Zap size={18} /> 챕터 테스트
           </button>
-        ) : slideMode === 'manual' ? (
-          <button
-            onClick={handleNextSlide}
-            disabled={!allChecked}
-            className={`w-full py-4 rounded-2xl text-[16px] font-bold transition-all ${
-              allChecked ? 'bg-[#00A651] text-white' : 'bg-[#E5E5E5] text-[#ADADAD]'
-            }`}
-          >
-            확인 퀴즈
-          </button>
+        ) : subSlide === 2 ? (
+          !miniQ ? null : !miniConfirmed ? (
+            <button
+              onClick={handleMiniConfirm}
+              className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold"
+            >
+              확인
+            </button>
+          ) : miniSelected === miniQ.answerIdx ? (
+            <button
+              onClick={advance}
+              className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold"
+            >
+              {slideIndex >= slides.length - 1 ? '학습 완료 🎉' : '다음 카드 →'}
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <button
+                onClick={retryFromWrong}
+                className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-2xl text-[14px] font-bold"
+              >
+                다시 학습하기
+              </button>
+              <button
+                onClick={continueAfterWrong}
+                className="w-full py-3.5 border-2 border-[#E5E5E5] text-[#6B6B6B] rounded-2xl text-[14px] font-semibold"
+              >
+                그래도 계속하기
+              </button>
+            </div>
+          )
+        ) : subSlide === 1 ? (
+          slideMode === 'manual' ? (
+            <button
+              onClick={advance}
+              disabled={!allChecked}
+              className={`w-full py-4 rounded-2xl text-[16px] font-bold transition-all ${
+                allChecked ? 'bg-[#00A651] text-white' : 'bg-[#E5E5E5] text-[#ADADAD]'
+              }`}
+            >
+              확인 퀴즈
+            </button>
+          ) : (
+            <div className="w-full py-4 text-center text-[14px] text-[#6B6B6B] font-medium">
+              ▶️ 자동 학습 중... ({slideIndex + 1}/{slides.length})
+            </div>
+          )
         ) : (
-          <div className="w-full py-4 text-center text-[14px] text-[#6B6B6B] font-medium">
-            ▶️ 자동 학습 중... ({slideIndex + 1}/{slides.length})
-          </div>
+          <button
+            onClick={advance}
+            className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold"
+          >
+            다음
+          </button>
         )}
       </div>
 
@@ -780,9 +937,7 @@ export default function LessonPage() {
           <button
             onClick={() => {
               setShowComplete(false)
-              setSlideIndex(0)
-              setCheckedSentences([])
-              setAutoProgress(0)
+              goToCard(0, 0)
               miniCorrectRef.current = 0
               miniTotalRef.current   = 0
             }}
@@ -800,157 +955,37 @@ export default function LessonPage() {
         </div>
       )}
 
-      {/* ══════════ Mini Quiz Panel ══════════ */}
-      {showMiniQuiz && miniQ && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end">
-          {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/60" />
-
-          <div className="relative bg-white rounded-t-3xl px-6 pt-6 pb-10 max-h-[85vh] overflow-y-auto">
-            {/* Handle */}
-            <div className="w-10 h-1 bg-[#E5E5E5] rounded-full mx-auto mb-5" />
-
-            <button
-              onClick={() => setShowMiniQuiz(false)}
-              className="absolute top-6 right-6 text-[12px] text-[#888] flex items-center gap-1"
-            >
-              📖 학습 내용 보기
-            </button>
-
-            <h2 className="text-[18px] font-black text-[#1A1A1A] mb-4">확인 퀴즈 💡</h2>
-            <p className="text-[15px] font-semibold text-[#1A1A1A] mb-5 leading-snug">
-              {miniQ.text}
-            </p>
-
-            {/* 보기 A / B */}
-            <div className="space-y-3 mb-5">
-              {([0, 1] as const).map((idx) => {
-                const label     = idx === 0 ? 'A' : 'B'
-                const isCorrect = miniConfirmed && idx === miniQ.answerIdx
-                const isWrong   = miniConfirmed && miniSelected === idx && idx !== miniQ.answerIdx
-                // 원문자(①②③④) 제거 후 표시
-                const optionText = miniQ.options[idx].replace(/^[①②③④⑤]\s*/, '').trim()
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => !miniConfirmed && setMiniSelected(idx)}
-                    className={`w-full flex items-start gap-3 px-4 py-4 rounded-2xl border-2 text-left transition-all ${
-                      miniConfirmed
-                        ? isCorrect
-                          ? 'border-[#639922] bg-[#63992210]'
-                          : isWrong
-                            ? 'border-[#E24B4A] bg-[#E24B4A10]'
-                            : 'border-[#E5E5E5] bg-[#F5F5F3] opacity-50'
-                        : miniSelected === idx
-                          ? 'border-[#00A651] bg-[#00A651]/5'
-                          : 'border-[#E5E5E5]'
-                    }`}
-                  >
-                    <span className={`text-[13px] font-black flex-shrink-0 w-5 ${
-                      miniConfirmed
-                        ? isCorrect ? 'text-[#639922]'
-                          : isWrong ? 'text-[#E24B4A]'
-                          : 'text-[#ADADAD]'
-                        : miniSelected === idx ? 'text-[#00A651]' : 'text-[#ADADAD]'
-                    }`}>
-                      {label}.
-                    </span>
-                    <span className={`flex-1 text-[14px] font-medium leading-relaxed ${
-                      miniConfirmed
-                        ? isCorrect ? 'text-[#639922]'
-                          : isWrong ? 'text-[#E24B4A]'
-                          : 'text-[#ADADAD]'
-                        : 'text-[#1A1A1A]'
-                    }`}>
-                      {optionText}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* Result */}
-            {miniConfirmed ? (
-              <>
-                <div className={`p-4 rounded-2xl mb-4 ${
-                  miniSelected === miniQ.answerIdx ? 'bg-[#63992210] border border-[#63992230]' : 'bg-[#E24B4A10] border border-[#E24B4A20]'
-                }`}>
-                  <p className={`text-[14px] font-bold mb-1.5 ${
-                    miniSelected === miniQ.answerIdx ? 'text-[#639922]' : 'text-[#E24B4A]'
-                  }`}>
-                    {miniSelected === miniQ.answerIdx ? '정확해요! ✅' : '아쉬워요!'}
-                  </p>
-                  {miniQ.explanation && (
-                    <p className="text-[12px] text-[#1A1A1A] leading-relaxed">{miniQ.explanation}</p>
-                  )}
-                </div>
-
-                {miniSelected === miniQ.answerIdx ? (
-                  <button
-                    onClick={() => {
-                      const pendingSlide = slides[pendingSlideIdxRef.current]
-                      if (pendingSlide?.exam_years && pendingSlide.exam_years.length > 0) {
-                        setShowRelatedQuestions(true)
-                      } else {
-                        advanceFromQuiz()
-                      }
-                    }}
-                    className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold"
-                  >
-                    {pendingSlideIdxRef.current >= slides.length - 1 ? '학습 완료 🎉' : '다음 슬라이드 →'}
-                  </button>
-                ) : (
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => {
-                        setShowMiniQuiz(false)
-                        setSlideIndex(pendingSlideIdxRef.current)
-                        setCheckedSentences([])
-                        setAutoProgress(0)
-                        setMiniSelected(null)
-                        setMiniConfirmed(false)
-                      }}
-                      className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-2xl text-[14px] font-bold"
-                    >
-                      다시 학습하기
-                    </button>
-                    <button
-                      onClick={() => {
-                        const pendingSlide = slides[pendingSlideIdxRef.current]
-                        if (pendingSlide?.exam_years && pendingSlide.exam_years.length > 0) {
-                          setShowRelatedQuestions(true)
-                        } else {
-                          advanceFromQuiz()
-                        }
-                      }}
-                      className="w-full py-3.5 border-2 border-[#E5E5E5] text-[#6B6B6B] rounded-2xl text-[14px] font-semibold"
-                    >
-                      그래도 계속하기
-                    </button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <button
-                onClick={handleMiniConfirm}
-                className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold"
-              >
-                확인
-              </button>
-            )}
-          </div>
+      {/* ══════════ Image Zoom Overlay ══════════ */}
+      {showImageZoom && currentSlide?.image_url && (
+        <div
+          className="fixed inset-0 z-[80] bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setShowImageZoom(false)}
+        >
+          <button
+            onClick={() => setShowImageZoom(false)}
+            className="absolute top-6 right-6 w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
+          >
+            <X size={18} className="text-white" />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={currentSlide.image_url}
+            alt="확대 이미지"
+            className="max-w-full max-h-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
 
       {/* ══════════ Related Questions Bottom Sheet ══════════ */}
       {showRelatedQuestions && (() => {
-        const pendingSlide = slides[pendingSlideIdxRef.current]
+        const pendingSlide = slides[slideIndex]
         return (
           <div className="fixed inset-0 z-[60] flex flex-col justify-end">
             {/* Backdrop */}
             <div
               className="absolute inset-0 bg-black/60"
-              onClick={() => { setShowRelatedQuestions(false); advanceFromQuiz() }}
+              onClick={() => { setShowRelatedQuestions(false); goToNextCard() }}
             />
 
             <div className="relative bg-white rounded-t-2xl px-5 pt-5 pb-10 max-h-[80vh] overflow-y-auto">
@@ -997,11 +1032,11 @@ export default function LessonPage() {
               <button
                 onClick={() => {
                   setShowRelatedQuestions(false)
-                  advanceFromQuiz()
+                  goToNextCard()
                 }}
                 className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold"
               >
-                {pendingSlideIdxRef.current >= slides.length - 1 ? '학습 완료 🎉' : '다음 슬라이드로 →'}
+                {slideIndex >= slides.length - 1 ? '학습 완료 🎉' : '다음 카드로 →'}
               </button>
             </div>
           </div>
