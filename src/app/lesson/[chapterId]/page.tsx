@@ -135,6 +135,8 @@ export default function LessonPage() {
   const [miniQ, setMiniQ]                 = useState<MiniQ | null>(null)
   const [miniSelected, setMiniSelected]   = useState<0 | 1 | null>(null)
   const [miniConfirmed, setMiniConfirmed] = useState(false)
+  // 정답 시 해설은 "해설 보기"를 눌러야만 노출(선택적). 오답 시엔 항상 강제 노출.
+  const [explanationRevealed, setExplanationRevealed] = useState(false)
   const [showComplete, setShowComplete]   = useState(false)
 
   useEffect(() => {
@@ -318,6 +320,7 @@ export default function LessonPage() {
     setMiniQ(null)
     setMiniSelected(null)
     setMiniConfirmed(false)
+    setExplanationRevealed(false)
   }
 
   const completeLesson = () => {
@@ -385,6 +388,7 @@ export default function LessonPage() {
     })
     setMiniSelected(null)
     setMiniConfirmed(false)
+    setExplanationRevealed(false)
     return true
   }
 
@@ -434,6 +438,7 @@ export default function LessonPage() {
     setMiniQ(null)
     setMiniSelected(null)
     setMiniConfirmed(false)
+    setExplanationRevealed(false)
   }
 
   const continueAfterWrong = () => {
@@ -805,20 +810,35 @@ export default function LessonPage() {
                     })}
                   </div>
 
-                  {miniConfirmed && (
-                    <div className={`p-4 rounded-2xl ${
-                      miniSelected === miniQ.answerIdx ? 'bg-[#63992210] border border-[#63992230]' : 'bg-[#E24B4A10] border border-[#E24B4A20]'
-                    }`}>
-                      <p className={`text-[14px] font-bold mb-1.5 ${
-                        miniSelected === miniQ.answerIdx ? 'text-[#639922]' : 'text-[#E24B4A]'
+                  {miniConfirmed && (() => {
+                    const isCorrectAnswer = miniSelected === miniQ.answerIdx
+                    // 정답: 해설은 "해설 보기"를 눌러야만 노출(선택적)
+                    // 오답: 해설 자동/필수 노출(항상 표시)
+                    const showExplanation = miniQ.explanation && (!isCorrectAnswer || explanationRevealed)
+                    return (
+                      <div className={`p-4 rounded-2xl ${
+                        isCorrectAnswer ? 'bg-[#63992210] border border-[#63992230]' : 'bg-[#E24B4A10] border border-[#E24B4A20]'
                       }`}>
-                        {miniSelected === miniQ.answerIdx ? '정확해요! ✅' : '아쉬워요!'}
-                      </p>
-                      {miniQ.explanation && (
-                        <p className="text-[12px] text-[#1A1A1A] leading-relaxed">{miniQ.explanation}</p>
-                      )}
-                    </div>
-                  )}
+                        <p className={`text-[14px] font-bold ${showExplanation ? 'mb-1.5' : ''} ${
+                          isCorrectAnswer ? 'text-[#639922]' : 'text-[#E24B4A]'
+                        }`}>
+                          {isCorrectAnswer ? '정확해요! ✅' : '아쉬워요!'}
+                        </p>
+                        {showExplanation && (
+                          <p className="text-[12px] text-[#1A1A1A] leading-relaxed">{miniQ.explanation}</p>
+                        )}
+                        {/* 정답이고 아직 해설을 열지 않았을 때만 "해설 보기" 버튼 노출 */}
+                        {isCorrectAnswer && miniQ.explanation && !explanationRevealed && (
+                          <button
+                            onClick={() => setExplanationRevealed(true)}
+                            className="mt-1 text-[12px] font-semibold text-[#639922] underline"
+                          >
+                            해설 보기
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })()}
                 </div>
               )}
             </div>
