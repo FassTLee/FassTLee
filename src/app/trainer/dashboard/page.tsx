@@ -628,19 +628,24 @@ function DashboardContent() {
       setUserCerts(certsData.data)
     }
 
-    // selectedNames: localStorage 우선, 없으면 certsData 폴백
+    // ── 과목 목록(selectedNames): userCerts(서버)의 모든 자격증 subjects 합집합을
+    // 신뢰의 원천으로 사용. localStorage 캐시나 단일 certType 폴백에 의존하지 않으므로
+    // 나중에 자격증을 추가하면 그 과목이 자동으로 반영됨.
+    // (이전엔 localStorage를 최우선으로 읽어, 과거 단일 자격증 시점의 stale 캐시가
+    //  남으면 새로 등록한 자격증의 과목이 subjectCards에서 영구 누락 → 강의실에서
+    //  "준비중"으로 뜨는 버그가 있었음. 예: 건강운동관리사만 있던 캐시가 남은 상태에서
+    //  IIPA를 추가하면 "필라테스 해부학"이 계속 준비중.)
     let selectedNames: string[] = []
-    if (subs) {
-      try { selectedNames = JSON.parse(subs) } catch { /* ignore */ }
-    }
-    if (selectedNames.length === 0 && certsData.data && certsData.data.length > 0) {
-      selectedNames = certsData.data.flatMap((c) => c.subjects ?? [])
-      if (selectedNames.length > 0) {
-        localStorage.setItem(SUBJECTS_KEY, JSON.stringify(selectedNames))
-      }
+    if (certsData.data && certsData.data.length > 0) {
+      selectedNames = Array.from(
+        new Set(certsData.data.flatMap((c) => c.subjects ?? []))
+      )
     }
 
-    // certType 기반 자동 조회 (user_certifications에 데이터 없는 경우 폴백)
+    // 폴백은 user_certifications가 아예 비어있는 레거시 계정에서만 사용
+    if (selectedNames.length === 0 && subs) {
+      try { selectedNames = JSON.parse(subs) } catch { /* ignore */ }
+    }
     if (selectedNames.length === 0 && loadedCertType) {
       try {
         const certKey = Object.entries(CERT_LABELS).find(([, v]) => v === loadedCertType)?.[0] ?? ''
@@ -648,12 +653,14 @@ function DashboardContent() {
           const csRes  = await fetch(`/api/v1/certification-subjects?certKey=${encodeURIComponent(certKey)}`)
           const csData = await csRes.json()
           const autoNames: string[] = (csData.subjects ?? []).map((s: { name: string }) => s.name)
-          if (autoNames.length > 0) {
-            selectedNames = autoNames
-            localStorage.setItem(SUBJECTS_KEY, JSON.stringify(autoNames))
-          }
+          if (autoNames.length > 0) selectedNames = autoNames
         }
       } catch { /* ignore */ }
+    }
+
+    // localStorage는 신뢰의 원천이 아니라 "다음 로드 초기 표시 속도" 캐시로만 갱신
+    if (selectedNames.length > 0) {
+      localStorage.setItem(SUBJECTS_KEY, JSON.stringify(selectedNames))
     }
 
     setSubjects(selectedNames)
@@ -801,10 +808,13 @@ function DashboardContent() {
       const CERT_ID_CATEGORY_MAP: Record<string, string> = {
         'exercise-prescriptionist': '410d8994-8574-448a-9a6e-1c383bb2a009',
       }
-      const currentCertId = Array.isArray(certsData.data) && certsData.data.length > 0
-        ? certsData.data[0].cert_id
-        : ''
-      const categoryIdForSubj = CERT_ID_CATEGORY_MAP[currentCertId] ?? undefined
+      // 동명 중복 과목(예: 스포츠심리학·운동생리학이 category별로 2개 존재) 구분용.
+      // certsData.data[0](첫 자격증)만 보면 자격증 등록 순서에 따라 건강운동관리사가
+      // [0]이 아닐 때 category 구분이 빠지므로, 등록한 자격증 중 category 매핑이 있는
+      // 것(현재는 건강운동관리사)이 하나라도 있으면 그 category를 사용
+      const categoryIdForSubj = (certsData.data ?? [])
+        .map((c) => CERT_ID_CATEGORY_MAP[c.cert_id])
+        .find((v): v is string => !!v) ?? undefined
       // ── 기존 코드 (타이밍 이슈로 대체됨) ──
       // const CATEGORY_ID_MAP: Record<string, string> = {
       //   '건강운동관리사': '410d8994-8574-448a-9a6e-1c383bb2a009',
@@ -814,14 +824,23 @@ function DashboardContent() {
       //     ? CERT_LABELS[certsData.data[0].cert_id] ?? ''
       //     : '')
       // const categoryIdForSubj = CATEGORY_ID_MAP[resolvedCertLabel] ?? undefined
-      const subjQuery = supabase.from('subjects').select('id, name').in('name', selectedNames)
-      const { data: dbSubjs } = categoryIdForSubj
-        ? await subjQuery.eq('category_id', categoryIdForSubj)
-        : await subjQuery
+      // subjects를 category 필터 없이 이름으로 전부 조회한 뒤 JS에서 해석.
+      // (이전엔 .eq('category_id', 주 자격증 category)로 걸러, 주 자격증과 다른
+      //  카테고리의 과목 — 예: 나중에 추가한 IIPA 필라테스 해부학 — 이 아예 조회에서
+      //  빠져 subjectId=null → "준비중"이 됐음. 이제 전부 가져와 동명 중복만 아래에서
+      //  주 자격증 category 우선으로 구분함)
+      const { data: dbSubjs } = await supabase
+        .from('subjects').select('id, name, category_id').in('name', selectedNames)
       const cards: SubjectCard[] = selectedNames.map((name) => {
-        const meta = SUBJECT_META[name] ?? { icon: '📚', desc: '' }
-        const db   = (dbSubjs ?? []).find((d: { id: string; name: string }) => d.name === name)
-        return { name, icon: meta.icon, desc: meta.desc, subjectId: db?.id ?? null }
+        const meta    = SUBJECT_META[name] ?? { icon: '📚', desc: '' }
+        const matches = (dbSubjs ?? []).filter((d: { name: string }) => d.name === name)
+        // 동명 중복 해소: 1순위 주 자격증 category 일치 row, 없으면 첫 row
+        // (기존 category 필터 없는 경로의 .find(name) 동작과 동일)
+        const picked =
+          (categoryIdForSubj
+            ? matches.find((d: { category_id: string | null }) => d.category_id === categoryIdForSubj)
+            : undefined) ?? matches[0]
+        return { name, icon: meta.icon, desc: meta.desc, subjectId: picked?.id ?? null }
       })
       console.log('[main cards]', cards.map((c: { name: string; subjectId: string | null }) => c.name))
       setSubjectCards(cards)

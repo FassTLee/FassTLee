@@ -53,6 +53,7 @@ interface MiniQ {
   id: string
   text: string
   explanation: string | null
+  imageUrl: string | null
   options: [string, string]
   answerIdx: 0 | 1
 }
@@ -128,8 +129,8 @@ export default function LessonPage() {
   const [checkedSentences, setCheckedSentences] = useState<boolean[]>([])
   const [autoProgress, setAutoProgress]   = useState(0)
 
-  /* ── Image zoom overlay ─────────────────────── */
-  const [showImageZoom, setShowImageZoom] = useState(false)
+  /* ── Image zoom overlay (슬라이드1 학습이미지 · 슬라이드3 퀴즈이미지 공용) ── */
+  const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null)
 
   /* ── Mini quiz (슬라이드3) ──────────────────── */
   const [miniQ, setMiniQ]                 = useState<MiniQ | null>(null)
@@ -383,6 +384,7 @@ export default function LessonPage() {
       id: q.id,
       text: q.question,
       explanation: q.explanation,
+      imageUrl: q.image_url ?? null,
       options: aIsCorrect ? [correct, wrongOpt] : [wrongOpt, correct],
       answerIdx: aIsCorrect ? 0 : 1,
     })
@@ -681,7 +683,7 @@ export default function LessonPage() {
                   {currentSlide?.image_url && (
                     <button
                       type="button"
-                      onClick={() => setShowImageZoom(true)}
+                      onClick={() => setZoomImageUrl(currentSlide.image_url)}
                       className="mb-3 relative w-full rounded-xl overflow-hidden block"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -760,9 +762,31 @@ export default function LessonPage() {
               {/* ── 슬라이드3: 미니퀴즈 ── */}
               {subSlide === 2 && miniQ && (
                 <div className="flex-1 overflow-y-auto">
-                  <p className="text-[14px] font-semibold text-[#1A1A1A] mb-5 leading-snug">
+                  <p className="text-[14px] font-semibold text-[#1A1A1A] mb-3 leading-snug">
                     {miniQ.text}
                   </p>
+
+                  {/* 문제 그림 (있을 때만 — 탭하면 확대). 그림 보고 맞히는 유형은
+                      자세히 봐야 하므로 슬라이드1과 동일한 확대 오버레이 재사용 */}
+                  {miniQ.imageUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setZoomImageUrl(miniQ.imageUrl)}
+                      className="mb-4 relative w-full rounded-xl overflow-hidden block"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={miniQ.imageUrl}
+                        alt="문제 그림"
+                        className="w-full object-contain rounded-xl"
+                        style={{ maxHeight: '240px' }}
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                      />
+                      <span className="absolute bottom-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full bg-black/60 text-white text-[10px] font-medium">
+                        <ZoomIn size={12} /> 확대
+                      </span>
+                    </button>
+                  )}
 
                   {/* 보기 A / B */}
                   <div className="space-y-3 mb-5">
@@ -975,21 +999,21 @@ export default function LessonPage() {
         </div>
       )}
 
-      {/* ══════════ Image Zoom Overlay ══════════ */}
-      {showImageZoom && currentSlide?.image_url && (
+      {/* ══════════ Image Zoom Overlay (슬라이드1·3 공용) ══════════ */}
+      {zoomImageUrl && (
         <div
           className="fixed inset-0 z-[80] bg-black/90 flex items-center justify-center p-4"
-          onClick={() => setShowImageZoom(false)}
+          onClick={() => setZoomImageUrl(null)}
         >
           <button
-            onClick={() => setShowImageZoom(false)}
+            onClick={() => setZoomImageUrl(null)}
             className="absolute top-6 right-6 w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
           >
             <X size={18} className="text-white" />
           </button>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={currentSlide.image_url}
+            src={zoomImageUrl}
             alt="확대 이미지"
             className="max-w-full max-h-full object-contain"
             onClick={(e) => e.stopPropagation()}
