@@ -136,6 +136,21 @@ export default function LessonPage() {
   // 이미 다음 슬라이드로 넘어가 있으므로, 직전 값을 별도 추적해야 row 라벨/값 격리가 정확함.
   const loggedSubSlideRef = useRef<SubSlide>(0)
 
+  /* ── 미니퀴즈(슬라이드3) per-attempt 로그 refs ── */
+  // 제출 시점 정보를 보관했다가 "다음 카드로 넘어갈 때" quiz_performance_logs로 flush.
+  // (response_time=제출 시점까지 / quiz_bridge_time=이탈 시점까지 — 두 시점이 다르므로 보관→전송 구조)
+  // 배치3의 이탈 flush에서도 이 pending 구조를 그대로 재사용.
+  const quizEnteredAtRef = useRef<number | null>(null)            // 슬라이드3 진입 시각(ms)
+  const pendingQuizLogRef = useRef<{
+    questionId: string
+    isCorrect: boolean
+    answerGiven: number
+    responseTime: number | null
+    submittedAt: number
+    quizEnteredAt: number | null
+    explanationViewed: boolean
+  } | null>(null)
+
   /* ── Image zoom overlay (슬라이드1 학습이미지 · 슬라이드3 퀴즈이미지 공용) ── */
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null)
 
@@ -358,8 +373,32 @@ export default function LessonPage() {
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [slideMode, slideIndex, subSlide, loading]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  /* ── 미니퀴즈 per-attempt 로그 flush (제출 후 다음 카드로 넘어갈 때 전송) ── */
+  const flushQuizLog = () => {
+    const p = pendingQuizLogRef.current
+    pendingQuizLogRef.current = null
+    if (!p || !session?.user?.id) return
+    const quizBridgeTime = Math.round((Date.now() - p.submittedAt) / 1000) // 제출~이탈(초)
+    fetch('/api/v1/quiz-performance-log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chapterId,
+        questionId:        p.questionId,
+        questionType:      'mini_quiz',
+        isCorrect:         p.isCorrect,
+        answerGiven:       p.answerGiven,
+        responseTime:      p.responseTime,
+        quizBridgeTime,
+        explanationViewed: p.explanationViewed,
+        quizEnteredAt:     p.quizEnteredAt != null ? new Date(p.quizEnteredAt).toISOString() : null,
+      }),
+    }).catch(() => {})
+  }
+
   /* ── 카드 이동 헬퍼 ─────────────────────────────────── */
   const goToCard = (idx: number, sub: SubSlide = 0) => {
+    flushQuizLog() // 이전 카드에 제출된 미니퀴즈 pending 로그가 있으면 전송
     setSlideIndex(idx)
     setSubSlide(sub)
     setCheckedSentences([])
@@ -374,6 +413,7 @@ export default function LessonPage() {
   }
 
   const completeLesson = () => {
+    flushQuizLog() // 마지막 카드 미니퀴즈 pending 로그 전송 (goToCard를 안 거치는 완료 경로)
     fetch('/api/v1/lesson-complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -453,6 +493,7 @@ export default function LessonPage() {
       if (slideMode === 'manual' && !allChecked) { showToast('모든 항목을 체크해주세요'); return }
       const hasQuiz = buildMiniQuizFor(slideIndex)
       if (hasQuiz) {
+        quizEnteredAtRef.current = Date.now() // 슬라이드3 진입 시각 — response_time 기준점
         setSubSlide(2)
       } else {
         // linked_quiz_id 없음(현재 IIPA는 없음, 타 자격증 확장 시 발생 가능)
@@ -508,6 +549,21 @@ export default function LessonPage() {
     const correct = miniSelected === miniQ.answerIdx
     miniTotalRef.current   += 1
     if (correct) miniCorrectRef.current += 1
+
+    // ── per-attempt 로그용 정보 보관(제출 시점) — 다음 카드 이탈 시 quiz_performance_logs로 flush ──
+    const submittedAt = Date.now()
+    pendingQuizLogRef.current = {
+      questionId:   miniQ.id,
+      isCorrect:    correct,
+      answerGiven:  miniSelected,        // 사용자가 고른 선지 인덱스(0=A / 1=B)
+      responseTime: quizEnteredAtRef.current != null
+        ? Math.round((submittedAt - quizEnteredAtRef.current) / 1000) // 진입~제출(초)
+        : null,
+      submittedAt,
+      quizEnteredAt: quizEnteredAtRef.current,
+      explanationViewed: correct ? false : true, // 오답=해설 자동노출→true, 정답=아직 "해설 보기" 안 누름
+    }
+
     fetch('/api/v1/mini-quiz-complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -908,7 +964,11 @@ export default function LessonPage() {
                         {/* 정답이고 아직 해설을 열지 않았을 때만 "해설 보기" 버튼 노출 */}
                         {isCorrectAnswer && miniQ.explanation && !explanationRevealed && (
                           <button
-                            onClick={() => setExplanationRevealed(true)}
+                            onClick={() => {
+                              setExplanationRevealed(true)
+                              // 정답 케이스에서 실제로 "해설 보기"를 누른 경우만 true로 기록
+                              if (pendingQuizLogRef.current) pendingQuizLogRef.current.explanationViewed = true
+                            }}
                             className="mt-1 text-[12px] font-semibold text-[#639922] underline"
                           >
                             해설 보기
