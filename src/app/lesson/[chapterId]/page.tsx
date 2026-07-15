@@ -129,6 +129,13 @@ export default function LessonPage() {
   const [checkedSentences, setCheckedSentences] = useState<boolean[]>([])
   const [autoProgress, setAutoProgress]   = useState(0)
 
+  /* ── 슬라이드(카드)별 상호작용 집계 refs — 카드 전환 시 리셋 ── */
+  const imageZoomCountRef = useRef(0)                              // 이미지 확대 탭 횟수
+  const checkboxClicksRef = useRef<{ index: number; t: number }[]>([]) // 체크박스 클릭 {인덱스, 타임스탬프(ms)}
+  // 로깅되는 체류 구간이 "속한" subSlide(방금 떠난 슬라이드). effect fire 시점 subSlide는
+  // 이미 다음 슬라이드로 넘어가 있으므로, 직전 값을 별도 추적해야 row 라벨/값 격리가 정확함.
+  const loggedSubSlideRef = useRef<SubSlide>(0)
+
   /* ── Image zoom overlay (슬라이드1 학습이미지 · 슬라이드3 퀴즈이미지 공용) ── */
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null)
 
@@ -281,16 +288,44 @@ export default function LessonPage() {
     setLoading(false)
   }
 
-  /* ── Auto mode timer ───────────────────────────────── */
+  /* ── 슬라이드 체류/상호작용 로깅 + Auto 타이머 ─────────── */
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current)
-    if (slideMode !== 'auto' || subSlide === 2 || loading) return
+    if (loading) return
 
-    // 슬라이드 체류시간 로깅
+    // ── 2026-07-15: 슬라이드 체류시간 + 상호작용 로깅 (수동/자동 모드 공통) ──
+    // (기존엔 slideMode !== 'auto' 게이팅으로 수동모드 로그가 유실됨 — 게이트 위로 이동)
     const now = Date.now()
     const duration = Math.round((now - slideEnterTimeRef.current) / 1000)
     const prevSlide = slides[slideIndex]
+    // 이 row가 나온 subSlide(방금 떠난 슬라이드) — slide_index는 카드 인덱스 유지, sub_slide로 슬라이드 구분
+    const loggedSub = loggedSubSlideRef.current
     if (prevSlide && duration > 0 && session?.user?.id) {
+      // ── 값 격리: 해당 subSlide에서 실제 일어난 행동만 채우고 나머지는 null 유지 ──
+      let imageZoomCount:        number | null   = null
+      let checkboxOrderRaw:      number[] | null = null
+      let checkboxIntervalsRaw:  number[] | null = null
+      let checkboxClickInterval: number | null   = null
+      let checkboxTotal:         number | null   = null
+
+      if (loggedSub === 0) {
+        // 학습 슬라이드: 이미지 확대 횟수만
+        imageZoomCount = imageZoomCountRef.current
+      } else if (loggedSub === 1) {
+        // 체크포인트 슬라이드: 체크박스 상호작용만
+        const clicks = checkboxClicksRef.current
+        checkboxOrderRaw = clicks.map((c) => c.index)                    // 클릭 순서대로의 인덱스
+        const intervals = clicks
+          .slice(1)
+          .map((c, i) => Math.round(((c.t - clicks[i].t) / 1000) * 100) / 100) // 연속 클릭 간 간격(초)
+        checkboxIntervalsRaw  = intervals
+        checkboxClickInterval = intervals.length > 0
+          ? Math.round((intervals.reduce((a, b) => a + b, 0) / intervals.length) * 100) / 100
+          : 0
+        checkboxTotal = sentences.length
+      }
+      // loggedSub === 2 (미니퀴즈): zoom·checkbox 모두 해당 없음 → 전부 null (미니퀴즈 로그는 배치2)
+
       fetch('/api/v1/lesson-log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -300,17 +335,28 @@ export default function LessonPage() {
           slideId: prevSlide.id,
           durationSeconds: duration,
           slideIndex,
+          subSlide: loggedSub,
+          imageZoomCount,
+          checkboxOrderRaw,
+          checkboxIntervalsRaw,
+          checkboxClickInterval,
+          checkboxTotal,
         }),
       }).catch(() => {})
     }
     slideEnterTimeRef.current = now
+    // 다음 체류 구간이 속할 subSlide로 갱신 (현재 진입한 subSlide)
+    loggedSubSlideRef.current = subSlide
+
+    // ── auto 모드에서만 자동진행 타이머 (미니퀴즈 화면 제외) ──
+    if (slideMode !== 'auto' || subSlide === 2) return
     setAutoProgress(0)
     timerRef.current = setInterval(() => {
       setAutoProgress((p) => Math.min(p + 2, 100)) // 100ms × 50 = 5 s
     }, 100)
 
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
-  }, [slideMode, slideIndex, subSlide, loading])
+  }, [slideMode, slideIndex, subSlide, loading]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── 카드 이동 헬퍼 ─────────────────────────────────── */
   const goToCard = (idx: number, sub: SubSlide = 0) => {
@@ -318,6 +364,9 @@ export default function LessonPage() {
     setSubSlide(sub)
     setCheckedSentences([])
     setAutoProgress(0)
+    // 카드 전환 → per-card 상호작용 집계 리셋 (슬라이드별 집계)
+    imageZoomCountRef.current = 0
+    checkboxClicksRef.current = []
     setMiniQ(null)
     setMiniSelected(null)
     setMiniConfirmed(false)
@@ -683,7 +732,10 @@ export default function LessonPage() {
                   {currentSlide?.image_url && (
                     <button
                       type="button"
-                      onClick={() => setZoomImageUrl(currentSlide.image_url)}
+                      onClick={() => {
+                        imageZoomCountRef.current += 1 // 로컬 카운터만 증가 (네트워크 호출 없음)
+                        setZoomImageUrl(currentSlide.image_url)
+                      }}
                       className="mb-3 relative w-full rounded-xl overflow-hidden block"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -728,6 +780,8 @@ export default function LessonPage() {
                             key={i}
                             onClick={() => {
                               if (slideMode !== 'manual') return
+                              // 클릭마다 {인덱스, 타임스탬프} 축적 (슬라이드 전환 시 payload로 전송)
+                              checkboxClicksRef.current.push({ index: i, t: Date.now() })
                               setCheckedSentences((prev) => {
                                 const next = new Array(sentences.length).fill(false)
                                 prev.forEach((v, idx) => { next[idx] = v })
