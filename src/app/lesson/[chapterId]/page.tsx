@@ -137,19 +137,24 @@ export default function LessonPage() {
   const loggedSubSlideRef = useRef<SubSlide>(0)
 
   /* ── 미니퀴즈(슬라이드3) per-attempt 로그 refs ── */
-  // 제출 시점 정보를 보관했다가 "다음 카드로 넘어갈 때" quiz_performance_logs로 flush.
-  // (response_time=제출 시점까지 / quiz_bridge_time=이탈 시점까지 — 두 시점이 다르므로 보관→전송 구조)
-  // 배치3의 이탈 flush에서도 이 pending 구조를 그대로 재사용.
+  // 배치3: 제출 즉시 INSERT로 attempt를 확정 저장(마지막 카드에서 안 넘어가도 유실 방지)하고,
+  // 생성된 row id(logId)를 보관 → 전환/이탈 시 quiz_bridge_time·explanation_viewed만 UPDATE.
   const quizEnteredAtRef = useRef<number | null>(null)            // 슬라이드3 진입 시각(ms)
   const pendingQuizLogRef = useRef<{
-    questionId: string
-    isCorrect: boolean
-    answerGiven: number
-    responseTime: number | null
-    submittedAt: number
-    quizEnteredAt: number | null
-    explanationViewed: boolean
+    logId: string | null          // INSERT로 생성된 row id (응답 도착 후 채워짐)
+    submittedAt: number           // 제출 시각(ms) — bridge_time 계산 기준
+    explanationViewed: boolean    // 최종 확정값("해설 보기" 누르면 true)
   } | null>(null)
+
+  /* ── 이탈(beforeunload/visibilitychange) 중복 전송 가드 ── */
+  const exitSentRef  = useRef(false) // 같은 이탈에서 중복 exit/flush 방지 (재방문 시 해제)
+  const completedRef = useRef(false) // 정상 완료 시 봉인 — 완료 후엔 이탈 exit 재전송 안 함
+
+  /* ── enter 중복 전송 가드 ── */
+  // StrictMode 이중 마운트/리렌더로 enter가 2번 나가면 API가 세션을 2개 만들어 고아 row가 생김.
+  // "enter를 보낸 chapterId"를 기억해 같은 챕터로는 재요청하지 않는다.
+  // (chapterId가 바뀌면 = 다른 챕터로 이동 → 새 enter 정상 허용)
+  const enterSentRef = useRef<string | null>(null)
 
   /* ── Image zoom overlay (슬라이드1 학습이미지 · 슬라이드3 퀴즈이미지 공용) ── */
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null)
@@ -162,25 +167,104 @@ export default function LessonPage() {
   const [explanationRevealed, setExplanationRevealed] = useState(false)
   const [showComplete, setShowComplete]   = useState(false)
 
-  useEffect(() => {
-    if (!lessonSessionId || !session?.user?.id) return
-    const handleUnload = () => {
+  // ── 이탈 시점 통합 flush: 세션 exit + 미니퀴즈 bridge_time UPDATE + 진행 중 슬라이드 로그 ──
+  // 본문 함수로 정의해 매 렌더 최신 slideIndex/subSlide/slides/sentences를 캡처한다.
+  // (아래 sendExitRef가 항상 최신 클로저를 가리키므로, 언마운트 cleanup도 stale 값을 잡지 않음)
+  const sendExit = () => {
+    const uid = session?.user?.id
+    if (!lessonSessionId || !uid) return
+    if (exitSentRef.current || completedRef.current) return // 중복/완료 후 재전송 방지
+    exitSentRef.current = true
+
+    // 1) 세션 exit — last_slide/last_sub_slide에 이탈 위치 기록
+    navigator.sendBeacon(
+      '/api/v1/chapter-session-log',
+      JSON.stringify({
+        userId:       uid,
+        chapterId,
+        action:       'exit',
+        sessionId:    lessonSessionId,
+        pageType:     'lesson',
+        isCompleted:  showComplete,
+        exitPoint:    subSlide === 2 ? 'mini_quiz' : 'slide',
+        lastSlide:    slideIndex,
+        lastSubSlide: subSlide,
+      })
+    )
+
+    // 2) 미니퀴즈 pending → bridge_time·explanation_viewed UPDATE (attempt 본체는 제출 시 이미 저장됨)
+    //    pending은 비우지 않는다 — 돌아와서 정상 전환/재이탈 시 최종값으로 다시 UPDATE 가능.
+    const p = pendingQuizLogRef.current
+    if (p && p.logId) {
       navigator.sendBeacon(
-        '/api/v1/chapter-session-log',
+        '/api/v1/quiz-performance-log',
         JSON.stringify({
-          userId:      session.user.id,
-          chapterId,
-          action:      'exit',
-          sessionId:   lessonSessionId,
-          pageType:    'lesson',
-          isCompleted: showComplete,
-          exitPoint:   subSlide === 2 ? 'mini_quiz' : 'slide',
+          mode: 'update',
+          logId: p.logId,
+          quizBridgeTime: Math.round((Date.now() - p.submittedAt) / 1000),
+          explanationViewed: p.explanationViewed,
         })
       )
     }
-    window.addEventListener('beforeunload', handleUnload)
-    return () => window.removeEventListener('beforeunload', handleUnload)
-  }, [lessonSessionId, session?.user?.id, slideIndex, subSlide, showComplete]) // eslint-disable-line react-hooks/exhaustive-deps
+
+    // 3) 진행 중 슬라이드의 lesson_slide 로그 flush (전환 없이 중간 이탈하는 경우 커버).
+    //    전환 시엔 effect가 이미 전송하므로, 여기선 마지막 미전송 구간만.
+    const prevSlide = slides[slideIndex]
+    const duration = Math.round((Date.now() - slideEnterTimeRef.current) / 1000)
+    if (prevSlide && duration > 0) {
+      const sub = loggedSubSlideRef.current
+      let imageZoomCount: number | null = null
+      let checkboxOrderRaw: number[] | null = null
+      let checkboxIntervalsRaw: number[] | null = null
+      let checkboxClickInterval: number | null = null
+      let checkboxTotal: number | null = null
+      if (sub === 0) {
+        imageZoomCount = imageZoomCountRef.current
+      } else if (sub === 1) {
+        const clicks = checkboxClicksRef.current
+        checkboxOrderRaw = clicks.map((c) => c.index)
+        const intervals = clicks
+          .slice(1)
+          .map((c, i) => Math.round(((c.t - clicks[i].t) / 1000) * 100) / 100)
+        checkboxIntervalsRaw  = intervals
+        checkboxClickInterval = intervals.length > 0
+          ? Math.round((intervals.reduce((a, b) => a + b, 0) / intervals.length) * 100) / 100
+          : 0
+        checkboxTotal = sentences.length
+      }
+      navigator.sendBeacon(
+        '/api/v1/lesson-log',
+        JSON.stringify({
+          userId: uid, chapterId, slideId: prevSlide.id,
+          durationSeconds: duration, slideIndex, subSlide: sub,
+          imageZoomCount, checkboxOrderRaw, checkboxIntervalsRaw, checkboxClickInterval, checkboxTotal,
+        })
+      )
+    }
+  }
+  // sendExitRef가 항상 "최신 렌더의 sendExit"을 가리키게 → 이벤트/언마운트 모두 현재값으로 flush
+  const sendExitRef = useRef(sendExit)
+  sendExitRef.current = sendExit
+
+  // ── 이탈 감지 3종 (마운트 1회 등록) ──
+  //   beforeunload  : 탭 닫기/새로고침
+  //   visibilitychange : 모바일 백그라운드/탭 전환 (돌아오면 가드 해제)
+  //   언마운트 cleanup : 앱 내 클라이언트 라우팅 이탈(챕터목록 버튼/앱 내 뒤로가기) — 위 두 이벤트가 안 뜨는 경로
+  //   → 정상완료(completedRef)/이미전송(exitSentRef)이면 sendExit 내부 가드로 skip
+  useEffect(() => {
+    const onBeforeUnload = () => sendExitRef.current()
+    const onVisibility = () => {
+      if (document.hidden) sendExitRef.current()
+      else if (!completedRef.current) exitSentRef.current = false // 돌아오면 가드 해제
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload)
+      document.removeEventListener('visibilitychange', onVisibility)
+      sendExitRef.current() // 언마운트 = 앱 내 라우팅 이탈 flush (가드 통과 시에만 전송)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── Mini quiz session score ────────────────── */
   const miniCorrectRef = useRef(0)
@@ -229,6 +313,9 @@ export default function LessonPage() {
   useEffect(() => {
     const userId = session?.user?.id
     if (!userId || !chapterId) return
+    // 이 챕터로 이미 enter를 보냈으면 재요청 안 함 (StrictMode 이중 마운트 → 고아 세션 방지)
+    if (enterSentRef.current === chapterId) return
+    enterSentRef.current = chapterId
     fetch('/api/v1/chapter-session-log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -241,7 +328,7 @@ export default function LessonPage() {
     })
       .then((r) => r.json())
       .then((data) => { if (data.sessionId) setLessonSessionId(data.sessionId) })
-      .catch(() => {})
+      .catch(() => { enterSentRef.current = null }) // 실패 시 가드 해제 — 재시도 가능하게
   }, [session?.user?.id, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
@@ -373,25 +460,20 @@ export default function LessonPage() {
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [slideMode, slideIndex, subSlide, loading]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* ── 미니퀴즈 per-attempt 로그 flush (제출 후 다음 카드로 넘어갈 때 전송) ── */
+  /* ── 미니퀴즈 로그 마무리 (다음 카드로 넘어갈 때 bridge_time·explanation_viewed UPDATE) ── */
+  // attempt 본체는 제출 시 이미 INSERT됨. 여기선 생성된 row(logId)에 이탈까지의 값만 갱신.
   const flushQuizLog = () => {
     const p = pendingQuizLogRef.current
     pendingQuizLogRef.current = null
-    if (!p || !session?.user?.id) return
-    const quizBridgeTime = Math.round((Date.now() - p.submittedAt) / 1000) // 제출~이탈(초)
+    if (!p || !p.logId || !session?.user?.id) return
     fetch('/api/v1/quiz-performance-log', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        chapterId,
-        questionId:        p.questionId,
-        questionType:      'mini_quiz',
-        isCorrect:         p.isCorrect,
-        answerGiven:       p.answerGiven,
-        responseTime:      p.responseTime,
-        quizBridgeTime,
+        mode: 'update',
+        logId: p.logId,
+        quizBridgeTime: Math.round((Date.now() - p.submittedAt) / 1000), // 제출~다음 카드(초)
         explanationViewed: p.explanationViewed,
-        quizEnteredAt:     p.quizEnteredAt != null ? new Date(p.quizEnteredAt).toISOString() : null,
       }),
     }).catch(() => {})
   }
@@ -427,18 +509,23 @@ export default function LessonPage() {
       }),
     }).catch(() => {})
     track('lesson_completed', { chapterId })
+    // 정상 완료 = 권위 있는 exit. 이후 beforeunload/visibilitychange가 이를 덮어쓰지 않도록 봉인.
+    completedRef.current = true
+    exitSentRef.current  = true
     if (lessonSessionId && session?.user?.id) {
       fetch('/api/v1/chapter-session-log', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId:      session.user.id,
+          userId:       session.user.id,
           chapterId,
-          action:      'exit',
-          sessionId:   lessonSessionId,
-          pageType:    'lesson',
-          isCompleted: true,
-          exitPoint:   'lesson_complete',
+          action:       'exit',
+          sessionId:    lessonSessionId,
+          pageType:     'lesson',
+          isCompleted:  true,
+          exitPoint:    'lesson_complete',
+          lastSlide:    slideIndex,
+          lastSubSlide: subSlide,
         }),
       }).catch(() => {})
     }
@@ -551,17 +638,35 @@ export default function LessonPage() {
     if (correct) miniCorrectRef.current += 1
 
     // ── per-attempt 로그용 정보 보관(제출 시점) — 다음 카드 이탈 시 quiz_performance_logs로 flush ──
+    // ── 배치3: 제출 즉시 quiz_performance_logs INSERT (attempt 확정 — 이탈해도 유실 방지) ──
     const submittedAt = Date.now()
-    pendingQuizLogRef.current = {
-      questionId:   miniQ.id,
-      isCorrect:    correct,
-      answerGiven:  miniSelected,        // 사용자가 고른 선지 인덱스(0=A / 1=B)
-      responseTime: quizEnteredAtRef.current != null
-        ? Math.round((submittedAt - quizEnteredAtRef.current) / 1000) // 진입~제출(초)
-        : null,
-      submittedAt,
-      quizEnteredAt: quizEnteredAtRef.current,
-      explanationViewed: correct ? false : true, // 오답=해설 자동노출→true, 정답=아직 "해설 보기" 안 누름
+    const responseTime = quizEnteredAtRef.current != null
+      ? Math.round((submittedAt - quizEnteredAtRef.current) / 1000) // 진입~제출(초)
+      : null
+    const explanationViewed0 = correct ? false : true // 오답=해설 자동노출→true, 정답=아직 "해설 보기" 안 누름
+    pendingQuizLogRef.current = { logId: null, submittedAt, explanationViewed: explanationViewed0 }
+
+    if (session?.user?.id) {
+      fetch('/api/v1/quiz-performance-log', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode:         'insert',
+          chapterId,
+          questionId:   miniQ.id,
+          questionType: 'mini_quiz',
+          isCorrect:    correct,
+          answerGiven:  miniSelected,   // 고른 선지 인덱스(0=A / 1=B)
+          responseTime,
+          explanationViewed: explanationViewed0,
+          quizEnteredAt: quizEnteredAtRef.current != null
+            ? new Date(quizEnteredAtRef.current).toISOString() : null,
+          // quizBridgeTime은 제출 시점엔 없음 → 전환/이탈 시 UPDATE로 채움
+        }),
+      })
+        .then((r) => r.json())
+        .then((d) => { if (d?.id && pendingQuizLogRef.current) pendingQuizLogRef.current.logId = d.id })
+        .catch(() => {})
     }
 
     fetch('/api/v1/mini-quiz-complete', {
