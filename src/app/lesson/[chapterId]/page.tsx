@@ -135,6 +135,10 @@ export default function LessonPage() {
   // 로깅되는 체류 구간이 "속한" subSlide(방금 떠난 슬라이드). effect fire 시점 subSlide는
   // 이미 다음 슬라이드로 넘어가 있으므로, 직전 값을 별도 추적해야 row 라벨/값 격리가 정확함.
   const loggedSubSlideRef = useRef<SubSlide>(0)
+  // ── 2026-07-19 수정: 미니퀴즈(sub_slide=2) slide_index +1 밀림 버그 — subSlide와 동일하게
+  //    "로깅 구간이 속한 카드 인덱스"도 ref로 고정. effect 발화 시점 slideIndex state는 이미
+  //    다음 카드로 넘어가 있어(카드 전환이 sub_slide 2 로깅을 발화) state를 직접 쓰면 +1 밀림. ──
+  const loggedSlideIndexRef = useRef(0)   // 로깅 구간이 속한 카드 인덱스(방금 떠난 카드)
 
   /* ── 미니퀴즈(슬라이드3) per-attempt 로그 refs ── */
   // 배치3: 제출 즉시 INSERT로 attempt를 확정 저장(마지막 카드에서 안 넘어가도 유실 방지)하고,
@@ -399,7 +403,9 @@ export default function LessonPage() {
     // (기존엔 slideMode !== 'auto' 게이팅으로 수동모드 로그가 유실됨 — 게이트 위로 이동)
     const now = Date.now()
     const duration = Math.round((now - slideEnterTimeRef.current) / 1000)
-    const prevSlide = slides[slideIndex]
+    // ── 2026-07-19 수정: slide_index +1 밀림 — slideIndex state 대신 loggedSlideIndexRef 사용 ──
+    // const prevSlide = slides[slideIndex]
+    const prevSlide = slides[loggedSlideIndexRef.current]
     // 이 row가 나온 subSlide(방금 떠난 슬라이드) — slide_index는 카드 인덱스 유지, sub_slide로 슬라이드 구분
     const loggedSub = loggedSubSlideRef.current
     if (prevSlide && duration > 0 && session?.user?.id) {
@@ -436,7 +442,9 @@ export default function LessonPage() {
           chapterId,
           slideId: prevSlide.id,
           durationSeconds: duration,
-          slideIndex,
+          // ── 2026-07-19 수정: slide_index +1 밀림 — 로깅 구간이 속한 카드 인덱스(ref) 전송 ──
+          // slideIndex,
+          slideIndex: loggedSlideIndexRef.current,
           subSlide: loggedSub,
           imageZoomCount,
           checkboxOrderRaw,
@@ -449,6 +457,8 @@ export default function LessonPage() {
     slideEnterTimeRef.current = now
     // 다음 체류 구간이 속할 subSlide로 갱신 (현재 진입한 subSlide)
     loggedSubSlideRef.current = subSlide
+    // ── 2026-07-19 수정: 다음 체류 구간이 속할 카드 인덱스도 함께 갱신 (subSlide와 대칭) ──
+    loggedSlideIndexRef.current = slideIndex
 
     // ── auto 모드에서만 자동진행 타이머 (미니퀴즈 화면 제외) ──
     if (slideMode !== 'auto' || subSlide === 2) return
