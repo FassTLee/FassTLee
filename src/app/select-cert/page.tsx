@@ -18,6 +18,11 @@ interface CertRow {
 
 const HIDDEN_CERT_IDS = [
   '40ac89d8-a6b7-4d53-8cbe-34ac40af6307', // 운동건강관리사 (화이트라벨 준비 중)
+  // ── 2026-07-20 수정: deprecated 자격증이 "준비 중" 섹션에 노출되는 문제 차단 ──
+  // deprecated 행의 slug를 sport_instructor_lv2_deprecated로 분리하면서, 기존에
+  // 이 행을 가려주던 slug 중복 제거(아래 seen.has(c.slug))에 더 이상 걸리지 않게 됨.
+  // course_certifications 매핑 0건인 폐기 행이므로 목록에서 숨긴다.
+  '3cd928fe-f820-4335-adb7-25fd904c898c', // 2급 생활스포츠지도사 (deprecated)
 ]
 
 const CERT_META: Record<string, {
@@ -77,6 +82,10 @@ export default function SelectCertPage() {
       supabase
         .from('certifications')
         .select('id, slug, name, is_active')
+        // ── 2026-07-20 수정: ORDER BY가 없어 카드 표시 순서가 비결정적이던 문제 ──
+        // 활성 자격증 먼저, 그 안에서 order_index 오름차순으로 고정한다.
+        .order('is_active', { ascending: false })
+        .order('order_index', { ascending: true })
         .then(({ data }) => {
           if (data) {
             const seen = new Set<string>()

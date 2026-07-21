@@ -196,8 +196,13 @@ export default function SelectSubjectPage() {
     // cert slug(예: 'iipa-pilates-lv1') → certifications.id(uuid). 같은 subject를
     // 여러 자격증이 공유하는 경우(예: IIPA Lv1/Lv2) course_certifications으로
     // 이 자격증에 매핑된 course만 챕터 수에 반영하기 위함
+    // ── 2026-07-20 수정: .single()은 0행일 때도 PGRST116을 던짐 ──
+    // user_certifications.cert_id에는 certifications.slug와 형식이 다른 값
+    // ('sports-instructor-2-practical' 등)이 존재해 이 조회가 0행이 되는 경로가 있음.
+    // slug UNIQUE 제약으로도 막을 수 없어 maybeSingle()로 0행을 허용하고,
+    // deprecated 행을 집지 않도록 is_active=true 조건을 추가한다.
     const { data: certRow } = await supabase
-      .from('certifications').select('id').eq('slug', cert).single()
+      .from('certifications').select('id').eq('slug', cert).eq('is_active', true).maybeSingle()
     const certUuid = certRow?.id ?? null
 
     const withDb: SubjectWithDb[] = await Promise.all(
