@@ -6,6 +6,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Check, X, ChevronLeft } from 'lucide-react'
 import { SignupPromptPopup } from '@/components/common/SignupPromptPopup'
+import { InstallPromptBanner } from '@/components/common/InstallPromptBanner'
 import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
 
 const RESULT_KEY  = 'kinepia_test_result'
@@ -173,7 +174,7 @@ export default function ReportPage() {
         <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 pb-36 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 pb-60 space-y-4">
 
         {!hasTestData && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -319,6 +320,10 @@ export default function ReportPage() {
           onClose={() => setShowSignupPopup(false)}
         />
       )}
+
+      {/* Android 설치 유도 배너 — 코드 팝업(z-50)과 배타적으로만 노출.
+          SignupPromptPopup(비로그인)과는 배너 내부 authenticated 조건으로 이미 배타적. */}
+      {!showCodePopup && <InstallPromptBanner />}
 
       {/* 이용 코드 입력 팝업 */}
       {showCodePopup && (
