@@ -6,7 +6,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Check, X, ChevronLeft } from 'lucide-react'
 import { SignupPromptPopup } from '@/components/common/SignupPromptPopup'
-import { InstallPromptBanner } from '@/components/common/InstallPromptBanner'
+import { InstallPromptBanner, useInstallBannerVisible } from '@/components/common/InstallPromptBanner'
 import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
 
 const RESULT_KEY  = 'kinepia_test_result'
@@ -53,6 +53,10 @@ export default function ReportPage() {
   const [codeInput, setCodeInput]             = useState('')
   const [codeError, setCodeError]             = useState<string | null>(null)
   const [codeSubmitting, setCodeSubmitting]   = useState(false)
+
+  // 배너 노출 판정 — 배너 컴포넌트와 동일한 훅을 사용(단일 소스). 코드 팝업과는 배타 마운트이므로
+  // 실제 배너 표시 = 판정 통과 && 코드 팝업 미표시. 이 값으로 스크롤 하단 여백을 조건부 적용한다.
+  const installBannerShown = useInstallBannerVisible() && !showCodePopup
 
   useEffect(() => {
     if (status === 'loading') return
@@ -174,7 +178,7 @@ export default function ReportPage() {
         <KakaoAdFit unit="DAN-LTearBRyYBpdjEd9" width={320} height={100} />
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 pb-60 space-y-4">
+      <div className={`flex-1 overflow-y-auto p-4 ${installBannerShown ? 'pb-60' : 'pb-36'} space-y-4`}>
 
         {!hasTestData && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
