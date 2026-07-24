@@ -56,9 +56,7 @@ export const metadata: Metadata = {
       { url: '/assets/icons/app/icon-favicon-32.svg', type: 'image/svg+xml', sizes: 'any' },
       { url: '/assets/icons/app/icon-192.svg',        type: 'image/svg+xml', sizes: '192x192' },
     ],
-    apple: [
-      { url: '/assets/icons/app/icon-192.svg', sizes: '192x192' },
-    ],
+    apple: '/assets/icons/app/PWA/icon-180.png',
   },
 
 }

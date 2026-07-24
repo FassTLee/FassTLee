@@ -39,6 +39,8 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
+              // 서비스워커 스크립트 로드 허용 (PWA)
+              "worker-src 'self'",
               // Next.js 인라인 스크립트 + 카카오 AdFit + Google OAuth
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://t1.kakaocdn.net https://*.kakaocdn.net https://t1.daumcdn.net https://ads-inf.kakao.com https://ad-apig.kakao.com https://accounts.google.com https://www.gstatic.com",
               "style-src 'self' 'unsafe-inline'",
@@ -46,7 +48,7 @@ const nextConfig = {
               "img-src 'self' data: blob: https://lh3.googleusercontent.com https://img1.kakaocdn.net https://k.kakaocdn.net https://t1.kakaocdn.net https://*.kakaocdn.net https://*.kakao.com https://t1.daumcdn.net https://ads-inf.kakao.com",
               "font-src 'self' data:",
               // Supabase REST/Realtime + 카카오 AdFit 트래킹 + Google OAuth
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://serv.ds.kakao.com https://aem-kakao-collector.onkakao.net https://*.kakao.com https://*.kakaocdn.net https://ka-f.kakaocdn.net https://ads-inf.kakao.com https://t1.daumcdn.net",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://accounts.google.com https://serv.ds.kakao.com https://aem-kakao-collector.onkakao.net https://*.kakao.com https://*.kakaocdn.net https://ka-f.kakaocdn.net https://ads-inf.kakao.com https://t1.daumcdn.net https://t1.kakaocdn.net",
               // AdFit iframe + Google OAuth 팝업
               "frame-src 'self' https://t1.kakaocdn.net https://ka-f.kakaocdn.net https://*.kakaocdn.net https://*.kakao.com https://ads-inf.kakao.com https://t1.daumcdn.net https://accounts.google.com",
               "object-src 'none'",
