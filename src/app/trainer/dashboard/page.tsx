@@ -6,6 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Heart as _Heart } from 'lucide-react'
 import BottomTabBar from '@/components/common/BottomTabBar'
+import { PrivacyConsent } from '@/components/common/PrivacyConsent'
+import { useConsentGate } from '@/hooks/useConsentGate'
 import { DashboardProvider, type DashboardContextType } from './_components/DashboardContext'
 import HomeTab from './_components/HomeTab'
 import ClassroomTab from './_components/ClassroomTab'
@@ -254,6 +256,25 @@ function DashboardContent() {
 
   /* ── 로그인 유도 바텀시트 ───────────────────────────────────────── */
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
+
+  /* ── 가입 동의 게이트 (1차) — consent_completed_at 없으면 모달 ──────── */
+  const consent = useConsentGate()
+  const [consentSubmitting, setConsentSubmitting] = useState(false)
+  const handleConsentAccept = async ({ marketing }: { marketing: boolean }) => {
+    setConsentSubmitting(true)
+    try {
+      const res = await fetch('/api/v1/consent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ terms: true, privacy: true, marketing, source: consent.source }),
+      })
+      if (res.ok) consent.markConsented()
+    } catch {
+      // 네트워크 오류 — 모달 유지, 재시도 가능
+    } finally {
+      setConsentSubmitting(false)
+    }
+  }
 
   /* Sync tab when URL search param changes (BottomTabBar navigation) */
   useEffect(() => {
@@ -1607,6 +1628,15 @@ function DashboardContent() {
       <BottomTabBar />
 
       <DashboardModals />
+
+      {/* 가입 동의 게이트 — 미동의 시 최상단 오버레이(닫기 불가) */}
+      {consent.needsConsent && (
+        <PrivacyConsent
+          onAccept={handleConsentAccept}
+          onLogout={() => signOut({ callbackUrl: '/landing' })}
+          submitting={consentSubmitting}
+        />
+      )}
     </div>
     </DashboardProvider>
   )

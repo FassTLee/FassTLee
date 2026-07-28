@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { ChevronLeft, ChevronRight as ArrowRight, Check, Zap, ZoomIn, X } from 'lucide-react'
 import { track } from '@vercel/analytics'
 import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
+import { PrivacyConsent } from '@/components/common/PrivacyConsent'
+import { useConsentGate } from '@/hooks/useConsentGate'
 // Zap used in completion screen
 
 const STYLE_KEY   = 'kinepia_learning_style'
@@ -120,6 +122,26 @@ export default function LessonPage() {
   const [subjectId, setSubjectId]       = useState<string | null>(null)
   const [loading, setLoading]           = useState(true)
   const [lessonSessionId, setLessonSessionId] = useState<string | null>(null)
+
+  /* ── 가입 동의 게이트 (2차) — 수집(세션·슬라이드 로그) 시작 전 차단 ──── */
+  const consent = useConsentGate()
+  const consentBlocked = consent.loading || consent.needsConsent
+  const [consentSubmitting, setConsentSubmitting] = useState(false)
+  const handleConsentAccept = async ({ marketing }: { marketing: boolean }) => {
+    setConsentSubmitting(true)
+    try {
+      const res = await fetch('/api/v1/consent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ terms: true, privacy: true, marketing, source: consent.source }),
+      })
+      if (res.ok) consent.markConsented()
+    } catch {
+      // 네트워크 오류 — 모달 유지, 재시도 가능
+    } finally {
+      setConsentSubmitting(false)
+    }
+  }
 
   /* ── Slide navigation ───────────────────────── */
   const [slideIndex, setSlideIndex]       = useState(0)
@@ -289,6 +311,8 @@ export default function LessonPage() {
   useEffect(() => {
     if (status === 'loading') return
     if (status === 'unauthenticated') { router.replace('/landing'); return }
+    // 동의 전에는 콘텐츠 로드·수집을 시작하지 않는다 (동의 후 재실행)
+    if (consentBlocked) return
     const s = localStorage.getItem(STYLE_KEY) as 'memorizer' | 'conceptualizer' | null
     if (s) setStyle(s)
     const cert = localStorage.getItem(CERT_KEY)
@@ -297,12 +321,13 @@ export default function LessonPage() {
     const m = localStorage.getItem(MODE_KEY) as 'manual' | 'auto' | null
     if (m) setSlideMode(m)
     fetchData()
-  }, [status, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [status, chapterId, consentBlocked]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── chapter-init: 첫 로드 시 chapter_stats row 생성 (없을 때만) ──────────
   useEffect(() => {
     const userId = session?.user?.id
     if (!userId || !chapterId) return
+    if (consentBlocked) return   // 동의 전 chapter_stats row 생성 차단
     fetch('/api/v1/chapter-init', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -312,11 +337,12 @@ export default function LessonPage() {
         certId,
       }),
     }).catch(() => {})
-  }, [session?.user?.id, chapterId, certId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [session?.user?.id, chapterId, certId, consentBlocked]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const userId = session?.user?.id
     if (!userId || !chapterId) return
+    if (consentBlocked) return   // 동의 전 세션 로그(enter) 전송 차단
     // 이 챕터로 이미 enter를 보냈으면 재요청 안 함 (StrictMode 이중 마운트 → 고아 세션 방지)
     if (enterSentRef.current === chapterId) return
     enterSentRef.current = chapterId
@@ -333,7 +359,7 @@ export default function LessonPage() {
       .then((r) => r.json())
       .then((data) => { if (data.sessionId) setLessonSessionId(data.sessionId) })
       .catch(() => { enterSentRef.current = null }) // 실패 시 가드 해제 — 재시도 가능하게
-  }, [session?.user?.id, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [session?.user?.id, chapterId, consentBlocked]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchData = async () => {
     const [{ data: ch }, { data: qs }] = await Promise.all([
@@ -398,6 +424,7 @@ export default function LessonPage() {
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current)
     if (loading) return
+    if (consentBlocked) return   // 동의 전 슬라이드 로그 전송 차단
 
     // ── 2026-07-15: 슬라이드 체류시간 + 상호작용 로깅 (수동/자동 모드 공통) ──
     // (기존엔 slideMode !== 'auto' 게이팅으로 수동모드 로그가 유실됨 — 게이트 위로 이동)
@@ -468,7 +495,7 @@ export default function LessonPage() {
     }, 100)
 
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
-  }, [slideMode, slideIndex, subSlide, loading]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [slideMode, slideIndex, subSlide, loading, consentBlocked]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ── 미니퀴즈 로그 마무리 (다음 카드로 넘어갈 때 bridge_time·explanation_viewed UPDATE) ── */
   // attempt 본체는 제출 시 이미 INSERT됨. 여기선 생성된 row(logId)에 이탈까지의 값만 갱신.
@@ -732,6 +759,19 @@ export default function LessonPage() {
   const onMouseDown  = (e: React.MouseEvent) => onDragStart(e.clientX)
   const onMouseUp    = (e: React.MouseEvent) => onDragEnd(e.clientX)
   const onMouseLeave = () => { isDragging.current = false; dragStartX.current = 0 }
+
+  // 동의 게이트 — 미동의 시 콘텐츠·수집을 렌더/시작하지 않고 모달만 노출(닫기 불가)
+  if (consent.needsConsent) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F3]">
+        <PrivacyConsent
+          onAccept={handleConsentAccept}
+          onLogout={() => signOut({ callbackUrl: '/landing' })}
+          submitting={consentSubmitting}
+        />
+      </div>
+    )
+  }
 
   if (loading) {
     return (

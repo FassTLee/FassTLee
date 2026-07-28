@@ -4,8 +4,11 @@ import { useState } from 'react'
 import { ChevronDown, ChevronUp, Check, ExternalLink, Shield } from 'lucide-react'
 
 interface PrivacyConsentProps {
-  onAccept: () => void
-  onDecline?: () => void
+  // 필수 2개(service·privacy)는 동의 보장 상태에서만 호출된다. marketing 선택값 전달.
+  onAccept: (result: { marketing: boolean }) => void
+  // 닫기(X) 불가 — 동의 또는 로그아웃만 가능. 탈퇴 아님(계정·데이터 유지).
+  onLogout: () => void
+  submitting?: boolean
   mode?: 'modal' | 'inline'
 }
 
@@ -14,6 +17,7 @@ interface ConsentItem {
   label: string
   required: boolean
   detail: string
+  link?: string   // 전문 보기 이동 경로 (새 탭)
 }
 
 const CONSENT_ITEMS: ConsentItem[] = [
@@ -22,12 +26,14 @@ const CONSENT_ITEMS: ConsentItem[] = [
     label: '서비스 이용약관 동의',
     required: true,
     detail: 'Kinepia 서비스 이용을 위한 기본 약관입니다. 서비스 제공, 콘텐츠 학습, 계정 관리 등에 관한 내용을 포함합니다.',
+    link: '/terms',
   },
   {
     id: 'privacy',
     label: '개인정보 수집·이용 동의',
     required: true,
     detail: '수집항목: 이름, 이메일 (Google 계정 연동 시)\n이용목적: 학습 진도 저장, 맞춤 추천, 서비스 개선\n보유기간: 회원 탈퇴 후 즉시 삭제',
+    link: '/privacy',
   },
   {
     id: 'marketing',
@@ -37,7 +43,7 @@ const CONSENT_ITEMS: ConsentItem[] = [
   },
 ]
 
-export function PrivacyConsent({ onAccept, onDecline, mode = 'modal' }: PrivacyConsentProps) {
+export function PrivacyConsent({ onAccept, onLogout, submitting = false, mode = 'modal' }: PrivacyConsentProps) {
   const [checked, setChecked] = useState<Record<string, boolean>>({})
   const [expanded, setExpanded] = useState<string | null>(null)
 
@@ -145,9 +151,16 @@ export function PrivacyConsent({ onAccept, onDecline, mode = 'modal' }: PrivacyC
                   <p className="text-[11px] text-[#6B6B6B] leading-relaxed whitespace-pre-line">
                     {item.detail}
                   </p>
-                  <button className="flex items-center gap-1 text-[11px] text-[#378ADD] mt-1.5">
-                    전문 보기 <ExternalLink size={10} />
-                  </button>
+                  {item.link && (
+                    <a
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-[11px] text-[#378ADD] mt-1.5"
+                    >
+                      전문 보기 <ExternalLink size={10} />
+                    </a>
+                  )}
                 </div>
               )}
             </div>
@@ -157,20 +170,19 @@ export function PrivacyConsent({ onAccept, onDecline, mode = 'modal' }: PrivacyC
         {/* Actions */}
         <div className="px-6 mt-5 space-y-2">
           <button
-            onClick={onAccept}
-            disabled={!allRequired}
+            onClick={() => onAccept({ marketing: !!checked['marketing'] })}
+            disabled={!allRequired || submitting}
             className="w-full py-4 bg-[#E24B4A] disabled:opacity-40 text-white rounded-xl text-[15px] font-bold"
           >
-            동의하고 시작하기
+            {submitting ? '처리 중…' : '동의하고 시작하기'}
           </button>
-          {onDecline && (
-            <button
-              onClick={onDecline}
-              className="w-full py-3 text-[13px] text-[#ADADAD]"
-            >
-              나중에 하기
-            </button>
-          )}
+          <button
+            onClick={onLogout}
+            disabled={submitting}
+            className="w-full py-3 text-[13px] text-[#ADADAD] disabled:opacity-40"
+          >
+            동의하지 않고 로그아웃
+          </button>
         </div>
 
         <p className="text-[10px] text-[#ADADAD] text-center mt-3 px-6 leading-relaxed">

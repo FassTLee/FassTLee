@@ -22,7 +22,7 @@ export async function GET() {
 
   const { data } = await supabaseAdmin
     .from('profiles')
-    .select('name, email, avatar_url, cert_type, selected_cert, exam_target_date, learning_style, code_popup_shown, access_code_used, survey_completed')
+    .select('name, email, avatar_url, cert_type, selected_cert, exam_target_date, learning_style, code_popup_shown, access_code_used, survey_completed, consent_completed_at, created_at')
     .eq('id', userId)
     .single()
 
@@ -70,5 +70,8 @@ export async function GET() {
     // ── 2026-06-24 수정 (P0-9): 활성 코드 만료일 ──
     codeExpiresAt:    activeCodeRow?.expires_at  ?? null,
     surveyCompleted:  data?.survey_completed  ?? false,
+    // ── 동의 게이트 판정용 ──
+    consentCompletedAt: data?.consent_completed_at ?? null,
+    createdAt:          data?.created_at          ?? null,
   })
 }
