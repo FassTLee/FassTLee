@@ -35,12 +35,7 @@ const CONSENT_ITEMS: ConsentItem[] = [
     detail: '수집항목: 이름, 이메일 (Google 계정 연동 시)\n이용목적: 학습 진도 저장, 맞춤 추천, 서비스 개선\n보유기간: 회원 탈퇴 후 즉시 삭제',
     link: '/privacy',
   },
-  {
-    id: 'marketing',
-    label: '마케팅 정보 수신 동의',
-    required: false,
-    detail: '신규 강의, 이벤트, 업데이트 소식을 이메일로 받아볼 수 있습니다. 언제든지 수신 거부할 수 있습니다.',
-  },
+  // 마케팅 수신 동의는 추후 푸시 알림(A2) 도입 시 별도로 취득 — 현재 미수집
 ]
 
 export function PrivacyConsent({ onAccept, onLogout, submitting = false, mode = 'modal' }: PrivacyConsentProps) {

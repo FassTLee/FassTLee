@@ -37,9 +37,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: '필수 항목에 모두 동의해야 합니다' }, { status: 400 })
   }
   const source: ConsentSource = body.source === 'signup' ? 'signup' : 'retroactive'
-  // marketing은 body에 있을 때만 행 생성 (agreed = 실제 값)
-  const hasMarketing = typeof body.marketing === 'boolean'
-  const marketing = body.marketing === true
+  // 마케팅 수신 동의는 현재 미수집 — body.marketing이 와도 무시하고 행을 만들지 않는다.
+  // (추후 푸시 알림(A2) 도입 시 별도 취득 예정)
 
   // 3. 멱등 — 이미 완료된 사용자는 중복 INSERT 없이 조용히 통과
   const { data: profile, error: profileErr } = await supabaseAdmin
@@ -60,7 +59,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, alreadyCompleted: true })
   }
 
-  // 4. user_consents INSERT (terms·privacy 필수 2행 + marketing 선택 1행)
+  // 4. user_consents INSERT (terms·privacy 필수 2행만 기록)
   const rows: {
     user_id: string
     consent_type: string
@@ -71,9 +70,6 @@ export async function POST(req: NextRequest) {
     { user_id: userId, consent_type: 'terms',   agreed: true, version: CONSENT_VERSION, source },
     { user_id: userId, consent_type: 'privacy', agreed: true, version: CONSENT_VERSION, source },
   ]
-  if (hasMarketing) {
-    rows.push({ user_id: userId, consent_type: 'marketing', agreed: marketing, version: CONSENT_VERSION, source })
-  }
 
   const { error: insertErr } = await supabaseAdmin
     .from('user_consents')
