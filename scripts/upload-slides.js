@@ -9,7 +9,9 @@
 //   npm install @supabase/supabase-js dotenv  (이미 설치됐으면 생략)
 
 import dotenv from 'dotenv'
-dotenv.config({ path: '.env.local' })
+const TARGET   = process.env.KINEPIA_TARGET
+const ENV_FILE = TARGET === 'prod' ? '.env.prod.local' : '.env.local'
+dotenv.config({ path: ENV_FILE })
 import { createClient } from '@supabase/supabase-js'
 import fs from 'fs'
 import path from 'path'
@@ -27,6 +29,21 @@ const serviceRoleKey  = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 if (!supabaseUrl || !serviceRoleKey) {
   console.error('❌ 환경변수 누락: NEXT_PUBLIC_SUPABASE_URL 또는 SUPABASE_SERVICE_ROLE_KEY')
+  process.exit(1)
+}
+
+// ── 타깃 가드 (첫 쓰기 전) ────────────────────────────────────────
+const projectRef = (supabaseUrl.match(/https?:\/\/([a-z0-9]+)\.supabase\.co/) || [])[1] ?? '(unknown)'
+console.log(`  ▸ env 파일 : ${ENV_FILE}`)
+console.log(`  ▸ project  : ${projectRef}`)
+console.log(`  ▸ service_role 존재: ${Boolean(serviceRoleKey)}`)
+const argv = process.argv.slice(2)
+if (argv.includes('--dry-run')) {
+  console.log('  ▸ --dry-run: DB 접근 없이 종료')
+  process.exit(0)
+}
+if (TARGET === 'prod' && !argv.includes('--confirm-prod')) {
+  console.error('  ✗ prod 대상입니다. --confirm-prod 인자가 필요합니다.')
   process.exit(1)
 }
 

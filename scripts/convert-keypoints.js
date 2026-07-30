@@ -3,14 +3,31 @@
  * 실행: node scripts/convert-keypoints.js
  */
 
-require('dotenv').config({ path: '.env.local' })
+const TARGET   = process.env.KINEPIA_TARGET
+const ENV_FILE = TARGET === 'prod' ? '.env.prod.local' : '.env.local'
+require('dotenv').config({ path: ENV_FILE })
 const { createClient } = require('@supabase/supabase-js')
 const Anthropic = require('@anthropic-ai/sdk')
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-)
+const SUPABASE_URL     = process.env.NEXT_PUBLIC_SUPABASE_URL
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+// ── 타깃 가드 (첫 쓰기 전) ────────────────────────────────────────
+const projectRef = ((SUPABASE_URL || '').match(/https?:\/\/([a-z0-9]+)\.supabase\.co/) || [])[1] ?? '(unknown)'
+console.log(`  ▸ env 파일 : ${ENV_FILE}`)
+console.log(`  ▸ project  : ${projectRef}`)
+console.log(`  ▸ service_role 존재: ${Boolean(SERVICE_ROLE_KEY)}`)
+const argv = process.argv.slice(2)
+if (argv.includes('--dry-run')) {
+  console.log('  ▸ --dry-run: DB 접근 없이 종료')
+  process.exit(0)
+}
+if (TARGET === 'prod' && !argv.includes('--confirm-prod')) {
+  console.error('  ✗ prod 대상입니다. --confirm-prod 인자가 필요합니다.')
+  process.exit(1)
+}
+
+const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 async function convertToKeyPoints(explanation) {
