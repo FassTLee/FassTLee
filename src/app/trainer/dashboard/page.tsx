@@ -742,12 +742,14 @@ function DashboardContent() {
     try {
       setAllStats(stats)
 
-      // 설문 팝업: authenticated + 미완료 + 미표시 + 학습 기록 있음
+      // 설문 팝업: authenticated + 미완료 + 미표시 + 학습 완료 이력 있음
+      // chapter_stats 행은 챕터 진입만 해도 생성되므로 행 존재(length > 0)로는
+      // "학습을 시작만 한 사용자"까지 포함된다. lesson_completed 로 판정한다.
       if (
         status === 'authenticated' &&
         !surveyCompletedRef.current &&
         !hasShownSurveyThisSession &&
-        stats.length > 0
+        stats.some((s) => s.lesson_completed)
       ) {
         setTimeout(() => {
           setShowSurveyPopup(true)
