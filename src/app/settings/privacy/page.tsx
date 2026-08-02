@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { signOut, useSession } from 'next-auth/react'
 import { Shield, Trash2, Download, ChevronLeft, AlertTriangle, Check } from 'lucide-react'
 
 function maskEmail(email: string | null | undefined): string {
@@ -23,7 +23,7 @@ function providerLabel(provider: string | null | undefined): string {
 export default function PrivacySettingsPage() {
   const router = useRouter()
   const { data: session } = useSession()
-  const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm' | 'deleting' | 'done'>('idle')
+  const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm' | 'deleting' | 'done' | 'accepted'>('idle')
   const [confirmText, setConfirmText] = useState('')
 
   const handleDeleteRequest = async () => {
@@ -32,7 +32,10 @@ export default function PrivacySettingsPage() {
 
     try {
       const res = await fetch('/api/v1/user/delete', { method: 'DELETE' })
-      if (res.ok) {
+      const data = await res.json() as { status?: string }
+      if (res.ok && data.status === 'accepted') {
+        setDeleteStep('accepted')
+      } else if (res.ok) {
         setDeleteStep('done')
       } else {
         alert('삭제 요청 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.')
@@ -44,20 +47,38 @@ export default function PrivacySettingsPage() {
     }
   }
 
-  if (deleteStep === 'done') {
+  if (deleteStep === 'done' || deleteStep === 'accepted') {
+    const isAccepted = deleteStep === 'accepted'
+
     return (
       <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center p-6">
         <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center border border-[#E5E5E5]">
           <div className="w-16 h-16 bg-[#639922]/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <Check size={28} className="text-[#639922]" />
           </div>
-          <h2 className="text-[20px] font-black text-[#1A1A1A] mb-2">삭제 요청 완료</h2>
+          <h2 className="text-[20px] font-black text-[#1A1A1A] mb-2">
+            {isAccepted ? '삭제 요청 접수' : '삭제 요청 완료'}
+          </h2>
           <p className="text-[14px] text-[#6B6B6B] leading-relaxed mb-6">
-            모든 개인정보 삭제가 요청되었습니다.<br />
-            최대 24시간 이내에 완전히 처리됩니다.
+            {isAccepted ? (
+              <>
+                삭제 요청이 접수되었습니다.<br />
+                학습 기록이 남아 있어 순차적으로 처리되며,<br />
+                처리 현황은{' '}
+                <a href="mailto:kinepia@kinepia.com" className="font-semibold underline">
+                  kinepia@kinepia.com
+                </a>
+                으로 문의해 주시기 바랍니다.
+              </>
+            ) : (
+              <>
+                프로필 및 연결된 사용자 데이터 삭제가 처리되었습니다.<br />
+                로그인 세션을 종료하고 메인 화면으로 이동합니다.
+              </>
+            )}
           </p>
           <button
-            onClick={() => router.push('/landing')}
+            onClick={() => signOut({ callbackUrl: '/landing' })}
             className="w-full py-3.5 bg-[#1A1A1A] text-white rounded-xl text-[14px] font-semibold"
           >
             메인으로
@@ -120,7 +141,6 @@ export default function PrivacySettingsPage() {
           <h2 className="text-[15px] font-bold text-[#1A1A1A] mb-4">🔒 보안 현황</h2>
           <div className="space-y-2.5">
             {[
-              { label: 'AES-256 암호화', status: '적용' },
               { label: 'Supabase RLS', status: '활성화' },
               { label: 'JWT 만료', status: '24시간' },
               { label: '최소 수집 원칙', status: '준수' },
@@ -142,8 +162,11 @@ export default function PrivacySettingsPage() {
           <p className="text-[12px] text-[#6B6B6B] mb-3">
             수집된 모든 개인정보를 JSON 파일로 다운로드할 수 있습니다.
           </p>
-          <button className="w-full flex items-center justify-center gap-2 py-3 bg-[#F5F5F3] border border-[#E5E5E5] rounded-xl text-[13px] font-medium text-[#1A1A1A]">
-            <Download size={15} /> 데이터 다운로드
+          <button
+            disabled
+            className="w-full flex items-center justify-center gap-2 py-3 bg-[#F5F5F3] border border-[#E5E5E5] rounded-xl text-[13px] font-medium text-[#6B6B6B] opacity-60 cursor-not-allowed"
+          >
+            <Download size={15} /> 데이터 다운로드 준비 중
           </button>
         </div>
 
