@@ -1,0 +1,55 @@
+# 채취일시: 2026-07-31T14:31:45.370Z / 대상 ref: jgweeoeikhdjcgkitjfl (dev)
+# pg_policies / pg_class.relrowsecurity 조회에는 SQL 접근이 필요하나 이 환경에는 DB 비밀번호·CLI 액세스 토큰이 없어 확인 불가
+# rls_enabled 는 SELECT 행동 프로브 결과(anon 키 vs service_role 키의 count=exact 비교)이며 카탈로그 값이 아님
+# policy_name / policy_cmd / policy_roles 는 확인 불가 → 전부 UNKNOWN
+# 프로브는 SELECT 만 수행. INSERT/UPDATE/DELETE 정책은 검사하지 않음
+table_name,rls_enabled,policy_name,policy_cmd,policy_roles
+access_codes,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+ad_banners,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+categories,ENFORCED(anon 0행),UNKNOWN,UNKNOWN,UNKNOWN
+certification_subjects,ENFORCED(anon 0행),UNKNOWN,UNKNOWN,UNKNOWN
+certifications,anon 전체 조회 가능(RLS 미적용 또는 전체 허용 정책),UNKNOWN,UNKNOWN,UNKNOWN
+chapter_cards,anon 전체 조회 가능(RLS 미적용 또는 전체 허용 정책),UNKNOWN,UNKNOWN,UNKNOWN
+chapter_session_logs,ENFORCED(anon 0행),UNKNOWN,UNKNOWN,UNKNOWN
+chapter_stats,anon 전체 조회 가능(RLS 미적용 또는 전체 허용 정책),UNKNOWN,UNKNOWN,UNKNOWN
+chapter_test_history,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+chapter_test_results,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+chapters,anon 전체 조회 가능(RLS 미적용 또는 전체 허용 정책),UNKNOWN,UNKNOWN,UNKNOWN
+content_purchases,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+course_certifications,anon 전체 조회 가능(RLS 미적용 또는 전체 허용 정책),UNKNOWN,UNKNOWN,UNKNOWN
+course_relations,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+courses,anon 전체 조회 가능(RLS 미적용 또는 전체 허용 정책),UNKNOWN,UNKNOWN,UNKNOWN
+exam_registrations,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+exam_results,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+exam_schedules,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+guest_test_results,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+landing_test_sessions,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+leaderboard,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+learning_progress,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+learning_progress_v2,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+lesson_questions,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+lesson_slide_logs,ENFORCED(anon 0행),UNKNOWN,UNKNOWN,UNKNOWN
+lessons,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+mock_exam_bookings,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+oral_exam_registrations,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+partners,ENFORCED(anon 0행),UNKNOWN,UNKNOWN,UNKNOWN
+profiles,ENFORCED(anon 0행),UNKNOWN,UNKNOWN,UNKNOWN
+question_stats,ENFORCED(anon 0행),UNKNOWN,UNKNOWN,UNKNOWN
+quiz_performance_logs,ENFORCED(anon 0행),UNKNOWN,UNKNOWN,UNKNOWN
+sports,anon 전체 조회 가능(RLS 미적용 또는 전체 허용 정책),UNKNOWN,UNKNOWN,UNKNOWN
+subjects,anon 전체 조회 가능(RLS 미적용 또는 전체 허용 정책),UNKNOWN,UNKNOWN,UNKNOWN
+subscription_features,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+subscription_plans,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+test_results,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+user_access_codes,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+user_badges,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+user_certifications,ENFORCED(anon 0행),UNKNOWN,UNKNOWN,UNKNOWN
+user_consents,ENFORCED(anon 0행),UNKNOWN,UNKNOWN,UNKNOWN
+user_events,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+user_gamification,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+user_goals,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+user_reviews,ENFORCED(anon 0행),UNKNOWN,UNKNOWN,UNKNOWN
+user_subscriptions,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+user_wrong_answers,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+video_bookmarks,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN
+wrong_answers,UNKNOWN(service_role 0행 — 구별 불가),UNKNOWN,UNKNOWN,UNKNOWN

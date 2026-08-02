@@ -1,0 +1,496 @@
+table_name,column_name,data_type,is_nullable,column_default
+access_codes,id,uuid,NO,gen_random_uuid()
+access_codes,code,text,NO,null
+access_codes,certification_id,uuid,YES,null
+access_codes,expires_at,timestamp with time zone,YES,null
+access_codes,max_uses,integer,YES,null
+access_codes,current_uses,integer,YES,0
+access_codes,is_active,boolean,YES,true
+access_codes,created_at,timestamp with time zone,YES,now()
+access_codes,label,text,YES,null
+access_codes,source,text,YES,null
+ad_banners,id,uuid,NO,gen_random_uuid()
+ad_banners,title,text,YES,null
+ad_banners,image_url,text,YES,null
+ad_banners,link_url,text,YES,null
+ad_banners,position,text,YES,null
+ad_banners,is_active,boolean,YES,true
+ad_banners,click_count,integer,YES,0
+ad_banners,created_at,timestamp with time zone,YES,now()
+categories,id,uuid,NO,gen_random_uuid()
+categories,name,text,NO,null
+categories,icon,text,YES,null
+categories,display_order,integer,YES,0
+categories,is_active,boolean,YES,true
+categories,created_at,timestamp with time zone,YES,now()
+certification_subjects,id,uuid,NO,gen_random_uuid()
+certification_subjects,certification_id,uuid,YES,null
+certification_subjects,subject_id,uuid,YES,null
+certification_subjects,is_required,boolean,YES,true
+certification_subjects,display_order,integer,YES,0
+certifications,id,uuid,NO,gen_random_uuid()
+certifications,category_id,uuid,YES,null
+certifications,name,text,NO,null
+certifications,type,text,YES,'national'::text
+certifications,level,text,YES,null
+certifications,exam_date,date,YES,null
+certifications,is_active,boolean,YES,true
+certifications,description,text,YES,null
+certifications,created_at,timestamp with time zone,YES,now()
+certifications,exam_type,text,YES,'written'::text
+certifications,phase,text,YES,'mvp'::text
+certifications,order_index,integer,YES,null
+certifications,partner_id,uuid,YES,null
+certifications,slug,text,YES,null
+certifications,area,text,YES,null
+certifications,grade,text,YES,null
+certifications,grade_rank,integer,YES,null
+chapter_cards,id,uuid,NO,gen_random_uuid()
+chapter_cards,chapter_id,uuid,NO,null
+chapter_cards,question,text,NO,null
+chapter_cards,options,jsonb,NO,null
+chapter_cards,explanation,text,YES,null
+chapter_cards,order_index,integer,YES,0
+chapter_cards,created_at,timestamp with time zone,YES,now()
+chapter_cards,image_url,text,YES,null
+chapter_cards,image_caption,text,YES,null
+chapter_cards,image_source,text,YES,null
+chapter_cards,reference_text,text,YES,null
+chapter_cards,exam_years,jsonb,YES,'[]'::jsonb
+chapter_cards,star_rating,smallint,YES,0
+chapter_cards,key_points,jsonb,YES,'[]'::jsonb
+chapter_cards,content_type,text,YES,null
+chapter_cards,question_format,text,YES,null
+chapter_cards,difficulty,integer,YES,2
+chapter_cards,answer_index,jsonb,YES,null
+chapter_cards,linked_quiz_id,uuid,YES,null
+chapter_session_logs,id,uuid,NO,gen_random_uuid()
+chapter_session_logs,user_id,uuid,NO,null
+chapter_session_logs,chapter_id,uuid,NO,null
+chapter_session_logs,session_id,uuid,YES,gen_random_uuid()
+chapter_session_logs,session_start,timestamp with time zone,YES,now()
+chapter_session_logs,session_end,timestamp with time zone,YES,null
+chapter_session_logs,last_slide,integer,YES,null
+chapter_session_logs,exit_point,text,YES,null
+chapter_session_logs,is_completed,boolean,YES,false
+chapter_session_logs,page_type,text,YES,'test'::text
+chapter_session_logs,slide_total,integer,YES,null
+chapter_session_logs,completion_rate,double precision,YES,null
+chapter_session_logs,day_of_week,smallint,YES,null
+chapter_session_logs,hour_of_day,smallint,YES,null
+chapter_session_logs,last_sub_slide,smallint,YES,null
+chapter_stats,id,uuid,NO,gen_random_uuid()
+chapter_stats,user_id,text,YES,null
+chapter_stats,chapter_id,text,YES,null
+chapter_stats,subject_id,text,YES,null
+chapter_stats,total_attempts,integer,YES,0
+chapter_stats,total_correct,integer,YES,0
+chapter_stats,avg_score,double precision,YES,0
+chapter_stats,wrong_rate,double precision,YES,0
+chapter_stats,last_attempt_at,timestamp with time zone,YES,null
+chapter_stats,updated_at,timestamp with time zone,YES,now()
+chapter_stats,lesson_completed,boolean,YES,false
+chapter_stats,mini_quiz_correct,integer,YES,0
+chapter_stats,mini_quiz_total,integer,YES,0
+chapter_stats,lesson_completed_at,timestamp with time zone,YES,null
+chapter_stats,latest_score,integer,YES,null
+chapter_stats,best_score,integer,YES,null
+chapter_stats,test_attempts,integer,YES,0
+chapter_stats,study_duration,integer,YES,0
+chapter_stats,total_questions,integer,YES,null
+chapter_stats,certification_id,uuid,YES,null
+chapter_test_history,id,uuid,NO,gen_random_uuid()
+chapter_test_history,user_id,uuid,YES,null
+chapter_test_history,chapter_id,uuid,YES,null
+chapter_test_history,score,integer,NO,null
+chapter_test_history,attempt_number,integer,NO,null
+chapter_test_history,created_at,timestamp with time zone,YES,now()
+chapter_test_results,id,uuid,NO,gen_random_uuid()
+chapter_test_results,user_id,uuid,NO,null
+chapter_test_results,chapter_id,uuid,NO,null
+chapter_test_results,score,integer,NO,null
+chapter_test_results,total,integer,NO,null
+chapter_test_results,passed,boolean,YES,false
+chapter_test_results,xp_earned,integer,YES,0
+chapter_test_results,answers_json,jsonb,YES,null
+chapter_test_results,created_at,timestamp with time zone,YES,now()
+chapters,id,uuid,NO,gen_random_uuid()
+chapters,course_id,uuid,NO,null
+chapters,title,text,NO,null
+chapters,description,text,YES,null
+chapters,order_index,integer,YES,0
+chapters,is_active,boolean,YES,true
+chapters,created_at,timestamp with time zone,YES,now()
+chapters,video_url,text,YES,null
+chapters,audio_url,text,YES,null
+chapters,image_url,text,YES,null
+chapters,content_type,text,YES,'image_slide'::text
+chapters,year_tags,ARRAY,YES,'{}'::text[]
+chapters,frequency_score,integer,YES,0
+chapters,content_json,jsonb,YES,null
+content_purchases,id,uuid,NO,gen_random_uuid()
+content_purchases,user_id,uuid,YES,null
+content_purchases,subject_id,uuid,YES,null
+content_purchases,price,integer,YES,null
+content_purchases,purchased_at,timestamp with time zone,YES,now()
+content_purchases,payment_id,text,YES,null
+course_certifications,id,uuid,NO,gen_random_uuid()
+course_certifications,course_id,uuid,NO,null
+course_certifications,certification_id,uuid,NO,null
+course_certifications,created_at,timestamp with time zone,YES,now()
+course_relations,id,uuid,NO,gen_random_uuid()
+course_relations,from_course_id,uuid,NO,null
+course_relations,to_course_id,uuid,NO,null
+course_relations,relation_type,text,NO,null
+course_relations,synced,boolean,NO,false
+course_relations,note,text,YES,null
+course_relations,created_at,timestamp with time zone,NO,now()
+courses,id,uuid,NO,gen_random_uuid()
+courses,title,text,NO,null
+courses,description,text,YES,null
+courses,category,text,NO,null
+courses,phase,text,YES,'mvp'::text
+courses,level,text,YES,null
+courses,xp_reward,integer,YES,10
+courses,order_index,integer,YES,0
+courses,is_locked,boolean,YES,false
+courses,unlock_condition,text,YES,null
+courses,thumbnail_url,text,YES,null
+courses,created_at,timestamp with time zone,YES,now()
+courses,subject_id,uuid,YES,null
+courses,certification_id,uuid,YES,null
+courses,is_active,boolean,NO,true
+courses,exam_type,text,YES,null
+courses,sport_id,uuid,YES,null
+courses,slug,text,YES,null
+exam_registrations,id,uuid,NO,gen_random_uuid()
+exam_registrations,name,text,NO,null
+exam_registrations,phone,text,NO,null
+exam_registrations,email,text,YES,null
+exam_registrations,round,integer,NO,null
+exam_registrations,user_id,uuid,YES,null
+exam_registrations,created_at,timestamp with time zone,NO,now()
+exam_results,id,uuid,NO,gen_random_uuid()
+exam_results,user_id,uuid,NO,null
+exam_results,schedule_id,uuid,YES,null
+exam_results,round,integer,NO,null
+exam_results,score,integer,NO,null
+exam_results,total_questions,integer,NO,100
+exam_results,subject_scores,jsonb,YES,null
+exam_results,created_at,timestamp with time zone,NO,now()
+exam_results,passed,boolean,YES,null
+exam_results,abandoned,boolean,YES,false
+exam_results,time_remaining,integer,YES,null
+exam_schedules,id,uuid,NO,gen_random_uuid()
+exam_schedules,round,integer,NO,null
+exam_schedules,exam_date,date,NO,null
+exam_schedules,start_time,time without time zone,NO,'10:00:00'::time without time zone
+exam_schedules,title,text,NO,null
+exam_schedules,description,text,YES,null
+exam_schedules,is_active,boolean,NO,true
+exam_schedules,created_at,timestamp with time zone,NO,now()
+exam_schedules,certification_id,uuid,YES,null
+exam_schedules,exam_type,text,YES,'written'::text
+exam_schedules,frequency,text,YES,'weekly'::text
+guest_test_results,id,uuid,NO,gen_random_uuid()
+guest_test_results,guest_id,uuid,NO,null
+guest_test_results,score,integer,YES,null
+guest_test_results,total_questions,integer,YES,null
+guest_test_results,correct_answers,integer,YES,null
+guest_test_results,level_result,text,YES,null
+guest_test_results,answers_json,jsonb,YES,null
+guest_test_results,is_converted,boolean,YES,false
+guest_test_results,created_at,timestamp with time zone,YES,now()
+guest_test_results,is_major,boolean,YES,false
+landing_test_sessions,id,uuid,NO,gen_random_uuid()
+landing_test_sessions,google_user_id,text,YES,null
+landing_test_sessions,email,text,YES,null
+landing_test_sessions,name,text,YES,null
+landing_test_sessions,avatar_url,text,YES,null
+landing_test_sessions,score,integer,YES,null
+landing_test_sessions,total_questions,integer,YES,5
+landing_test_sessions,weak_areas,text,YES,null
+landing_test_sessions,answers_json,jsonb,YES,null
+landing_test_sessions,app_download_clicked,boolean,YES,false
+landing_test_sessions,ip_address,text,YES,null
+landing_test_sessions,is_guest,boolean,YES,false
+landing_test_sessions,guest_id,uuid,YES,null
+landing_test_sessions,created_at,timestamp with time zone,YES,now()
+leaderboard,id,uuid,NO,gen_random_uuid()
+leaderboard,user_id,uuid,NO,null
+leaderboard,weekly_xp,integer,YES,0
+leaderboard,monthly_xp,integer,YES,0
+leaderboard,rank,integer,YES,null
+leaderboard,updated_at,timestamp with time zone,YES,now()
+learning_progress,id,uuid,NO,gen_random_uuid()
+learning_progress,user_id,uuid,NO,null
+learning_progress,chapter,text,NO,null
+learning_progress,section,text,NO,null
+learning_progress,is_skipped,boolean,YES,false
+learning_progress,completed_at,timestamp with time zone,YES,null
+learning_progress,created_at,timestamp with time zone,YES,now()
+learning_progress_v2,id,uuid,NO,gen_random_uuid()
+learning_progress_v2,user_id,uuid,NO,null
+learning_progress_v2,chapter_id,uuid,YES,null
+learning_progress_v2,course_id,uuid,YES,null
+learning_progress_v2,certification_id,uuid,YES,null
+learning_progress_v2,status,text,YES,'not_started'::text
+learning_progress_v2,completed_at,timestamp with time zone,YES,null
+learning_progress_v2,created_at,timestamp with time zone,YES,now()
+lesson_questions,id,uuid,NO,gen_random_uuid()
+lesson_questions,lesson_id,uuid,NO,null
+lesson_questions,question,text,NO,null
+lesson_questions,options,jsonb,NO,null
+lesson_questions,answer_index,integer,NO,null
+lesson_questions,explanation,text,YES,null
+lesson_questions,order_index,integer,YES,0
+lesson_questions,created_at,timestamp with time zone,YES,now()
+lesson_slide_logs,id,uuid,NO,gen_random_uuid()
+lesson_slide_logs,user_id,uuid,NO,null
+lesson_slide_logs,chapter_id,uuid,NO,null
+lesson_slide_logs,session_id,uuid,YES,null
+lesson_slide_logs,slide_index,integer,NO,null
+lesson_slide_logs,slide_total,integer,YES,null
+lesson_slide_logs,slide_retention_time,double precision,YES,null
+lesson_slide_logs,checkbox_click_interval,double precision,YES,null
+lesson_slide_logs,checkbox_intervals_raw,jsonb,YES,null
+lesson_slide_logs,is_completed,boolean,YES,false
+lesson_slide_logs,created_at,timestamp with time zone,YES,now()
+lesson_slide_logs,checkbox_order_raw,jsonb,YES,null
+lesson_slide_logs,checkbox_total,integer,YES,null
+lesson_slide_logs,revisit_count,integer,YES,0
+lesson_slide_logs,is_revisit,boolean,YES,false
+lesson_slide_logs,image_zoom_count,integer,YES,0
+lesson_slide_logs,sub_slide,smallint,YES,null
+lessons,id,uuid,NO,gen_random_uuid()
+lessons,course_id,uuid,NO,null
+lessons,title,text,NO,null
+lessons,content_json,jsonb,YES,null
+lessons,lesson_type,text,NO,null
+lessons,xp_reward,integer,YES,5
+lessons,order_index,integer,YES,0
+lessons,duration_minutes,integer,YES,5
+lessons,is_required,boolean,YES,false
+lessons,created_at,timestamp with time zone,YES,now()
+mock_exam_bookings,id,uuid,NO,gen_random_uuid()
+mock_exam_bookings,user_id,uuid,YES,null
+mock_exam_bookings,certification_id,uuid,YES,null
+mock_exam_bookings,exam_type,text,NO,null
+mock_exam_bookings,week_number,integer,NO,null
+mock_exam_bookings,week_start_date,date,NO,null
+mock_exam_bookings,selected_date,date,NO,null
+mock_exam_bookings,status,text,YES,'confirmed'::text
+mock_exam_bookings,created_at,timestamp with time zone,YES,now()
+oral_exam_registrations,id,uuid,NO,gen_random_uuid()
+oral_exam_registrations,user_id,uuid,YES,null
+oral_exam_registrations,certification_id,uuid,YES,null
+oral_exam_registrations,exam_date,date,NO,null
+oral_exam_registrations,week_number,integer,NO,null
+oral_exam_registrations,slot_number,integer,NO,null
+oral_exam_registrations,ticket_number,integer,NO,null
+oral_exam_registrations,start_time,time without time zone,NO,null
+oral_exam_registrations,is_completed,boolean,YES,false
+oral_exam_registrations,created_at,timestamp with time zone,YES,now()
+partners,id,uuid,NO,gen_random_uuid()
+partners,name,text,NO,null
+partners,logo_url,text,YES,null
+partners,website_url,text,YES,null
+partners,revenue_share,numeric,YES,0.3
+partners,contact_email,text,YES,null
+partners,is_active,boolean,YES,true
+partners,created_at,timestamp with time zone,YES,now()
+profiles,id,uuid,NO,null
+profiles,email,text,YES,null
+profiles,name,text,YES,null
+profiles,avatar_url,text,YES,null
+profiles,role,text,YES,'trainer'::text
+profiles,gender,text,YES,null
+profiles,age_group,text,YES,null
+profiles,occupation,text,YES,null
+profiles,occupation_custom,text,YES,null
+profiles,onboarding_completed,boolean,YES,false
+profiles,created_at,timestamp with time zone,YES,now()
+profiles,learning_style,text,YES,null
+profiles,style_tested_at,timestamp with time zone,YES,null
+profiles,selected_subjects,jsonb,YES,'[]'::jsonb
+profiles,selected_cert,text,YES,null
+profiles,required_subjects,jsonb,YES,'[]'::jsonb
+profiles,additional_subjects,jsonb,YES,'[]'::jsonb
+profiles,exam_target_date,date,YES,null
+profiles,region,text,YES,null
+profiles,daily_study_hours,integer,YES,null
+profiles,subscription_plan,text,YES,'free'::text
+profiles,subscription_started_at,timestamp with time zone,YES,null
+profiles,subscription_expires_at,timestamp with time zone,YES,null
+profiles,trial_started_at,timestamp with time zone,YES,null
+profiles,trial_expires_at,timestamp with time zone,YES,null
+profiles,sub,text,YES,null
+profiles,phone,text,YES,null
+profiles,primary_provider,text,YES,null
+profiles,linked_providers,ARRAY,YES,'{}'::text[]
+profiles,daily_study_time,integer,YES,null
+profiles,daily_study_count,integer,YES,null
+profiles,study_time_slot,text,YES,null
+profiles,push_enabled,boolean,YES,false
+profiles,certification_id,uuid,YES,null
+profiles,is_major,boolean,YES,false
+profiles,cert_type,text,YES,null
+profiles,style_acknowledged_at,timestamp with time zone,YES,null
+profiles,mode_intro_acknowledged_at,timestamp with time zone,YES,null
+profiles,code_popup_shown,boolean,YES,false
+profiles,survey_completed,boolean,YES,false
+profiles,access_code_used,text,YES,null
+profiles,chapter_star_ratings,jsonb,YES,'{}'::jsonb
+profiles,access_unlocked,boolean,YES,false
+profiles,streak_days,integer,YES,0
+profiles,last_study_date,date,YES,null
+profiles,tendency_analyzed,boolean,YES,false
+profiles,learning_style_answers,jsonb,YES,null
+profiles,consent_completed_at,timestamp with time zone,YES,null
+question_stats,id,uuid,NO,gen_random_uuid()
+question_stats,user_id,uuid,YES,null
+question_stats,question_id,text,YES,null
+question_stats,chapter_id,text,YES,null
+question_stats,total_attempts,integer,YES,0
+question_stats,total_correct,integer,YES,0
+question_stats,wrong_rate,double precision,YES,0
+question_stats,updated_at,timestamp with time zone,YES,now()
+quiz_performance_logs,id,uuid,NO,gen_random_uuid()
+quiz_performance_logs,user_id,uuid,NO,null
+quiz_performance_logs,chapter_id,uuid,YES,null
+quiz_performance_logs,question_id,uuid,NO,null
+quiz_performance_logs,question_type,integer,NO,null
+quiz_performance_logs,quiz_bridge_time,double precision,YES,null
+quiz_performance_logs,response_time,double precision,YES,null
+quiz_performance_logs,answer_given,integer,YES,null
+quiz_performance_logs,is_correct,boolean,YES,null
+quiz_performance_logs,wrong_answer_vulnerability,double precision,YES,0
+quiz_performance_logs,created_at,timestamp with time zone,YES,now()
+quiz_performance_logs,quiz_entered_at,timestamp with time zone,YES,now()
+quiz_performance_logs,after_wrong_action,text,YES,null
+quiz_performance_logs,retry_count,integer,YES,0
+quiz_performance_logs,explanation_viewed,boolean,YES,false
+sports,id,uuid,NO,gen_random_uuid()
+sports,name,text,NO,null
+sports,slug,text,NO,null
+sports,order_index,integer,NO,1
+sports,is_active,boolean,NO,true
+sports,created_at,timestamp with time zone,NO,now()
+subjects,id,uuid,NO,gen_random_uuid()
+subjects,name,text,NO,null
+subjects,description,text,YES,null
+subjects,icon,text,YES,null
+subjects,phase,text,YES,'mvp'::text
+subjects,order_index,integer,YES,null
+subjects,is_active,boolean,YES,true
+subjects,created_at,timestamp with time zone,YES,now()
+subjects,category_id,uuid,YES,null
+subjects,event,text,YES,null
+subjects,certification_id,uuid,YES,null
+subscription_features,plan,text,NO,null
+subscription_features,max_chapters_per_subject,integer,YES,null
+subscription_features,full_report,boolean,YES,false
+subscription_features,d_day_plan,boolean,YES,false
+subscription_features,ai_questions,boolean,YES,false
+subscription_features,pass_prediction,boolean,YES,false
+subscription_features,wrong_note,boolean,YES,false
+subscription_features,ads,boolean,YES,true
+subscription_plans,id,uuid,NO,gen_random_uuid()
+subscription_plans,name,text,NO,null
+subscription_plans,price_monthly,integer,YES,0
+subscription_plans,price_yearly,integer,YES,0
+subscription_plans,features_json,jsonb,YES,null
+subscription_plans,is_active,boolean,YES,true
+test_results,id,uuid,NO,gen_random_uuid()
+test_results,user_id,uuid,NO,null
+test_results,chapter,text,NO,null
+test_results,score,integer,NO,null
+test_results,total,integer,NO,null
+test_results,type_scores_json,jsonb,YES,null
+test_results,weak_muscles,ARRAY,YES,null
+test_results,created_at,timestamp with time zone,YES,now()
+user_access_codes,id,uuid,NO,gen_random_uuid()
+user_access_codes,user_id,uuid,YES,null
+user_access_codes,code_id,uuid,YES,null
+user_access_codes,used_at,timestamp with time zone,YES,now()
+user_badges,id,uuid,NO,gen_random_uuid()
+user_badges,user_id,uuid,NO,null
+user_badges,badge_type,text,NO,null
+user_badges,badge_name,text,NO,null
+user_badges,earned_at,timestamp with time zone,YES,now()
+user_certifications,id,uuid,NO,gen_random_uuid()
+user_certifications,user_id,uuid,NO,null
+user_certifications,cert_id,text,NO,null
+user_certifications,cert_label,text,NO,null
+user_certifications,subjects,jsonb,NO,'[]'::jsonb
+user_certifications,exam_type,text,NO,'written'::text
+user_certifications,is_active,boolean,NO,true
+user_certifications,order_index,integer,NO,0
+user_certifications,added_at,timestamp with time zone,YES,now()
+user_certifications,last_studied_at,timestamp with time zone,YES,null
+user_certifications,exam_types,ARRAY,YES,null
+user_certifications,sport_id,uuid,YES,null
+user_certifications,subject_ids,ARRAY,YES,null
+user_consents,id,uuid,NO,gen_random_uuid()
+user_consents,user_id,uuid,NO,null
+user_consents,consent_type,text,NO,null
+user_consents,agreed,boolean,NO,null
+user_consents,version,text,NO,null
+user_consents,agreed_at,timestamp with time zone,NO,now()
+user_consents,source,text,YES,null
+user_events,id,uuid,NO,gen_random_uuid()
+user_events,user_id,uuid,YES,null
+user_events,event_type,text,YES,null
+user_events,meta,jsonb,YES,null
+user_events,created_at,timestamp with time zone,YES,now()
+user_gamification,id,uuid,NO,gen_random_uuid()
+user_gamification,user_id,uuid,NO,null
+user_gamification,xp,integer,YES,0
+user_gamification,level,integer,YES,1
+user_gamification,streak_days,integer,YES,0
+user_gamification,last_study_date,date,YES,null
+user_gamification,created_at,timestamp with time zone,YES,now()
+user_gamification,updated_at,timestamp with time zone,YES,now()
+user_goals,id,uuid,NO,gen_random_uuid()
+user_goals,profile_id,uuid,YES,null
+user_goals,user_id,uuid,YES,null
+user_goals,title,text,YES,null
+user_goals,target_date,date,YES,null
+user_goals,created_at,timestamp with time zone,YES,now()
+user_reviews,id,uuid,NO,gen_random_uuid()
+user_reviews,user_id,uuid,YES,null
+user_reviews,star_rating,smallint,NO,null
+user_reviews,review_text,text,YES,null
+user_reviews,is_public,boolean,YES,false
+user_reviews,is_featured,boolean,YES,false
+user_reviews,created_at,timestamp with time zone,YES,now()
+user_reviews,survey_answers,jsonb,YES,null
+user_reviews,feedback_text,text,YES,null
+user_subscriptions,id,uuid,NO,gen_random_uuid()
+user_subscriptions,user_id,uuid,YES,null
+user_subscriptions,plan_id,uuid,YES,null
+user_subscriptions,started_at,timestamp with time zone,YES,now()
+user_subscriptions,expires_at,timestamp with time zone,YES,null
+user_subscriptions,payment_status,text,YES,'active'::text
+user_wrong_answers,id,uuid,NO,gen_random_uuid()
+user_wrong_answers,user_id,uuid,NO,null
+user_wrong_answers,question_id,uuid,NO,null
+user_wrong_answers,chapter_id,uuid,YES,null
+user_wrong_answers,selected_index,integer,NO,null
+user_wrong_answers,correct_index,integer,YES,null
+user_wrong_answers,wrong_count,integer,NO,1
+user_wrong_answers,last_wrong_at,timestamp with time zone,NO,now()
+user_wrong_answers,created_at,timestamp with time zone,YES,now()
+video_bookmarks,id,uuid,NO,gen_random_uuid()
+video_bookmarks,user_id,uuid,YES,null
+video_bookmarks,video_url,text,YES,null
+video_bookmarks,video_title,text,YES,null
+video_bookmarks,video_thumbnail,text,YES,null
+video_bookmarks,bookmarked_at,timestamp with time zone,YES,now()
+wrong_answers,id,uuid,NO,gen_random_uuid()
+wrong_answers,user_id,uuid,YES,null
+wrong_answers,chapter_id,uuid,NO,null
+wrong_answers,question_id,uuid,NO,null
+wrong_answers,selected_option,text,YES,null
+wrong_answers,correct_option,text,YES,null
+wrong_answers,created_at,timestamp with time zone,YES,now()

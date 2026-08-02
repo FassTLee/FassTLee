@@ -1,0 +1,61 @@
+# 채취일시: 2026-07-31T14:36:40.208Z / 대상: 코드 정적 스캔 (env 구분 없음)
+# 대상: src/app/api/**/route.ts
+# http_method: export async function <METHOD> 선언 기준. 선언이 없으면 NONE
+# has_getServerSession: 파일 내 getServerSession 문자열 존재 여부(호출 경로 검증은 아님)
+# supabase_key: admin=supabase-admin/supabaseAdmin/SERVICE_ROLE 참조, anon=ANON_KEY 또는 @/lib/supabase import
+route_path,http_method,has_getServerSession,supabase_key
+/api/ads/banner,GET,false,anon
+/api/ads/click,POST,false,admin
+/api/auth/[...nextauth],NONE,false,none
+/api/auth/convert-guest,POST,false,admin+anon
+/api/health,GET,false,anon
+/api/schema,GET,false,none
+/api/v1/access-code,POST,true,admin
+/api/v1/c9d2b,GET,false,anon
+/api/v1/c9d2b,PATCH,false,anon
+/api/v1/certification-subjects,GET,false,admin
+/api/v1/chapter-init,POST,true,admin
+/api/v1/chapter-session-log,POST,true,admin
+/api/v1/chapter-test,GET,true,admin
+/api/v1/compare-scores,GET,false,anon
+/api/v1/consent,POST,true,admin
+/api/v1/e8f3a,GET,false,anon
+/api/v1/e8f3a,POST,false,anon
+/api/v1/exam-complete,POST,true,admin
+/api/v1/exam-questions,GET,true,admin
+/api/v1/guest-major,POST,false,anon
+/api/v1/guest-test,POST,false,anon
+/api/v1/landing-test-grade,POST,false,admin
+/api/v1/landing-test-questions,GET,false,admin
+/api/v1/learning-style,GET,false,admin
+/api/v1/learning-style,POST,false,admin
+/api/v1/lesson-complete,POST,true,admin
+/api/v1/lesson-log,POST,true,admin
+/api/v1/mini-quiz-complete,POST,true,admin
+/api/v1/onboarding,POST,true,admin
+/api/v1/oral-exam-reg,GET,true,admin
+/api/v1/oral-exam-reg,POST,true,admin
+/api/v1/oral-exam/draw,GET,true,admin
+/api/v1/oral-exam/schedule,GET,false,admin
+/api/v1/oral-exam/submit,POST,true,admin
+/api/v1/ping,GET,false,admin
+/api/v1/profile-me,GET,true,admin
+/api/v1/profile-settings,GET,true,admin
+/api/v1/profile-settings,POST,true,admin
+/api/v1/quiz-performance-log,POST,false,admin
+/api/v1/report,GET,true,admin
+/api/v1/selected-subjects,GET,true,admin
+/api/v1/selected-subjects,POST,true,admin
+/api/v1/survey,POST,true,admin
+/api/v1/t4f7e,POST,false,anon
+/api/v1/test-complete,POST,true,admin
+/api/v1/update-phone,GET,true,admin
+/api/v1/update-phone,POST,true,admin
+/api/v1/user-certifications,GET,true,admin
+/api/v1/user-certifications,PATCH,true,admin
+/api/v1/user-certifications,POST,true,admin
+/api/v1/user-certifications,PUT,true,admin
+/api/v1/user/delete,DELETE,false,anon
+/api/v1/video-bookmarks,DELETE,true,admin
+/api/v1/video-bookmarks,GET,true,admin
+/api/v1/video-bookmarks,POST,true,admin

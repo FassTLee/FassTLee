@@ -1,0 +1,78 @@
+table_name,rls_enabled,policy_name,policy_cmd,using_expr
+access_codes,true,null,null,null
+ad_banners,true,ads_select_active,r,(is_active = true)
+categories,true,null,null,null
+certification_subjects,true,null,null,null
+certifications,true,certifications_public_read,r,(is_active = true)
+chapter_cards,true,allow_read_chapter_questions,r,true
+chapter_cards,true,anyone can read questions,r,true
+chapter_cards,true,chapter_questions_select_all,r,true
+chapter_session_logs,true,null,null,null
+chapter_stats,true,allow_insert_chapter_stats,a,null
+chapter_stats,true,allow_select_chapter_stats,r,true
+chapter_stats,true,allow_update_chapter_stats,w,true
+chapter_stats,true,users can insert own stats,a,null
+chapter_stats,true,users can read own stats,r,(user_id = (auth.uid())::text)
+chapter_stats,true,users can update own stats,w,(user_id = (auth.uid())::text)
+chapter_test_history,true,본인 데이터만 접근,*,((auth.uid())::text = (user_id)::text)
+chapter_test_results,true,chapter_test_results_self_insert,a,null
+chapter_test_results,true,chapter_test_results_self_select,r,(user_id = auth.uid())
+chapters,true,chapters_select_all,r,true
+content_purchases,true,purchases_self_insert,a,null
+content_purchases,true,purchases_self_select,r,(user_id = auth.uid())
+course_certifications,true,course_certifications_select_all,r,true
+course_relations,true,course_relations_public_read,r,true
+courses,true,courses_select_all,r,true
+exam_registrations,true,users can insert own registration,a,null
+exam_registrations,true,users can read own registration,r,true
+exam_results,true,users can insert own result,a,null
+exam_results,true,users can read own result,r,(auth.uid() = user_id)
+exam_schedules,true,null,null,null
+guest_test_results,true,guest_test_insert,a,null
+guest_test_results,true,guest_test_select,r,true
+guest_test_results,true,guest_test_update_converted,w,true
+landing_test_sessions,true,landing_insert_anon,a,null
+landing_test_sessions,true,landing_select_self,r,(google_user_id = (auth.jwt() ->> 'sub'::text))
+leaderboard,true,leaderboard_insert_self,a,null
+leaderboard,true,leaderboard_select_all,r,true
+leaderboard,true,leaderboard_update_self,w,(user_id = auth.uid())
+learning_progress,true,learning_insert,a,null
+learning_progress,true,learning_self,*,(user_id = auth.uid())
+learning_progress,true,learning_update,w,(user_id = auth.uid())
+learning_progress_v2,true,null,null,null
+lesson_questions,true,lesson_questions_select_all,r,true
+lesson_slide_logs,true,null,null,null
+lessons,true,lessons_select_all,r,true
+mock_exam_bookings,true,null,null,null
+oral_exam_registrations,true,본인 신청 등록,a,null
+oral_exam_registrations,true,본인 신청 조회,r,(auth.uid() = user_id)
+partners,true,null,null,null
+profiles,true,profiles_insert,a,null
+profiles,true,profiles_self,*,(id = auth.uid())
+question_stats,true,null,null,null
+quiz_performance_logs,true,null,null,null
+sports,true,sports_public_read,r,(is_active = true)
+subjects,true,subjects_select_all,r,true
+subscription_features,true,null,null,null
+subscription_plans,true,plans_select_all,r,true
+test_results,true,test_results_insert,a,null
+test_results,true,test_results_self,*,(user_id = auth.uid())
+user_access_codes,true,본인 코드 등록,a,null
+user_access_codes,true,본인 코드 조회,r,(auth.uid() = user_id)
+user_badges,true,badges_insert,a,null
+user_badges,true,badges_self,*,(user_id = auth.uid())
+user_certifications,true,Users can update own certifications,w,((user_id)::text = (auth.uid())::text)
+user_certifications,true,user_certifications_self,*,(user_id = auth.uid())
+user_consents,true,null,null,null
+user_events,true,null,null,null
+user_gamification,true,gamification_insert,a,null
+user_gamification,true,gamification_self,*,(user_id = auth.uid())
+user_gamification,true,gamification_update,w,(user_id = auth.uid())
+user_goals,true,null,null,null
+user_reviews,true,null,null,null
+user_subscriptions,true,subscriptions_self_insert,a,null
+user_subscriptions,true,subscriptions_self_select,r,(user_id = auth.uid())
+user_subscriptions,true,subscriptions_self_update,w,(user_id = auth.uid())
+user_wrong_answers,true,null,null,null
+video_bookmarks,true,null,null,null
+wrong_answers,true,null,null,null

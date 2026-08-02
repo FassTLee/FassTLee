@@ -1,0 +1,500 @@
+# 채취일시: 2026-07-31T14:32:01.836Z / 대상 ref: sbketzgadjvzedbayesc (prod)
+# 출처: PostgREST OpenAPI (/rest/v1/, service_role)
+# is_nullable 도출: OpenAPI required 배열=NOT NULL & default 없음. required 에 없고 default 가 있으면 NOT NULL 여부 판별 불가 → UNKNOWN(has default)
+# data_type 은 OpenAPI format 값 (information_schema.data_type 과 표기가 다를 수 있음)
+table_name,column_name,data_type,is_nullable,column_default
+access_codes,id,uuid,NO,gen_random_uuid()
+access_codes,code,text,NO,
+access_codes,certification_id,uuid,YES,
+access_codes,expires_at,timestamp with time zone,YES,
+access_codes,max_uses,integer,YES,
+access_codes,current_uses,integer,UNKNOWN(has default),0
+access_codes,is_active,boolean,UNKNOWN(has default),true
+access_codes,created_at,timestamp with time zone,UNKNOWN(has default),now()
+access_codes,label,text,YES,
+access_codes,source,text,YES,
+ad_banners,id,uuid,NO,gen_random_uuid()
+ad_banners,title,text,YES,
+ad_banners,image_url,text,YES,
+ad_banners,link_url,text,YES,
+ad_banners,position,text,YES,
+ad_banners,is_active,boolean,UNKNOWN(has default),true
+ad_banners,click_count,integer,UNKNOWN(has default),0
+ad_banners,created_at,timestamp with time zone,UNKNOWN(has default),now()
+categories,id,uuid,NO,gen_random_uuid()
+categories,name,text,NO,
+categories,icon,text,YES,
+categories,display_order,integer,UNKNOWN(has default),0
+categories,is_active,boolean,UNKNOWN(has default),true
+categories,created_at,timestamp with time zone,UNKNOWN(has default),now()
+certification_subjects,id,uuid,NO,gen_random_uuid()
+certification_subjects,certification_id,uuid,YES,
+certification_subjects,subject_id,uuid,YES,
+certification_subjects,is_required,boolean,UNKNOWN(has default),true
+certification_subjects,display_order,integer,UNKNOWN(has default),0
+certifications,id,uuid,NO,gen_random_uuid()
+certifications,category_id,uuid,YES,
+certifications,name,text,NO,
+certifications,type,text,UNKNOWN(has default),national
+certifications,level,text,YES,
+certifications,exam_date,date,YES,
+certifications,is_active,boolean,UNKNOWN(has default),true
+certifications,description,text,YES,
+certifications,created_at,timestamp with time zone,UNKNOWN(has default),now()
+certifications,exam_type,text,UNKNOWN(has default),written
+certifications,phase,text,UNKNOWN(has default),mvp
+certifications,order_index,integer,YES,
+certifications,partner_id,uuid,YES,
+certifications,slug,text,YES,
+certifications,area,text,YES,
+certifications,grade,text,YES,
+certifications,grade_rank,integer,YES,
+chapter_cards,id,uuid,NO,gen_random_uuid()
+chapter_cards,chapter_id,uuid,NO,
+chapter_cards,question,text,NO,
+chapter_cards,options,jsonb,NO,
+chapter_cards,explanation,text,YES,
+chapter_cards,order_index,integer,UNKNOWN(has default),0
+chapter_cards,created_at,timestamp with time zone,UNKNOWN(has default),now()
+chapter_cards,image_url,text,YES,
+chapter_cards,image_caption,text,YES,
+chapter_cards,image_source,text,YES,
+chapter_cards,reference_text,text,YES,
+chapter_cards,exam_years,jsonb,YES,
+chapter_cards,star_rating,smallint,UNKNOWN(has default),0
+chapter_cards,key_points,jsonb,YES,
+chapter_cards,content_type,text,YES,
+chapter_cards,question_format,text,YES,
+chapter_cards,difficulty,integer,UNKNOWN(has default),2
+chapter_cards,answer_index,jsonb,YES,
+chapter_cards,linked_quiz_id,uuid,YES,
+chapter_session_logs,id,uuid,NO,gen_random_uuid()
+chapter_session_logs,user_id,uuid,NO,
+chapter_session_logs,chapter_id,uuid,NO,
+chapter_session_logs,session_id,uuid,UNKNOWN(has default),gen_random_uuid()
+chapter_session_logs,session_start,timestamp with time zone,UNKNOWN(has default),now()
+chapter_session_logs,session_end,timestamp with time zone,YES,
+chapter_session_logs,last_slide,integer,YES,
+chapter_session_logs,exit_point,text,YES,
+chapter_session_logs,is_completed,boolean,UNKNOWN(has default),false
+chapter_session_logs,page_type,text,UNKNOWN(has default),test
+chapter_session_logs,slide_total,integer,YES,
+chapter_session_logs,completion_rate,double precision,YES,
+chapter_session_logs,day_of_week,smallint,YES,
+chapter_session_logs,hour_of_day,smallint,YES,
+chapter_session_logs,last_sub_slide,smallint,YES,
+chapter_stats,id,uuid,NO,gen_random_uuid()
+chapter_stats,user_id,text,YES,
+chapter_stats,chapter_id,text,YES,
+chapter_stats,subject_id,text,YES,
+chapter_stats,total_attempts,integer,UNKNOWN(has default),0
+chapter_stats,total_correct,integer,UNKNOWN(has default),0
+chapter_stats,avg_score,double precision,UNKNOWN(has default),0
+chapter_stats,wrong_rate,double precision,UNKNOWN(has default),0
+chapter_stats,last_attempt_at,timestamp with time zone,YES,
+chapter_stats,updated_at,timestamp with time zone,UNKNOWN(has default),now()
+chapter_stats,lesson_completed,boolean,UNKNOWN(has default),false
+chapter_stats,mini_quiz_correct,integer,UNKNOWN(has default),0
+chapter_stats,mini_quiz_total,integer,UNKNOWN(has default),0
+chapter_stats,lesson_completed_at,timestamp with time zone,YES,
+chapter_stats,latest_score,integer,YES,
+chapter_stats,best_score,integer,YES,
+chapter_stats,test_attempts,integer,UNKNOWN(has default),0
+chapter_stats,study_duration,integer,UNKNOWN(has default),0
+chapter_stats,total_questions,integer,YES,
+chapter_stats,certification_id,uuid,YES,
+chapter_test_history,id,uuid,NO,gen_random_uuid()
+chapter_test_history,user_id,uuid,YES,
+chapter_test_history,chapter_id,uuid,YES,
+chapter_test_history,score,integer,NO,
+chapter_test_history,attempt_number,integer,NO,
+chapter_test_history,created_at,timestamp with time zone,UNKNOWN(has default),now()
+chapter_test_results,id,uuid,NO,gen_random_uuid()
+chapter_test_results,user_id,uuid,NO,
+chapter_test_results,chapter_id,uuid,NO,
+chapter_test_results,score,integer,NO,
+chapter_test_results,total,integer,NO,
+chapter_test_results,passed,boolean,UNKNOWN(has default),false
+chapter_test_results,xp_earned,integer,UNKNOWN(has default),0
+chapter_test_results,answers_json,jsonb,YES,
+chapter_test_results,created_at,timestamp with time zone,UNKNOWN(has default),now()
+chapters,id,uuid,NO,gen_random_uuid()
+chapters,course_id,uuid,NO,
+chapters,title,text,NO,
+chapters,description,text,YES,
+chapters,order_index,integer,UNKNOWN(has default),0
+chapters,is_active,boolean,UNKNOWN(has default),true
+chapters,created_at,timestamp with time zone,UNKNOWN(has default),now()
+chapters,video_url,text,YES,
+chapters,audio_url,text,YES,
+chapters,image_url,text,YES,
+chapters,content_type,text,UNKNOWN(has default),image_slide
+chapters,year_tags,text[],YES,
+chapters,frequency_score,integer,UNKNOWN(has default),0
+chapters,content_json,jsonb,YES,
+content_purchases,id,uuid,NO,gen_random_uuid()
+content_purchases,user_id,uuid,YES,
+content_purchases,subject_id,uuid,YES,
+content_purchases,price,integer,YES,
+content_purchases,purchased_at,timestamp with time zone,UNKNOWN(has default),now()
+content_purchases,payment_id,text,YES,
+course_certifications,id,uuid,NO,gen_random_uuid()
+course_certifications,course_id,uuid,NO,
+course_certifications,certification_id,uuid,NO,
+course_certifications,created_at,timestamp with time zone,UNKNOWN(has default),now()
+course_relations,id,uuid,NO,gen_random_uuid()
+course_relations,from_course_id,uuid,NO,
+course_relations,to_course_id,uuid,NO,
+course_relations,relation_type,text,NO,
+course_relations,synced,boolean,NO,false
+course_relations,note,text,YES,
+course_relations,created_at,timestamp with time zone,NO,now()
+courses,id,uuid,NO,gen_random_uuid()
+courses,title,text,NO,
+courses,description,text,YES,
+courses,category,text,NO,
+courses,phase,text,UNKNOWN(has default),mvp
+courses,level,text,YES,
+courses,xp_reward,integer,UNKNOWN(has default),10
+courses,order_index,integer,UNKNOWN(has default),0
+courses,is_locked,boolean,UNKNOWN(has default),false
+courses,unlock_condition,text,YES,
+courses,thumbnail_url,text,YES,
+courses,created_at,timestamp with time zone,UNKNOWN(has default),now()
+courses,subject_id,uuid,YES,
+courses,certification_id,uuid,YES,
+courses,is_active,boolean,NO,true
+courses,exam_type,text,YES,
+courses,sport_id,uuid,YES,
+courses,slug,text,YES,
+exam_registrations,id,uuid,NO,gen_random_uuid()
+exam_registrations,name,text,NO,
+exam_registrations,phone,text,NO,
+exam_registrations,email,text,YES,
+exam_registrations,round,integer,NO,
+exam_registrations,user_id,uuid,YES,
+exam_registrations,created_at,timestamp with time zone,NO,now()
+exam_results,id,uuid,NO,gen_random_uuid()
+exam_results,user_id,uuid,NO,
+exam_results,schedule_id,uuid,YES,
+exam_results,round,integer,NO,
+exam_results,score,integer,NO,
+exam_results,total_questions,integer,NO,100
+exam_results,subject_scores,jsonb,YES,
+exam_results,created_at,timestamp with time zone,NO,now()
+exam_results,passed,boolean,YES,
+exam_results,abandoned,boolean,UNKNOWN(has default),false
+exam_results,time_remaining,integer,YES,
+exam_schedules,id,uuid,NO,gen_random_uuid()
+exam_schedules,round,integer,NO,
+exam_schedules,exam_date,date,NO,
+exam_schedules,start_time,time without time zone,NO,10:00:00
+exam_schedules,title,text,NO,
+exam_schedules,description,text,YES,
+exam_schedules,is_active,boolean,NO,true
+exam_schedules,created_at,timestamp with time zone,NO,now()
+exam_schedules,certification_id,uuid,YES,
+exam_schedules,exam_type,text,UNKNOWN(has default),written
+exam_schedules,frequency,text,UNKNOWN(has default),weekly
+guest_test_results,id,uuid,NO,gen_random_uuid()
+guest_test_results,guest_id,uuid,NO,
+guest_test_results,score,integer,YES,
+guest_test_results,total_questions,integer,YES,
+guest_test_results,correct_answers,integer,YES,
+guest_test_results,level_result,text,YES,
+guest_test_results,answers_json,jsonb,YES,
+guest_test_results,is_converted,boolean,UNKNOWN(has default),false
+guest_test_results,created_at,timestamp with time zone,UNKNOWN(has default),now()
+guest_test_results,is_major,boolean,UNKNOWN(has default),false
+landing_test_sessions,id,uuid,NO,gen_random_uuid()
+landing_test_sessions,google_user_id,text,YES,
+landing_test_sessions,email,text,YES,
+landing_test_sessions,name,text,YES,
+landing_test_sessions,avatar_url,text,YES,
+landing_test_sessions,score,integer,YES,
+landing_test_sessions,total_questions,integer,UNKNOWN(has default),5
+landing_test_sessions,weak_areas,text,YES,
+landing_test_sessions,answers_json,jsonb,YES,
+landing_test_sessions,app_download_clicked,boolean,UNKNOWN(has default),false
+landing_test_sessions,ip_address,text,YES,
+landing_test_sessions,is_guest,boolean,UNKNOWN(has default),false
+landing_test_sessions,guest_id,uuid,YES,
+landing_test_sessions,created_at,timestamp with time zone,UNKNOWN(has default),now()
+leaderboard,id,uuid,NO,gen_random_uuid()
+leaderboard,user_id,uuid,NO,
+leaderboard,weekly_xp,integer,UNKNOWN(has default),0
+leaderboard,monthly_xp,integer,UNKNOWN(has default),0
+leaderboard,rank,integer,YES,
+leaderboard,updated_at,timestamp with time zone,UNKNOWN(has default),now()
+learning_progress,id,uuid,NO,gen_random_uuid()
+learning_progress,user_id,uuid,NO,
+learning_progress,chapter,text,NO,
+learning_progress,section,text,NO,
+learning_progress,is_skipped,boolean,UNKNOWN(has default),false
+learning_progress,completed_at,timestamp with time zone,YES,
+learning_progress,created_at,timestamp with time zone,UNKNOWN(has default),now()
+learning_progress_v2,id,uuid,NO,gen_random_uuid()
+learning_progress_v2,user_id,uuid,NO,
+learning_progress_v2,chapter_id,uuid,YES,
+learning_progress_v2,course_id,uuid,YES,
+learning_progress_v2,certification_id,uuid,YES,
+learning_progress_v2,status,text,UNKNOWN(has default),not_started
+learning_progress_v2,completed_at,timestamp with time zone,YES,
+learning_progress_v2,created_at,timestamp with time zone,UNKNOWN(has default),now()
+lesson_questions,id,uuid,NO,gen_random_uuid()
+lesson_questions,lesson_id,uuid,NO,
+lesson_questions,question,text,NO,
+lesson_questions,options,jsonb,NO,
+lesson_questions,answer_index,integer,NO,
+lesson_questions,explanation,text,YES,
+lesson_questions,order_index,integer,UNKNOWN(has default),0
+lesson_questions,created_at,timestamp with time zone,UNKNOWN(has default),now()
+lesson_slide_logs,id,uuid,NO,gen_random_uuid()
+lesson_slide_logs,user_id,uuid,NO,
+lesson_slide_logs,chapter_id,uuid,NO,
+lesson_slide_logs,session_id,uuid,YES,
+lesson_slide_logs,slide_index,integer,NO,
+lesson_slide_logs,slide_total,integer,YES,
+lesson_slide_logs,slide_retention_time,double precision,YES,
+lesson_slide_logs,checkbox_click_interval,double precision,YES,
+lesson_slide_logs,checkbox_intervals_raw,jsonb,YES,
+lesson_slide_logs,is_completed,boolean,UNKNOWN(has default),false
+lesson_slide_logs,created_at,timestamp with time zone,UNKNOWN(has default),now()
+lesson_slide_logs,checkbox_order_raw,jsonb,YES,
+lesson_slide_logs,checkbox_total,integer,YES,
+lesson_slide_logs,revisit_count,integer,UNKNOWN(has default),0
+lesson_slide_logs,is_revisit,boolean,UNKNOWN(has default),false
+lesson_slide_logs,image_zoom_count,integer,UNKNOWN(has default),0
+lesson_slide_logs,sub_slide,smallint,YES,
+lessons,id,uuid,NO,gen_random_uuid()
+lessons,course_id,uuid,NO,
+lessons,title,text,NO,
+lessons,content_json,jsonb,YES,
+lessons,lesson_type,text,NO,
+lessons,xp_reward,integer,UNKNOWN(has default),5
+lessons,order_index,integer,UNKNOWN(has default),0
+lessons,duration_minutes,integer,UNKNOWN(has default),5
+lessons,is_required,boolean,UNKNOWN(has default),false
+lessons,created_at,timestamp with time zone,UNKNOWN(has default),now()
+mock_exam_bookings,id,uuid,NO,gen_random_uuid()
+mock_exam_bookings,user_id,uuid,YES,
+mock_exam_bookings,certification_id,uuid,YES,
+mock_exam_bookings,exam_type,text,NO,
+mock_exam_bookings,week_number,integer,NO,
+mock_exam_bookings,week_start_date,date,NO,
+mock_exam_bookings,selected_date,date,NO,
+mock_exam_bookings,status,text,UNKNOWN(has default),confirmed
+mock_exam_bookings,created_at,timestamp with time zone,UNKNOWN(has default),now()
+oral_exam_registrations,id,uuid,NO,gen_random_uuid()
+oral_exam_registrations,user_id,uuid,YES,
+oral_exam_registrations,certification_id,uuid,YES,
+oral_exam_registrations,exam_date,date,NO,
+oral_exam_registrations,week_number,integer,NO,
+oral_exam_registrations,slot_number,integer,NO,
+oral_exam_registrations,ticket_number,integer,NO,
+oral_exam_registrations,start_time,time without time zone,NO,
+oral_exam_registrations,is_completed,boolean,UNKNOWN(has default),false
+oral_exam_registrations,created_at,timestamp with time zone,UNKNOWN(has default),now()
+partners,id,uuid,NO,gen_random_uuid()
+partners,name,text,NO,
+partners,logo_url,text,YES,
+partners,website_url,text,YES,
+partners,revenue_share,numeric,UNKNOWN(has default),0.3
+partners,contact_email,text,YES,
+partners,is_active,boolean,UNKNOWN(has default),true
+partners,created_at,timestamp with time zone,UNKNOWN(has default),now()
+profiles,id,uuid,NO,
+profiles,email,text,YES,
+profiles,name,text,YES,
+profiles,avatar_url,text,YES,
+profiles,role,text,UNKNOWN(has default),trainer
+profiles,gender,text,YES,
+profiles,age_group,text,YES,
+profiles,occupation,text,YES,
+profiles,occupation_custom,text,YES,
+profiles,onboarding_completed,boolean,UNKNOWN(has default),false
+profiles,created_at,timestamp with time zone,UNKNOWN(has default),now()
+profiles,learning_style,text,YES,
+profiles,style_tested_at,timestamp with time zone,YES,
+profiles,selected_subjects,jsonb,YES,
+profiles,selected_cert,text,YES,
+profiles,required_subjects,jsonb,YES,
+profiles,additional_subjects,jsonb,YES,
+profiles,exam_target_date,date,YES,
+profiles,region,text,YES,
+profiles,daily_study_hours,integer,YES,
+profiles,subscription_plan,text,UNKNOWN(has default),free
+profiles,subscription_started_at,timestamp with time zone,YES,
+profiles,subscription_expires_at,timestamp with time zone,YES,
+profiles,trial_started_at,timestamp with time zone,YES,
+profiles,trial_expires_at,timestamp with time zone,YES,
+profiles,sub,text,YES,
+profiles,phone,text,YES,
+profiles,primary_provider,text,YES,
+profiles,linked_providers,text[],YES,
+profiles,daily_study_time,integer,YES,
+profiles,daily_study_count,integer,YES,
+profiles,study_time_slot,text,YES,
+profiles,push_enabled,boolean,UNKNOWN(has default),false
+profiles,certification_id,uuid,YES,
+profiles,is_major,boolean,UNKNOWN(has default),false
+profiles,cert_type,text,YES,
+profiles,style_acknowledged_at,timestamp with time zone,YES,
+profiles,mode_intro_acknowledged_at,timestamp with time zone,YES,
+profiles,code_popup_shown,boolean,UNKNOWN(has default),false
+profiles,survey_completed,boolean,UNKNOWN(has default),false
+profiles,access_code_used,text,YES,
+profiles,chapter_star_ratings,jsonb,YES,
+profiles,access_unlocked,boolean,UNKNOWN(has default),false
+profiles,streak_days,integer,UNKNOWN(has default),0
+profiles,last_study_date,date,YES,
+profiles,tendency_analyzed,boolean,UNKNOWN(has default),false
+profiles,learning_style_answers,jsonb,YES,
+profiles,consent_completed_at,timestamp with time zone,YES,
+question_stats,id,uuid,NO,gen_random_uuid()
+question_stats,user_id,uuid,YES,
+question_stats,question_id,text,YES,
+question_stats,chapter_id,text,YES,
+question_stats,total_attempts,integer,UNKNOWN(has default),0
+question_stats,total_correct,integer,UNKNOWN(has default),0
+question_stats,wrong_rate,double precision,UNKNOWN(has default),0
+question_stats,updated_at,timestamp with time zone,UNKNOWN(has default),now()
+quiz_performance_logs,id,uuid,NO,gen_random_uuid()
+quiz_performance_logs,user_id,uuid,NO,
+quiz_performance_logs,chapter_id,uuid,YES,
+quiz_performance_logs,question_id,uuid,NO,
+quiz_performance_logs,question_type,integer,NO,
+quiz_performance_logs,quiz_bridge_time,double precision,YES,
+quiz_performance_logs,response_time,double precision,YES,
+quiz_performance_logs,answer_given,integer,YES,
+quiz_performance_logs,is_correct,boolean,YES,
+quiz_performance_logs,wrong_answer_vulnerability,double precision,UNKNOWN(has default),0
+quiz_performance_logs,created_at,timestamp with time zone,UNKNOWN(has default),now()
+quiz_performance_logs,quiz_entered_at,timestamp with time zone,UNKNOWN(has default),now()
+quiz_performance_logs,after_wrong_action,text,YES,
+quiz_performance_logs,retry_count,integer,UNKNOWN(has default),0
+quiz_performance_logs,explanation_viewed,boolean,UNKNOWN(has default),false
+sports,id,uuid,NO,gen_random_uuid()
+sports,name,text,NO,
+sports,slug,text,NO,
+sports,order_index,integer,NO,1
+sports,is_active,boolean,NO,true
+sports,created_at,timestamp with time zone,NO,now()
+subjects,id,uuid,NO,gen_random_uuid()
+subjects,name,text,NO,
+subjects,description,text,YES,
+subjects,icon,text,YES,
+subjects,phase,text,UNKNOWN(has default),mvp
+subjects,order_index,integer,YES,
+subjects,is_active,boolean,UNKNOWN(has default),true
+subjects,created_at,timestamp with time zone,UNKNOWN(has default),now()
+subjects,category_id,uuid,YES,
+subjects,event,text,YES,
+subjects,certification_id,uuid,YES,
+subscription_features,plan,text,NO,
+subscription_features,max_chapters_per_subject,integer,YES,
+subscription_features,full_report,boolean,UNKNOWN(has default),false
+subscription_features,d_day_plan,boolean,UNKNOWN(has default),false
+subscription_features,ai_questions,boolean,UNKNOWN(has default),false
+subscription_features,pass_prediction,boolean,UNKNOWN(has default),false
+subscription_features,wrong_note,boolean,UNKNOWN(has default),false
+subscription_features,ads,boolean,UNKNOWN(has default),true
+subscription_plans,id,uuid,NO,gen_random_uuid()
+subscription_plans,name,text,NO,
+subscription_plans,price_monthly,integer,UNKNOWN(has default),0
+subscription_plans,price_yearly,integer,UNKNOWN(has default),0
+subscription_plans,features_json,jsonb,YES,
+subscription_plans,is_active,boolean,UNKNOWN(has default),true
+test_results,id,uuid,NO,gen_random_uuid()
+test_results,user_id,uuid,NO,
+test_results,chapter,text,NO,
+test_results,score,integer,NO,
+test_results,total,integer,NO,
+test_results,type_scores_json,jsonb,YES,
+test_results,weak_muscles,text[],YES,
+test_results,created_at,timestamp with time zone,UNKNOWN(has default),now()
+user_access_codes,id,uuid,NO,gen_random_uuid()
+user_access_codes,user_id,uuid,YES,
+user_access_codes,code_id,uuid,YES,
+user_access_codes,used_at,timestamp with time zone,UNKNOWN(has default),now()
+user_badges,id,uuid,NO,gen_random_uuid()
+user_badges,user_id,uuid,NO,
+user_badges,badge_type,text,NO,
+user_badges,badge_name,text,NO,
+user_badges,earned_at,timestamp with time zone,UNKNOWN(has default),now()
+user_certifications,id,uuid,NO,gen_random_uuid()
+user_certifications,user_id,uuid,NO,
+user_certifications,cert_id,text,NO,
+user_certifications,cert_label,text,NO,
+user_certifications,subjects,jsonb,NO,
+user_certifications,exam_type,text,NO,written
+user_certifications,is_active,boolean,NO,true
+user_certifications,order_index,integer,NO,0
+user_certifications,added_at,timestamp with time zone,UNKNOWN(has default),now()
+user_certifications,last_studied_at,timestamp with time zone,YES,
+user_certifications,exam_types,text[],YES,
+user_certifications,sport_id,uuid,YES,
+user_certifications,subject_ids,uuid[],YES,
+user_consents,id,uuid,NO,gen_random_uuid()
+user_consents,user_id,uuid,NO,
+user_consents,consent_type,text,NO,
+user_consents,agreed,boolean,NO,
+user_consents,version,text,NO,
+user_consents,agreed_at,timestamp with time zone,NO,now()
+user_consents,source,text,YES,
+user_events,id,uuid,NO,gen_random_uuid()
+user_events,user_id,uuid,YES,
+user_events,event_type,text,YES,
+user_events,meta,jsonb,YES,
+user_events,created_at,timestamp with time zone,UNKNOWN(has default),now()
+user_gamification,id,uuid,NO,gen_random_uuid()
+user_gamification,user_id,uuid,NO,
+user_gamification,xp,integer,UNKNOWN(has default),0
+user_gamification,level,integer,UNKNOWN(has default),1
+user_gamification,streak_days,integer,UNKNOWN(has default),0
+user_gamification,last_study_date,date,YES,
+user_gamification,created_at,timestamp with time zone,UNKNOWN(has default),now()
+user_gamification,updated_at,timestamp with time zone,UNKNOWN(has default),now()
+user_goals,id,uuid,NO,gen_random_uuid()
+user_goals,profile_id,uuid,YES,
+user_goals,user_id,uuid,YES,
+user_goals,title,text,YES,
+user_goals,target_date,date,YES,
+user_goals,created_at,timestamp with time zone,UNKNOWN(has default),now()
+user_reviews,id,uuid,NO,gen_random_uuid()
+user_reviews,user_id,uuid,YES,
+user_reviews,star_rating,smallint,NO,
+user_reviews,review_text,text,YES,
+user_reviews,is_public,boolean,UNKNOWN(has default),false
+user_reviews,is_featured,boolean,UNKNOWN(has default),false
+user_reviews,created_at,timestamp with time zone,UNKNOWN(has default),now()
+user_reviews,survey_answers,jsonb,YES,
+user_reviews,feedback_text,text,YES,
+user_subscriptions,id,uuid,NO,gen_random_uuid()
+user_subscriptions,user_id,uuid,YES,
+user_subscriptions,plan_id,uuid,YES,
+user_subscriptions,started_at,timestamp with time zone,UNKNOWN(has default),now()
+user_subscriptions,expires_at,timestamp with time zone,YES,
+user_subscriptions,payment_status,text,UNKNOWN(has default),active
+user_wrong_answers,id,uuid,NO,gen_random_uuid()
+user_wrong_answers,user_id,uuid,NO,
+user_wrong_answers,question_id,uuid,NO,
+user_wrong_answers,chapter_id,uuid,YES,
+user_wrong_answers,selected_index,integer,NO,
+user_wrong_answers,correct_index,integer,YES,
+user_wrong_answers,wrong_count,integer,NO,1
+user_wrong_answers,last_wrong_at,timestamp with time zone,NO,now()
+user_wrong_answers,created_at,timestamp with time zone,UNKNOWN(has default),now()
+video_bookmarks,id,uuid,NO,gen_random_uuid()
+video_bookmarks,user_id,uuid,YES,
+video_bookmarks,video_url,text,YES,
+video_bookmarks,video_title,text,YES,
+video_bookmarks,video_thumbnail,text,YES,
+video_bookmarks,bookmarked_at,timestamp with time zone,UNKNOWN(has default),now()
+wrong_answers,id,uuid,NO,gen_random_uuid()
+wrong_answers,user_id,uuid,YES,
+wrong_answers,chapter_id,uuid,NO,
+wrong_answers,question_id,uuid,NO,
+wrong_answers,selected_option,text,YES,
+wrong_answers,correct_option,text,YES,
+wrong_answers,created_at,timestamp with time zone,UNKNOWN(has default),now()

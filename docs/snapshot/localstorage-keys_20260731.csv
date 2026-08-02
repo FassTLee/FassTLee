@@ -1,0 +1,109 @@
+# 채취일시: 2026-07-31T14:36:40.208Z / 대상: 코드 정적 스캔 (env 구분 없음)
+# 패턴: localStorage.getItem/setItem/removeItem
+# operation: getItem=read, setItem/removeItem=write
+# 키가 변수·상수면 원문 표현을 그대로 두고 "(비리터럴)" 표기
+# localStorage.clear() 및 sessionStorage 는 대상 외
+key_name,operation,file_path,line_no
+ADDITIONAL_KEY (비리터럴),read,src/app/select-subject/page.tsx,169
+ADDITIONAL_KEY (비리터럴),write,src/app/select-subject/page.tsx,273
+CERT_KEY (비리터럴),read,src/app/lesson/[chapterId]/page.tsx,318
+CERT_KEY (비리터럴),read,src/app/onboarding/page.tsx,62
+CERT_KEY (비리터럴),write,src/app/select-cert/page.tsx,125
+CERT_KEY (비리터럴),read,src/app/select-subject/page.tsx,163
+CERT_KEY (비리터럴),read,src/app/select-subject/page.tsx,299
+CERT_KEY (비리터럴),read,src/app/test/[chapterId]/page.tsx,106
+CERT_KEY (비리터럴),read,src/app/trainer/dashboard/page.tsx,551
+CERT_KEY (비리터럴),read,src/app/trainer/profile/page.tsx,59
+DISMISS_COUNT_KEY (비리터럴),read,src/app/providers.tsx,23
+DISMISS_COUNT_KEY (비리터럴),write,src/app/providers.tsx,112
+DISMISS_COUNT_KEY (비리터럴),read,src/app/providers.tsx,125
+DISMISS_COUNT_KEY (비리터럴),write,src/app/providers.tsx,126
+DISMISSED_AT_KEY (비리터럴),read,src/app/providers.tsx,25
+DISMISSED_AT_KEY (비리터럴),write,src/app/providers.tsx,113
+DISMISSED_AT_KEY (비리터럴),write,src/app/providers.tsx,127
+EXAM_RESULT_KEY (비리터럴),read,src/app/exam/report/page.tsx,83
+EXAM_RESULT_KEY (비리터럴),write,src/app/exam/report/page.tsx,329
+examResult,write,src/app/exam/page.tsx,168
+GUEST_ID_KEY (비리터럴),read,src/app/landing/survey/page.tsx,104
+k (비리터럴),write,src/app/landing/survey/page.tsx,116
+k (비리터럴),write,src/components/common/SignupPromptPopup.tsx,21
+kinepia_cert_type,write,src/app/trainer/dashboard/page.tsx,710
+kinepia_cert_type,read,src/app/trainer/dashboard/page.tsx,732
+kinepia_cert_type,write,src/app/trainer/dashboard/page.tsx,1354
+kinepia_cert_type,write,src/app/trainer/dashboard/page.tsx,1507
+kinepia_code_popup_triggered,read,src/app/test/[chapterId]/page.tsx,226
+kinepia_code_popup_triggered,write,src/app/test/[chapterId]/page.tsx,228
+kinepia_current_subject_id,write,src/app/chapters/[subjectId]/page.tsx,549
+kinepia_current_subject_id,write,src/app/chapters/[subjectId]/page.tsx,617
+kinepia_current_subject_id,write,src/app/chapters/[subjectId]/page.tsx,631
+kinepia_current_subject_id,read,src/app/test/[chapterId]/page.tsx,207
+kinepia_current_subject_id,read,src/app/test/[chapterId]/page.tsx,414
+kinepia_current_subject_id,write,src/app/trainer/dashboard/_components/ClassroomTab.tsx,39
+kinepia_current_subject_id,write,src/app/trainer/dashboard/_components/ClassroomTab.tsx,205
+kinepia_exam_date,read,src/app/trainer/dashboard/page.tsx,724
+kinepia_exam_date,write,src/app/trainer/dashboard/page.tsx,1353
+kinepia_exam_date,write,src/app/trainer/dashboard/page.tsx,1389
+kinepia_exam_date,write,src/app/trainer/dashboard/page.tsx,1505
+kinepia_exam_date,write,src/app/trainer/dashboard/page.tsx,1506
+kinepia_guest_id,read,src/app/landing/LandingContent.tsx,139
+kinepia_guest_id,read,src/app/landing/test/page.tsx,25
+kinepia_guest_id,write,src/app/landing/test/page.tsx,26
+kinepia_is_major,write,src/app/landing/test/page.tsx,162
+kinepia_learning_type,read,src/app/landing/report/page.tsx,110
+kinepia_learning_type,write,src/app/trainer/dashboard/_components/ProfileTab.tsx,141
+kinepia_learning_type,read,src/app/trainer/dashboard/page.tsx,557
+kinepia_learning_type,read,src/app/trainer/dashboard/page.tsx,627
+kinepia_learning_type,write,src/app/trainer/dashboard/page.tsx,628
+kinepia_lesson_mode,read,src/app/trainer/education/lesson/page.tsx,265
+kinepia_lesson_mode,write,src/app/trainer/education/lesson/page.tsx,301
+kinepia_lesson_mode_set,read,src/app/trainer/education/lesson/page.tsx,267
+kinepia_lesson_mode_set,write,src/app/trainer/education/lesson/page.tsx,308
+kinepia_registered_rounds,write,src/app/trainer/dashboard/_components/DashboardModals.tsx,306
+kinepia_registered_rounds,read,src/app/trainer/dashboard/page.tsx,373
+kinepia_selected_cert,read,src/app/onboarding/style-result/page.tsx,94
+kinepia_subject_order,read,src/app/trainer/dashboard/_components/ProfileTab.tsx,224
+kinepia_subject_order,write,src/app/trainer/dashboard/page.tsx,1418
+landingTestQuestions,read,src/app/landing/report/page.tsx,107
+landingTestQuestions,write,src/app/landing/test/page.tsx,117
+landingTestResult,read,src/app/landing/LandingContent.tsx,140
+landingTestResult,read,src/app/landing/report/page.tsx,102
+landingTestResult,write,src/app/landing/test/page.tsx,116
+MODE_KEY (비리터럴),read,src/app/lesson/[chapterId]/page.tsx,321
+MODE_KEY (비리터럴),write,src/app/lesson/[chapterId]/page.tsx,732
+ONBOARDING_KEY (비리터럴),read,src/app/onboarding/page.tsx,59
+ONBOARDING_KEY (비리터럴),write,src/app/onboarding/page.tsx,89
+ONBOARDING_KEY (비리터럴),write,src/app/onboarding/page.tsx,247
+RESULT_KEY (비리터럴),read,src/app/report/[chapterId]/page.tsx,69
+RESULT_KEY (비리터럴),read,src/app/review/[chapterId]/page.tsx,44
+RESULT_KEY (비리터럴),write,src/app/test/[chapterId]/page.tsx,214
+RESULT_KEY (비리터럴),write,src/app/test/[chapterId]/page.tsx,221
+STYLE_KEY (비리터럴),write,src/app/landing/survey/page.tsx,148
+STYLE_KEY (비리터럴),read,src/app/landing/survey/page.tsx,165
+STYLE_KEY (비리터럴),read,src/app/lesson/[chapterId]/page.tsx,316
+STYLE_KEY (비리터럴),read,src/app/onboarding/page.tsx,60
+STYLE_KEY (비리터럴),read,src/app/onboarding/style-result/page.tsx,84
+STYLE_KEY (비리터럴),write,src/app/onboarding/style-test/page.tsx,153
+STYLE_KEY (비리터럴),write,src/app/trainer/dashboard/_components/ProfileTab.tsx,140
+STYLE_KEY (비리터럴),read,src/app/trainer/dashboard/page.tsx,553
+STYLE_KEY (비리터럴),read,src/app/trainer/dashboard/page.tsx,612
+STYLE_KEY (비리터럴),write,src/app/trainer/dashboard/page.tsx,625
+STYLE_KEY (비리터럴),read,src/app/trainer/profile/page.tsx,51
+STYLE_KEY (비리터럴),write,src/app/trainer/profile/page.tsx,174
+STYLE_TYPE_KEY (비리터럴),write,src/app/landing/survey/page.tsx,147
+STYLE_TYPE_KEY (비리터럴),read,src/app/onboarding/style-result/page.tsx,83
+STYLE_TYPE_KEY (비리터럴),read,src/app/onboarding/style-test/page.tsx,129
+STYLE_TYPE_KEY (비리터럴),write,src/app/onboarding/style-test/page.tsx,152
+SUBJECT_KEY (비리터럴),read,src/app/lesson/[chapterId]/page.tsx,320
+SUBJECT_KEY (비리터럴),read,src/app/lesson/[chapterId]/page.tsx,336
+SUBJECT_KEY (비리터럴),read,src/app/lesson/[chapterId]/page.tsx,541
+SUBJECT_KEY (비리터럴),read,src/app/lesson/[chapterId]/page.tsx,714
+SUBJECT_KEY (비리터럴),read,src/app/report/[chapterId]/page.tsx,75
+SUBJECT_KEY (비리터럴),read,src/app/review/[chapterId]/page.tsx,51
+SUBJECTS_KEY (비리터럴),read,src/app/select-subject/page.tsx,177
+SUBJECTS_KEY (비리터럴),write,src/app/select-subject/page.tsx,272
+SUBJECTS_KEY (비리터럴),read,src/app/trainer/dashboard/page.tsx,535
+SUBJECTS_KEY (비리터럴),write,src/app/trainer/dashboard/page.tsx,544
+SUBJECTS_KEY (비리터럴),read,src/app/trainer/dashboard/page.tsx,552
+SUBJECTS_KEY (비리터럴),write,src/app/trainer/dashboard/page.tsx,684
+SUBJECTS_KEY (비리터럴),write,src/app/trainer/dashboard/page.tsx,1116
+SUBJECTS_KEY (비리터럴),read,src/app/trainer/profile/page.tsx,61
