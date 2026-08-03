@@ -13,16 +13,29 @@ const SECTIONS = [
     title: '수집 항목',
     content: [
       {
-        sub: 'Google OAuth 연동 시',
-        items: ['이름 (Google 계정 표시명)', '이메일 주소', '프로필 사진 URL'],
+        sub: '소셜 로그인 연동 시',
+        items: [
+          '이름 (소셜 계정 표시명)',
+          '이메일 주소 (제공하는 계정에 한함)',
+          '프로필 사진 URL',
+        ],
+      },
+      {
+        sub: '이용자가 직접 입력하는 정보',
+        items: [
+          '프로필 설정 (성별, 연령대, 직업, 지역 — 선택 입력)',
+          '학습 설정 (목표 자격증, 선택 과목, 시험 예정일, 학습 시간 설정)',
+          '휴대전화번호 (모의고사·구술시험 신청 시에 한함)',
+          '이용자 의견 (설문 응답, 후기, 별점)',
+        ],
       },
       {
         sub: '서비스 이용 중 생성 데이터',
         items: [
-          '학습 진도 (완료한 강의·레슨)',
-          '테스트 결과 및 점수',
-          'XP·레벨·스트릭 (게이미피케이션)',
-          '리더보드 순위 데이터',
+          '학습 이용 기록 (학습 진행 상황, 콘텐츠 이용 내역, 이용 일시)',
+          '학습 성취 기록 (테스트 결과 및 점수, 연속 학습일)',
+          '서비스 이용 통계 (접속 빈도, 이용 시간)',
+          '동의 기록 (동의 항목, 동의 일시)',
         ],
       },
       {
@@ -31,7 +44,10 @@ const SECTIONS = [
       },
       {
         sub: '자동 수집',
-        items: ['IP 주소 (AES-256 암호화 저장, 보안 목적)', '서비스 접속 일시'],
+        items: [
+          '서비스 접속 일시',
+          'IP 주소 (비정상 접근 차단 목적으로 일시 처리하며 저장하지 않음)',
+        ],
       },
     ],
   },
@@ -42,11 +58,11 @@ const SECTIONS = [
       {
         sub: '',
         items: [
-          '서비스 제공 및 학습 관리 (진도 저장, 테스트 결과 분석)',
-          '게이미피케이션 운영 (XP 적립, 레벨업, 리더보드)',
-          '맞춤형 학습 경로 추천',
-          '서비스 개선 및 통계 분석 (개인 식별 불가 형태)',
-          '광고 표시 — 무료 플랜 사용자 대상 (유료 전환 시 광고 제거)',
+          '서비스 제공 및 학습 진도 관리',
+          '맞춤형 학습 지원 및 학습 경로 안내',
+          '서비스 품질 개선 및 이용 통계 분석 (개인 식별 불가 형태)',
+          '이용자 문의·요청 처리 및 공지 전달',
+          '광고 표시 — 무료 플랜 이용자 대상 (유료 전환 시 광고 제거)',
         ],
       },
     ],
@@ -58,28 +74,30 @@ const SECTIONS = [
       {
         sub: '',
         items: [
-          '회원 탈퇴 시 즉시 삭제 (30일 이내 완전 삭제)',
+          '서비스 이용 기간 동안 보유',
+          '회원 탈퇴 요청 시 접수 후 순차적으로 처리하여 파기',
           '법령에 따라 보존이 필요한 경우 해당 기간만 별도 보관 후 파기',
-          '학습 데이터는 탈퇴 요청 즉시 비식별화 처리',
         ],
       },
     ],
   },
   {
     num: '4',
-    title: '제3자 제공',
+    title: '제3자 제공 및 처리위탁',
     content: [
       {
         sub: '서비스 운영을 위한 외부 서비스',
         items: [
-          'Supabase (데이터 저장) — 미국 소재, GDPR 적합성 결정 준수',
-          'Google OAuth (로그인) — 이메일·프로필만 수신, 게시 권한 없음',
-          'Google AdSense (광고) — 무료 플랜 사용자, 클릭 행동 분석',
+          'Supabase (데이터 저장·인증) — 국외 서버 이용',
+          'Vercel (서비스 호스팅 및 이용 통계) — 국외 서버 이용',
+          '소셜 로그인 (구글·카카오·네이버) — 계정 식별 정보 수신, 게시 권한 없음',
+          '카카오 애드핏 (광고) — 무료 플랜 이용자 대상 광고 표시',
+          '카카오 공유 (링크 공유 기능) — 이용자가 공유를 실행한 경우에 한함',
         ],
       },
       {
         sub: '제공 불가',
-        items: ['수사기관 등 법령에 의한 요구 제외 시 제3자 제공 없음'],
+        items: ['수사기관 등 법령에 의한 요구를 제외하고 제3자에게 제공하지 않음'],
       },
     ],
   },
@@ -90,8 +108,8 @@ const SECTIONS = [
       {
         sub: '행사 가능한 권리',
         items: [
-          '개인정보 열람 요청 — 앱 내 설정 > 개인정보 보기',
-          '개인정보 수정 요청 — Google 계정 정보 수정 시 자동 반영',
+          '개인정보 열람 요청 — 앱 내 설정 > 개인정보 관리',
+          '개인정보 수정 요청 — 소셜 계정 정보 수정 시 자동 반영',
           '개인정보 삭제 요청 (Right to be Forgotten) — 앱 내 탈퇴 또는 아래 이메일',
           '처리 정지 요청',
           '이의 제기 권리',
@@ -99,7 +117,10 @@ const SECTIONS = [
       },
       {
         sub: '요청 방법',
-        items: ['이메일: privacy@kinepia.io', '앱 내: 설정 > 개인정보 > 데이터 삭제 요청'],
+        items: [
+          '이메일: privacy@kinepia.com',
+          '앱 내: 설정 > 개인정보 > 데이터 삭제 요청',
+        ],
       },
     ],
   },
@@ -110,11 +131,11 @@ const SECTIONS = [
       {
         sub: '',
         items: [
-          'AES-256-GCM 암호화 — 이메일, IP 주소 암호화 저장',
           'HTTPS (TLS 1.3) 통신 암호화',
           'Row Level Security (RLS) — 본인 데이터만 접근 가능',
-          'JWT 기반 인증 (24시간 만료, 7일 갱신)',
-          'Rate Limiting — API 분당 60회 제한',
+          'JWT 기반 인증 (24시간 만료)',
+          'Rate Limiting — 비정상 접근 요청 제한',
+          '접근 권한 최소화 및 최소 수집 원칙 적용',
         ],
       },
     ],
@@ -134,7 +155,7 @@ export default function PrivacyPage() {
             ← Kinepia 홈
           </Link>
           <h1 className="text-[28px] font-black mb-2">개인정보처리방침</h1>
-          <p className="text-[14px] text-white/60">시행일: 2026년 4월 14일</p>
+          <p className="text-[14px] text-white/60">시행일: 2026년 8월 3일</p>
         </div>
       </div>
 
@@ -143,8 +164,8 @@ export default function PrivacyPage() {
         <div className="max-w-2xl mx-auto">
           <p className="text-[14px] text-[#6B6B6B] leading-relaxed">
             Kinepia(이하 &ldquo;서비스&rdquo;)는 이용자의 개인정보를 중요하게 생각합니다.
-            본 방침은 Google OAuth를 통해 수집되는 정보와 서비스 이용 중 생성되는
-            학습 데이터의 처리 방법을 설명합니다.
+            본 방침은 소셜 로그인(구글·카카오·네이버)을 통해 수집되는 정보와
+            서비스 이용 중 생성되는 학습 데이터의 처리 방법을 설명합니다.
           </p>
         </div>
       </div>
@@ -182,8 +203,8 @@ export default function PrivacyPage() {
             <h2 className="text-[18px] font-black text-[#1A1A1A] mb-3">개인정보 보호책임자</h2>
             <div className="space-y-1">
               <p className="text-[14px] text-[#1A1A1A] font-medium">Kinepia 운영팀</p>
-              <p className="text-[13px] text-[#6B6B6B]">이메일: <a href="mailto:privacy@kinepia.io" className="text-[#378ADD] hover:underline">privacy@kinepia.io</a></p>
-              <p className="text-[13px] text-[#6B6B6B]">처리 기간: 요청 수신 후 영업일 5일 이내</p>
+              <p className="text-[13px] text-[#6B6B6B]">이메일: <a href="mailto:privacy@kinepia.com" className="text-[#378ADD] hover:underline">privacy@kinepia.com</a></p>
+              <p className="text-[13px] text-[#6B6B6B]">처리 기간: 요청 접수 후 순차적으로 처리</p>
             </div>
           </section>
 
