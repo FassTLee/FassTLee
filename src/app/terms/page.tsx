@@ -83,15 +83,6 @@ export default function TermsPage() {
         </div>
       </div>
 
-      {/* Notice */}
-      <div className="bg-[#FFF8E1] border-b border-[#FFE082] px-6 py-4">
-        <div className="max-w-2xl mx-auto">
-          <p className="text-[13px] text-[#F57F17]">
-            ⚠️ 본 약관은 초안 버전입니다. 정식 서비스 출시 전 법률 검토 후 최종 확정됩니다.
-          </p>
-        </div>
-      </div>
-
       {/* Content */}
       <div className="px-6 py-10">
         <div className="max-w-2xl mx-auto space-y-8">
