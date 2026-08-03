@@ -62,7 +62,7 @@ const TERMS = [
   {
     num: '9',
     title: '분쟁 해결',
-    body: `본 약관과 관련한 분쟁은 대한민국 법을 준거법으로 하며, 서울중앙지방법원을 제1심 전속 관할 법원으로 합니다. 분쟁 발생 시 먼저 이메일(privacy@kinepia.io)로 문의해 주세요.`,
+    body: `본 약관과 관련한 분쟁은 대한민국 법을 준거법으로 하며, 서울중앙지방법원을 제1심 전속 관할 법원으로 합니다. 분쟁 발생 시 먼저 이메일(privacy@kinepia.com)로 문의해 주세요.`,
   },
 ]
 
@@ -110,7 +110,7 @@ export default function TermsPage() {
           <div className="bg-[#F5F5F3] rounded-2xl p-5 border border-[#E5E5E5]">
             <p className="text-[13px] text-[#6B6B6B]">
               공고일: 2026년 4월 7일 | 시행일: 2026년 4월 14일<br />
-              Kinepia 운영팀 · <a href="mailto:privacy@kinepia.io" className="text-[#378ADD] hover:underline">privacy@kinepia.io</a>
+              Kinepia 운영팀 · <a href="mailto:privacy@kinepia.com" className="text-[#378ADD] hover:underline">privacy@kinepia.com</a>
             </p>
           </div>
 

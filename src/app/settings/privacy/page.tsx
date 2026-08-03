@@ -65,8 +65,8 @@ export default function PrivacySettingsPage() {
                 삭제 요청이 접수되었습니다.<br />
                 학습 기록이 남아 있어 순차적으로 처리되며,<br />
                 처리 현황은{' '}
-                <a href="mailto:kinepia@kinepia.com" className="font-semibold underline">
-                  kinepia@kinepia.com
+                <a href="mailto:privacy@kinepia.com" className="font-semibold underline">
+                  privacy@kinepia.com
                 </a>
                 으로 문의해 주시기 바랍니다.
               </>

@@ -40,7 +40,7 @@ export function AppFooter({ dark = false }: AppFooterProps) {
             이용약관
           </Link>
           <a
-            href="mailto:privacy@kinepia.io"
+            href="mailto:privacy@kinepia.com"
             className={`text-[12px] transition-colors ${linkColor}`}
           >
             문의
