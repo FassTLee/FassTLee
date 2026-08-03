@@ -43,14 +43,14 @@ export function AppFooter({ dark = false }: AppFooterProps) {
             href="mailto:privacy@kinepia.com"
             className={`text-[12px] transition-colors ${linkColor}`}
           >
-            문의
+            privacy@kinepia.com
           </a>
         </div>
 
         {/* Copyright + Version */}
         <div className={`flex items-center justify-between text-[10px] ${textColor}`}>
           <span>© 2026 Kinepia. All rights reserved.</span>
-          <span>v0.1.0</span>
+          <span>v1.0.0</span>
         </div>
       </div>
     </footer>
