@@ -25,13 +25,18 @@ export default function PrivacySettingsPage() {
   const { data: session } = useSession()
   const [deleteStep, setDeleteStep] = useState<'idle' | 'confirm' | 'deleting' | 'done' | 'accepted'>('idle')
   const [confirmText, setConfirmText] = useState('')
+  const [contactEmail, setContactEmail] = useState(session?.user?.email ?? '')
 
   const handleDeleteRequest = async () => {
     if (confirmText !== '삭제 동의') return
     setDeleteStep('deleting')
 
     try {
-      const res = await fetch('/api/v1/user/delete', { method: 'DELETE' })
+      const res = await fetch('/api/v1/user/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contactEmail }),
+      })
       const data = await res.json() as { status?: string }
       if (res.ok && data.status === 'accepted') {
         setDeleteStep('accepted')
@@ -183,7 +188,11 @@ export default function PrivacySettingsPage() {
 
           {deleteStep === 'idle' && (
             <button
-              onClick={() => setDeleteStep('confirm')}
+              onClick={() => {
+                setConfirmText('')
+                setContactEmail(session?.user?.email ?? '')
+                setDeleteStep('confirm')
+              }}
               className="w-full py-3 border-2 border-[#E24B4A] text-[#E24B4A] rounded-xl text-[13px] font-semibold"
             >
               삭제 요청하기
@@ -210,9 +219,21 @@ export default function PrivacySettingsPage() {
                   className="w-full px-4 py-3 bg-[#F5F5F3] border border-[#E5E5E5] rounded-xl text-[14px] outline-none focus:border-[#E24B4A]"
                 />
               </div>
+              <div>
+                <label className="text-[12px] text-[#6B6B6B] mb-1.5 block">
+                  처리 현황 안내 이메일 (선택)
+                </label>
+                <input
+                  type="email"
+                  value={contactEmail}
+                  onChange={(e) => setContactEmail(e.target.value)}
+                  placeholder="연락받을 이메일 주소를 입력해 주세요"
+                  className="w-full px-4 py-3 bg-[#F5F5F3] border border-[#E5E5E5] rounded-xl text-[14px] outline-none focus:border-[#E24B4A]"
+                />
+              </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => { setDeleteStep('idle'); setConfirmText('') }}
+                  onClick={() => { setDeleteStep('idle'); setConfirmText(''); setContactEmail(session?.user?.email ?? '') }}
                   className="flex-1 py-3 border border-[#E5E5E5] rounded-xl text-[13px] text-[#6B6B6B]"
                 >
                   취소

@@ -10,10 +10,77 @@ const DB_UNAVAILABLE = NextResponse.json(
   { status: 503 }
 )
 
+type DeletionRequestIntakeResult = 'deleted' | 'fk_blocked' | 'not_found' | 'partial_error'
+
+async function recordDeletionRequest({
+  profileId,
+  contactEmail,
+  tokenEmail,
+  intakeResult,
+  processingNote,
+}: {
+  profileId: string
+  contactEmail?: string
+  tokenEmail?: string | null
+  intakeResult: DeletionRequestIntakeResult
+  processingNote?: string
+}) {
+  const submitted = typeof contactEmail === 'string' ? contactEmail.trim() : ''
+  const accountEmail = typeof tokenEmail === 'string' ? tokenEmail.trim() : ''
+
+  // 필드는 세션 이메일로 프리필된다. 빈 값은 "값 없음"이 아니라 명시적 거부이므로
+  // token.email로 폴백하지 않는다. 이메일 제공은 선택 항목이다.
+  const email = submitted || null
+  const emailSource = !submitted
+    ? null
+    : submitted === accountEmail
+      ? 'profile'      // 프리필된 계정 이메일을 그대로 사용
+      : 'user_input'   // 사용자가 다른 주소를 입력
+  const isCompleted = intakeResult === 'deleted'
+
+  try {
+    const { error } = await supabaseAdmin
+      .from('deletion_requests')
+      .insert({
+        profile_id: profileId,
+        email,
+        status: isCompleted ? 'completed' : 'received',
+        intake_result: intakeResult,
+        email_source: emailSource,
+        processed_at: isCompleted ? new Date().toISOString() : null,
+        processing_note: processingNote ?? null,
+      })
+
+    if (error) {
+      console.error('[GDPR] Failed to record deletion request:', {
+        profileId,
+        intakeResult,
+        errorCode: error.code,
+        errorMessage: error.message,
+      })
+    }
+  } catch (err) {
+    console.error('[GDPR] Failed to record deletion request:', {
+      profileId,
+      intakeResult,
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
+}
+
 export async function DELETE(req: NextRequest) {
   if (!isSupabaseAdminConfigured) return DB_UNAVAILABLE
 
+  let contactEmail: string | undefined
+  try {
+    const body = await req.json() as { contactEmail?: unknown }
+    contactEmail = typeof body?.contactEmail === 'string' ? body.contactEmail : undefined
+  } catch {
+    contactEmail = undefined
+  }
+
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+  const tokenEmail = typeof token?.email === 'string' ? token.email : null
   const profileId = typeof token?.userId === 'string' ? token.userId : null
   if (!profileId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -90,6 +157,15 @@ export async function DELETE(req: NextRequest) {
 
     if (deleteErrors.length > 0) {
       console.error('[GDPR] Delete table errors:', deleteErrors)
+      await recordDeletionRequest({
+        profileId,
+        contactEmail,
+        tokenEmail,
+        intakeResult: 'partial_error',
+        processingNote: deleteErrors
+          .map(({ table, error }) => `${table}:${error?.code ?? 'unknown'}`)
+          .join(', '),
+      })
       return NextResponse.json(
         {
           error: 'Deletion failed',
@@ -105,6 +181,12 @@ export async function DELETE(req: NextRequest) {
         counts: deleteCounts,
         errorCode: profileError.code,
       })
+      await recordDeletionRequest({
+        profileId,
+        contactEmail,
+        tokenEmail,
+        intakeResult: 'fk_blocked',
+      })
       return NextResponse.json(
         {
           ok: true,
@@ -118,6 +200,12 @@ export async function DELETE(req: NextRequest) {
 
     if (deleteCounts.profiles === 0) {
       console.warn('[GDPR] Profile delete matched no rows:', { profileId, counts: deleteCounts })
+      await recordDeletionRequest({
+        profileId,
+        contactEmail,
+        tokenEmail,
+        intakeResult: 'not_found',
+      })
       return NextResponse.json(
         {
           error: 'Profile not found or already deleted',
@@ -126,6 +214,13 @@ export async function DELETE(req: NextRequest) {
         { status: 404 }
       )
     }
+
+    await recordDeletionRequest({
+      profileId,
+      contactEmail,
+      tokenEmail,
+      intakeResult: 'deleted',
+    })
 
     return NextResponse.json({
       ok: true,
