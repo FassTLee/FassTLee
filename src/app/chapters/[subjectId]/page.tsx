@@ -140,24 +140,30 @@ export default function ChaptersPage() {
 
   const fetchStats = async (userId: string) => {
     try {
-      let query = supabase
-        .from('chapter_stats')
-        .select('chapter_id, subject_id, avg_score, wrong_rate, total_attempts, last_attempt_at, lesson_completed, mini_quiz_correct, mini_quiz_total, lesson_completed_at, latest_score, best_score, test_attempts, total_questions')
-        .eq('user_id', userId)
-
+      // ── 2026-08-06 수정: anon 클라이언트 직접 조회 → 서버 라우트 경유 ──
+      // chapter_stats의 RLS 정책(qual=TRUE) 제거 시 anon 조회는 에러가 아니라 빈 배열을
+      // 반환해 진도가 조용히 사라진다. user_id는 서버가 세션에서 취하므로 보내지 않는다.
+      // ── 기존 코드 ──
+      // let query = supabase.from('chapter_stats').select(...).eq('user_id', userId)
+      // if (certIdFilter) query = query.eq('certification_id', certIdFilter)
+      // const { data, error } = await query.order('updated_at', { ascending: false, nullsFirst: false })
+      //
       // certId가 있는 자격증(같은 챕터를 여러 자격증이 공유하는 경우, 예: IIPA Lv1/Lv2)만
       // 그 자격증 문맥의 진도로 좁혀서 조회. certId가 없으면(레거시 자격증 — chapter_id 자체가
       // 자격증 간 공유되지 않으므로 certification_id로 좁힐 필요가 없음) 기존과 동일하게
       // user_id만으로 조회 — 백필로 certification_id가 채워진 기존 행도 그대로 잡혀야 하므로
       // 여기서 certification_id 필터를 걸면 안 됨(걸면 기존 진도가 전부 안 보이게 됨)
-      if (certIdFilter) query = query.eq('certification_id', certIdFilter)
+      const url = certIdFilter
+        ? `/api/v1/chapter-stats?certId=${encodeURIComponent(certIdFilter)}`
+        : '/api/v1/chapter-stats'
+      const res = await fetch(url, { cache: 'no-store' })
 
-      const { data, error } = await query.order('updated_at', { ascending: false, nullsFirst: false })
-
-      if (error) {
-        console.log('[chapters] fetchStats error:', error)
+      if (!res.ok) {
+        console.log('[chapters] fetchStats error:', res.status, userId)
         return
       }
+
+      const data = await res.json()
 
       const map: Record<string, ChapterStat> = {}
       for (const s of (data ?? []) as ChapterStat[]) {
