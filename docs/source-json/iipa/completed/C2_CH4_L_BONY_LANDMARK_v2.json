@@ -1,0 +1,23 @@
+{
+  "card_id": "C2_CH4_L_BONY_LANDMARK",
+  "chapter": "C2_CH4 (하지골과 골반)",
+  "insert_instruction": "unit2_skeletal_system.json에 병합하지 않음. Claude Code가 단일 카드 INSERT로 처리. C2_CH4_L02(자유하지골) 다음, C2_CH4_L03(발의 뼈) 앞에 삽입되도록 order_index=3으로 지정하고, 기존 C2_CH4_L03 이하 카드들의 order_index를 전부 +1 조정할 것.",
+  "content_type": "lesson",
+  "question_format": null,
+  "difficulty": 1,
+  "order_index": 3,
+  "question": "하지골의 Bony Landmark",
+  "explanation": "뼈에는 근육이 붙거나 다른 뼈와 관절을 이루기 위한 특징적인 돌출부와 패임이 있는데, 이를 Bony landmark(뼈 표지)라고 부릅니다. 교재 12개 용어 체계(돌기·조면·결절·전자·복사·극·관절융기·능선·오목·구멍·고랑) 중 하지골과 골반에서 자주 등장하는 예시를 정리하면 다음과 같습니다.\n\n1. 극(Spine) — 전상장골극(ASIS, Anterior Superior Iliac Spine): 장골 앞쪽의 뾰족하게 튀어나온 부위로, 골반 앞쪽에서 손으로 쉽게 만져지는 랜드마크입니다. 봉공근(Sartorius)과 대퇴근막장근(TFL)이 이 지점에서 시작합니다. 골반의 좌우 기울기를 눈으로 확인할 때도 양쪽 ASIS의 높이를 비교합니다.\n\n2. 능선(Crest) — 장골능(Iliac crest): 골반 위쪽 테두리를 따라 둥글게 이어지는 선으로, 흔히 바지 허리끈이 걸리는 부위입니다. 허리에 양손을 얹었을 때 만져지는 뼈가 바로 장골능이며, 복횡근과 요방형근의 기시점이기도 합니다.\n\n3. 오목/와(Fossa) — 장골와(Iliac fossa): 장골 안쪽 면이 접시처럼 얇고 넓게 패인 부위로, 장골근(Iliacus)이 이 오목한 면을 채우듯 자리 잡아 시작됩니다.\n\n4. 결절(Tubercle) — 좌골결절(Ischial tuberosity): 좌골 아래쪽의 거칠고 두드러진 면으로, 흔히 '앉는 뼈'라고 불립니다. 의자에 앉았을 때 체중을 직접 받치는 부위이며, 햄스트링(대퇴이두근·반건양근·반막양근)이 모두 이곳에서 시작합니다.\n\n5. 전자(Trochanter) — 대전자(Greater trochanter of femur): 대퇴골에만 있는 특유의 큰 돌출부로, 골반 옆쪽 엉덩이 부위에서 만져집니다. 중둔근·소둔근·이상근을 비롯한 여러 고관절 안정근이 이곳에 부착하며, 옆으로 누웠을 때 바닥에 닿는 뼈가 바로 대전자입니다. (참고: 이 부위에 부착하는 근육들의 실제 작용은 근육마다 다릅니다 — 중둔근·소둔근은 주로 고관절 외전, 이상근은 고관절 외회전을 만듭니다. 대전자는 여러 방향의 힘이 모이는 부착 지점일 뿐, 특정 움직임 하나로 근육 그룹을 묶어 부르지 않도록 주의합니다.)\n\n6. 조면(Tuberosity) — 경골조면(Tibial tuberosity): 정강이뼈 앞쪽 위에서 만져지는 거친 돌출부로, 대퇴사두근의 힘이 슬개건(patellar ligament)을 통해 최종적으로 전달되는 지점입니다. 무릎을 펴는 동작(Knee extension)에서 힘이 실제로 다리로 전달되는 '종착지'라고 이해하면 쉽습니다.\n\n7. 관절융기(Condyle)와 위관절융기(Epicondyle) — 대퇴골의 내측/외측 관절융기(Medial/Lateral condyle): 무릎 관절을 이루는 크고 둥근 부위로, 경골과 만나 슬관절을 형성합니다. 위관절융기(Epicondyle)는 관절융기 바로 옆에 있지만 관절의 일부는 아닌 돌출부로, 내전근결절(Adductor tubercle)이 내측상과 부근에 위치하며 대내전근이 이곳에 정지합니다.\n\n8. 복사(Malleolus) — 외측복사(Lateral malleolus)와 내측복사(Medial malleolus): 발목에 있는 특유의 두 융기로, 비골 끝(외측복사)과 경골 끝(내측복사)이 각각 만들어냅니다. 발목 양옆에서 튀어나온 뼈를 만져보면 바로 이 복사뼈이며, 발목 관절의 안정성과 인대 부착에 중요한 지표입니다.\n\n이처럼 같은 12개 용어 체계라도 상지골에서는 견갑골·상완골 위주로, 하지골에서는 골반·대퇴골·경골 위주로 나타나며, 명칭의 의미(돌기/조면/결절/전자 등)를 알면 처음 보는 뼈의 사진에서도 어떤 특징의 구조인지 유추할 수 있습니다.",
+  "key_points": [
+    "ASIS(전상장골극): 골반 앞쪽 돌출부, 봉공근·TFL 기시점, 골반 정렬 확인 랜드마크",
+    "장골능: 골반 위쪽 테두리, 허리에 손 얹을 때 만져지는 뼈",
+    "좌골결절: '앉는 뼈', 햄스트링 3근 공통 기시점",
+    "대전자: 대퇴골 특유의 큰 돌출부, 옆으로 누울 때 바닥에 닿는 부위, 여러 고관절 안정근의 부착점(작용은 근육마다 다름)",
+    "경골조면: 슬개건이 붙는 정강이 앞쪽 돌출부, 무릎 신전력이 전달되는 지점",
+    "외측/내측 복사: 비골·경골 끝의 발목 양옆 돌출부"
+  ],
+  "source_page": 74,
+  "source_page_note": "상지골의 Bony Landmark 카드가 상지 촉진 페이지(p.62)를 이미지 소스로 쓴 것과 대칭을 맞춰, 하지골 카드는 p.74(하지 및 골반 Bony landmark 촉진 목록: Iliac crest, PSIS, ASIS, AIIS, Superior pubic ramus / Tibia&fibula: Medial condyle, Lateral condyle, Tibial tuberosity, Fibula head, Pes anserinus, Lateral/Medial malleolus / Femur: Greater trochanter, Medial/Lateral epicondyle, Adductor tubercle)를 이미지 소스로 확정.",
+  "image_url": null,
+  "note_for_pm": "explanation에 언급된 8개 랜드마크(ASIS/장골능/장골와/좌골결절/대전자/경골조면/관절융기·위관절융기/내외측복사) 중 p.74 목록에 없는 항목(장골와, 좌골결절 자체 명칭)은 p.65(골반 그림) 등 인접 페이지 이미지 보완이 필요할 수 있음. 이미지 매핑은 Claude Code 협업 단계에서 p.74 우선 확인 후 진행 요망."
+}

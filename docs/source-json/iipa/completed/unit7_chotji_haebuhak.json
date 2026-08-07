@@ -1,0 +1,974 @@
+{
+  "course": {
+    "title": "촉지 해부학",
+    "description": "필라테스 지도 현장에서 활용하는 뼈·근육 촉지(palpation) 기법과 동작-근육 연결을 다루는 Lv2 전용 단원",
+    "category": "ASSUMPTION: 기존 단원1-6과 동일 컨벤션 필요 (예: '이론') - PM 확인 필요",
+    "phase": "ASSUMPTION: Lv2_Tier2 - PM 확인 필요 (기존 courses.phase 값 컨벤션에 맞춰 조정)",
+    "order_index": 7,
+    "subject_id": "7538c34d-5b36-4955-91fd-3f7fe4e7f244",
+    "certification_id": "5e130f49-0439-4f34-8585-a8d26f197e3e",
+    "page_range": "원본교재 p.160-196",
+    "note": "기출 매핑: 0건 (필기 1차/2차 80문항 전량 단원1-6 범위). 챕터테스트/모의고사 관련 5번 규칙 적용."
+  },
+  "chapters": [
+    {
+      "chapter_title": "촉지란?",
+      "chapter_order_index": 1,
+      "page_range": "p.161-165",
+      "cards": [
+        {
+          "order_index": 1,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 1,
+          "question": "촉지(Palpation)란 무엇인가",
+          "options": [],
+          "answer_index": null,
+          "explanation": "촉지(Palpation)는 손의 접촉을 통해 신체 구조물의 위치와 상태를 확인하는 검사 기법입니다. 교재에서는 촉지를 \"일반적으로 진단의 목적으로 사용되는 접촉에 의한 검사나 탐색\"으로 정의하며, 다음 세 가지 기술을 포함합니다.\n\n1. 구조의 위치를 찾는 것 — 예를 들어 손끝으로 무릎뼈(슬개골)의 정확한 가장자리를 짚어내는 것\n2. 구조의 특징을 인지하는 것 — 그 구조물이 뼈처럼 딱딱한지, 근육처럼 말랑한지 구별하는 것\n3. 구조의 질이나 상황을 측정하는 것 — 근육이 이완되어 있는지 수축되어 있는지, 조직에 압통이 있는지 등을 판단하는 것\n\n필라테스 지도자에게 촉지는 회원의 특정 근육이 실제로 활성화되고 있는지, 자세가 좌우 대칭인지를 손으로 직접 확인할 수 있는 실전 도구입니다. 예를 들어 플랭크 자세에서 회원의 복직근이 실제로 수축하고 있는지 손으로 가볍게 짚어 확인하는 것도 촉지의 한 예입니다.",
+          "key_points": [
+            "촉지=접촉을 통해 구조물의 위치·특징·상태를 확인하는 검사 기법",
+            "위치 찾기, 특징 인지, 질/상황 측정의 3요소로 구성",
+            "지도 현장에서는 근육 활성화 여부·좌우 대칭 확인 등에 활용"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 163
+        },
+        {
+          "order_index": 2,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 1,
+          "question": "촉지를 위한 손 사용법",
+          "options": [],
+          "answer_index": null,
+          "explanation": "정확한 촉지를 위해서는 손끝의 감각을 최대한 예민하게 만드는 것이 중요합니다. 교재에서 제시하는 방법은 다음과 같습니다.\n\n1. 양손을 포개어 촉지하기 — 아래쪽 손으로 실제 촉지를 하고 위쪽 손은 가볍게 눌러 보조함으로써, 아래 손이 이완된 상태를 유지하게 해 민감성과 안정성을 동시에 높입니다.\n2. 눈을 감고 촉지하기 — 시각 정보를 차단하면 손끝 감각에 더 집중할 수 있어 미세한 촉감 차이를 구별하기 쉬워집니다.\n3. 구조물 크기에 맞는 접촉면 선택 — ASIS(위앞엉덩뼈가시)처럼 작은 뼈는 손가락 끝으로, 장골능(엉덩뼈능선)처럼 넓은 구조는 손바닥 전체로 짚습니다.\n\n이 세 가지 방법은 촉지 실습 초반에 함께 연습해보면 감각의 차이를 빠르게 체감할 수 있습니다.",
+          "key_points": [
+            "양손을 포개면 아래 손이 이완되어 민감성·안정성이 함께 높아진다",
+            "눈을 감으면 손끝 감각에 더 집중할 수 있다",
+            "구조물 크기에 따라 손가락 끝 또는 손바닥 전체를 선택해서 사용한다"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 163
+        },
+        {
+          "order_index": 3,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 1,
+          "question": "촉지 시 주의사항",
+          "options": [],
+          "answer_index": null,
+          "explanation": "촉지는 강하게 누른다고 더 정확해지는 기술이 아닙니다. 초보자일수록 구조물이 잘 느껴지지 않으면 더 깊고 강하게 누르려는 경향이 있는데, 이는 오히려 구조물을 찾기 어렵게 만들고 대상자에게 불편함만 키웁니다.\n\n지켜야 할 원칙은 다음과 같습니다.\n\n1. 아무리 깊은 조직이라도 부드러운 압력으로 접근한다.\n2. 손을 천천히 움직이며 촉지한다.\n3. 대상자가 불편함을 느끼면 즉시 촉지를 멈춘다. 예를 들어 검사자의 손이 차갑기만 해도 대상자는 사소한 촉지에 불편함을 느낄 수 있으므로, 손 온도 같은 사소한 요소도 미리 점검하는 것이 좋습니다.\n\n지도자가 이 원칙을 지키지 않으면 회원과의 신뢰 관계에도 영향을 줄 수 있으므로, 기술적 정확성 못지않게 태도의 문제로 다뤄야 합니다.",
+          "key_points": [
+            "강하고 깊게 누르는 것이 아니라 부드러운 압력으로 촉지한다",
+            "천천히 움직이며, 대상자가 불편해하면 즉시 중단한다",
+            "손 온도처럼 사소한 요소도 대상자의 불편감에 영향을 줄 수 있다"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 164
+        },
+        {
+          "order_index": 4,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 2,
+          "question": "구조물별 질감 차이 구분하기",
+          "options": [],
+          "answer_index": null,
+          "explanation": "촉지 실력을 키우는 핵심은 뼈·근육·힘줄(건)의 질감 차이를 구별하는 감각을 기르는 것입니다.\n\n1. 뼈: 다른 구조물과 확연히 구별되는 딱딱한 느낌이 납니다. 다만 신장되어 팽팽해진 힘줄을 뼈로 착각하지 않도록 주의해야 합니다. ASIS(위앞엉덩뼈가시), 슬개골(patella), 복사뼈(malleolus) 등을 촉지하며 이 느낌을 익힐 수 있습니다.\n2. 근육: 이완되어 있을 때는 말랑말랑하지만, 수축하면 단단해집니다. 상완이두근, 삼각근, 비복근(장딴지근)을 촉지하며 이완-수축 차이를 비교해볼 수 있습니다.\n3. 건(힘줄): 이완 상태에서도 뼈처럼 단단한 느낌이 납니다. 아킬레스건, 슬개건(무릎힘줄)을 촉지하며 근육의 말랑함과 대비해볼 수 있습니다.\n\n세 구조물을 번갈아 촉지하며 비교하는 연습이 감각을 가장 빠르게 발달시킵니다.",
+          "key_points": [
+            "뼈=항상 딱딱함(신장된 힘줄과 혼동 주의)",
+            "근육=이완 시 말랑, 수축 시 단단",
+            "건(힘줄)=이완 상태에서도 단단한 느낌"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 165
+        },
+        {
+          "order_index": 5,
+          "content_type": "quiz",
+          "question_format": "true_false",
+          "difficulty": 1,
+          "question": "촉지 시 구조물이 잘 느껴지지 않더라도 강하게 누르기보다 부드러운 압력으로 천천히 접근해야 한다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            0
+          ],
+          "explanation": "구조물이 잘 느껴지지 않는다고 강하고 깊게 누르면 오히려 찾기 어려워지고 대상자가 불편해집니다. 부드러운 압력으로 천천히 접근하는 것이 올바른 방법입니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 164
+        },
+        {
+          "order_index": 6,
+          "content_type": "quiz",
+          "question_format": "multiple_choice",
+          "difficulty": 1,
+          "question": "근육 조직의 촉지 시 질감에 대한 설명으로 옳은 것은?",
+          "options": [
+            "이완 시에도 항상 뼈처럼 단단하다",
+            "이완 시 말랑하고 수축 시 단단해진다",
+            "힘줄과 동일한 질감을 갖는다",
+            "촉지로는 이완과 수축 상태를 구별할 수 없다"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "근육은 이완 상태에서는 말랑말랑하지만 수축하면 단단해지는 특성이 있어, 이 변화를 통해 활성화 여부를 촉지로 확인할 수 있습니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 165
+        },
+        {
+          "order_index": 7,
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 1,
+          "question": "촉지(Palpation)의 정의에 포함되는 요소로 옳지 않은 것은?",
+          "options": [
+            "구조의 위치를 찾는 것",
+            "구조의 특징을 인지하는 것",
+            "구조의 질이나 상황을 측정하는 것",
+            "구조물의 손상 여부를 영상으로 진단하는 것"
+          ],
+          "answer_index": [
+            3
+          ],
+          "explanation": "촉지는 손의 접촉을 통한 검사 기법으로, 위치 찾기·특징 인지·질/상황 측정의 세 요소로 구성됩니다. 영상을 이용한 진단은 촉지와는 다른 별개의 검사 방법입니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 163
+        },
+        {
+          "order_index": 8,
+          "content_type": "exam",
+          "question_format": "true_false",
+          "difficulty": 2,
+          "question": "작은 뼈 구조물을 촉지할 때는 손바닥 전체를 사용하는 것이 손가락 끝을 사용하는 것보다 정확하다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "ASIS와 같이 작은 뼈 구조물은 손가락 끝을 사용해 촉지하는 것이 정확도를 높입니다. 손바닥 전체는 장골능처럼 넓은 구조물을 촉지할 때 사용합니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 163
+        },
+        {
+          "order_index": 9,
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 2,
+          "question": "회원이 촉지 도중 통증이나 불편함을 호소했을 때 지도자가 취해야 할 가장 적절한 대응은?",
+          "options": [
+            "압력을 유지하며 통증의 원인을 계속 확인한다",
+            "즉시 촉지를 중단한다",
+            "더 부드럽게 다른 부위부터 다시 시작한다",
+            "회원에게 참을 것을 권한다"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "대상자가 불편함을 느끼면 즉시 촉지를 멈추는 것이 원칙입니다. 통증을 무릅쓰고 계속 진행하는 것은 안전 원칙에 어긋납니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 164
+        }
+      ]
+    },
+    {
+      "chapter_title": "뼈 촉지",
+      "chapter_order_index": 2,
+      "page_range": "p.166-170",
+      "cards": [
+        {
+          "order_index": 1,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 1,
+          "question": "상지 및 견갑골 촉지 랜드마크",
+          "options": [],
+          "answer_index": null,
+          "explanation": "상지와 견갑골 부위에서는 다음과 같은 뼈 랜드마크를 촉지로 확인할 수 있습니다.\n\n1. 쇄골(Clavicle): 목 아래 앞쪽에서 가로로 만져지는 뼈\n2. 견봉(Acromion): 어깨 가장 바깥쪽 위, 어깨뽕이 만져지는 지점\n3. 오훼돌기(Coracoid process): 쇄골 아래쪽, 어깨 앞쪽 안쪽에서 깊게 눌러야 만져지는 작은 돌기\n4. 상완골 대결절(Greater tubercle)/소결절(Lesser tubercle): 어깨 앞쪽에서 팔을 돌리며 만지면 움직임이 느껴지는 지점\n5. 견갑골(Scapula)의 위각(Superior angle)/아래각(Inferior angle)/내측연(Medial border)/외측연(Lateral border): 등 위쪽에서 견갑골의 삼각형 윤곽을 따라 짚을 수 있는 경계선\n\n이 랜드마크들은 어깨 관절의 정렬 상태를 평가하거나 회전근개 관련 통증 부위를 확인할 때 기준점으로 활용됩니다.",
+          "key_points": [
+            "쇄골·견봉·오훼돌기는 어깨 앞쪽에서 촉지 가능한 대표 랜드마크",
+            "상완골 대결절/소결절은 팔을 돌리며 움직임을 확인해 찾는다",
+            "견갑골 위각/아래각/내측연/외측연은 등에서 삼각형 윤곽으로 짚는다"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 167
+        },
+        {
+          "order_index": 2,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 1,
+          "question": "몸통 및 척추 촉지 랜드마크",
+          "options": [],
+          "answer_index": null,
+          "explanation": "척추와 몸통에서는 특정 분절의 극돌기(spinous process)를 기준점으로 촉지합니다.\n\n1. 제2경추, 제7경추: 목을 숙이면 목 뒤에서 가장 크게 튀어나오는 뼈가 제7경추이며, 임상 및 촉지 실습에서 척추 분절을 셀 때 기준점으로 가장 많이 쓰입니다.\n2. 제1흉추, 제7흉추: 제7경추 아래로 이어지는 흉추 극돌기를 따라 세어 내려가며 확인합니다.\n3. 제4요추: 양쪽 장골능(iliac crest)을 잇는 가상의 선이 지나가는 위치의 척추 분절로 찾습니다.\n4. 흉골 검상돌기(Sternum-xiphoid): 가슴뼈 아래쪽 끝의 작은 돌기\n5. 미골(Coccyx): 척추의 가장 아래쪽, 꼬리뼈 부위\n\n특히 제7경추와 좌우 장골능 연결선은 다른 척추 분절의 위치를 셀 때 쓰는 기준점 역할을 하므로 정확히 찾는 연습이 필요합니다.",
+          "key_points": [
+            "제7경추=목을 숙였을 때 가장 튀어나오는 뼈, 척추 분절 계산의 기준점",
+            "제4요추=양쪽 장골능을 잇는 가상의 선이 지나가는 분절",
+            "흉골 검상돌기·미골도 몸통 정중선의 주요 촉지 랜드마크"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 168
+        },
+        {
+          "order_index": 3,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 1,
+          "question": "골반 촉지 랜드마크",
+          "options": [],
+          "answer_index": null,
+          "explanation": "골반 부위의 뼈 랜드마크는 자세 평가에서도 반복적으로 활용되는 만큼 정확히 익혀야 합니다.\n\n1. ASIS(위앞엉덩뼈가시): 골반 앞쪽에서 양손을 허리에 얹었을 때 엄지 아래로 만져지는 뾰족한 뼈\n2. AIIS(아래앞엉덩뼈가시): ASIS보다 약간 아래, 대퇴직근의 기시가 되는 지점\n3. 장골능(Iliac crest): 골반 위쪽 능선을 따라 만져지는 곡선\n4. PSIS(뒤위엉덩뼈가시): 골반 뒤쪽, 허리 아래쪽 움푹 들어간 곳 근처의 뼈\n5. 좌골결절(Ischial tuberosity): 앉았을 때 체중이 실리는 뼈, 슬괵근의 기시가 되는 지점\n6. 대전자(Greater trochanter): 엉덩이 옆쪽, 대퇴골 위쪽에서 튀어나온 부위\n\n교재에서는 \"먼저 자신의 골반을 촉지해본 뒤 파트너에게 진행해보라\"고 권장하는데, 이는 스스로 랜드마크의 느낌을 알아야 타인에게서도 정확히 찾을 수 있기 때문입니다.",
+          "key_points": [
+            "ASIS·PSIS는 골반 앞뒤의 뾰족한 뼈, 자세평가의 기준점",
+            "좌골결절=슬괵근의 기시가 되는 지점, 앉을 때 체중이 실리는 뼈",
+            "대전자=엉덩이 옆쪽에서 만져지는 대퇴골의 튀어나온 부위"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 170
+        },
+        {
+          "order_index": 4,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 1,
+          "question": "하지(무릎~발목) 촉지 랜드마크",
+          "options": [],
+          "answer_index": null,
+          "explanation": "무릎 아래에서 발목까지는 다음 랜드마크를 촉지로 확인합니다.\n\n1. 슬개골(Patella): 무릎 앞쪽의 둥글고 평평한 뼈\n2. 경골조면(Tibial tuberosity): 슬개골 바로 아래, 정강뼈 앞쪽에서 튀어나온 부위 — 슬개건(무릎힘줄)이 부착되는 지점\n3. 내측/외측 복사뼈(Medial/Lateral malleolus): 발목 안쪽과 바깥쪽에서 튀어나온 뼈\n\n이 랜드마크들은 무릎이나 발목 관절의 정렬을 평가하거나, 운동 시 무릎이 발끝 방향과 일치하는지 확인하는 큐잉 기준으로도 활용됩니다.",
+          "key_points": [
+            "슬개골=무릎 앞쪽의 둥근 뼈",
+            "경골조면=슬개건이 붙는 정강뼈 앞쪽 돌출부",
+            "내·외측 복사뼈=발목 안팎에서 만져지는 뼈, 정렬 평가 기준점"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 170
+        },
+        {
+          "order_index": 5,
+          "content_type": "quiz",
+          "question_format": "true_false",
+          "difficulty": 1,
+          "question": "제7경추는 목을 숙였을 때 목 뒤에서 가장 크게 튀어나오는 뼈로, 척추 분절을 셀 때 기준점으로 활용된다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            0
+          ],
+          "explanation": "맞는 설명입니다. 제7경추는 목을 숙였을 때 가장 두드러지게 튀어나오는 극돌기로, 다른 척추 분절 위치를 셀 때 기준점이 됩니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 168
+        },
+        {
+          "order_index": 6,
+          "content_type": "quiz",
+          "question_format": "multiple_choice",
+          "difficulty": 2,
+          "question": "슬괵근의 기시가 되는 골반 뼈 랜드마크는?",
+          "options": [
+            "ASIS",
+            "좌골결절",
+            "장골능",
+            "PSIS"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "슬괵근(대퇴이두근·반건양근·반막양근)은 모두 좌골결절에서 시작합니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 170
+        },
+        {
+          "order_index": 7,
+          "content_type": "quiz",
+          "question_format": "true_false",
+          "difficulty": 2,
+          "question": "AIIS는 ASIS보다 위쪽에 위치하며 대퇴사두근 중 대퇴직근의 기시가 되는 지점이다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "AIIS(아래앞엉덩뼈가시)는 ASIS보다 아래쪽에 위치합니다. 대퇴직근의 기시가 된다는 설명은 맞지만, 위치 설명이 틀렸으므로 전체 문장은 거짓입니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 170
+        },
+        {
+          "order_index": 8,
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 2,
+          "question": "다음 중 골반 뒤쪽에 위치하며 자세평가에서 좌우 높이 비교에 활용되는 랜드마크는?",
+          "options": [
+            "ASIS",
+            "PSIS",
+            "AIIS",
+            "대전자"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "PSIS(뒤위엉덩뼈가시)는 골반 뒤쪽에 위치하며, 좌우 PSIS의 높이를 비교해 골반 정렬을 평가하는 데 활용됩니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 170
+        },
+        {
+          "order_index": 9,
+          "content_type": "exam",
+          "question_format": "true_false",
+          "difficulty": 2,
+          "question": "장골능(Iliac crest)은 손끝보다 손바닥 전체로 촉지하는 것이 더 정확하다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            0
+          ],
+          "explanation": "장골능처럼 넓은 뼈 구조물은 손바닥 전체를 사용해 촉지하는 것이 더 정확합니다. 손끝은 ASIS처럼 작은 구조물에 적합합니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 166
+        },
+        {
+          "order_index": 10,
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 1,
+          "question": "무릎 아래에서 슬개건이 부착되는 뼈 돌출부의 이름은?",
+          "options": [
+            "경골조면",
+            "대전자",
+            "좌골결절",
+            "복사뼈"
+          ],
+          "answer_index": [
+            0
+          ],
+          "explanation": "경골조면(Tibial tuberosity)은 슬개골 아래 정강뼈 앞쪽에서 튀어나온 부위로, 슬개건이 부착됩니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 170
+        },
+        {
+          "order_index": 11,
+          "content_type": "exam",
+          "question_format": "true_false",
+          "difficulty": 2,
+          "question": "제4요추는 양쪽 장골능을 잇는 가상의 선이 지나가는 척추 분절이다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            0
+          ],
+          "explanation": "양쪽 장골능 최상단을 잇는 가상의 수평선(장골능간선)은 대략 제4요추 극돌기를 지나가며, 임상에서 요추 위치를 셀 때 기준점으로 활용됩니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 168
+        }
+      ]
+    },
+    {
+      "chapter_title": "근육 촉지",
+      "chapter_order_index": 3,
+      "page_range": "p.171-185",
+      "cards": [
+        {
+          "order_index": 1,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 2,
+          "question": "몸통 근육 촉지 — 승모근·외복사근·복직근",
+          "options": [],
+          "answer_index": null,
+          "explanation": "근육을 촉지할 때는 다음 순서를 따르면 효율적입니다.\n\n1. 강의자료를 기준으로 근육의 기시·정지점을 먼저 파악한다.\n2. 그 근육의 위치를 따라 손으로 짚어나간다.\n3. 근육의 작용(Action)에 해당하는 움직임을 만들어 수축을 느껴본다.\n4. 근육의 질감을 이완/수축 상태에서 비교해본다.\n\n몸통 근육 중에서는 다음을 촉지 대상으로 삼습니다.\n\n- 승모근(Trapezius): 목 뒤에서 등 위쪽까지 넓게 덮고 있는 근육으로, 어깨를 으쓱하는 동작(견갑골 거상)을 시키면서 수축을 확인합니다.\n- 외복사근(External oblique): 옆구리에서 대각선 방향으로 만져지는 근육으로, 몸통을 반대쪽으로 회전시키며 확인합니다.\n- 복직근(Rectus abdominis): 배 앞쪽 정중선 양옆의 세로 근육으로, 크런치처럼 몸통을 굴곡시키며 단단해지는 것을 느낍니다.\n\n승모근과 전완근처럼 서로 다른 근육의 질감 차이를 비교해보는 것도 촉지 감각을 기르는 좋은 연습입니다.",
+          "key_points": [
+            "근육 촉지 순서: 기시/정지 파악→위치 촉지→작용 동작으로 수축 확인→질감 비교",
+            "승모근=견갑골 거상 동작으로 수축 확인",
+            "외복사근=몸통 반대측 회전, 복직근=몸통 굴곡 동작으로 확인"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 173
+        },
+        {
+          "order_index": 2,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 2,
+          "question": "견갑대·상완 근육 촉지 — 회전근개·이두근/삼두근·광배근",
+          "options": [],
+          "answer_index": null,
+          "explanation": "어깨와 위팔 부위에서는 다음 근육을 촉지 대상으로 합니다.\n\n1. 광배근(Latissimus dorsi): 등 옆면 넓게 퍼져 있는 근육으로, 팔을 아래로 당기는 동작(어깨관절 신전/내전)에서 수축이 확인됩니다.\n2. 회전근개(Rotator cuff) 중 체표에서 촉지 가능한 극상근(Supraspinatus)·극하근(Infraspinatus)·소원근(Teres minor): 어깨관절을 외회전시킨 상태에서 팔꿈치를 위로 올리면 극하근을 비교적 쉽게 촉지할 수 있습니다. (참고: 견갑하근은 회전근개에 속하지만 어깨 앞쪽 깊은 곳에 있어 체표 촉지로는 잘 확인되지 않습니다.)\n3. 상완이두근(Biceps brachii)/상완삼두근(Triceps brachii): 팔꿈치를 굽히면 이두근이, 펴면 삼두근이 단단해지는 것을 비교해서 느낍니다.\n\n회전근개는 위치가 깊고 서로 인접해 있어 처음에는 구별이 어려울 수 있으므로, 어깨관절의 자세(외회전 여부)를 먼저 만든 뒤 촉지하는 순서가 중요합니다.",
+          "key_points": [
+            "광배근=팔을 아래로 당기는 동작(신전/내전)에서 수축 확인",
+            "극하근=어깨 외회전 자세를 만든 뒤 촉지하면 구별이 쉬워짐",
+            "이두근/삼두근=팔꿈치 굴곡/신전으로 각각 수축을 대비해 확인"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 177
+        },
+        {
+          "order_index": 3,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 2,
+          "question": "대퇴 앞면 근육 촉지 — 대퇴사두근",
+          "options": [],
+          "answer_index": null,
+          "explanation": "대퇴사두근(Quadriceps femoris)은 넙다리 앞쪽을 채우는 네 개의 근육으로 구성됩니다.\n\n1. 대퇴직근(Rectus femoris): 넙다리 앞쪽 중앙, 무릎을 편 상태에서 다리를 들어올리면(고관절 굴곡+무릎 신전) 뚜렷하게 만져집니다.\n2. 내측광근(Vastus medialis): 무릎 안쪽 바로 위, 무릎을 완전히 펼 때 특히 잘 단단해지는 부위입니다.\n3. 외측광근(Vastus lateralis): 넙다리 바깥쪽, 대퇴이두근(햄스트링)과 인접해 있어 처음에는 혼동하기 쉽습니다.\n\n내측광근과 외측광근을 구별하는 방법은 무릎을 펴는 동작에서 안쪽과 바깥쪽 중 어느 부위가 먼저 단단해지는지 좌우로 번갈아 짚어보는 것입니다.",
+          "key_points": [
+            "대퇴직근=고관절 굴곡+무릎 신전 동작에서 확인, 넙다리 앞쪽 중앙",
+            "내측광근=무릎 안쪽, 무릎을 완전히 펼 때 두드러짐",
+            "외측광근은 대퇴이두근(햄스트링)과 위치가 인접해 혼동 주의"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 181
+        },
+        {
+          "order_index": 4,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 2,
+          "question": "대퇴 뒤·둔부 근육 촉지 — 슬괵근·대둔근/중둔근·TFL",
+          "options": [],
+          "answer_index": null,
+          "explanation": "넙다리 뒤쪽과 엉덩이 부위 근육은 다음과 같이 구별해서 촉지합니다.\n\n1. 슬괵근(Hamstring): 대퇴이두근(바깥쪽)과 반건양근/반막양근(안쪽)으로 나뉘며, 무릎을 굽히는 동작에서 안쪽과 바깥쪽 중 어느 힘줄이 만져지는지로 구분합니다.\n2. 대둔근(Gluteus maximus)/중둔근(Gluteus medius): 대둔근은 엉덩이 전체를 덮는 큰 근육이고, 중둔근은 그보다 위쪽·옆쪽에서 골반을 안정화하는 역할을 합니다. 한 발로 서면 중둔근의 수축이 뚜렷하게 느껴집니다.\n3. 대퇴근막장근(TFL)/장경인대(IT band): 골반 앞가쪽에서 시작해 넙다리 옆면을 타고 내려가는 얇고 긴 구조로, 다리를 옆으로 들어올리는 동작(고관절 외전)에서 확인됩니다.\n\n특히 대퇴이두근과 반건양근/반막양근을 구분하는 연습, 외측광근과 대퇴이두근을 구분하는 연습은 교재에서도 별도로 강조하는 촉지 훈련 포인트입니다.",
+          "key_points": [
+            "슬괵근은 바깥쪽 대퇴이두근과 안쪽 반건양근/반막양근으로 구분해서 촉지",
+            "중둔근=한 발 서기 동작에서 골반 안정화 수축이 뚜렷하게 느껴짐",
+            "TFL/IT band=고관절 외전 동작에서 골반 앞가쪽~넙다리 옆면을 따라 확인"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 184
+        },
+        {
+          "order_index": 5,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 2,
+          "question": "하퇴 근육 촉지 — 비복근·넙치근·전경골근",
+          "options": [],
+          "answer_index": null,
+          "explanation": "종아리와 정강이 부위 근육은 다음과 같이 구별합니다.\n\n1. 비복근(Gastrocnemius): 종아리 뒤쪽 위쪽에서 볼록하게 튀어나온 근육으로, 무릎을 편 상태에서 까치발을 들면 뚜렷하게 확인됩니다.\n2. 넙치근(Soleus): 비복근보다 더 깊고 아래쪽에 위치하며, 무릎을 굽힌 상태에서 까치발을 들면 비복근의 개입이 줄어들어 넙치근을 더 잘 느낄 수 있습니다.\n3. 전경골근(Tibialis anterior): 정강이 앞쪽 바깥에서 만져지며, 발끝을 위로 들어올리는 동작(발목 배측굴곡)에서 수축이 확인됩니다.\n\n비복근과 넙치근을 구별하는 핵심은 \"무릎을 펴고 촉지하는가, 굽히고 촉지하는가\"의 차이이며, 이는 교재에서도 직접 질문으로 제시하는 핵심 포인트입니다.",
+          "key_points": [
+            "비복근=무릎을 편 상태에서 까치발 시 뚜렷하게 확인",
+            "넙치근=무릎을 굽힌 상태에서 까치발 시 더 잘 느껴짐(비복근 개입 감소)",
+            "전경골근=발목 배측굴곡(발끝 들기) 동작에서 정강이 앞쪽 바깥에서 확인"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 185
+        },
+        {
+          "order_index": 6,
+          "content_type": "quiz",
+          "question_format": "true_false",
+          "difficulty": 2,
+          "question": "극하근을 촉지할 때는 어깨관절을 외회전시킨 상태에서 팔꿈치를 위로 올리면 더 쉽게 찾을 수 있다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            0
+          ],
+          "explanation": "극하근은 어깨관절을 외회전시킨 상태에서 팔꿈치를 위로 올리면 근육이 상대적으로 도드라져 더 쉽게 촉지할 수 있습니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 177
+        },
+        {
+          "order_index": 7,
+          "content_type": "quiz",
+          "question_format": "multiple_choice",
+          "difficulty": 2,
+          "question": "무릎을 굽힌 상태에서 까치발을 들었을 때 비복근보다 더 잘 느껴지는 종아리 근육은?",
+          "options": [
+            "대퇴이두근",
+            "넙치근",
+            "전경골근",
+            "대퇴직근"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "무릎을 굽히면 비복근의 개입이 줄어들어 그보다 깊은 넙치근의 수축을 더 잘 느낄 수 있습니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 185
+        },
+        {
+          "order_index": 8,
+          "content_type": "quiz",
+          "question_format": "true_false",
+          "difficulty": 2,
+          "question": "대둔근은 한 발로 서는 동작에서 골반 안정화를 위해 가장 뚜렷하게 수축하는 근육이다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "한 발 서기에서 골반의 좌우 안정화를 담당하는 근육은 중둔근입니다. 대둔근은 주로 고관절 신전에 관여하는 근육입니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 184
+        },
+        {
+          "order_index": 9,
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 2,
+          "question": "대퇴사두근 중 무릎 안쪽 바로 위에 위치하며 무릎을 완전히 펼 때 특히 두드러지는 근육은?",
+          "options": [
+            "외측광근",
+            "대퇴직근",
+            "내측광근",
+            "중간광근"
+          ],
+          "answer_index": [
+            2
+          ],
+          "explanation": "내측광근(Vastus medialis)은 무릎 안쪽 바로 위에 위치하며, 무릎을 완전히 신전할 때 특히 뚜렷하게 활성화됩니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 181
+        },
+        {
+          "order_index": 10,
+          "content_type": "exam",
+          "question_format": "true_false",
+          "difficulty": 2,
+          "question": "슬괵근 중 대퇴이두근은 넙다리 안쪽에, 반건양근·반막양근은 넙다리 바깥쪽에 위치한다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "실제로는 반대입니다. 대퇴이두근은 넙다리 뒤 바깥쪽, 반건양근·반막양근은 안쪽에 위치합니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 182
+        },
+        {
+          "order_index": 11,
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 2,
+          "question": "다리를 옆으로 들어올리는 고관절 외전 동작에서 촉지로 확인할 수 있는 골반 앞가쪽의 근육은?",
+          "options": [
+            "대퇴근막장근(TFL)",
+            "봉공근",
+            "박근",
+            "반막양근"
+          ],
+          "answer_index": [
+            0
+          ],
+          "explanation": "대퇴근막장근(TFL)은 골반 앞가쪽에서 시작해 장경인대로 이어지며, 고관절 외전 동작에서 수축이 확인됩니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 184
+        },
+        {
+          "order_index": 12,
+          "content_type": "exam",
+          "question_format": "true_false",
+          "difficulty": 1,
+          "question": "근육을 촉지하기 전에는 먼저 강의자료를 기준으로 기시·정지점을 파악하는 것이 권장된다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            0
+          ],
+          "explanation": "교재에서 제시하는 근육 촉지 순서의 첫 단계는 강의자료 기준 기시·정지점 파악이며, 이후 위치를 따라 촉지하고 작용 동작으로 수축을 확인합니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 172
+        },
+        {
+          "order_index": 13,
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 1,
+          "question": "발목관절 배측굴곡(발끝 들어올리기) 동작에서 정강이 앞쪽 바깥에서 촉지되는 근육은?",
+          "options": [
+            "비복근",
+            "넙치근",
+            "전경골근",
+            "장비골근"
+          ],
+          "answer_index": [
+            2
+          ],
+          "explanation": "전경골근(Tibialis anterior)은 발목 배측굴곡 동작에서 정강이 앞쪽 바깥쪽에 수축이 확인되는 근육입니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 185
+        }
+      ]
+    },
+    {
+      "chapter_title": "동작과 근육",
+      "chapter_order_index": 4,
+      "page_range": "p.186-196",
+      "note_for_pm": "원문 p.186-196은 도표/이미지 중심 슬라이드로 텍스트가 거의 없어, 카드 설명은 단원4-6에서 이미 학습한 근육의 O/I/A를 종합해 표준 임상 분류(주동근·협력근) 기준으로 재구성했습니다. v1.2 신설 품질규칙(개별사실+기능통합 검증)에 따라 단일 근육의 개별 작용뿐 아니라 동작 패턴 안에서의 근육 간 상호작용까지 반영했습니다. 해부학적 사실관계 최종 확인 부탁드립니다.",
+      "cards": [
+        {
+          "order_index": 1,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 3,
+          "question": "체간 동작과 관여근육",
+          "options": [],
+          "answer_index": null,
+          "explanation": "체간(몸통)의 동작은 여러 근육이 함께 작용해서 만들어지며, 방향에 따라 주로 관여하는 근육이 다릅니다.\n\n1. 체간 굴곡: 복직근이 가장 직접적으로 관여하며, 양쪽 외복사근·내복사근도 함께 작용합니다.\n2. 체간 신전: 척추기립근(장늑근·최장근·극근)과 다열근이 주로 작용합니다.\n3. 체간 측굴: 같은 쪽 외복사근·내복사근, 요방형근이 함께 작용합니다(양쪽 근육이 각자 자기 쪽으로 굽히는 방향에 관여).\n4. 체간 회전: 한쪽 외복사근과 반대쪽 내복사근이 짝을 이루어 함께 작용해야 회전이 만들어집니다 — 즉 좌측 회전은 우측 외복사근+좌측 내복사근의 협력으로 일어납니다.\n\n이처럼 체간 동작은 한 근육이 단독으로 만드는 것이 아니라, 여러 근육이 협력근(synergist) 관계로 함께 작용한다는 점이 중요합니다.",
+          "key_points": [
+            "체간 굴곡=복직근+양측 복사근, 체간 신전=척추기립근+다열근",
+            "체간 측굴=같은 쪽 복사근+요방형근",
+            "체간 회전=한쪽 외복사근과 반대쪽 내복사근이 짝을 이뤄 작용"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 188
+        },
+        {
+          "order_index": 2,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 3,
+          "question": "어깨(견갑골 포함) 동작과 관여근육",
+          "options": [],
+          "answer_index": null,
+          "explanation": "어깨 동작은 상완골이 움직이는 것뿐 아니라 견갑골의 움직임이 함께 맞물려야 정상적으로 완성됩니다(견갑상완리듬).\n\n1. 어깨관절 굴곡: 삼각근 전면부가 주로 작용\n2. 어깨관절 신전: 광배근, 대원근이 주로 작용\n3. 어깨관절 외전: 삼각근 중간부, 극상근(초기 외전 개시)이 관여\n4. 견갑골 후인(모으기): 능형근, 승모근 중부\n5. 견갑골 상방회전(팔을 머리 위로 들 때 필요): 전거근과 승모근 상부·하부가 함께 작용\n\n특히 견갑골이 제대로 상방회전하지 않으면 어깨를 완전히 들어올릴 때 견봉과 회전근개 힘줄 사이가 좁아져 충돌이 생길 수 있으므로, 상완골 움직임과 견갑골 움직임을 항상 짝으로 이해해야 합니다.",
+          "key_points": [
+            "어깨 굴곡=삼각근 전면부, 신전=광배근+대원근",
+            "어깨 외전 초기에는 극상근이, 이후에는 삼각근 중간부가 관여",
+            "견갑골 상방회전(전거근+승모근)이 없으면 어깨 완전 거상 시 충돌 위험"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 191
+        },
+        {
+          "order_index": 3,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 3,
+          "question": "고관절 동작과 관여근육",
+          "options": [],
+          "answer_index": null,
+          "explanation": "고관절은 큰 가동범위를 가진 관절인 만큼 방향별로 관여하는 근육도 다양합니다.\n\n1. 고관절 굴곡: 장요근, 대퇴직근이 주로 작용\n2. 고관절 신전: 대둔근, 슬괵근이 주로 작용\n3. 고관절 외전: 중둔근, 대퇴근막장근(TFL)이 주로 작용\n4. 고관절 내전: 장내전근·단내전근·대내전근·박근·치골근 등 내전근군이 작용\n5. 고관절 회전: 대둔근 등 둔부 심부의 여러 작은 근육들이 외회전에, 중둔근·소둔근의 전면 섬유가 내회전에 관여합니다(세부 근육은 별도 심화 과정에서 다룹니다)\n\n한 발로 서는 동작에서는 중둔근이 골반을 수평으로 유지하는 역할을 하므로, 고관절 외전근의 약화는 걷기·한발서기 시 골반이 반대쪽으로 기우는 트렌델렌버그 징후로 이어질 수 있습니다.",
+          "key_points": [
+            "고관절 굴곡=장요근+대퇴직근, 신전=대둔근+슬괵근",
+            "고관절 외전=중둔근+TFL, 내전=내전근군(장/단/대내전근, 박근, 치골근)",
+            "중둔근 약화 시 한발서기·보행에서 골반이 기우는 트렌델렌버그 징후 발생 가능"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 193
+        },
+        {
+          "order_index": 4,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 3,
+          "question": "무릎 동작과 관여근육",
+          "options": [],
+          "answer_index": null,
+          "explanation": "무릎관절은 굴곡-신전을 중심으로 비교적 단순해 보이지만, 관여 근육이 다관절근인 경우가 많아 다른 관절과 연동해서 이해해야 합니다.\n\n1. 무릎 신전: 대퇴사두근(대퇴직근·내측광근·외측광근·중간광근) 전체가 작용\n2. 무릎 굴곡: 슬괵근(대퇴이두근·반건양근·반막양근)이 주로 작용하며, 비복근도 하퇴 뒤쪽에서 보조적으로 관여\n3. 무릎이 살짝 굴곡될 때 경골을 내회전시켜 완전 신전 잠김을 풀어주는 역할: 슬와근(Popliteus)\n\n대퇴직근과 슬괵근(대퇴이두근 장두)은 모두 고관절도 함께 지나가는 다관절근이므로, 무릎 동작을 볼 때는 고관절 자세가 함께 고려되어야 정확한 근육 기여도를 판단할 수 있습니다.",
+          "key_points": [
+            "무릎 신전=대퇴사두근 전체, 무릎 굴곡=슬괵근+비복근(보조)",
+            "슬와근=무릎 굴곡 시작 시 경골 내회전으로 신전 잠김을 풀어줌",
+            "대퇴직근·슬괵근은 고관절도 지나가는 다관절근 — 고관절 자세와 함께 고려 필요"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 195
+        },
+        {
+          "order_index": 5,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 2,
+          "question": "발목 동작과 관여근육",
+          "options": [],
+          "answer_index": null,
+          "explanation": "발목관절의 동작은 발목 앞뒤·안팎 방향에 따라 관여하는 근육이 나뉩니다.\n\n1. 발목 배측굴곡(발끝 들기): 전경골근이 주로 작용\n2. 발목 저측굴곡(까치발): 비복근·넙치근(하퇴삼두근)이 주로 작용\n3. 발목 내번: 후경골근, 전경골근이 함께 관여\n4. 발목 외번: 장비골근·단비골근이 관여\n\n특히 후경골근은 저측굴곡과 내번에 동시에 관여하는 근육으로, 발의 아치를 지지하는 데도 중요한 역할을 합니다. 장비골근 역시 외번 작용 외에 아치 지지 기능이 있어, 발목 동작을 발의 아치 안정성과 함께 이해하면 자세평가 단원(단원8)과도 자연스럽게 연결됩니다.",
+          "key_points": [
+            "발목 배측굴곡=전경골근, 저측굴곡=비복근+넙치근",
+            "발목 내번=후경골근+전경골근, 외번=장/단비골근",
+            "후경골근·장비골근은 각각 발의 아치 지지 기능도 함께 가짐"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 196
+        },
+        {
+          "order_index": 6,
+          "content_type": "quiz",
+          "question_format": "true_false",
+          "difficulty": 3,
+          "question": "체간 좌측 회전은 좌측 외복사근과 좌측 내복사근이 함께 수축하여 만들어진다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "체간 회전은 한쪽 외복사근과 반대쪽 내복사근이 짝을 이루어 작용합니다. 좌측 회전은 우측 외복사근과 좌측 내복사근의 협력으로 만들어집니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 188
+        },
+        {
+          "order_index": 7,
+          "content_type": "quiz",
+          "question_format": "multiple_choice",
+          "difficulty": 2,
+          "question": "한 발로 서는 동작에서 골반을 수평으로 유지하는 데 가장 중요한 고관절 외전근은?",
+          "options": [
+            "대둔근",
+            "중둔근",
+            "장요근",
+            "대퇴직근"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "중둔근은 한 발 서기에서 골반의 수평을 유지하는 핵심 고관절 외전근이며, 약화 시 트렌델렌버그 징후가 나타날 수 있습니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 193
+        },
+        {
+          "order_index": 8,
+          "content_type": "quiz",
+          "question_format": "true_false",
+          "difficulty": 2,
+          "question": "무릎을 살짝 굴곡시켜 완전 신전 잠김을 풀어주는 역할을 하는 근육은 슬와근이다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            0
+          ],
+          "explanation": "슬와근(Popliteus)은 경골을 내회전시켜 무릎의 완전 신전 잠김(screw-home mechanism)을 풀어주는 역할을 합니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 195
+        },
+        {
+          "order_index": 9,
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 3,
+          "question": "어깨관절을 머리 위로 완전히 들어올릴 때 견갑골이 함께 상방회전하지 않으면 발생할 수 있는 문제는?",
+          "options": [
+            "고관절 충돌",
+            "견봉-회전근개 힘줄 사이 충돌",
+            "무릎 잠김 이상",
+            "발목 배측굴곡 제한"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "견갑골의 상방회전이 상완골 거상과 함께 일어나지 않으면 견봉과 회전근개 힘줄 사이 공간이 좁아져 충돌증후군으로 이어질 수 있습니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 191
+        },
+        {
+          "order_index": 10,
+          "content_type": "exam",
+          "question_format": "true_false",
+          "difficulty": 2,
+          "question": "대퇴직근은 무릎관절만 지나가는 단관절근이다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "대퇴직근은 고관절과 무릎관절을 모두 지나가는 다관절근(이관절근)입니다. 고관절 굴곡과 무릎 신전에 동시에 관여합니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 195
+        },
+        {
+          "order_index": 11,
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 2,
+          "question": "발목 저측굴곡과 내번에 동시에 관여하며 발의 아치 지지에도 기여하는 근육은?",
+          "options": [
+            "전경골근",
+            "비복근",
+            "후경골근",
+            "장비골근"
+          ],
+          "answer_index": [
+            2
+          ],
+          "explanation": "후경골근(Tibialis posterior)은 발목 저측굴곡과 내번에 동시에 관여하며, 발의 내측 아치를 지지하는 역할도 함께 담당합니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 196
+        },
+        {
+          "order_index": 12,
+          "content_type": "exam",
+          "question_format": "true_false",
+          "difficulty": 3,
+          "question": "고관절 신전근인 대둔근이 약화되면 걷기 동작에서 고관절 신전 기능이 다른 근육으로 보상될 수 있다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            0
+          ],
+          "explanation": "대둔근이 약화되면 슬괵근이나 척추기립근이 고관절 신전을 보상하려는 패턴이 나타날 수 있어, 기능적 통합 관점에서 함께 살펴봐야 합니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 193
+        },
+        {
+          "order_index": 13,
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 2,
+          "question": "체간 신전 동작에서 척추기립근과 함께 주로 작용하는 심부 근육은?",
+          "options": [
+            "복직근",
+            "다열근",
+            "장요근",
+            "대둔근"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "다열근(Multifidus)은 척추 분절 안정화와 신전에 관여하는 심부 근육으로, 척추기립근과 함께 체간 신전에 작용합니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 188
+        }
+      ]
+    }
+  ]
+}

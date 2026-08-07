@@ -1,0 +1,259 @@
+﻿table_name,constraint_type,constraint_name,column_name,ref_table,ref_column,check_clause
+access_codes,CHECK,2200_18694_1_not_null,null,null,null,id IS NOT NULL
+access_codes,CHECK,2200_18694_2_not_null,null,null,null,code IS NOT NULL
+access_codes,FOREIGN KEY,access_codes_certification_id_fkey,certification_id,certifications,id,null
+access_codes,PRIMARY KEY,access_codes_pkey,id,null,null,null
+access_codes,UNIQUE,access_codes_code_key,code,null,null,null
+ad_banners,CHECK,2200_17786_1_not_null,null,null,null,id IS NOT NULL
+ad_banners,PRIMARY KEY,ad_banners_pkey,id,null,null,null
+categories,CHECK,2200_18399_2_not_null,null,null,null,name IS NOT NULL
+categories,CHECK,2200_18399_1_not_null,null,null,null,id IS NOT NULL
+categories,PRIMARY KEY,categories_pkey,id,null,null,null
+certification_subjects,CHECK,2200_18427_1_not_null,null,null,null,id IS NOT NULL
+certification_subjects,FOREIGN KEY,certification_subjects_certification_id_fkey,certification_id,certifications,id,null
+certification_subjects,FOREIGN KEY,certification_subjects_subject_id_fkey,subject_id,subjects,id,null
+certification_subjects,PRIMARY KEY,certification_subjects_pkey,id,null,null,null
+certifications,CHECK,2200_18410_1_not_null,null,null,null,id IS NOT NULL
+certifications,CHECK,2200_18410_3_not_null,null,null,null,name IS NOT NULL
+certifications,CHECK,certifications_type_check,null,null,null,"(type = ANY (ARRAY['national'::text, 'private'::text]))"
+certifications,FOREIGN KEY,certifications_category_id_fkey,category_id,categories,id,null
+certifications,FOREIGN KEY,certifications_partner_id_fkey,partner_id,partners,id,null
+certifications,PRIMARY KEY,certifications_pkey,id,null,null,null
+chapter_cards,CHECK,2200_17842_4_not_null,null,null,null,options IS NOT NULL
+chapter_cards,CHECK,2200_17842_1_not_null,null,null,null,id IS NOT NULL
+chapter_cards,CHECK,2200_17842_2_not_null,null,null,null,chapter_id IS NOT NULL
+chapter_cards,CHECK,2200_17842_3_not_null,null,null,null,question IS NOT NULL
+chapter_cards,FOREIGN KEY,chapter_cards_linked_quiz_id_fkey,linked_quiz_id,chapter_cards,id,null
+chapter_cards,FOREIGN KEY,chapter_questions_chapter_id_fkey,chapter_id,chapters,id,null
+chapter_cards,PRIMARY KEY,chapter_questions_pkey,id,null,null,null
+chapter_session_logs,CHECK,2200_18831_2_not_null,null,null,null,user_id IS NOT NULL
+chapter_session_logs,CHECK,chapter_session_logs_exit_point_check,null,null,null,"(exit_point = ANY (ARRAY['lesson_complete'::text, 'user_exit'::text, 'unload'::text, 'test_submit'::text, 'mini_quiz'::text, 'slide'::text]))"
+chapter_session_logs,CHECK,2200_18831_1_not_null,null,null,null,id IS NOT NULL
+chapter_session_logs,CHECK,2200_18831_3_not_null,null,null,null,chapter_id IS NOT NULL
+chapter_session_logs,PRIMARY KEY,chapter_session_logs_pkey,id,null,null,null
+chapter_stats,CHECK,2200_18069_1_not_null,null,null,null,id IS NOT NULL
+chapter_stats,FOREIGN KEY,chapter_stats_certification_id_fkey,certification_id,certifications,id,null
+chapter_stats,PRIMARY KEY,chapter_stats_pkey,id,null,null,null
+chapter_test_history,CHECK,2200_18296_1_not_null,null,null,null,id IS NOT NULL
+chapter_test_history,CHECK,2200_18296_5_not_null,null,null,null,attempt_number IS NOT NULL
+chapter_test_history,CHECK,2200_18296_4_not_null,null,null,null,score IS NOT NULL
+chapter_test_history,FOREIGN KEY,chapter_test_history_user_id_fkey,user_id,null,null,null
+chapter_test_history,FOREIGN KEY,chapter_test_history_chapter_id_fkey,chapter_id,chapters,id,null
+chapter_test_history,PRIMARY KEY,chapter_test_history_pkey,id,null,null,null
+chapter_test_results,CHECK,2200_17874_1_not_null,null,null,null,id IS NOT NULL
+chapter_test_results,CHECK,2200_17874_4_not_null,null,null,null,score IS NOT NULL
+chapter_test_results,CHECK,2200_17874_3_not_null,null,null,null,chapter_id IS NOT NULL
+chapter_test_results,CHECK,2200_17874_5_not_null,null,null,null,total IS NOT NULL
+chapter_test_results,CHECK,2200_17874_2_not_null,null,null,null,user_id IS NOT NULL
+chapter_test_results,FOREIGN KEY,chapter_test_results_chapter_id_fkey,chapter_id,chapters,id,null
+chapter_test_results,FOREIGN KEY,chapter_test_results_user_id_fkey,user_id,profiles,id,null
+chapter_test_results,PRIMARY KEY,chapter_test_results_pkey,id,null,null,null
+chapters,CHECK,2200_17825_2_not_null,null,null,null,course_id IS NOT NULL
+chapters,CHECK,2200_17825_3_not_null,null,null,null,title IS NOT NULL
+chapters,CHECK,2200_17825_1_not_null,null,null,null,id IS NOT NULL
+chapters,FOREIGN KEY,chapters_course_id_fkey,course_id,courses,id,null
+chapters,PRIMARY KEY,chapters_pkey,id,null,null,null
+content_purchases,CHECK,2200_17767_1_not_null,null,null,null,id IS NOT NULL
+content_purchases,FOREIGN KEY,content_purchases_user_id_fkey,user_id,profiles,id,null
+content_purchases,FOREIGN KEY,content_purchases_subject_id_fkey,subject_id,subjects,id,null
+content_purchases,PRIMARY KEY,content_purchases_pkey,id,null,null,null
+course_certifications,CHECK,2200_19484_2_not_null,null,null,null,course_id IS NOT NULL
+course_certifications,CHECK,2200_19484_1_not_null,null,null,null,id IS NOT NULL
+course_certifications,CHECK,2200_19484_3_not_null,null,null,null,certification_id IS NOT NULL
+course_certifications,FOREIGN KEY,course_certifications_certification_id_fkey,certification_id,certifications,id,null
+course_certifications,FOREIGN KEY,course_certifications_course_id_fkey,course_id,courses,id,null
+course_certifications,PRIMARY KEY,course_certifications_pkey,id,null,null,null
+course_certifications,UNIQUE,course_certifications_course_id_certification_id_key,course_id,null,null,null
+course_certifications,UNIQUE,course_certifications_course_id_certification_id_key,certification_id,null,null,null
+courses,CHECK,2200_17662_4_not_null,null,null,null,category IS NOT NULL
+courses,CHECK,2200_17662_2_not_null,null,null,null,title IS NOT NULL
+courses,CHECK,2200_17662_1_not_null,null,null,null,id IS NOT NULL
+courses,FOREIGN KEY,courses_subject_id_fkey,subject_id,subjects,id,null
+courses,FOREIGN KEY,courses_certification_id_fkey,certification_id,certifications,id,null
+courses,PRIMARY KEY,courses_pkey,id,null,null,null
+exam_registrations,CHECK,2200_18208_5_not_null,null,null,null,round IS NOT NULL
+exam_registrations,CHECK,2200_18208_7_not_null,null,null,null,created_at IS NOT NULL
+exam_registrations,CHECK,2200_18208_2_not_null,null,null,null,name IS NOT NULL
+exam_registrations,CHECK,2200_18208_1_not_null,null,null,null,id IS NOT NULL
+exam_registrations,CHECK,2200_18208_3_not_null,null,null,null,phone IS NOT NULL
+exam_registrations,FOREIGN KEY,exam_registrations_user_id_fkey,user_id,null,null,null
+exam_registrations,PRIMARY KEY,exam_registrations_pkey,id,null,null,null
+exam_results,CHECK,2200_18224_8_not_null,null,null,null,created_at IS NOT NULL
+exam_results,CHECK,2200_18224_4_not_null,null,null,null,round IS NOT NULL
+exam_results,CHECK,2200_18224_2_not_null,null,null,null,user_id IS NOT NULL
+exam_results,CHECK,2200_18224_1_not_null,null,null,null,id IS NOT NULL
+exam_results,CHECK,2200_18224_5_not_null,null,null,null,score IS NOT NULL
+exam_results,CHECK,2200_18224_6_not_null,null,null,null,total_questions IS NOT NULL
+exam_results,FOREIGN KEY,exam_results_schedule_id_fkey,schedule_id,exam_schedules,id,null
+exam_results,FOREIGN KEY,exam_results_user_id_fkey,user_id,profiles,id,null
+exam_results,PRIMARY KEY,exam_results_pkey,id,null,null,null
+exam_schedules,CHECK,2200_18197_4_not_null,null,null,null,start_time IS NOT NULL
+exam_schedules,CHECK,2200_18197_2_not_null,null,null,null,round IS NOT NULL
+exam_schedules,CHECK,2200_18197_7_not_null,null,null,null,is_active IS NOT NULL
+exam_schedules,CHECK,2200_18197_8_not_null,null,null,null,created_at IS NOT NULL
+exam_schedules,CHECK,2200_18197_3_not_null,null,null,null,exam_date IS NOT NULL
+exam_schedules,CHECK,2200_18197_1_not_null,null,null,null,id IS NOT NULL
+exam_schedules,CHECK,2200_18197_5_not_null,null,null,null,title IS NOT NULL
+exam_schedules,FOREIGN KEY,exam_schedules_certification_id_fkey,certification_id,certifications,id,null
+exam_schedules,PRIMARY KEY,exam_schedules_pkey,id,null,null,null
+guest_test_results,CHECK,2200_17705_1_not_null,null,null,null,id IS NOT NULL
+guest_test_results,CHECK,2200_17705_2_not_null,null,null,null,guest_id IS NOT NULL
+guest_test_results,PRIMARY KEY,guest_test_results_pkey,id,null,null,null
+landing_test_sessions,CHECK,2200_17693_1_not_null,null,null,null,id IS NOT NULL
+landing_test_sessions,PRIMARY KEY,landing_test_sessions_pkey,id,null,null,null
+leaderboard,CHECK,2200_17646_2_not_null,null,null,null,user_id IS NOT NULL
+leaderboard,CHECK,2200_17646_1_not_null,null,null,null,id IS NOT NULL
+leaderboard,FOREIGN KEY,leaderboard_user_id_fkey,user_id,profiles,id,null
+leaderboard,PRIMARY KEY,leaderboard_pkey,id,null,null,null
+leaderboard,UNIQUE,leaderboard_user_id_key,user_id,null,null,null
+learning_progress,CHECK,2200_17581_2_not_null,null,null,null,user_id IS NOT NULL
+learning_progress,CHECK,2200_17581_1_not_null,null,null,null,id IS NOT NULL
+learning_progress,CHECK,2200_17581_4_not_null,null,null,null,section IS NOT NULL
+learning_progress,CHECK,2200_17581_3_not_null,null,null,null,chapter IS NOT NULL
+learning_progress,FOREIGN KEY,learning_progress_user_id_fkey,user_id,profiles,id,null
+learning_progress,PRIMARY KEY,learning_progress_pkey,id,null,null,null
+learning_progress,UNIQUE,learning_progress_user_id_chapter_section_key,user_id,null,null,null
+learning_progress,UNIQUE,learning_progress_user_id_chapter_section_key,chapter,null,null,null
+learning_progress,UNIQUE,learning_progress_user_id_chapter_section_key,section,null,null,null
+learning_progress_v2,CHECK,2200_18531_1_not_null,null,null,null,id IS NOT NULL
+learning_progress_v2,CHECK,2200_18531_2_not_null,null,null,null,user_id IS NOT NULL
+learning_progress_v2,FOREIGN KEY,learning_progress_v2_certification_id_fkey,certification_id,certifications,id,null
+learning_progress_v2,FOREIGN KEY,learning_progress_v2_chapter_id_fkey,chapter_id,chapters,id,null
+learning_progress_v2,FOREIGN KEY,learning_progress_v2_course_id_fkey,course_id,courses,id,null
+learning_progress_v2,PRIMARY KEY,learning_progress_v2_pkey,id,null,null,null
+learning_progress_v2,UNIQUE,learning_progress_v2_user_id_chapter_id_key,user_id,null,null,null
+learning_progress_v2,UNIQUE,learning_progress_v2_user_id_chapter_id_key,chapter_id,null,null,null
+lesson_questions,CHECK,2200_17858_4_not_null,null,null,null,options IS NOT NULL
+lesson_questions,CHECK,2200_17858_1_not_null,null,null,null,id IS NOT NULL
+lesson_questions,CHECK,2200_17858_2_not_null,null,null,null,lesson_id IS NOT NULL
+lesson_questions,CHECK,2200_17858_3_not_null,null,null,null,question IS NOT NULL
+lesson_questions,CHECK,2200_17858_5_not_null,null,null,null,answer_index IS NOT NULL
+lesson_questions,FOREIGN KEY,lesson_questions_lesson_id_fkey,lesson_id,lessons,id,null
+lesson_questions,PRIMARY KEY,lesson_questions_pkey,id,null,null,null
+lesson_slide_logs,CHECK,2200_18813_2_not_null,null,null,null,user_id IS NOT NULL
+lesson_slide_logs,CHECK,2200_18813_5_not_null,null,null,null,slide_index IS NOT NULL
+lesson_slide_logs,CHECK,2200_18813_3_not_null,null,null,null,chapter_id IS NOT NULL
+lesson_slide_logs,CHECK,2200_18813_1_not_null,null,null,null,id IS NOT NULL
+lesson_slide_logs,PRIMARY KEY,lesson_slide_logs_pkey,id,null,null,null
+lessons,CHECK,2200_17675_3_not_null,null,null,null,title IS NOT NULL
+lessons,CHECK,2200_17675_5_not_null,null,null,null,lesson_type IS NOT NULL
+lessons,CHECK,2200_17675_1_not_null,null,null,null,id IS NOT NULL
+lessons,CHECK,2200_17675_2_not_null,null,null,null,course_id IS NOT NULL
+lessons,FOREIGN KEY,lessons_course_id_fkey,course_id,courses,id,null
+lessons,PRIMARY KEY,lessons_pkey,id,null,null,null
+mock_exam_bookings,CHECK,2200_18604_1_not_null,null,null,null,id IS NOT NULL
+mock_exam_bookings,CHECK,2200_18604_4_not_null,null,null,null,exam_type IS NOT NULL
+mock_exam_bookings,CHECK,2200_18604_7_not_null,null,null,null,selected_date IS NOT NULL
+mock_exam_bookings,CHECK,2200_18604_5_not_null,null,null,null,week_number IS NOT NULL
+mock_exam_bookings,CHECK,2200_18604_6_not_null,null,null,null,week_start_date IS NOT NULL
+mock_exam_bookings,FOREIGN KEY,mock_exam_bookings_user_id_fkey,user_id,profiles,id,null
+mock_exam_bookings,PRIMARY KEY,mock_exam_bookings_pkey,id,null,null,null
+oral_exam_registrations,CHECK,2200_18731_7_not_null,null,null,null,ticket_number IS NOT NULL
+oral_exam_registrations,CHECK,2200_18731_6_not_null,null,null,null,slot_number IS NOT NULL
+oral_exam_registrations,CHECK,2200_18731_5_not_null,null,null,null,week_number IS NOT NULL
+oral_exam_registrations,CHECK,2200_18731_4_not_null,null,null,null,exam_date IS NOT NULL
+oral_exam_registrations,CHECK,2200_18731_8_not_null,null,null,null,start_time IS NOT NULL
+oral_exam_registrations,CHECK,2200_18731_1_not_null,null,null,null,id IS NOT NULL
+oral_exam_registrations,FOREIGN KEY,oral_exam_registrations_certification_id_fkey,certification_id,certifications,id,null
+oral_exam_registrations,FOREIGN KEY,oral_exam_registrations_user_id_fkey,user_id,profiles,id,null
+oral_exam_registrations,PRIMARY KEY,oral_exam_registrations_pkey,id,null,null,null
+partners,CHECK,2200_18561_1_not_null,null,null,null,id IS NOT NULL
+partners,CHECK,2200_18561_2_not_null,null,null,null,name IS NOT NULL
+partners,PRIMARY KEY,partners_pkey,id,null,null,null
+profiles,CHECK,profiles_role_check,null,null,null,"(role = ANY (ARRAY['trainer'::text, 'member'::text]))"
+profiles,CHECK,2200_17565_1_not_null,null,null,null,id IS NOT NULL
+profiles,FOREIGN KEY,profiles_certification_id_fkey,certification_id,certifications,id,null
+profiles,PRIMARY KEY,profiles_pkey,id,null,null,null
+profiles,UNIQUE,profiles_sub_key,sub,null,null,null
+profiles,UNIQUE,profiles_phone_key,phone,null,null,null
+profiles,UNIQUE,profiles_email_unique,email,null,null,null
+question_stats,CHECK,2200_18089_1_not_null,null,null,null,id IS NOT NULL
+question_stats,FOREIGN KEY,question_stats_user_id_fkey,user_id,profiles,id,null
+question_stats,PRIMARY KEY,question_stats_pkey,id,null,null,null
+question_stats,UNIQUE,question_stats_user_id_question_id_key,question_id,null,null,null
+question_stats,UNIQUE,question_stats_user_id_question_id_key,user_id,null,null,null
+quiz_performance_logs,CHECK,2200_18823_2_not_null,null,null,null,user_id IS NOT NULL
+quiz_performance_logs,CHECK,2200_18823_1_not_null,null,null,null,id IS NOT NULL
+quiz_performance_logs,CHECK,2200_18823_5_not_null,null,null,null,question_type IS NOT NULL
+quiz_performance_logs,CHECK,2200_18823_4_not_null,null,null,null,question_id IS NOT NULL
+quiz_performance_logs,PRIMARY KEY,quiz_performance_logs_pkey,id,null,null,null
+subjects,CHECK,2200_17718_2_not_null,null,null,null,name IS NOT NULL
+subjects,CHECK,2200_17718_1_not_null,null,null,null,id IS NOT NULL
+subjects,FOREIGN KEY,subjects_category_id_fkey,category_id,categories,id,null
+subjects,PRIMARY KEY,subjects_pkey,id,null,null,null
+subscription_features,CHECK,2200_18122_1_not_null,null,null,null,plan IS NOT NULL
+subscription_features,PRIMARY KEY,subscription_features_pkey,plan,null,null,null
+subscription_plans,CHECK,2200_17734_1_not_null,null,null,null,id IS NOT NULL
+subscription_plans,CHECK,2200_17734_2_not_null,null,null,null,name IS NOT NULL
+subscription_plans,PRIMARY KEY,subscription_plans_pkey,id,null,null,null
+subscription_plans,UNIQUE,subscription_plans_name_key,name,null,null,null
+test_results,CHECK,2200_17598_1_not_null,null,null,null,id IS NOT NULL
+test_results,CHECK,2200_17598_2_not_null,null,null,null,user_id IS NOT NULL
+test_results,CHECK,2200_17598_3_not_null,null,null,null,chapter IS NOT NULL
+test_results,CHECK,2200_17598_4_not_null,null,null,null,score IS NOT NULL
+test_results,CHECK,2200_17598_5_not_null,null,null,null,total IS NOT NULL
+test_results,FOREIGN KEY,test_results_user_id_fkey,user_id,profiles,id,null
+test_results,PRIMARY KEY,test_results_pkey,id,null,null,null
+user_access_codes,CHECK,2200_18753_1_not_null,null,null,null,id IS NOT NULL
+user_access_codes,FOREIGN KEY,user_access_codes_code_id_fkey,code_id,access_codes,id,null
+user_access_codes,FOREIGN KEY,user_access_codes_user_id_fkey,user_id,profiles,id,null
+user_access_codes,PRIMARY KEY,user_access_codes_pkey,id,null,null,null
+user_access_codes,UNIQUE,user_access_codes_user_id_code_id_key,code_id,null,null,null
+user_access_codes,UNIQUE,user_access_codes_user_id_code_id_key,user_id,null,null,null
+user_badges,CHECK,2200_17630_4_not_null,null,null,null,badge_name IS NOT NULL
+user_badges,CHECK,2200_17630_3_not_null,null,null,null,badge_type IS NOT NULL
+user_badges,CHECK,2200_17630_2_not_null,null,null,null,user_id IS NOT NULL
+user_badges,CHECK,2200_17630_1_not_null,null,null,null,id IS NOT NULL
+user_badges,FOREIGN KEY,user_badges_user_id_fkey,user_id,profiles,id,null
+user_badges,PRIMARY KEY,user_badges_pkey,id,null,null,null
+user_badges,UNIQUE,user_badges_user_id_badge_type_key,badge_type,null,null,null
+user_badges,UNIQUE,user_badges_user_id_badge_type_key,user_id,null,null,null
+user_certifications,CHECK,2200_18638_5_not_null,null,null,null,subjects IS NOT NULL
+user_certifications,CHECK,2200_18638_6_not_null,null,null,null,exam_type IS NOT NULL
+user_certifications,CHECK,2200_18638_8_not_null,null,null,null,order_index IS NOT NULL
+user_certifications,CHECK,2200_18638_7_not_null,null,null,null,is_active IS NOT NULL
+user_certifications,CHECK,2200_18638_1_not_null,null,null,null,id IS NOT NULL
+user_certifications,CHECK,2200_18638_2_not_null,null,null,null,user_id IS NOT NULL
+user_certifications,CHECK,2200_18638_3_not_null,null,null,null,cert_id IS NOT NULL
+user_certifications,CHECK,2200_18638_4_not_null,null,null,null,cert_label IS NOT NULL
+user_certifications,FOREIGN KEY,user_certifications_user_id_fkey,user_id,profiles,id,null
+user_certifications,PRIMARY KEY,user_certifications_pkey,id,null,null,null
+user_events,CHECK,2200_18777_1_not_null,null,null,null,id IS NOT NULL
+user_events,FOREIGN KEY,user_events_user_id_fkey,user_id,profiles,id,null
+user_events,PRIMARY KEY,user_events_pkey,id,null,null,null
+user_gamification,CHECK,2200_17612_2_not_null,null,null,null,user_id IS NOT NULL
+user_gamification,CHECK,2200_17612_1_not_null,null,null,null,id IS NOT NULL
+user_gamification,FOREIGN KEY,user_gamification_user_id_fkey,user_id,profiles,id,null
+user_gamification,PRIMARY KEY,user_gamification_pkey,id,null,null,null
+user_gamification,UNIQUE,user_gamification_user_id_key,user_id,null,null,null
+user_goals,CHECK,2200_18253_1_not_null,null,null,null,id IS NOT NULL
+user_goals,FOREIGN KEY,user_goals_profile_id_fkey,profile_id,profiles,id,null
+user_goals,FOREIGN KEY,user_goals_user_id_fkey,user_id,null,null,null
+user_goals,PRIMARY KEY,user_goals_pkey,id,null,null,null
+user_reviews,CHECK,2200_18869_1_not_null,null,null,null,id IS NOT NULL
+user_reviews,CHECK,2200_18869_3_not_null,null,null,null,star_rating IS NOT NULL
+user_reviews,CHECK,user_reviews_star_rating_check,null,null,null,((star_rating >= 1) AND (star_rating <= 5))
+user_reviews,FOREIGN KEY,user_reviews_user_id_fkey,user_id,profiles,id,null
+user_reviews,PRIMARY KEY,user_reviews_pkey,id,null,null,null
+user_subscriptions,CHECK,2200_17747_1_not_null,null,null,null,id IS NOT NULL
+user_subscriptions,FOREIGN KEY,user_subscriptions_plan_id_fkey,plan_id,subscription_plans,id,null
+user_subscriptions,FOREIGN KEY,user_subscriptions_user_id_fkey,user_id,profiles,id,null
+user_subscriptions,PRIMARY KEY,user_subscriptions_pkey,id,null,null,null
+user_wrong_answers,CHECK,2200_19505_2_not_null,null,null,null,user_id IS NOT NULL
+user_wrong_answers,CHECK,2200_19505_7_not_null,null,null,null,wrong_count IS NOT NULL
+user_wrong_answers,CHECK,2200_19505_5_not_null,null,null,null,selected_index IS NOT NULL
+user_wrong_answers,CHECK,2200_19505_3_not_null,null,null,null,question_id IS NOT NULL
+user_wrong_answers,CHECK,2200_19505_8_not_null,null,null,null,last_wrong_at IS NOT NULL
+user_wrong_answers,CHECK,2200_19505_1_not_null,null,null,null,id IS NOT NULL
+user_wrong_answers,FOREIGN KEY,user_wrong_answers_user_id_fkey,user_id,profiles,id,null
+user_wrong_answers,PRIMARY KEY,user_wrong_answers_pkey,id,null,null,null
+user_wrong_answers,UNIQUE,user_wrong_answers_user_id_question_id_key,question_id,null,null,null
+user_wrong_answers,UNIQUE,user_wrong_answers_user_id_question_id_key,user_id,null,null,null
+video_bookmarks,CHECK,2200_18108_1_not_null,null,null,null,id IS NOT NULL
+video_bookmarks,FOREIGN KEY,video_bookmarks_user_id_fkey,user_id,profiles,id,null
+video_bookmarks,PRIMARY KEY,video_bookmarks_pkey,id,null,null,null
+wrong_answers,CHECK,2200_18948_1_not_null,null,null,null,id IS NOT NULL
+wrong_answers,CHECK,2200_18948_3_not_null,null,null,null,chapter_id IS NOT NULL
+wrong_answers,CHECK,2200_18948_4_not_null,null,null,null,question_id IS NOT NULL
+wrong_answers,FOREIGN KEY,wrong_answers_user_id_fkey,user_id,profiles,id,null
+wrong_answers,PRIMARY KEY,wrong_answers_pkey,id,null,null,null

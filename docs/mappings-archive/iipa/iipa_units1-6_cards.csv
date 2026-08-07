@@ -1,0 +1,847 @@
+﻿id,chapter_id,chapter_title,course_title,order_index,content_type,question,explanation
+ea627362-cc6a-4f7f-8e9b-23a364c0d612,46765992-863d-4509-b773-c25d5595c18f,해부학적 자세와 기본 자세,해부학 기초,1,lesson,해부학적 자세 (Anatomical Position)란?,"해부학적 자세(Anatomical Position)는 인체의 위치와 방향을 설명하기 위한 표준 기준 자세입니다.
+
+조건:
+① 똑바로 선다 (직립)
+② 정면을 바라본다
+③ 양팔은 몸통 옆에 자연스럽게 내린다
+④ 손바닥은 앞(전방)을 향한다 — 엄지가 바깥쪽
+⑤ 양 발은 약간 벌려 평행하게 놓는다
+
+이 자세를 기준으로 모든 해부학적 방향, 면, 움직임을 설명합니다."
+9254058f-7edd-4935-bf9f-c028508de574,46765992-863d-4509-b773-c25d5595c18f,해부학적 자세와 기본 자세,해부학 기초,2,lesson,운동 기본 자세의 종류,"필라테스와 운동에서 자주 사용하는 기본 자세들입니다:
+
+① Supine position (앙와위/바로 누운 자세): 등을 바닥에 대고 누운 자세
+② Prone position (복와위/엎드린 자세): 배를 바닥에 대고 엎드린 자세
+③ Side-lying position (측와위/옆으로 누운 자세): 옆으로 누운 자세
+④ Quadruped position (네발기기 자세): 양 손과 양 무릎을 바닥에 짚은 자세
+⑤ Kneeling position (무릎 꿇기 자세): 무릎을 꿇고 상체를 세운 자세
+⑥ Standing position (기립 자세): 서 있는 자세"
+66a9092b-9cbc-4eff-9d94-db95e26783e1,46765992-863d-4509-b773-c25d5595c18f,해부학적 자세와 기본 자세,해부학 기초,3,lesson,자세에 따른 관절 움직임 분석,"각 운동 자세에서 주요 관절이 어떤 위치에 있는지 파악하는 것은 동작 분석의 기초입니다.
+
+Quadruped position(네발기기 자세):
+• 견관절(Shoulder): 약 90° 굴곡(Flexion)
+• 주관절(Elbow): 신전(Extension) — 팔을 곧게 편 상태
+• 고관절(Hip): 약 90° 굴곡(Flexion)
+• 슬관절(Knee): 약 90° 굴곡(Flexion)"
+c1db5d69-3d46-475f-b0e3-5ea56102f214,46765992-863d-4509-b773-c25d5595c18f,해부학적 자세와 기본 자세,해부학 기초,4,quiz,해부학적 자세에서 손바닥은 몸의 앞쪽(전방)을 향한다.,"해부학적 자세에서 손바닥은 반드시 앞(전방)을 향합니다. 이는 전완의 회외(supination) 상태를 기준으로 잡기 위함입니다. 일상에서 팔을 자연스럽게 내리면 손바닥이 몸쪽을 향하지만, 해부학적 자세에서는 앞을 향해야 합니다."
+33cfc93d-9bc3-4dfb-ab5b-b5edbf4070df,46765992-863d-4509-b773-c25d5595c18f,해부학적 자세와 기본 자세,해부학 기초,5,quiz,Quadruped position(네발기기 자세)에서 고관절은 신전(Extension) 상태이다.,"Quadruped position에서 고관절은 약 90° 굴곡(Flexion) 상태입니다. 엉덩이가 무릎 위에 위치하므로 고관절이 접혀 있는 상태입니다. 신전(Extension)은 고관절이 펴지는 것으로, Kneeling이나 Standing 자세에서의 상태입니다."
+a90d1bb7-b052-4e17-8bc3-45944c18a958,46765992-863d-4509-b773-c25d5595c18f,해부학적 자세와 기본 자세,해부학 기초,6,quiz,다음 중 해부학적 자세에 대한 설명으로 올바른 것은?,"해부학적 자세는 직립, 정면 주시, 양팔은 몸통 옆에 자연스럽게 내리고, 손바닥은 앞(전방)을 향하며, 양 발은 약간 벌려 평행하게 놓은 자세입니다."
+48b4130b-f574-4276-b36c-edeb4c4a7d9f,46765992-863d-4509-b773-c25d5595c18f,해부학적 자세와 기본 자세,해부학 기초,7,exam,해부학적 자세(Anatomical Position)에 대한 설명으로 옳은 것을 모두 포함한 보기는?,"해부학적 자세의 조건: ① 직립 ② 정면 주시 ③ 양팔 몸통 옆 ④ 손바닥 전방 ⑤ 양 발 약간 벌려 평행. 보기 2는 손바닥이 몸쪽(오답), 보기 3은 손바닥이 뒤(오답), 보기 4는 옆을 봄(오답)."
+75c325d6-0740-452a-9050-1bf653b4d81c,46765992-863d-4509-b773-c25d5595c18f,해부학적 자세와 기본 자세,해부학 기초,8,exam,"다음은 어떤 자세이며, 고관절(Hip)의 움직임은 무엇인가?",이미지에서 양 손과 양 무릎이 바닥에 있으므로 Quadruped position(네발기기 자세)입니다. 이 자세에서 고관절은 약 90° 굴곡(Flexion) 상태입니다. Kneeling은 무릎만 바닥에 닿고 상체가 직립한 자세입니다.
+6d1081ec-5dd0-45a5-a473-cac7316bdc24,46765992-863d-4509-b773-c25d5595c18f,해부학적 자세와 기본 자세,해부학 기초,9,exam,다음 중 Prone position(복와위)에 대한 설명으로 올바른 것은?,Prone = 엎드린(복와위). Supine = 바로 누운(앙와위). Side-lying = 옆으로 누운(측와위). Kneeling = 무릎 꿇기.
+25666a63-4303-4f27-8243-9293c75f0e67,61e82564-b076-4771-8503-f8f71202a376,해부학적 면과 축,해부학 기초,1,lesson,해부학적 면 (Anatomical Planes)의 개념,"해부학적 면(Plane)은 인체를 가상으로 나누는 평평한 면입니다. 3가지 기본 면이 있습니다:
+
+① Sagittal Plane (시상면): 인체를 좌우로 나누는 면
+② Frontal/Coronal Plane (전두면/관상면): 인체를 전후로 나누는 면
+③ Transverse/Horizontal Plane (횡단면/수평면): 인체를 상하로 나누는 면
+
+각 면에서 특정 움직임이 일어납니다."
+bb5c925f-d822-45d5-b2c0-615d64f17c07,61e82564-b076-4771-8503-f8f71202a376,해부학적 면과 축,해부학 기초,2,lesson,시상면 (Sagittal Plane),"시상면(Sagittal Plane)은 인체를 좌(왼쪽)와 우(오른쪽)로 나누는 수직면입니다.
+
+• 정중시상면(Midsagittal/Median Plane): 정확히 좌우 대칭으로 나누는 면
+• 방시상면(Parasagittal Plane): 정중앙에서 벗어난 좌우 분할 면
+
+시상면에서 일어나는 움직임:
+• Flexion (굴곡)
+• Extension (신전)
+• Dorsiflexion (배측굴곡)
+• Plantarflexion (저측굴곡)"
+398c0970-c1f1-4d56-8aa3-d81d73bd40b5,61e82564-b076-4771-8503-f8f71202a376,해부학적 면과 축,해부학 기초,3,lesson,관상면/전두면 (Frontal/Coronal Plane),"관상면(Frontal Plane = Coronal Plane)은 인체를 전(앞)과 후(뒤)로 나누는 수직면입니다.
+
+⚠️ Frontal Plane과 Coronal Plane은 같은 면입니다!
+
+관상면에서 일어나는 움직임:
+• Abduction (외전) — 몸 중심에서 멀어지는 움직임
+• Adduction (내전) — 몸 중심으로 가까워지는 움직임
+• Lateral Flexion (외측굴곡) — 몸통의 옆으로 구부리기
+• Inversion/Eversion (내번/외번) — 발목의 안/바깥 기울임"
+73b49e2f-d3d2-4e10-9739-7dff593b46db,61e82564-b076-4771-8503-f8f71202a376,해부학적 면과 축,해부학 기초,4,lesson,횡단면/수평면 (Transverse/Horizontal Plane),"횡단면(Transverse Plane = Horizontal Plane)은 인체를 상(위)과 하(아래)로 나누는 수평면입니다.
+
+횡단면에서 일어나는 움직임:
+• Internal Rotation (내회전) — 몸 안쪽으로의 회전
+• External Rotation (외회전) — 몸 바깥쪽으로의 회전
+• Pronation (회내) — 전완의 안쪽 회전
+• Supination (회외) — 전완의 바깥 회전
+• Horizontal Abduction/Adduction (수평 외전/내전)"
+c2ff4fad-e808-428f-9db1-1c3bdc4a6893,61e82564-b076-4771-8503-f8f71202a376,해부학적 면과 축,해부학 기초,5,quiz,Frontal Plane(전두면)과 Coronal Plane(관상면)은 서로 다른 면이다.,Frontal Plane(전두면)과 Coronal Plane(관상면)은 같은 면의 다른 이름입니다. 둘 다 인체를 전(앞)과 후(뒤)로 나누는 수직면을 가리킵니다. 시험에서 이 두 용어를 별도 선지로 제시하여 혼동을 유도하므로 주의해야 합니다.
+6f8563d0-0f15-4c72-a370-d5fd30dc0ff7,61e82564-b076-4771-8503-f8f71202a376,해부학적 면과 축,해부학 기초,6,quiz,팔꿈치를 구부리는 Elbow Flexion 동작은 어떤 면에서 일어나는 움직임인가?,"Flexion(굴곡)과 Extension(신전)은 시상면(Sagittal Plane)에서 일어나는 움직임입니다. 시상면은 인체를 좌우로 나누며, 앞뒤로 구부리고 펴는 동작이 이 면에서 발생합니다."
+af4f7f5f-0189-46a5-8e51-4eeb9c7a184d,61e82564-b076-4771-8503-f8f71202a376,해부학적 면과 축,해부학 기초,7,quiz,어깨를 옆으로 들어올리는 Shoulder Abduction은 어떤 면에서 일어나는 움직임인가?,"Abduction(외전)과 Adduction(내전)은 관상면(Frontal/Coronal Plane)에서 일어나는 움직임입니다. 관상면은 인체를 전후로 나누며, 좌우로 벌리고 모으는 동작이 이 면에서 발생합니다."
+521fdfb2-927a-4a48-8374-4e62c022c808,61e82564-b076-4771-8503-f8f71202a376,해부학적 면과 축,해부학 기초,8,exam,다음은 어떤 면을 나타낸 그림인가?,"그림은 인체를 좌우로 나누는 시상면(Sagittal Plane)을 보여줍니다. 보기 1번 Frontal Plane(전두면)과 3번 Coronal Plane(관상면)은 같은 면의 다른 이름이므로, 두 보기 모두 정답이 될 수 없습니다(하나만 정답인 문제에서 같은 면이 2개면 둘 다 오답). 이것이 시험의 출제 의도입니다."
+f752ab52-0001-4184-847f-b80b8574f769,61e82564-b076-4771-8503-f8f71202a376,해부학적 면과 축,해부학 기초,9,exam,다음은 어떤 면에서 신체를 관찰하는 것인가?,"그림은 인체의 측면(옆모습)에서 관찰하는 시상면(Sagittal Plane)을 보여줍니다. 보기 1번 Frontal Plane과 3번 Coronal Plane은 모두 '관상면'이라는 같은 뜻의 한국어 번역이 적혀 있어, 둘 다 같은 면을 가리킵니다."
+3374a02c-725d-4d43-8fbc-797c636442ce,61e82564-b076-4771-8503-f8f71202a376,해부학적 면과 축,해부학 기초,10,exam,다음 중 횡단면(Transverse Plane)에서 일어나는 움직임을 모두 포함한 것은?,"횡단면(Transverse Plane)에서는 회전(Rotation) 계열 움직임이 일어납니다: Internal/External Rotation, Pronation/Supination, Horizontal Abduction/Adduction 등. Flexion/Extension은 시상면, Abduction/Adduction은 관상면, Dorsiflexion/Plantarflexion은 시상면에서 일어납니다."
+ec4d812c-a27d-4af9-9c2e-354918b2381c,61e82564-b076-4771-8503-f8f71202a376,해부학적 면과 축,해부학 기초,11,exam,다음 각 면과 움직임의 연결이 올바른 것은?,"시상면(Sagittal Plane)에서는 Flexion/Extension이 일어납니다. Abduction/Adduction은 관상면, Lateral Flexion도 관상면에서 일어납니다."
+b451ca1c-5306-449a-94b3-a9e0e5dbcc96,ee39f006-ac8d-4c44-a1bc-3ae9e0de46f3,해부학적 방향 용어,해부학 기초,1,lesson,"기본 방향 용어: Superior/Inferior, Anterior/Posterior","해부학적 방향 용어는 인체의 위치를 정확히 표현하기 위한 표준 용어입니다.
+
+① Superior (상방) / Inferior (하방)
+• Superior = 위쪽 (머리 방향, Cranial)
+• Inferior = 아래쪽 (발 방향, Caudal)
+• 예: 머리는 목보다 Superior, 발은 무릎보다 Inferior
+
+② Anterior (전방) / Posterior (후방)
+• Anterior = 앞쪽 (Ventral)
+• Posterior = 뒤쪽 (Dorsal)
+• 예: 가슴은 등보다 Anterior, 엉덩이는 배보다 Posterior"
+640fa35f-3c2f-4801-a68a-e4bcb0d64c22,ee39f006-ac8d-4c44-a1bc-3ae9e0de46f3,해부학적 방향 용어,해부학 기초,2,lesson,"기본 방향 용어: Medial/Lateral, Proximal/Distal","③ Medial (내측) / Lateral (외측)
+• Medial = 몸의 정중선(midline)에 가까운 쪽
+• Lateral = 몸의 정중선에서 먼 쪽
+• 예: 엄지손가락은 새끼손가락보다 Lateral (해부학적 자세에서), 무릎 안쪽 = Medial knee
+
+④ Proximal (근위) / Distal (원위)
+• Proximal = 몸통(중심)에 가까운 쪽
+• Distal = 몸통에서 먼 쪽
+• 예: 어깨는 손목보다 Proximal, 손가락은 팔꿈치보다 Distal
+• 주로 사지(팔, 다리)에서 사용"
+8d337f83-f9b5-4163-8945-755b3479c276,ee39f006-ac8d-4c44-a1bc-3ae9e0de46f3,해부학적 방향 용어,해부학 기초,3,lesson,"추가 방향 용어: Superficial/Deep, Ipsilateral/Contralateral","⑤ Superficial (표재/얕은) / Deep (심부/깊은)
+• Superficial = 피부 표면에 가까운
+• Deep = 피부 표면에서 먼, 몸 안쪽의
+• 예: 피부는 근육보다 Superficial, 뼈는 근육보다 Deep
+
+⑥ Ipsilateral (동측) / Contralateral (반대측)
+• Ipsilateral = 같은 쪽
+• Contralateral = 반대 쪽
+• 예: 오른손과 오른발은 Ipsilateral, 오른손과 왼발은 Contralateral"
+0a1896a6-6406-406a-b11a-0d6f944ee574,ee39f006-ac8d-4c44-a1bc-3ae9e0de46f3,해부학적 방향 용어,해부학 기초,4,quiz,경골(Tibia)은 비골(Fibula)보다 Lateral(외측)에 위치한다.,"경골(Tibia)은 하퇴부의 안쪽(Medial)에 위치하는 굵은 뼈이고, 비골(Fibula)은 바깥쪽(Lateral)에 위치하는 가는 뼈입니다. 따라서 경골이 비골보다 Medial에 있으므로 'Lateral'이라는 설명은 틀립니다."
+686521b1-b59f-48a3-b39a-783a200bf534,ee39f006-ac8d-4c44-a1bc-3ae9e0de46f3,해부학적 방향 용어,해부학 기초,5,quiz,어깨는 손목에 비해 어떤 방향에 위치하는가?,"Proximal(근위)은 몸통에 가까운 쪽, Distal(원위)은 몸통에서 먼 쪽입니다. 어깨는 손목보다 몸통에 가까우므로 Proximal에 위치합니다."
+ab45e298-606b-4e80-b11a-a79bc7023037,ee39f006-ac8d-4c44-a1bc-3ae9e0de46f3,해부학적 방향 용어,해부학 기초,6,exam,다음 중 방향 용어의 설명이 올바른 것은?,Proximal = 몸통에 가까운 쪽(근위). Superior = 위쪽(상방). Anterior = 앞쪽(전방). Medial = 정중선에 가까운 쪽(내측).
+624ace2e-b046-42ef-906a-67baa5d2cdb0,ee39f006-ac8d-4c44-a1bc-3ae9e0de46f3,해부학적 방향 용어,해부학 기초,7,exam,복횡근(Transverse abdominis)은 복직근(Rectus abdominis)에 비해 어떤 위치에 있는가?,"복횡근(Transverse abdominis)은 복부 근육 중 가장 깊은 층에 위치하며, 복직근(Rectus abdominis)은 가장 표면에 위치합니다. 따라서 복횡근은 복직근보다 Deep(심부)에 있습니다.
+
+복부 근육 층 순서 (표면→깊은): 복직근 → 외복사근 → 내복사근 → 복횡근"
+ae6bd6ab-ffea-4b1d-8199-4b15e0e50d53,ee39f006-ac8d-4c44-a1bc-3ae9e0de46f3,해부학적 방향 용어,해부학 기초,8,exam,해부학적 자세에서 엄지손가락(Thumb)은 새끼손가락(Little finger)에 비해 어떤 방향에 위치하는가?,"해부학적 자세에서 손바닥이 전방을 향할 때, 엄지손가락은 몸의 바깥쪽(Lateral)에, 새끼손가락은 안쪽(Medial)에 위치합니다. 일상적으로 팔을 내렸을 때(손바닥이 몸쪽) 엄지가 앞에 있어 혼동되지만, 해부학적 자세 기준으로 판단해야 합니다."
+43e95e82-9d17-4f49-ab79-9c8404fa90cd,31c299a9-9ae0-43e3-8d20-021c629c33e3,관절 움직임 용어,해부학 기초,1,lesson,기본 움직임 용어: Flexion/Extension,"① Flexion (굴곡): 관절을 구부려 두 분절 사이의 각도가 줄어드는 움직임
+• 예: 팔꿈치 굴곡, 고관절 굴곡(다리 앞으로 들기), 슬관절 굴곡(무릎 구부리기)
+
+② Extension (신전): 관절을 펴서 두 분절 사이의 각도가 늘어나는 움직임
+• 예: 팔꿈치 신전, 고관절 신전(다리 뒤로 뻗기), 슬관절 신전(무릎 펴기)
+
+③ Hyperextension (과신전): 정상 ROM을 넘어선 신전
+• 예: 허리를 과도하게 젖히는 것"
+e715285f-efd0-4845-b97c-0139a55ea6f3,31c299a9-9ae0-43e3-8d20-021c629c33e3,관절 움직임 용어,해부학 기초,2,lesson,기본 움직임 용어: Abduction/Adduction,"③ Abduction (외전): 몸의 정중선에서 멀어지는 움직임
+• 예: 팔을 옆으로 들어올리기 (Shoulder Abduction)
+• 예: 다리를 옆으로 벌리기 (Hip Abduction)
+
+④ Adduction (내전): 몸의 정중선으로 가까워지는 움직임
+• 예: 벌린 팔을 몸쪽으로 내리기 (Shoulder Adduction)
+• 예: 벌린 다리를 모으기 (Hip Adduction)
+
+관상면(Frontal/Coronal Plane)에서 일어납니다."
+ae836ab7-1ff8-43b3-8bbd-f13cd7113e78,31c299a9-9ae0-43e3-8d20-021c629c33e3,관절 움직임 용어,해부학 기초,3,lesson,"기본 움직임 용어: Rotation, Pronation/Supination","⑤ Internal Rotation (내회전): 몸의 안쪽으로 회전
+• 예: 어깨 내회전 — 팔을 안쪽으로 돌림
+• 예: 고관절 내회전 — 무릎이 안쪽을 향하게 돌림
+
+⑥ External Rotation (외회전): 몸의 바깥쪽으로 회전
+• 예: 어깨 외회전 — 팔을 바깥쪽으로 돌림
+• 예: 고관절 외회전 — 무릎이 바깥을 향하게 돌림
+
+⑦ Pronation (회내): 전완(Forearm)에서 손바닥을 아래로 향하게 돌림
+⑧ Supination (회외): 전완에서 손바닥을 위로 향하게 돌림
+
+횡단면(Transverse Plane)에서 일어납니다."
+21658ce2-c18f-4139-8150-1ffd63fed96f,31c299a9-9ae0-43e3-8d20-021c629c33e3,관절 움직임 용어,해부학 기초,4,lesson,"특수 움직임 용어: 발목, 견갑골","발목(Ankle) 특수 움직임:
+• Inversion (내번): 발바닥이 안쪽(Medial)을 향하게 기울임
+• Eversion (외번): 발바닥이 바깥쪽(Lateral)을 향하게 기울임
+
+견갑골(Scapula) 움직임:
+• Elevation (거상/상승): 견갑골을 위로 올림 (어깨 으쓱)
+• Depression (하강): 견갑골을 아래로 내림
+• Protraction (전인): 견갑골을 앞으로 밀어냄 (어깨를 앞으로)
+• Retraction (후인): 견갑골을 뒤로 당김 (어깨를 뒤로, 날개뼈 모으기)
+• Upward Rotation (상방회전): 견갑골 하각이 바깥위쪽으로 회전
+• Downward Rotation (하방회전): 견갑골 하각이 안쪽아래로 회전"
+a79f5351-ff31-4b25-ba91-217141c3ff36,31c299a9-9ae0-43e3-8d20-021c629c33e3,관절 움직임 용어,해부학 기초,5,lesson,어깨 관절 vs 견갑골 움직임 구분,"어깨 복합체에는 여러 관절이 있으며, 각 관절에서 일어나는 움직임이 다릅니다.
+
+견관절(Glenohumeral joint, 어깨 관절)의 움직임:
+• Flexion / Extension (굴곡/신전)
+• Abduction / Adduction (외전/내전)
+• Internal Rotation / External Rotation (내회전/외회전)
+• Horizontal Abduction / Horizontal Adduction (수평외전/수평내전)
+
+견갑골(Scapulothoracic, 견흉관절)의 움직임:
+• Elevation / Depression (거상/하강)
+• Protraction / Retraction (전인/후인)
+• Upward Rotation / Downward Rotation (상방회전/하방회전)"
+fddad111-932a-49a7-a138-cbb9923d3a2e,31c299a9-9ae0-43e3-8d20-021c629c33e3,관절 움직임 용어,해부학 기초,6,quiz,Dorsiflexion(배측굴곡)은 발끝을 정강이 쪽으로 당기는 발목 움직임이다.,"Dorsiflexion(배측굴곡)은 발등(dorsum) 방향으로의 움직임으로, 발끝을 정강이 쪽으로 당기는 것입니다. 반대로 Plantarflexion(저측굴곡)은 발바닥(plantar) 방향, 즉 발끝을 아래로 내리는 것입니다."
+629c3462-a703-404a-81e8-056025d490d1,31c299a9-9ae0-43e3-8d20-021c629c33e3,관절 움직임 용어,해부학 기초,7,quiz,견갑골을 뒤로 당겨 날개뼈를 모으는 움직임은?,"Retraction(후인)은 견갑골을 척추 쪽으로 당기는 움직임으로, '날개뼈 모으기'라고도 합니다. Protraction(전인)은 반대로 견갑골을 앞으로 밀어내는 것입니다."
+4e8591a9-21c0-4bfb-a516-67b9232c1c80,31c299a9-9ae0-43e3-8d20-021c629c33e3,관절 움직임 용어,해부학 기초,8,quiz,Pronation(회내)은 어깨 관절(Glenohumeral joint)에서 일어나는 움직임이다.,"Pronation(회내)은 전완(Forearm)의 움직임으로, 요골(Radius)이 척골(Ulna) 위를 넘어가며 손바닥을 아래로 향하게 합니다. 어깨 관절(Glenohumeral joint)의 움직임이 아닙니다. 어깨에서의 회전은 Internal/External Rotation입니다."
+47efc914-d8ab-44af-8117-2d118768bec9,31c299a9-9ae0-43e3-8d20-021c629c33e3,관절 움직임 용어,해부학 기초,9,exam,다음 중 어깨 관절의 움직임이 아닌 것은?,"Pronation(회내)은 전완(Forearm)의 움직임이지 어깨 관절의 움직임이 아닙니다. 어깨 관절에서는 Flexion/Extension, Abduction/Adduction, Internal/External Rotation, Horizontal Abduction/Adduction이 일어납니다."
+cf9295f8-4267-48c3-af8c-bc5a7821b106,31c299a9-9ae0-43e3-8d20-021c629c33e3,관절 움직임 용어,해부학 기초,10,exam,다음 중 어깨 관절의 움직임이 아닌 것은?,"Depression(하강)은 견갑골(Scapula)의 움직임이지 어깨 관절(Glenohumeral joint)의 움직임이 아닙니다. 견갑골의 움직임에는 Elevation/Depression, Protraction/Retraction, Upward/Downward Rotation이 있습니다."
+cf993ff5-9c67-4c79-a323-83b54f417dc8,31c299a9-9ae0-43e3-8d20-021c629c33e3,관절 움직임 용어,해부학 기초,11,exam,다음은 Scapular(견갑골)의 어떤 움직임인가?,"이미지에서 견갑골이 아래 방향으로 내려가는 모습을 보여줍니다. Depression(하강)은 견갑골을 아래로 내리는 움직임입니다. 견갑거근(Levator scapula)의 반대 동작이며, 하부 승모근(Lower trapezius)이 관여합니다."
+1e00e62e-762d-4f2d-b78c-6b43eeeb2bcc,31c299a9-9ae0-43e3-8d20-021c629c33e3,관절 움직임 용어,해부학 기초,12,exam,다음 중 관상면(Frontal Plane)에서 일어나는 움직임만으로 구성된 것은?,"관상면(Frontal/Coronal Plane)에서는 Abduction(외전), Adduction(내전), Lateral Flexion(외측굴곡), Inversion/Eversion(내번/외번)이 일어납니다.
+
+보기 1: 시상면 움직임
+보기 3: 횡단면 움직임
+보기 4: 3개의 서로 다른 면 움직임 혼합"
+04901c2c-04c0-4b74-b750-318faf624270,31c299a9-9ae0-43e3-8d20-021c629c33e3,관절 움직임 용어,해부학 기초,13,exam,발목에서 발바닥이 안쪽(Medial)을 향하게 기울이는 움직임은?,"Inversion(내번)은 발바닥이 안쪽(Medial)을 향하게 기울이는 움직임입니다. Eversion(외번)은 반대로 바깥쪽(Lateral)을 향하게 기울입니다.
+
+Dorsiflexion은 발등 방향 구부림, Plantarflexion은 발바닥 방향 구부림으로, 내번/외번과는 다른 축의 움직임입니다."
+74b861b0-af80-4640-9780-222e8909bf2f,f26381b9-9bba-4292-9612-2d3918bd642b,뼈의 기초와 분류,골격계,1,lesson,뼈의 기능,"뼈(Bone)는 인체에서 다양한 기능을 수행합니다:
+
+① 지지(Support): 몸의 구조를 유지하고 지탱
+② 보호(Protection): 내부 장기 보호 (두개골→뇌, 흉곽→심폐)
+③ 운동(Movement): 근육이 부착하여 지렛대 역할
+④ 조혈(Hematopoiesis): 골수에서 혈액세포 생성
+⑤ 무기질 저장(Mineral Storage): 칼슘, 인 등 저장"
+30a0a087-3aed-4dfe-9c1a-1344980e1026,f26381b9-9bba-4292-9612-2d3918bd642b,뼈의 기초와 분류,골격계,2,lesson,뼈의 형태에 따른 분류,"뼈는 형태에 따라 4가지로 분류합니다:
+
+① Long bone (장골/긴뼈): 길이가 긴 뼈
+   예: 상완골(Humerus), 대퇴골(Femur), 경골(Tibia), 비골(Fibula), 요골(Radius), 척골(Ulna)
+
+② Short bone (단골/짧은뼈): 길이·너비·높이가 비슷한 작은 뼈
+   예: 수근골(Carpals), 족근골(Tarsals)
+
+③ Flat bone (편평골/납작뼈): 얇고 넓은 뼈
+   예: 견갑골(Scapula), 흉골(Sternum), 두개골(Skull), 늑골(Ribs)
+
+④ Irregular bone (불규칙골/불규칙뼈): 특정 형태에 맞지 않는 뼈
+   예: 척추(Vertebrae), 골반뼈(Hip bone)"
+275f0e91-27f6-4cd6-8414-74c785f2f19b,f26381b9-9bba-4292-9612-2d3918bd642b,뼈의 기초와 분류,골격계,3,lesson,축골격(Axial)과 사지골격(Appendicular),"인체의 206개 뼈는 크게 두 그룹으로 나뉩니다:
+
+① Axial skeleton (축골격): 몸의 중심축을 구성 — 80개
+   • 두개골(Skull)
+   • 척추(Vertebral column)
+   • 흉곽(Thoracic cage): 흉골 + 늑골
+   • 설골(Hyoid bone)
+
+② Appendicular skeleton (사지골격): 사지와 연결 부위 — 126개
+   • 상지(Upper extremity): 쇄골, 견갑골, 상완골, 요골, 척골, 수근골, 수지골
+   • 하지(Lower extremity): 골반뼈, 대퇴골, 슬개골, 경골, 비골, 족근골, 족지골"
+1505f2f0-48df-469c-b19c-b4e27703f355,f26381b9-9bba-4292-9612-2d3918bd642b,뼈의 기초와 분류,골격계,4,quiz,견갑골(Scapula)은 편평골(Flat bone)에 속한다.,"견갑골(Scapula)은 얇고 넓적한 삼각형 모양의 뼈로 편평골(Flat bone)에 속합니다. 같은 편평골로는 두개골(Skull), 흉골(Sternum), 늑골(Ribs) 등이 있습니다."
+e262e4fc-cfaf-40ac-9dbe-a054086e78db,f26381b9-9bba-4292-9612-2d3918bd642b,뼈의 기초와 분류,골격계,5,quiz,다음 중 Long bone(장골)에 해당하는 것은?,"대퇴골(Femur)은 인체에서 가장 크고 긴 장골(Long bone)입니다. 수근골 = 단골, 견갑골 = 편평골, 척추뼈 = 불규칙골."
+c3e71907-931f-41bd-ab21-b5c063696b49,f26381b9-9bba-4292-9612-2d3918bd642b,뼈의 기초와 분류,골격계,6,exam,다음 뼈의 분류에서 사지를 뭐라고 부르는가?,"사지(팔과 다리)를 포함하는 골격 그룹은 Appendicular skeleton(사지골격)입니다. Axial skeleton(축골격)은 두개골, 척추, 흉곽을 포함하는 몸 중심축입니다. Appendicitis는 충수돌기염(맹장염)으로 해부학적 분류와 무관합니다."
+24cdc368-a9fc-43a8-a3c7-a165b2400cd3,f26381b9-9bba-4292-9612-2d3918bd642b,뼈의 기초와 분류,골격계,7,exam,다음 중 뼈의 형태 분류와 그 예시가 올바르게 연결된 것은?,"흉골(Sternum)은 얇고 넓은 편평골(Flat bone)입니다. 수근골은 단골, 대퇴골은 장골, 슬개골은 종자골(Sesamoid bone)입니다."
+d2750d11-04b9-4175-9c30-0bcb0f71e3a2,f26381b9-9bba-4292-9612-2d3918bd642b,뼈의 기초와 분류,골격계,8,exam,슬개골(Patella)은 인체 최대의 종자골(Sesamoid bone)이다.,"슬개골(Patella)은 대퇴사두근의 건(tendon) 내에 형성된 종자골(Sesamoid bone)이며, 인체에서 가장 큰 종자골입니다. 무릎 관절의 지렛대 효율을 높이는 역할을 합니다."
+7ac5f3aa-95bf-4d77-8178-ec93b711397a,6c82a7ff-9762-4e62-85b3-fb6848e9a900,척추,골격계,1,lesson,척추의 구성과 개수,"척추(Vertebral column)는 총 26개의 뼈로 구성됩니다:
+
+① 경추 (Cervical spine): 7개 — 목 부위
+② 흉추 (Thoracic spine): 12개 — 등 부위 (늑골과 연결)
+③ 요추 (Lumbar spine): 5개 — 허리 부위
+④ 천골 (Sacrum): 5개가 융합 → 1개
+⑤ 미골 (Coccyx): 3-5개가 융합 → 1개
+
+⚠️ 시험 빈출: 경추 7, 흉추 12, 요추 5 (외우기: 7-12-5 또는 '아침 7시, 점심 12시, 오후 5시')"
+797a745b-348b-4e3d-9e80-f5c1e51f722d,6c82a7ff-9762-4e62-85b3-fb6848e9a900,척추,골격계,2,lesson,척추의 만곡 (Spinal Curves),"척추는 측면에서 보면 S자 형태의 4가지 만곡을 가집니다:
+
+① 경추 전만 (Cervical lordosis): 앞으로 볼록 — C자 커브
+② 흉추 후만 (Thoracic kyphosis): 뒤로 볼록 — 역C자 커브
+③ 요추 전만 (Lumbar lordosis): 앞으로 볼록 — C자 커브
+④ 천골 후만 (Sacral kyphosis): 뒤로 볼록
+
+전만(Lordosis) = 앞으로 볼록 (경추, 요추)
+후만(Kyphosis) = 뒤로 볼록 (흉추, 천골)"
+38a0ec16-3223-4890-b4cf-32e6ad593325,6c82a7ff-9762-4e62-85b3-fb6848e9a900,척추,골격계,3,lesson,특수 경추: C1(Atlas)과 C2(Axis),"경추 1번(C1)과 2번(C2)은 다른 척추뼈와 형태가 다릅니다:
+
+① C1 — Atlas (환추):
+• 고리 모양 (뼈 몸통이 없음)
+• 두개골과 관절 → 고개 끄덕이기(Flexion/Extension)
+• 이름 유래: 그리스 신화의 아틀라스(하늘을 떠받치는 신)
+
+② C2 — Axis (축추):
+• 치돌기(Dens/Odontoid process)가 위로 돌출
+• C1이 C2의 치돌기를 축으로 회전 → 고개 돌리기(Rotation)
+
+C1-C2 관절은 목의 회전 운동 대부분을 담당합니다."
+aa679129-a4be-46d9-aa03-67c8d395cca2,6c82a7ff-9762-4e62-85b3-fb6848e9a900,척추,골격계,4,quiz,흉추(Thoracic spine)는 12개이다.,"흉추는 12개이며, 12쌍의 늑골(Rib)과 관절을 이룹니다. 경추 7개, 흉추 12개, 요추 5개입니다."
+8bdc7355-5097-4170-8d2c-b4d723f0dfc1,6c82a7ff-9762-4e62-85b3-fb6848e9a900,척추,골격계,5,quiz,요추(Lumbar spine)의 만곡은?,요추의 정상 만곡은 전만(Lordosis)으로 앞으로 볼록한 커브입니다. 경추도 전만입니다. 후만(Kyphosis)은 흉추와 천골의 만곡입니다.
+177fda4f-0fd8-49ea-a053-2dd4538fc325,6c82a7ff-9762-4e62-85b3-fb6848e9a900,척추,골격계,6,exam,"경추, 흉추, 요추의 개수를 올바르게 나열한 것은?","경추(Cervical) 7개, 흉추(Thoracic) 12개, 요추(Lumbar) 5개입니다. 7-12-5로 외웁니다."
+684b88f0-b1bb-4975-bc6c-8a07b7d55f68,6c82a7ff-9762-4e62-85b3-fb6848e9a900,척추,골격계,7,exam,다음 중 하이라이트 된 뼈의 이름은?,"이미지에서 하이라이트 된 부분은 척추의 하부(허리 위치)에 있으며, 5개의 큰 척추뼈로 구성되어 있으므로 요추(Lumbar spine)입니다. 요추는 체중 지지를 위해 가장 크고 두꺼운 척추뼈입니다."
+7435dfcc-58bd-45ff-bd83-80c864601860,6c82a7ff-9762-4e62-85b3-fb6848e9a900,척추,골격계,8,exam,다음 중 하이라이트 된 뼈의 이름은?,"이미지에서 하이라이트 된 뼈는 요추 아래, 골반 뒤쪽에 위치한 역삼각형 형태의 천골(Sacrum)입니다. 천골은 5개의 척추뼈가 융합되어 하나의 뼈를 이루며, 골반과 연결되어 체중을 하지로 전달합니다."
+4f99649c-94a5-4531-a812-349209e96238,5e12883b-4bf8-4515-bea8-361759afee64,상지골,골격계,1,lesson,상지대와 자유상지골,"상지골은 크게 상지대(Shoulder girdle)와 자유상지골(Free upper limb)로 나뉩니다.
+
+상지대 (Shoulder girdle, 어깨뼈):
+• 쇄골 (Clavicle): S자 모양, 흉골과 견갑골을 연결
+• 견갑골 (Scapula): 삼각형 편평골, 등 뒤에 위치
+
+자유상지골 (Free upper limb):
+• 상완골 (Humerus): 위팔뼈 (장골)
+• 요골 (Radius): 아래팔 바깥쪽 (엄지 쪽)
+• 척골 (Ulna): 아래팔 안쪽 (새끼 쪽)
+• 수근골 (Carpals): 손목뼈 8개 (단골)
+• 중수골 (Metacarpals): 손바닥뼈 5개
+• 수지골 (Phalanges): 손가락뼈"
+cb3d31ee-f1a7-453a-ac76-0710d5b10e60,5e12883b-4bf8-4515-bea8-361759afee64,상지골,골격계,2,lesson,상지골의 Bony Landmark,"Bony landmark(골격 랜드마크)는 근육 부착점이나 촉진(palpation) 시 기준이 되는 뼈의 돌출부입니다.
+
+쇄골 (Clavicle):
+• 흉골단(Sternal end): 흉골과 연결
+• 견봉단(Acromial end): 견갑골 견봉과 연결
+
+견갑골 (Scapula):
+• 견봉(Acromion): 어깨 최상단
+• 오훼돌기(Coracoid process): 소흉근, 상완이두근 부착
+• 견갑극(Spine): 승모근 부착
+• 관절와(Glenoid fossa): 상완골두가 들어가는 얕은 홈
+
+상완골 (Humerus):
+• 대결절(Greater tubercle): 극상근, 극하근, 소원근 부착
+• 소결절(Lesser tubercle): 견갑하근 부착
+• 삼각근 조면(Deltoid tuberosity): 삼각근 부착"
+fbebcd05-eee9-404b-bdee-1ef57239ab10,5e12883b-4bf8-4515-bea8-361759afee64,상지골,골격계,3,lesson,흉골과 흉곽,"흉골 (Sternum):
+• 편평골(Flat bone)
+• 3개 부분: 흉골병(Manubrium, 상부), 흉골체(Body, 중앙), 검상돌기(Xiphoid process, 하부)
+• 쇄골, 늑골과 관절
+
+흉곽 (Thoracic cage):
+• 흉골 + 12쌍의 늑골(Ribs) + 흉추(12개)
+• 심장과 폐를 보호
+• 늑골 1-7: 진늑골(True ribs) — 흉골에 직접 연결
+• 늑골 8-10: 가늑골(False ribs) — 7번 늑골 연골에 연결
+• 늑골 11-12: 부유늑골(Floating ribs) — 앞쪽 연결 없음"
+cc8acc04-9eff-4fa7-9129-8dd5e0903787,5e12883b-4bf8-4515-bea8-361759afee64,상지골,골격계,4,quiz,해부학적 자세에서 요골(Radius)은 전완의 안쪽(Medial)에 위치한다.,"해부학적 자세에서 요골(Radius)은 전완의 바깥쪽(Lateral, 엄지 쪽)에 위치합니다. 안쪽(Medial, 새끼 쪽)에 있는 것은 척골(Ulna)입니다."
+5e5c7a1b-75dc-40ad-b958-a7f7d40648e8,5e12883b-4bf8-4515-bea8-361759afee64,상지골,골격계,5,quiz,쇄골(Clavicle)이 연결하는 두 뼈는?,"쇄골(Clavicle)은 안쪽 끝(흉골단)에서 흉골(Sternum)과, 바깥 끝(견봉단)에서 견갑골의 견봉(Acromion)과 관절을 이룹니다. 이를 각각 흉쇄관절(SC joint)과 견쇄관절(AC joint)이라 합니다."
+14523030-ff17-4627-84ce-d2745b36a4c6,5e12883b-4bf8-4515-bea8-361759afee64,상지골,골격계,6,exam,다음 중 하이라이트 된 뼈의 이름은?,이미지에서 하이라이트 된 뼈는 흉골에서 어깨 방향으로 뻗은 S자 형태의 쇄골(Clavicle)입니다. 쇄골은 상지와 체간을 연결하는 유일한 뼈입니다.
+1964a593-da33-4b53-b189-40e8389137cb,5e12883b-4bf8-4515-bea8-361759afee64,상지골,골격계,7,exam,다음 중 하이라이트 된 뼈의 이름은?,"이미지에서 하이라이트 된 뼈는 가슴 정중앙에 위치한 흉골(Sternum)입니다. 흉골은 편평골(Flat bone)로 흉골병, 흉골체, 검상돌기의 3부분으로 구성됩니다."
+738e570e-0ce5-4e68-8299-9d9bd05378c4,5e12883b-4bf8-4515-bea8-361759afee64,상지골,골격계,8,exam,견갑골의 관절와(Glenoid fossa)와 관절을 이루는 뼈는?,"견갑골의 관절와(Glenoid fossa)에 상완골두(Head of humerus)가 들어가 어깨 관절(Glenohumeral joint, 상완와관절)을 형성합니다. 이 관절은 Ball & Socket type으로 다축 움직임이 가능합니다."
+ca6a66ec-d1a3-491b-831a-35440ebd7c7b,7453441d-122e-407c-bce8-9d93af12cbd4,하지골과 골반,골격계,1,lesson,골반뼈 (Pelvic bone/Hip bone),"골반뼈(Hip bone, Innominate bone)는 3개의 뼈가 융합되어 형성됩니다:
+
+① 장골 (Ilium): 골반의 상부, 가장 큰 부분
+   • 장골능(Iliac crest): 골반 위쪽 테두리 (허리에 손을 얹는 부위)
+   • ASIS(전상장골극): 앞쪽 돌출부 — 촉진 가능한 중요 랜드마크
+
+② 좌골 (Ischium): 골반의 하후부
+   • 좌골결절(Ischial tuberosity): 앉을 때 체중을 받는 부분 ('앉는 뼈')
+   • 햄스트링 기시점
+
+③ 치골 (Pubis): 골반의 하전부
+   • 치골결합(Pubic symphysis): 좌우 치골이 만나는 곳
+   • 복직근 정지점"
+eac8c143-05f9-48c9-b94f-8d6f4511ec41,7453441d-122e-407c-bce8-9d93af12cbd4,하지골과 골반,골격계,2,lesson,"자유하지골: 대퇴골, 슬개골, 경골, 비골","자유하지골 (Free lower limb):
+
+① 대퇴골 (Femur): 허벅지뼈
+   • 인체에서 가장 크고 긴 장골
+   • 대퇴골두(Head) → 비구에 들어감 → 고관절
+   • 대전자(Greater trochanter): 외측 돌출부 — 외전근 부착
+
+② 슬개골 (Patella): 무릎뼈 (종자골)
+   • 대퇴사두근 건 속에 위치
+   • 무릎 관절의 지렛대 효율 향상
+
+③ 경골 (Tibia): 정강이뼈 — 하퇴 안쪽(Medial)
+   • 굵고 체중 지지
+   • 경골결절(Tibial tuberosity): 슬개건 부착점
+
+④ 비골 (Fibula): 종아리뼈 — 하퇴 바깥쪽(Lateral)
+   • 가늘고 주로 근육 부착 역할
+   • 체중 지지 역할 거의 없음"
+38a92b5e-befd-4bf1-a1df-22e749b6e027,7453441d-122e-407c-bce8-9d93af12cbd4,하지골과 골반,골격계,3,lesson,"발의 뼈: 족근골, 중족골, 족지골","발(Foot)의 뼈:
+
+① 족근골 (Tarsals): 발목뼈 — 7개
+   • 거골(Talus): 경골과 관절 → 발목 관절
+   • 종골(Calcaneus): 발뒤꿈치뼈 — 족근골 중 가장 큼
+   • 주상골(Navicular): 거골 앞, 발 안쪽
+   • 입방골(Cuboid): 발 바깥쪽
+   • 설상골(Cuneiforms): 3개 (내·중·외측)
+
+② 중족골 (Metatarsals): 발바닥뼈 — 5개
+③ 족지골 (Phalanges): 발가락뼈 — 14개"
+6a8b48b6-5f9f-4cc4-a741-69029d8be4f8,7453441d-122e-407c-bce8-9d93af12cbd4,하지골과 골반,골격계,4,quiz,대퇴골(Femur)은 인체에서 가장 긴 뼈이다.,"대퇴골(Femur)은 인체에서 가장 크고 긴 뼈(장골, Long bone)입니다. 성인 기준 약 45cm 정도입니다."
+bf113175-9596-4a72-95fa-5e18d12eb4ae,7453441d-122e-407c-bce8-9d93af12cbd4,하지골과 골반,골격계,5,quiz,좌골결절(Ischial tuberosity)은 어떤 동작에서 체중을 받는 부분인가?,"좌골결절(Ischial tuberosity)은 '앉는 뼈(Sit bone)'라고도 불리며, 앉아 있을 때 체중을 받는 부분입니다. 또한 햄스트링 근육의 기시점(Origin)이기도 합니다."
+f1bdc14e-a898-4de8-b098-c75bb4a415e1,7453441d-122e-407c-bce8-9d93af12cbd4,하지골과 골반,골격계,6,quiz,종골(Calcaneus)에 부착하는 건(tendon)은?,"종골(Calcaneus, 발뒤꿈치뼈)에는 아킬레스건(Achilles tendon)이 부착합니다. 아킬레스건은 비복근(Gastrocnemius)과 가자미근(Soleus)의 공통 건으로, Plantarflexion의 주동근 건입니다."
+0e79cdbf-de71-4a03-b661-4d78147e50f2,7453441d-122e-407c-bce8-9d93af12cbd4,하지골과 골반,골격계,7,exam,다음 중 하이라이트 된 뼈의 이름은?,이미지에서 하이라이트 된 뼈는 허벅지에 위치한 인체 최대의 장골인 대퇴골(Femur)입니다. 상단에 둥근 골두(Head)가 있어 골반의 비구(Acetabulum)에 들어갑니다.
+3404ef46-dd76-42af-b64b-9fef30d9356e,7453441d-122e-407c-bce8-9d93af12cbd4,하지골과 골반,골격계,8,exam,다음 중 하이라이트 된 뼈의 이름은?,"이미지에서 하이라이트 된 뼈는 무릎 앞쪽에 위치한 삼각형/원형의 슬개골(Patella)입니다. 슬개골은 대퇴사두근 건 속의 종자골(Sesamoid bone)로, 무릎 신전의 지렛대 효율을 높입니다."
+fd975449-0109-4fd2-b80f-fa5e167b737b,7453441d-122e-407c-bce8-9d93af12cbd4,하지골과 골반,골격계,9,exam,다음 중 하이라이트 된 뼈의 이름은?,이미지에서 하이라이트 된 부분은 골반뼈의 앞 아래쪽에 위치한 치골(Pubis)입니다. 치골은 좌우가 치골결합(Pubic symphysis)으로 연결됩니다.
+4b3973d6-7bce-454e-a3d2-ae4cef242ac9,7453441d-122e-407c-bce8-9d93af12cbd4,하지골과 골반,골격계,10,exam,다음 중 하이라이트 된 뼈의 이름은?,"이미지에서 하이라이트 된 부분은 골반뼈의 뒤 아래쪽에 위치한 좌골(Ischium)입니다. 좌골결절(Ischial tuberosity)은 앉을 때 체중을 지지하며, 햄스트링의 기시점입니다."
+582e867c-4614-4d76-8512-b701b5c67cb7,7453441d-122e-407c-bce8-9d93af12cbd4,하지골과 골반,골격계,11,exam,다음 중 경골(Tibia)과 비골(Fibula)의 설명으로 올바른 것은?,경골(Tibia)은 하퇴 내측(Medial)에 위치하는 굵은 뼈로 체중 지지의 주역입니다. 비골(Fibula)은 하퇴 외측(Lateral)의 가는 뼈로 주로 근육 부착 역할을 합니다.
+0c4bc30b-f35f-4fee-8761-c7f08da0706f,d6864af1-47f9-4214-b778-23521da89431,관절의 기초,관절,1,lesson,관절(Joint)이란?,"관절(Joint)이란 2개 이상의 뼈가 연결되어 있는 구조물입니다. (교재 p.24)
+
+관절의 특징:
+• 뼈들이 서로 단단히 연결되어 신체의 움직임을 만든다
+• 관절마다 관절가동범위(ROM: Range of Motion)가 존재한다
+• ROM은 관절의 모양과 형태에 의해 정해진다
+• 관절에는 부동관절과 가동관절이 있다
+
+부동관절: 움직임이 없거나 매우 적은 관절 (예: 두개골 봉합)
+가동관절: 자유롭게 움직이는 관절 (예: 어깨, 고관절)"
+152b0d62-0631-4fbe-b1d0-67543967c5cc,d6864af1-47f9-4214-b778-23521da89431,관절의 기초,관절,2,lesson,관절의 기본 구조 (주변 구조물),"관절 주변에는 안정성과 기능을 돕는 구조물들이 있습니다. (교재 p.25)
+
+① 인대 (Ligament): 뼈와 뼈를 연결하여 관절 안정성 제공
+② 건 (Tendon): 근육과 뼈를 연결
+③ 관절연골 (Articular cartilage): 뼈 끝을 덮어 마찰 감소
+④ 관절낭 (Joint capsule): 관절을 감싸는 주머니
+⑤ 점액낭 (Bursa): 마찰이 많은 부위의 쿠션 역할
+
+이들은 관절의 안정성을 높이고, 동작 시 마찰력을 감소시키며, 충격을 흡수합니다."
+920268c1-ff18-4cfb-8f93-c80fee7ba227,d6864af1-47f9-4214-b778-23521da89431,관절의 기초,관절,3,lesson,관절 운동 형상학 (Arthrokinematics),"관절면에서 일어나는 3가지 기본 운동이 있습니다. (교재 p.26)
+
+① 구름 (Roll): 관절면 위를 굴러가는 움직임
+   • 예: 바퀴가 지면 위를 굴러가는 것
+② 미끄러짐 (Slide/Glide): 관절면 위를 미끄러지는 움직임
+   • 예: 책상 위에서 책이 밀려가는 것
+③ 축돌림 (Spin): 고정된 축을 중심으로 회전
+   • 예: 팽이가 도는 것"
+ebc8a69f-ca98-40e9-9366-ef22ab34228a,d6864af1-47f9-4214-b778-23521da89431,관절의 기초,관절,4,quiz,인대(Ligament)는 근육과 뼈를 연결하는 구조물이다.,인대(Ligament)는 뼈와 뼈를 연결하는 구조물입니다. 근육과 뼈를 연결하는 것은 건(Tendon)입니다.
+6111f07f-3516-40e0-a3e1-9d883cf11e6e,d6864af1-47f9-4214-b778-23521da89431,관절의 기초,관절,5,quiz,다음 중 관절 주변 구조물의 역할이 아닌 것은?,"관절 주변 구조물(인대, 건, 관절연골, 관절낭, 점액낭)의 역할은 안정성 향상, 마찰력 감소, 충격 흡수입니다. (교재 p.25) 혈액세포 생산(조혈)은 뼈(골수)의 기능이지 관절 구조물의 역할이 아닙니다."
+79ae07dd-19f8-4b38-8fc1-e35ba633b9a3,d6864af1-47f9-4214-b778-23521da89431,관절의 기초,관절,6,exam,관절가동범위(ROM)를 결정하는 주요 요인은?,"교재 p.24: '관절마다 관절가동범위(ROM)가 존재하며 관절의 모양과 형태에 의해 정해진다.' 관절의 구조적 형태(볼록면/오목면의 형태, 관절면의 깊이 등)가 ROM의 주요 결정 요인입니다."
+1d0f5532-577e-4ecb-bcbe-e06d11de632b,94ef3951-2387-45df-ab91-2b8c87d3a310,관절의 종류,관절,1,lesson,관절의 6가지 종류 (교재 분류),"교재(p.27-33)에서는 관절을 6가지로 분류합니다:
+
+① 평면 관절 (Gliding joint): 미끄러짐(병진운동). 편평한 면들이 마주봄
+   예: 견쇄관절(AC), 흉쇄관절(SC), 수근간관절, 천장관절(SI)
+
+② 경첩 관절 (Hinge joint): 굴곡과 신전만 일어남. 문의 경첩과 유사
+   예: 팔꿈치(Elbow), 슬관절(Knee), 손가락관절(IP), 발목(Ankle)
+
+③ 자축 관절 (Pivot joint): 한 축을 중심으로 축돌림(회전)
+   예: 환축추관절(Atlas/Axis), 근위요척관절(Proximal radioulnar)"
+b70ca745-e282-4cf8-8314-055b079470d8,94ef3951-2387-45df-ab91-2b8c87d3a310,관절의 종류,관절,2,lesson,경첩 관절 (Hinge Joint) 상세,"경첩 관절(Hinge joint)은 굴곡(Flexion)과 신전(Extension)만 일어나는 단축 관절입니다. (교재 p.29)
+
+문의 경첩처럼 한 방향으로만 접히고 펴집니다.
+
+교재의 경첩 관절 예시:
+• 팔꿈치 관절 (Elbow joint)
+• 슬관절 (Knee joint)
+• 손가락 관절 (Interphalangeal joint, IP)
+
+추가: 교재 p.72에서 발목 관절(Talocrural joint = Ankle joint)도 경첩 관절로 분류합니다."
+14b777c7-5dd5-4f09-b69e-4bc3db48cc95,94ef3951-2387-45df-ab91-2b8c87d3a310,관절의 종류,관절,3,lesson,구상 관절 (Ball & Socket Joint) 상세,"구상 관절(Ball & Socket joint)은 삼평면 운동이 가능한 가장 자유로운 관절입니다. (교재 p.33)
+
+가능한 움직임:
+• 굴곡-신전 (Flexion-Extension) — 시상면
+• 외전-내전 (Abduction-Adduction) — 관상면
+• 내회전-외회전 (Internal-External Rotation) — 횡단면
+
+구조: 오목한 찻잔(소켓)과 짝을 이루는 구형의 볼록면(볼)
+
+교재의 구상 관절 예시:
+• 어깨 관절 — Glenohumeral joint (상완와관절)
+• 고관절 — Hip joint"
+525b66f4-a11e-407a-88f8-def6ff427faa,94ef3951-2387-45df-ab91-2b8c87d3a310,관절의 종류,관절,4,quiz,"경첩 관절(Hinge joint)에서는 굴곡, 신전, 회전이 모두 일어난다.",경첩 관절에서는 굴곡(Flexion)과 신전(Extension)만 일어납니다. (교재 p.29: '굴곡과 신전만 일어남') 회전(Rotation)은 자축 관절(Pivot joint)이나 구상 관절(Ball & Socket)에서 일어납니다.
+1188142e-2d19-46bb-b3b7-7aa9ee5e4d0a,94ef3951-2387-45df-ab91-2b8c87d3a310,관절의 종류,관절,5,quiz,자축 관절(Pivot joint)의 예시로 올바른 것은?,"교재 p.30: 자축 관절 예시는 환축추관절(Atlas/Axis)과 근위요척관절(Proximal radioulnar)입니다. 회전의 단일축 주위에서 축돌림이 일어납니다. 어깨와 고관절은 구상 관절, 팔꿈치는 경첩 관절."
+13525131-923b-4bff-953e-86174b3e0d7a,94ef3951-2387-45df-ab91-2b8c87d3a310,관절의 종류,관절,6,quiz,"삼평면 운동(굴곡-신전, 외전-내전, 내-외회전)이 가능한 관절 종류는?","교재 p.33: 구상 관절은 '삼평면 운동(굴곡-신전, 외전-내전, 내회전-외회전)'이 가능합니다. 경첩=단축(1평면), 안장=이축(2평면), 평면=미끄러짐."
+d2b93980-2ba3-4e75-a4c5-65192884526f,94ef3951-2387-45df-ab91-2b8c87d3a310,관절의 종류,관절,7,quiz,구상 관절(Ball & Socket joint)은 삼평면 운동이 가능하다.,"교재 p.33: 구상 관절은 '삼평면 운동(굴곡-신전, 외전-내전, 내회전-외회전)'이 가능합니다. 오목한 찻잔(소켓)과 구형 볼록면(볼)의 구조로 가장 넓은 ROM을 가집니다. 예: 어깨(GH joint), 고관절(Hip joint)."
+80fb67f0-9ed5-4681-bda5-2cd2ece53d14,94ef3951-2387-45df-ab91-2b8c87d3a310,관절의 종류,관절,8,exam,다음 중 관절의 종류(Type)를 모두 고르시오.,"Pivot joint(자축), Ball & Socket joint(구상), Condylar joint(과상)은 모두 관절의 종류(유형)입니다. Occipital joint(후두관절)은 관절이 위치한 부위의 이름이지 관절 종류(Type)가 아닙니다.
+
+교재 6가지: Gliding, Hinge, Pivot, Ellipsoid, Saddle, Ball & Socket. Condylar는 교재 외 추가 분류로 타원 관절의 변형입니다."
+ede91702-3dd3-48c2-bd06-f6deed222d53,94ef3951-2387-45df-ab91-2b8c87d3a310,관절의 종류,관절,9,exam,Hinge joint (경첩관절)를 모두 고르시오.,"교재 p.29: 경첩 관절 예시 = Elbow, Knee, Interphalangeal. 교재 p.72: 'Talocrural joint = Ankle J. : Hinge joint'으로 발목도 경첩 관절.
+
+Thoracolumbar joint(흉요추 관절)은 척추 관절로, 주로 회전과 측굴이 일어나며 경첩 관절이 아닙니다."
+ce824995-b437-4c3f-8941-f93595fc0a02,94ef3951-2387-45df-ab91-2b8c87d3a310,관절의 종류,관절,10,exam,다음 중 관절과 그 종류(Type)의 연결이 올바른 것은?,"교재 p.30: Atlas/Axis = Pivot joint(자축관절). 어깨(GH)=Ball&Socket(p.33), 팔꿈치=Hinge(p.29), 고관절=Ball&Socket(p.33)."
+ec2bef0b-08f6-4760-8667-fae3ce05890d,94ef3951-2387-45df-ab91-2b8c87d3a310,관절의 종류,관절,11,exam,안장 관절(Saddle joint)에 대한 설명으로 올바른 것은?,"교재 p.32: 안장 관절은 '이평면 운동'이 가능하며, '엄지의 수근중수관절(First CMC)'이 대표 예시입니다. 말의 기수와 안장의 관계와 같이 오목면과 볼록면이 직각 방향에서 서로 맞물려 있습니다."
+5d248f55-7ba9-4a85-a6ec-06606ab1661c,c6130385-d2f9-4f02-856e-4db161c997a6,상지 관절,관절,1,lesson,어깨 관절의 5가지 구성 (교재 p.57),"어깨 복합체에는 5가지 관절이 있습니다. (교재 p.57)
+
+일반 관절 (True Joint) 3개:
+① GH joint (Glenohumeral J') — 상완와관절
+   • 구상 관절(Ball & Socket)
+   • 가장 넓은 ROM, 삼평면 운동
+
+② AC joint (Acromioclavicular J') — 견쇄관절
+   • 견봉과 쇄골이 만나는 관절
+
+③ SC joint (Sternoclavicular J') — 흉쇄관절
+   • 흉골과 쇄골이 만나는 관절
+   • 상지와 체간을 연결하는 유일한 뼈 관절"
+cdfa6ca5-4703-4b92-82b5-054c0bd8a24b,c6130385-d2f9-4f02-856e-4db161c997a6,상지 관절,관절,2,lesson,팔꿈치 관절과 인대 (교재 p.60-61),"팔꿈치 관절(Elbow joint)은 경첩 관절(Hinge joint)입니다. (교재 p.29, 60)
+
+팔꿈치 관절의 구성:
+• 상완척골관절 (Humeroulnar joint): 경첩 관절 → 굴곡/신전
+• 상완요골관절 (Humeroradial joint)
+• 근위요척관절 (Proximal radioulnar joint): 자축 관절 → 회내/회외
+
+팔꿈치 주요 인대 (교재 p.60):
+• Annular ligament (윤상인대): 요골두를 감싸 안정화
+• Ulnar collateral L. (척측측부인대, UCL): 내측 안정성
+• Radial collateral L. (요측측부인대, RCL): 외측 안정성"
+8a3b2d65-6995-4a04-ba2c-fa755b897286,c6130385-d2f9-4f02-856e-4db161c997a6,상지 관절,관절,3,quiz,견흉관절(Scapulothoracic joint)은 해부학적 관절(True joint)이다.,"교재 p.57: 견흉관절(Scapulothoracic joint)은 '기능적 관절(Functional Articulation)'로, 해부학적 관절(True joint)이 아닙니다. 견갑골이 흉곽 위를 미끄러지는 기능적 연결입니다."
+56bb832f-9313-4573-9a10-7ecc8b1e1794,c6130385-d2f9-4f02-856e-4db161c997a6,상지 관절,관절,4,quiz,어깨 GH관절(Glenohumeral joint)은 어떤 종류의 관절인가?,"교재 p.33: GH joint(상완와관절)은 구상 관절(Ball & Socket)로, 삼평면 운동(굴곡-신전, 외전-내전, 내-외회전)이 가능합니다."
+4437ce63-d9cb-4e84-8ebd-26bd3eef9b62,c6130385-d2f9-4f02-856e-4db161c997a6,상지 관절,관절,5,exam,다음 중 기능적 관절(가짜 관절)은?,"교재 p.57: Scapulothoracic joint(견흉관절)은 '기능적 관절(Functional Articulation)'입니다. 나머지 GH, AC, SC는 모두 일반 관절(True Joint)입니다. 견흉관절은 관절낭이나 인대가 없이, 견갑골이 흉곽 위를 미끄러지는 기능적 연결입니다."
+8153f6c7-4f24-4c18-be1c-afe9d8a489d7,c6130385-d2f9-4f02-856e-4db161c997a6,상지 관절,관절,6,exam,다음 중 견쇄관절(AC joint)의 관절 종류는?,교재 p.28: 평면 관절(Gliding joint)의 예시로 Acromioclavicular joint(견쇄관절)과 Sternoclavicular joint(흉쇄관절)이 명시되어 있습니다. 편평한 면들이 마주보고 미끄러짐 운동이 일어납니다.
+e0e531f8-98a2-4f71-8304-570c4954402b,d5198b22-477b-4a8a-a4a0-182a98a3098e,하지 관절,관절,1,lesson,"고관절 (Hip Joint) (교재 p.66, 70)","고관절(Hip joint)은 구상 관절(Ball & Socket)입니다. (교재 p.33, 66)
+
+구성: 대퇴골두(Femur head) + 비구(Acetabulum)
+교재 p.66: 'Hip Joint = Femoralacetabular joint'
+
+가능한 움직임 (삼평면):
+• 굴곡/신전 (Flexion/Extension)
+• 외전/내전 (Abduction/Adduction)
+• 내회전/외회전 (Internal/External Rotation)
+
+고관절 ROM (교재 p.138):
+• Flexion 120°, Extension 30°
+• Abduction 40°, Adduction 20°
+• External rotation 50°, Internal rotation 40°"
+ee3b5b18-d720-4bf7-952c-2909f17fb740,d5198b22-477b-4a8a-a4a0-182a98a3098e,하지 관절,관절,2,lesson,슬관절과 인대 (교재 p.71),"슬관절(Knee joint)은 경첩 관절(Hinge joint)로 분류됩니다. (교재 p.29)
+
+슬관절의 4대 인대 (교재 p.71):
+① ACL (Anterior Cruciate Ligament, 전방십자인대)
+   • 경골의 전방 이동 방지
+② PCL (Posterior Cruciate Ligament, 후방십자인대)
+   • 경골의 후방 이동 방지
+③ LCL (Lateral Collateral Ligament, 외측측부인대)
+   • 외측 안정성
+④ MCL (Medial Collateral Ligament, 내측측부인대)
+   • 내측 안정성"
+82208f05-296a-438e-88dc-cdb30c2ceb13,d5198b22-477b-4a8a-a4a0-182a98a3098e,하지 관절,관절,3,lesson,발목 관절 (교재 p.72),"발목에는 2가지 관절이 있습니다. (교재 p.72)
+
+① 거퇴관절 (Talocrural joint = Ankle joint)
+   • 경골+비골 ↔ 거골(Talus)
+   • 경첩 관절 (Hinge joint)
+   • 움직임: 배측굴곡(Dorsiflexion) / 저측굴곡(Plantarflexion)
+
+② 거골하관절 (Subtalar joint)
+   • 거골(Talus) ↔ 종골(Calcaneus)
+   • 평면 관절 (Gliding joint)
+   • 움직임: 내번(Inversion) / 외번(Eversion)"
+e75f6fae-f9ac-41ff-87e9-f6f43adf3994,d5198b22-477b-4a8a-a4a0-182a98a3098e,하지 관절,관절,4,quiz,발목의 내번(Inversion)과 외번(Eversion)은 거퇴관절(Talocrural joint)에서 일어난다.,"교재 p.72: 내번(Inversion)/외번(Eversion)은 거골하관절(Subtalar joint, Gliding)에서 일어납니다. 거퇴관절(Talocrural, Hinge)에서는 배측굴곡(Dorsiflexion)/저측굴곡(Plantarflexion)이 일어납니다."
+b939b603-5296-4734-b96a-25a518261fa5,d5198b22-477b-4a8a-a4a0-182a98a3098e,하지 관절,관절,5,quiz,슬관절에서 경골의 전방 이동을 방지하는 인대는?,"교재 p.71: ACL(Anterior Cruciate Ligament, 전방십자인대)은 경골이 대퇴골에 대해 앞으로 밀리는 것을 방지합니다. PCL은 후방 이동, MCL/LCL은 내측/외측 안정성을 담당합니다."
+667ce89e-a4b1-4eff-bea7-2a8d2be3f29a,d5198b22-477b-4a8a-a4a0-182a98a3098e,하지 관절,관절,6,quiz,ACL(전방십자인대)은 경골의 전방 이동을 방지한다.,"교재 p.71: ACL(Anterior Cruciate Ligament, 전방십자인대)은 경골이 대퇴골에 대해 앞(전방)으로 밀리는 것을 방지하는 인대입니다. 반대로 PCL(후방십자인대)은 경골의 후방 이동을 방지합니다."
+57918292-123b-4040-9cfd-76e0b23c10ec,d5198b22-477b-4a8a-a4a0-182a98a3098e,하지 관절,관절,7,exam,교재에서 발목 관절(Talocrural joint)은 어떤 관절 종류로 분류되는가?,교재 p.72: 'Talocrural joint = Ankle J. : Hinge joint'으로 명시. 배측굴곡(Dorsiflexion)과 저측굴곡(Plantarflexion)이 일어나는 경첩 관절입니다.
+16b3cfff-beb5-4fb5-87c7-f11cece38b5f,d5198b22-477b-4a8a-a4a0-182a98a3098e,하지 관절,관절,8,exam,다음 중 고관절(Hip joint)의 안정성을 높이는 구조물이 아닌 것은?,"교재 p.70: 고관절의 안정성 구조는 Acetabular labrum(비구순), Joint capsule(관절낭), Ligament(인대)입니다. Meniscus(반월판)는 슬관절(Knee joint)의 구조물이지 고관절의 구조물이 아닙니다. (교재 p.71)"
+6a2a50dd-c73e-4f3b-8054-123487ec695f,d5198b22-477b-4a8a-a4a0-182a98a3098e,하지 관절,관절,9,exam,다음 관절과 그 종류(Type)의 연결이 모두 올바른 것은?,"교재 기반: Talocrural(발목)=Hinge(p.72), Subtalar(거골하)=Gliding(p.72), GH(상완와)=Ball&Socket(p.33). 모두 올바른 연결은 보기 1번뿐입니다."
+115024e6-a117-4bf0-91ec-53344692a8d2,ea5e91a3-efd9-4a17-aee4-6bbccf9c519f,근육의 기초,목/체간 근육,1,lesson,근육 수축의 종류 (교재 p.96-97),"근육 수축은 크게 2가지로 나뉩니다:
+
+① 등척성 수축 (Isometric contraction):
+• 근육 길이 변화 없이 힘 생산
+• 관절에서의 회전 없음
+• 예: 플랭크 자세 유지
+
+② 등장성 수축 (Isotonic contraction):
+ 1) 단축성 수축 (Concentric): 근육이 수축(짧아)지면서 힘 생산
+    예: 팔꿈치 굴곡 시 이두근
+ 2) 신장성 수축 (Eccentric): 근육이 길어지면서 힘 생산
+    예: 팔꿈치 천천히 펴기 시 이두근"
+b44529b5-34e5-427a-9ae5-8e9b8d1ccc9f,ea5e91a3-efd9-4a17-aee4-6bbccf9c519f,근육의 기초,목/체간 근육,2,lesson,작용에 따른 근육 분류 (교재 p.95),"근육은 작용에 따라 3가지로 분류됩니다. (교재 p.95)
+
+① 주동근 (Agonist): 특정 움직임의 시작과 완성에 가장 직접적으로 관계되는 근육
+   예: 팔꿈치 굴곡 시 상완이두근
+
+② 길항근 (Antagonist): 특정 주동근의 반대 작용을 갖는 근육
+   예: 팔꿈치 굴곡 시 상완삼두근
+
+③ 협력근 (Synergist): 특정 움직임이 완성되는 동안 서로 협력하는 근육
+   예: 팔꿈치 굴곡 시 상완근(이두근 보조)"
+4713d50b-2d18-4fdf-b0e1-9a29f1e0baee,ea5e91a3-efd9-4a17-aee4-6bbccf9c519f,근육의 기초,목/체간 근육,3,lesson,고유수용성 감각기: 근방추와 GTO (교재 p.92-94),"고유수용성 감각(Proprioception)은 신체 위치와 움직임 정보를 CNS로 전달합니다. (교재 p.92)
+
+두 가지 핵심 감각기:
+
+① 근방추 (Muscle spindle) — 교재 p.93
+• 근육의 길이 변화에 반응
+• 근육의 갑작스런 신장에 반응 → 해당 근육 수축 + 반대 근육 이완 (상호억제작용)
+• 방어적 역할
+
+② 골지건기관 (GTO, Golgi Tendon Organ) — 교재 p.94
+• 근육의 과한 수축에 반응
+• 과한 수축에 대응 → 해당 근육을 이완시킴
+• 방어적 역할"
+4a94a901-1137-452a-91aa-a7026cc9133b,ea5e91a3-efd9-4a17-aee4-6bbccf9c519f,근육의 기초,목/체간 근육,4,quiz,신장성 수축(Eccentric contraction)은 근육이 길어지면서 힘을 생산하는 수축이다.,교재 p.97: '신장성 수축(Eccentric contraction) — 근육이 길어지는 동안 능동적인 힘을 생산할 때 일어난다.' 팔을 천천히 내릴 때 이두근이 길어지면서도 힘을 내는 것이 예시입니다.
+fc2649a4-8f3c-43b1-af4a-db33a72ac49a,ea5e91a3-efd9-4a17-aee4-6bbccf9c519f,근육의 기초,목/체간 근육,5,quiz,근방추(Muscle spindle)는 근육의 과한 수축에 반응하여 해당 근육을 이완시킨다.,교재 p.93-94: 과한 수축에 반응→이완은 GTO(골지건기관)의 역할입니다. 근방추(Muscle spindle)는 갑작스런 신장에 반응→수축시킵니다. 둘의 반응 자극과 결과가 반대입니다.
+d2eaf6e3-5b8a-466f-baed-29b6b1d99af8,ea5e91a3-efd9-4a17-aee4-6bbccf9c519f,근육의 기초,목/체간 근육,6,exam,"근육의 길이 변화에 대한 반응을 하는 고유 수용성 감각기로서, 근육의 과한 수축에 반응하여 스트레스에 대한 방어적 역할을 하는 이 기관의 이름은?",교재 p.94: 'GTO — 근육의 과한 수축에 반응하여 스트레스에 대한 방어적 역할을 함. 해당 근육을 이완시킴.' 근방추(p.93)는 갑작스런 신장에 반응합니다.
+11783fcc-755a-4301-881d-b658c295ff94,da8f91a5-ee5b-450b-b05d-8bd51fe76d1e,목 근육,목/체간 근육,1,lesson,흉쇄유돌근 SCM (교재 p.101),"Sternocleidomastoid (흉쇄유돌근, SCM)
+
+기시 (Origin): 흉골병(Manubrium of sternum), 쇄골 내측(Medial clavicle)
+정지 (Insertion): 유양돌기(Mastoid process)
+작용 (Action): 목의 굴곡(Neck flexion), 외측굴곡(Lateral flexion), 회전(Rotation)
+
+이름 유래: Sterno(흉골) + Cleido(쇄골) + Mastoid(유양돌기) → 기시-정지가 이름에 포함."
+0b5ef135-9f47-47d1-bb7c-4d14f3f55a6b,da8f91a5-ee5b-450b-b05d-8bd51fe76d1e,목 근육,목/체간 근육,2,lesson,사각근 Scalene (교재 p.102),"Scalene (사각근) — 3개로 구성
+
+기시 (Origin): 경추 횡돌기(Transverse process of cervical spine)
+정지 (Insertion):
+• 전방사각근(Anterior): 제1늑골
+• 중간사각근(Middle): 제1늑골 상연
+• 후방사각근(Posterior): 제2늑골
+
+작용 (Action):
+• 목의 굴곡(Neck flexion), 외측굴곡(Lateral flexion), 회전
+• 호흡근: 숨을 들이쉬는 동안 제1, 2 늑골을 들어올린다"
+1738f0a2-7fda-4dc6-99b5-43594269d4b9,da8f91a5-ee5b-450b-b05d-8bd51fe76d1e,목 근육,목/체간 근육,3,lesson,목 신전근과 후두하근 (교재 p.104-105),"목 신전근 (Neck extensor) — 교재 p.104:
+• 두판상근(Splenius capitis): O=C3-T3 극돌기, I=유양돌기
+• 경판상근(Splenius cervicis): O=T3-T6 극돌기, I=C1-C3 횡돌기
+• 경반극근(Semispinalis cervicis): O=T1-T5 횡돌기, I=C2-C5 극돌기
+• 두반극근(Semispinalis capitis): O=C4-T6, I=후두골
+
+후두하근 (Suboccipital muscle) — 교재 p.105:
+• 대후두직근, 소후두직근, 상두사근, 하두사근 (4개)
+• 기능: Capital extension(두부 신전), Capital rotation(두부 회전), Head stability(머리 안정화)"
+7c5a6c9a-84d2-4a10-8898-a06025ac871a,da8f91a5-ee5b-450b-b05d-8bd51fe76d1e,목 근육,목/체간 근육,4,quiz,"사각근(Scalene)은 호흡 시 제1, 2 늑골을 들어올리는 호흡 보조근이다.","교재 p.102: 사각근의 작용에 '호흡근: 숨을 들이쉬는 동안 제1, 2 늑골을 들어올린다'고 명시되어 있습니다."
+817bdec4-9bc8-435a-b6c6-4b5ece9d61ab,da8f91a5-ee5b-450b-b05d-8bd51fe76d1e,목 근육,목/체간 근육,5,quiz,SCM(흉쇄유돌근)의 정지(Insertion)는?,교재 p.101: SCM의 정지(Insertion)는 유양돌기(Mastoid process)입니다. 흉골병과 쇄골 내측은 기시(Origin). 경추 횡돌기는 Scalene의 기시.
+efaea271-feb4-4fff-9ab8-7d02cdc0d35a,da8f91a5-ee5b-450b-b05d-8bd51fe76d1e,목 근육,목/체간 근육,6,exam,다음 근육의 이름과 움직임(Action)을 고르시오.,"교재 p.105: 후두하근(Suboccipital muscle)의 기능은 Capital extension(두부 신전), Capital rotation(두부 회전), Head stability(머리 안정화)입니다. 이미지에서 C1-C2 부위의 소근육이 보이면 후두하근입니다."
+e029290d-27cc-40a6-b6d7-667f6b51a476,da8f91a5-ee5b-450b-b05d-8bd51fe76d1e,목 근육,목/체간 근육,7,exam,다음 근육들은 어떤 움직임을 만들어내는 그룹인가?,"이미지에서 목 뒤쪽에 위치한 근육 그룹은 목 신전근(Neck extensor)입니다. 교재 p.104: 두판상근(Splenius capitis), 경판상근(Splenius cervicis), 경반극근, 두반극근 등이 목 신전근 그룹에 속합니다."
+449ad8b0-8207-4710-b34a-811358ba0969,f45b05aa-ac10-46c2-8c29-1237c9e2fc0f,척추 근육,목/체간 근육,1,lesson,척추기립근 Erector Spinae (교재 p.107-108),"척추기립근(Erector spinae)은 3개의 근육으로 구성됩니다. (교재 p.107-108)
+
+① 장늑근 (Iliocostalis): 가장 외측
+② 최장근 (Longissimus): 중앙
+③ 극근 (Spinalis): 가장 내측
+
+작용 (Action): 척추의 신전(Extension)
+
+⚠️ 시험 빈출: 'Erector spinae의 구성 근육은?' → 장늑근, 최장근, 극근
+
+외우기: '장·최·극' 또는 영문 첫 글자 'ILS'(I'll See = Iliocostalis, Longissimus, Spinalis)"
+2e44e753-86a1-4dc4-9376-3d9114cec399,f45b05aa-ac10-46c2-8c29-1237c9e2fc0f,척추 근육,목/체간 근육,2,lesson,다열근과 요방형근 (교재 p.109-110),"다열근 (Multifidus) — 교재 p.109:
+기시: 천골, ASIS, 모든 척추의 횡돌기
+정지: 모든 척추의 극돌기
+작용: 척추의 신전, 측굴, 회전
+
+⚠️ 다열근은 Inner core 4대 근육 중 하나! (교재 p.115)
+
+요방형근 (Quadratus lumborum, QL) — 교재 p.110:
+기시: 장골능(Iliac crest)
+정지: 요추 1-4 횡돌기, 12번 늑골
+작용: 몸통의 측면굴곡(Lateral flexion), 신전(Extension), 12번 늑골 안정화·하강"
+ed38b6c8-1934-49f5-a6ec-cd8a6d3da1c3,f45b05aa-ac10-46c2-8c29-1237c9e2fc0f,척추 근육,목/체간 근육,3,quiz,척추기립근(Erector spinae)을 구성하는 3개의 근육은?,"교재 p.107-108: 척추기립근은 장늑근(Iliocostalis), 최장근(Longissimus), 극근(Spinalis)으로 구성됩니다."
+ae0e9e15-fc14-48b0-b1ea-47ba7a978e9c,f45b05aa-ac10-46c2-8c29-1237c9e2fc0f,척추 근육,목/체간 근육,4,exam,Erector spinae(척추기립근)의 구성 근육으로 올바른 것은?,"교재 p.107-108: Erector spinae = Iliocostalis(장늑근) + Longissimus(최장근) + Spinalis(극근). 보기 2는 목 신전근, 보기 3는 다열근+요방형근+극근 혼합, 보기 4는 복벽 근육."
+b431351b-eb4c-4ad9-ac54-7ee007a58f6f,43e5684b-96b2-4aa4-b2c0-b2ccfbe13172,복근과 코어,목/체간 근육,1,lesson,복벽 근육 (교재 p.111-113),"복벽(Abdominal wall)의 4대 근육:
+
+① 복직근 (Rectus abdominis) — 교재 p.112
+   O: 제5-7늑연골, 검상돌기
+   I: 치골
+   A: 몸통 굴곡(Trunk flexion)
+
+② 외복사근 (External oblique)
+③ 내복사근 (Internal oblique)
+④ 복횡근 (Transverse abdominis)
+
+층 순서 (표면→깊은): 복직근 → 외복사근 → 내복사근 → 복횡근
+
+복직근은 '식스팩' 근육으로, 가장 표면에 위치하며 몸통 굴곡의 주동근입니다."
+cf89358b-cdcd-4fa6-98fd-a16d6d1c3ae0,43e5684b-96b2-4aa4-b2c0-b2ccfbe13172,복근과 코어,목/체간 근육,2,lesson,Inner Core Muscles (교재 p.115-117),"심부 코어 근육(Inner core)은 4개로 구성됩니다. (교재 p.115)
+
+'4 muscles make inner core box':
+① Transverse abdominis (복횡근) — 앞
+② Multifidus (다열근) — 뒤
+③ Diaphragm (횡격막) — 위
+④ Pelvic floor muscles (골반기저근) — 아래
+
+이 4개가 상자(Box) 형태로 몸통 중심을 감싸 척추를 안정화합니다."
+67189e6a-3210-4faa-b16c-6c254ade238e,43e5684b-96b2-4aa4-b2c0-b2ccfbe13172,복근과 코어,목/체간 근육,3,quiz,복직근(Rectus abdominis)은 Inner core muscle에 포함된다.,교재 p.115: Inner core = 복횡근 + 다열근 + 횡격막 + 골반기저근. 복직근(Rectus abdominis)은 가장 표층의 복벽 근육이며 Inner core에 포함되지 않습니다. 복직근은 Extrinsic stabilizer(외재 안정근)입니다.
+eed8dd90-d4b8-4ffa-b512-063bac940bab,43e5684b-96b2-4aa4-b2c0-b2ccfbe13172,복근과 코어,목/체간 근육,4,quiz,복직근(Rectus abdominis)의 주된 작용(Action)은?,"교재 p.112: 복직근의 작용(Action)은 '몸통의 굴곡(Trunk flexion)'입니다. 회전은 복사근(Obliques), 신전은 척추기립근(Erector spinae)의 주 작용."
+122d2070-a74c-4063-b6e4-ce777a865ec9,43e5684b-96b2-4aa4-b2c0-b2ccfbe13172,복근과 코어,목/체간 근육,5,exam,Inner core muscle (속 코어근육)을 구성하는 근육을 모두 고르시오.,"교재 p.115: Inner core = ① Transverse abdominis(복횡근) ② Multifidus(다열근) ③ Diaphragm(횡격막) ④ Pelvic floor muscles(골반기저근).
+
+보기에서 복직근(Rectus abdominis)은 Inner core에 포함되지 않습니다. Inner core에는 복횡근이 포함되지만 보기에 없으므로, 보기 중 Inner core인 것은 a(횡격막), c(골반기저근), d(다열근)입니다."
+f9ff847f-7130-4c02-8844-4a5c17b02e1f,43e5684b-96b2-4aa4-b2c0-b2ccfbe13172,복근과 코어,목/체간 근육,6,exam,"다음 복벽 근육 중 가장 깊은 층에 위치하며, Inner core의 구성원인 근육은?","복벽 근육 층 순서(표면→깊은): 복직근 → 외복사근 → 내복사근 → 복횡근. 가장 깊은 층인 복횡근(Transverse abdominis)이 Inner core의 구성원입니다. (교재 p.111, 115)"
+e1822de6-d79d-4fbd-ba27-b8fb91430f5d,b67ae8e9-5ffc-4319-85b9-a6ad41a509a8,견갑골 근육,상지 근육,1,lesson,승모근 Trapezius (교재 p.123),"승모근(Trapezius)은 3부분으로 나뉩니다. (교재 p.123)
+
+상부 승모근 (Upper Trapezius):
+  O: 후두골, 항인대, C1-C7 극돌기
+  I: 쇄골 외측, 견봉
+  A: 견갑골 거상(Elevation), 상방회전(Upward rotation)
+
+중부 승모근 (Middle Trapezius):
+  O: T1-T4 극돌기
+  I: 견갑극
+  A: 견갑골 후인(Retraction), 상방회전
+
+하부 승모근 (Lower Trapezius):
+  O: T5-T12 극돌기
+  I: 견갑극근
+  A: 견갑골 하강(Depression), 상방회전"
+5b9b178e-fdb3-471b-a729-31a9bf49c7be,b67ae8e9-5ffc-4319-85b9-a6ad41a509a8,견갑골 근육,상지 근육,2,lesson,"능형근, 견갑거근, 전거근 (교재 p.121-122, 129)","능형근 (Rhomboid) — 교재 p.122:
+  소능형근: O=C7-T1 극돌기, I=견갑극근
+  대능형근: O=T2-T5 극돌기, I=견갑골 척추연
+  A: 견갑골 후인(Retraction), 하방회전(Downward rotation)
+
+견갑거근 (Levator scapulae) — 교재 p.121:
+  O: C1-C4 횡돌기
+  I: 견갑골 상각~견갑극근
+  A: 견갑골 거상(Elevation), 하방회전
+
+전거근 (Serratus anterior) — 교재 p.129:
+  O: 상위 8늑골 바깥쪽
+  I: 견갑골 척추연
+  A: 견갑골 전인(Protraction), 상방회전"
+6a1729d4-a9c4-40f1-8156-f4820e2424e6,b67ae8e9-5ffc-4319-85b9-a6ad41a509a8,견갑골 근육,상지 근육,3,quiz,전거근(Serratus anterior)의 작용은 견갑골 전인(Protraction)과 상방회전(Upward rotation)이다.,"교재 p.129: 전거근의 작용 = '견갑골 전인(Scapula protraction), 상방회전(Upward rotation)'. Boxer's muscle이라 불리며, 팔을 앞으로 밀 때 견갑골을 전인시킵니다."
+a437cfaf-916e-4fff-8b76-2a6f447c9edf,b67ae8e9-5ffc-4319-85b9-a6ad41a509a8,견갑골 근육,상지 근육,4,quiz,견갑골 후인(Retraction)을 담당하는 근육으로 올바른 것은?,"교재 p.122: 능형근의 작용 = '견갑골 후인(Retraction), 하방회전'. 중부 승모근(p.123)도 후인을 담당합니다. 전거근=전인, 견갑거근=거상, 하부 승모근=하강."
+d03c61b0-49d0-4847-9165-a7edebeeb6bb,b67ae8e9-5ffc-4319-85b9-a6ad41a509a8,견갑골 근육,상지 근육,5,exam,소흉근(Pectoralis minor)의 작용(Action)으로 올바른 것은?,"교재 p.133: 소흉근 Action = '견갑골 전인(Protraction), 하강(Depression), 하방회전(Downward rotation)'. O=제3-5 늑골 전면, I=오훼돌기(Coracoid process)."
+621e62b2-6981-4b6e-b42b-86973fa22ccc,3de3cfeb-6c18-4fb6-bff8-600035cba11b,회전근개와 삼각근,상지 근육,1,lesson,회전근개 Rotator Cuff 4근 (교재 p.124),"회전근개(Rotator cuff)는 어깨 관절(GH joint)의 동적 안정화를 담당하는 4개의 근육입니다. (교재 p.124)
+
+① 극상근 (Supraspinatus):
+  O: 극상와(Supraspinous fossa)
+  I: 대결절(Greater tubercle)
+  A: 견관절 외전(Shoulder abduction)
+
+② 극하근 (Infraspinatus):
+  O: 극하와(Infraspinatus fossa)
+  I: 대결절
+  A: 견관절 외회전(External rotation)
+
+③ 소원근 (Teres minor):
+  O: 견갑골 액와연(Upper axillary border)
+  I: 대결절
+  A: 견관절 신전, 외회전
+
+④ 견갑하근 (Subscapularis):
+  O: 견갑하와(Subscapular fossa)
+  I: 소결절(Lesser tubercle)
+  A: 견관절 내회전(Internal rotation)"
+60605c11-b36f-4145-870f-b6c5e1d42d75,3de3cfeb-6c18-4fb6-bff8-600035cba11b,회전근개와 삼각근,상지 근육,2,lesson,삼각근 Deltoid (교재 p.126-127),"삼각근(Deltoid)은 3부분으로 나뉩니다. (교재 p.126-127)
+
+전면 삼각근 (Anterior part):
+  O: 쇄골 외측 1/3
+  I: 삼각근 조면(Deltoid tuberosity)
+  A: 견관절 굴곡, 내회전, 수평내전
+
+중면 삼각근 (Middle part):
+  O: 견봉 외측
+  I: 삼각근 조면
+  A: 견관절 외전(Abduction)
+
+후면 삼각근 (Posterior part):
+  O: 견갑극
+  I: 삼각근 조면
+  A: 견관절 신전, 외회전, 수평외전"
+56388e09-e4e8-4b50-933e-1b4791387263,3de3cfeb-6c18-4fb6-bff8-600035cba11b,회전근개와 삼각근,상지 근육,3,quiz,대원근(Teres major)은 회전근개(Rotator cuff)에 포함된다.,"교재 p.124: 회전근개 = 극상근(Supraspinatus), 극하근(Infraspinatus), 소원근(Teres minor), 견갑하근(Subscapularis). 대원근(Teres major)은 회전근개에 포함되지 않습니다. 소원근(Teres MINOR)과 혼동 주의!"
+8458aa5a-5445-444d-8d00-29ab56039928,3de3cfeb-6c18-4fb6-bff8-600035cba11b,회전근개와 삼각근,상지 근육,4,quiz,견갑하근(Subscapularis)의 정지(Insertion)는?,"교재 p.124: 견갑하근 I=소결절(Lesser tubercle). 나머지 3개(극상근, 극하근, 소원근)는 모두 대결절(Greater tubercle)에 부착."
+afbbbd47-2ed9-4ea5-985e-18bae7f4a5f9,3de3cfeb-6c18-4fb6-bff8-600035cba11b,회전근개와 삼각근,상지 근육,5,exam,다음 중 Rotator cuff (회전근개)를 모두 고르시오.,"교재 p.124: 회전근개 = Supraspinatus(극상근) + Infraspinatus(극하근) + Teres minor(소원근) + Subscapularis(견갑하근). Teres major(대원근)는 포함 안 됨! 보기 중 회전근개 = a(견갑하근), c(극상근), d(극하근)."
+23b178eb-b2f7-44e9-9be4-9abc26a13d9b,3de3cfeb-6c18-4fb6-bff8-600035cba11b,회전근개와 삼각근,상지 근육,6,exam,다음 근육의 이름과 움직임은 무엇인가?,이미지에서 견갑골 전면(앞쪽)에 위치한 근육은 견갑하근(Subscapularis)입니다. 교재 p.124: 견갑하근 Action = Shoulder internal rotation(견관절 내회전). 견갑하근은 견갑하와(Subscapular fossa)를 채우는 근육입니다.
+6dcaa472-351a-4ab8-9bb9-7e9577118d71,58d61afd-fff4-4d29-a0a1-66b26817b5f6,"대흉근, 광배근, 대원근",상지 근육,1,lesson,광배근과 대원근 (교재 p.130-131),"광배근 (Latissimus dorsi) — 교재 p.130:
+  O: T7~장골능 흉요건막, 하부 3-4 늑골, 견갑골 하각
+  I: 상완골 이두근구(Bicipital groove)
+  A: 견관절 신전(Extension), 내전(Adduction), 내회전(Internal rotation)
+
+대원근 (Teres major) — 교재 p.131:
+  O: 견갑골 하각(Inferior angle)
+  I: 상완골 이두근구 내측순면
+  A: 견관절 신전, 내전, 내회전"
+19e70b5b-b480-430f-9ff6-47da4663e0f9,58d61afd-fff4-4d29-a0a1-66b26817b5f6,"대흉근, 광배근, 대원근",상지 근육,2,lesson,대흉근 Pectoralis Major (교재 p.132),"대흉근 (Pectoralis major) — 교재 p.132:
+
+  쇄골두(Clavicular head):
+    O: 쇄골 내측(Medial half of clavicle)
+  흉골두(Sternal head):
+    O: 흉골, 상위 6늑연골(Sternum, cartilages of upper 6 ribs)
+
+  I: 상완골 이두근구(Lateral lip of bicipital groove)
+
+  A: 견관절 내회전(Internal rotation), 내전(Adduction), 수평내전(Horizontal adduction)"
+50d74787-8e0f-4ebb-849d-05006bd901b2,58d61afd-fff4-4d29-a0a1-66b26817b5f6,"대흉근, 광배근, 대원근",상지 근육,3,quiz,광배근(Latissimus dorsi)의 Action에 포함되지 않는 것은?,교재 p.130: 광배근 Action = 신전 + 내전 + 내회전. 외전(Abduction)은 포함되지 않습니다. 외전은 삼각근(중면)과 극상근의 작용입니다.
+793be6d8-cc65-4c2d-811f-12ca616d763b,58d61afd-fff4-4d29-a0a1-66b26817b5f6,"대흉근, 광배근, 대원근",상지 근육,4,exam,"견관절 신전(Extension), 내전(Adduction), 내회전(Internal rotation)을 모두 수행하는 근육은?","교재 p.130: 광배근 Action = 신전+내전+내회전. 대원근(p.131)도 같은 Action. 삼각근 전면=굴곡+내회전+수평내전, 극상근=외전, 전거근=견갑골 전인."
+cb10dd49-f987-4e54-bc29-c15b02e6325d,3cf93f64-6604-446b-aaad-d275a5c27ba4,상완 근육,상지 근육,1,lesson,상완이두근과 상완삼두근 (교재 p.134-135),"상완이두근 (Biceps brachii) — 교재 p.134:
+  O 장두: 견갑골 관절상결절(Supraglenoid tubercle)
+  O 단두: 오훼돌기(Coracoid process)
+  I: 요골조면(Tuberosity of radius)
+  A: 주관절 굴곡(Elbow flexion), 견관절 굴곡(Shoulder flexion)
+
+상완삼두근 (Triceps brachii) — 교재 p.135:
+  O 장두: 관절하결절(Infraglenoid tubercle)
+  O 외측두/내측두: 상완골 후면
+  I: 주두돌기(Olecranon process of ulna)
+  A: 주관절 신전(Elbow extension), 견관절 신전(Shoulder extension)"
+da8c4fda-48ad-4dda-8df9-a2c75f15d417,3cf93f64-6604-446b-aaad-d275a5c27ba4,상완 근육,상지 근육,2,quiz,상완삼두근(Triceps brachii)의 주된 작용은 주관절 신전(Elbow extension)이다.,"교재 p.135: 상완삼두근의 작용 = '주관절 신전(Elbow extension), 견관절 신전(Shoulder extension)'. 주관절 신전이 주된 작용입니다."
+b6e46e58-b330-4e75-9fb8-b9c7cbf5696d,3cf93f64-6604-446b-aaad-d275a5c27ba4,상완 근육,상지 근육,3,exam,다음 근육의 이름과 움직임(Action)을 고르시오.,이미지에서 상완 후면의 3두 구조 근육은 상완삼두근(Triceps brachii)입니다. 교재 p.135: 삼두근 Action = Elbow extension(주관절 신전). 이두근(Biceps)은 전면에 위치하며 Elbow flexion이 작용.
+1446ef07-5dbc-48de-9444-f610ccb6bcc0,0057f1ef-97ef-4d1d-b09c-af42654fb40e,고관절 근육 (굴곡/신전/외전/외회전),하지 근육,1,lesson,고관절 ROM과 장요근 Iliopsoas (교재 p.138-139),"고관절 ROM (교재 p.138):
+• Flexion 120˚ / Extension 30˚
+• Abduction 40˚ / Adduction 20˚
+• External rotation 50˚ / Internal rotation 40˚
+
+장요근 (Iliopsoas) — 교재 p.139: 장골근+대요근의 결합
+
+장골근 (Iliacus):
+  O: 장골능(Iliac crest)
+  I: 대퇴골 소전자(Lesser trochanter)
+  A: 고관절 굴곡, 외회전
+
+대요근 (Psoas major):
+  O: T12~L4
+  I: 대퇴골 소전자
+  A: 고관절 굴곡, 외회전, 몸통 측굴"
+5f1d201c-b516-4d24-a0af-0b5579e69c98,0057f1ef-97ef-4d1d-b09c-af42654fb40e,고관절 근육 (굴곡/신전/외전/외회전),하지 근육,2,lesson,"둔근 3형제: 대둔근, 중둔근, 소둔근 (교재 p.141-143)","대둔근 (Gluteus maximus) — 교재 p.141:
+  O: 천골후면, 장골, 장골 상둔선
+  I: 대퇴골 둔근조면, 장경인대
+  A: 고관절 신전, 외회전 + 고관절·골반 안정화
+
+중둔근 (Gluteus medius) — 교재 p.142:
+  O: 장골능, 상둔선~중둔선 사이
+  I: 대퇴골 대전자
+  A: 고관절 외전, 내회전(전방섬유) + 안정화
+
+소둔근 (Gluteus minimus) — 교재 p.143:
+  O: 장골후부, 중둔선~하둔선 사이
+  I: 대전자 전면
+  A: 고관절 외전, 내회전 + 안정화"
+4c9e3509-61ba-4f77-b395-1c11dcb46a20,0057f1ef-97ef-4d1d-b09c-af42654fb40e,고관절 근육 (굴곡/신전/외전/외회전),하지 근육,3,lesson,대퇴근막장근(TFL)과 고관절 외회전근군 (교재 p.144-146),"대퇴근막장근 (TFL, Tensor fascia latae) — 교재 p.144:
+  O: 장골능(ASIS 후방)
+  I: 장경인대(Iliotibial tract)
+  A: 고관절 외전, 내회전, 굴곡 + 슬관절 신전
+
+고관절 외회전근군 (Hip External Rotators) — 교재 p.145-146, 6개:
+• 이상근(Piriformis): O=천골전면, I=대전자
+• 내폐쇄근(Obturator internus): O=폐쇄공, I=대전자
+• 외폐쇄근(Obturator externus): O=폐쇄공, I=대전자
+• 상/하쌍자근(Superior/Inferior gemellus): I=대전자
+• 대퇴방형근(Quadratus femoris): O=좌골결절, I=전자간능선
+
+모두 Action: 고관절 외회전(Hip external rotation)"
+6953d637-18f6-4b1b-809b-4e4bed4f9d8c,0057f1ef-97ef-4d1d-b09c-af42654fb40e,고관절 근육 (굴곡/신전/외전/외회전),하지 근육,4,quiz,대둔근(Gluteus maximus)의 Action에는 고관절 외회전(External rotation)이 포함된다.,"교재 p.141: 대둔근 Action = '고관절 신전(Hip extension), 고관절 외회전(Hip external rotation)' + 안정화. 중둔근·소둔근은 반대로 내회전이 Action입니다."
+16b5824e-580c-48d1-9817-c7edef143cae,0057f1ef-97ef-4d1d-b09c-af42654fb40e,고관절 근육 (굴곡/신전/외전/외회전),하지 근육,5,quiz,중둔근(Gluteus medius)의 전방섬유(anterior fiber)는 고관절 외회전을 만든다.,"교재 p.142: 중둔근 Action = '고관절 외전(Abduction), 고관절 내회전(Internal rotation, 전방섬유)'. 전방섬유는 외회전이 아닌 내회전을 만듭니다."
+1eed6137-9a30-4bff-8684-568713152dcc,0057f1ef-97ef-4d1d-b09c-af42654fb40e,고관절 근육 (굴곡/신전/외전/외회전),하지 근육,6,exam,Iliopsoas (장요근) 근육의 주 움직임(Action)은 무엇인가?,"교재 p.139: 장요근(장골근+대요근) Action = 고관절 굴곡(Hip flexion), 외회전. 장요근은 고관절 굴곡의 가장 강력한 근육입니다."
+f9f1ba72-e9fc-4855-bee7-16f775fbec06,0057f1ef-97ef-4d1d-b09c-af42654fb40e,고관절 근육 (굴곡/신전/외전/외회전),하지 근육,7,exam,"다음 동작(반가부좌 자세, 무릎을 굽혀 발을 붙인 좌위)에서 보이는 고관절의 움직임은?",이미지 캡션에 'midrange external femur rotation'이 명시되어 있어 대퇴골의 외회전(External rotation)이 일어남을 알 수 있습니다. 동시에 앉은 자세에서 고관절은 굴곡(Flexion) 상태입니다. 따라서 답은 굴곡+외회전입니다.
+ba24c93a-c03d-4f9b-b57f-e88d7a727676,4bf059dc-9f0e-43bd-ab9c-a8e3412166a6,고관절 내전근과 대퇴사두근,하지 근육,1,lesson,고관절 내전근군 6개 (교재 p.147-150),"고관절 내전근(Hip adductors)은 6개로 구성됩니다. (교재 p.147-150)
+
+① 치골근 (Pectineus): O=상치골지, A=굴곡+내전+외회전
+② 대내전근 (Adductor magnus): O=대퇴골 후면 조선, A=내전+외회전
+③ 장내전근 (Adductor longus): O=치골전면, A=굴곡+내전+외회전
+④ 단내전근 (Adductor brevis): O=하치골지, A=굴곡+내전+외회전
+⑤ 소내전근 (Adductor minimus): O=하치골지, A=굴곡+내전+외회전
+⑥ 박근 (Gracilis): I=거위발건(Pes anserinus), A=고관절 내전 + 슬관절 굴곡·내회전"
+829b4477-7ac3-493f-8aa1-ba1b9f0a428e,4bf059dc-9f0e-43bd-ab9c-a8e3412166a6,고관절 내전근과 대퇴사두근,하지 근육,2,lesson,봉공근과 대퇴사두근 (교재 p.151-152),"봉공근 (Sartorius) — 교재 p.151:
+  O: 전상장골극(ASIS)
+  I: 경골 내측상부(Pes anserinus 일부)
+  A: 고관절 굴곡+외전+외회전, 슬관절 굴곡+내회전
+  ('재봉사 근육' — 인체에서 가장 긴 근육, 다리를 꼬는 동작에 사용)
+
+대퇴사두근 (Quadriceps femoris) — 교재 p.152, 4개:
+① 대퇴직근 (Rectus femoris): O=AIIS (유일하게 고관절도 지남)
+② 내측광근 (Vastus medialis): O=조선 내측
+③ 외측광근 (Vastus lateralis): O=조선 외측+대전자
+④ 중간광근 (Vastus intermedius): O=대퇴골 전면
+
+I(공통): 경골조면(via 슬개건)
+A: 대퇴직근=고관절 굴곡+슬관절 신전(모두), 나머지 3개=슬관절 신전만"
+98ecfb1f-e360-4b7c-bca7-4ca88ecd982f,4bf059dc-9f0e-43bd-ab9c-a8e3412166a6,고관절 내전근과 대퇴사두근,하지 근육,3,quiz,봉공근(Sartorius)은 고관절 내전근(Hip adductor)에 속한다.,교재 p.151: 봉공근의 작용은 고관절 굴곡+외전(Abduction)+외회전입니다. 내전(Adduction)이 아닌 외전근입니다. 이름과 위치(대퇴 내측을 지나감) 때문에 내전근으로 오해하기 쉬우나 실제로는 외전근입니다.
+f967e459-7c0e-45bb-8da5-4483a674357e,4bf059dc-9f0e-43bd-ab9c-a8e3412166a6,고관절 내전근과 대퇴사두근,하지 근육,4,quiz,대퇴사두근 4개 중 유일하게 고관절 굴곡(Hip flexion)에도 관여하는 근육은?,교재 p.152: 대퇴직근(Rectus femoris)은 O=AIIS(전하장골극)로 고관절 위쪽에서 기시하여 고관절을 지나갑니다. 따라서 Action에 Hip flexion(RF만 해당)이 포함됩니다. 나머지 3개 광근은 대퇴골에서만 기시하여 Knee extension만 담당합니다.
+ecca2758-d04f-4858-ad05-c3ce5d9a60ea,4bf059dc-9f0e-43bd-ab9c-a8e3412166a6,고관절 내전근과 대퇴사두근,하지 근육,5,exam,Hip adductor (고관절 내전근)를 모두 고르시오.,"교재 p.147-150: 고관절 내전근 = 치골근, 대내전근, 장내전근, 단내전근, 소내전근, 박근. 보기 중 a(단내전근), b(장내전근), d(박근)는 내전근입니다. c(봉공근/Sartorius)는 교재 p.151에서 외전근(Abduction)으로 명시되어 내전근이 아닙니다."
+f7a038a8-f1ba-43cc-90fd-7c915ce0fdd1,8d123e29-7999-4833-b497-854816841e9f,햄스트링과 하퇴 근육,하지 근육,1,lesson,햄스트링 3근 (교재 p.153-155),"햄스트링(Hamstring)은 대퇴 후면의 3개 근육입니다.
+
+대퇴이두근 (Biceps femoris) — 교재 p.153:
+  O 장두: 좌골결절 / O 단두: 대퇴골조선
+  I: 비골두(Fibula head)
+  A: 고관절 신전, 슬관절 굴곡
+
+반막양근 (Semimembranosus) — 교재 p.154:
+  O: 좌골결절
+  I: 경골 내측과 후면
+  A: 고관절 신전, 슬관절 굴곡
+
+반건양근 (Semitendinosus) — 교재 p.155:
+  O: 좌골결절
+  I: 거위발건(Pes anserinus)
+  A: 고관절 신전, 슬관절 굴곡+내회전(굴곡 시)"
+5bd5b026-6132-46d2-833a-942b83a3b584,8d123e29-7999-4833-b497-854816841e9f,햄스트링과 하퇴 근육,하지 근육,2,lesson,하퇴삼두근: 비복근과 가자미근 (교재 p.156),"하퇴삼두근(Triceps surae) = 비복근 + 가자미근
+
+비복근 (Gastrocnemius) — 교재 p.156:
+  O: 대퇴골 내측상과(내측두) + 외측상과(외측두)
+  I: 아킬레스건(Achilles tendon)
+  A: 슬관절 굴곡, 발목관절 저측굴곡
+
+가자미근 (Soleus) — 교재 p.156:
+  O: 후방 비골두, 비골체, 경골의 넙치선
+  I: 아킬레스건
+  A: 발목관절 저측굴곡 (슬관절 관여 없음!)"
+82f00a12-af68-43e8-9a87-99c4b30ae4b3,8d123e29-7999-4833-b497-854816841e9f,햄스트링과 하퇴 근육,하지 근육,3,lesson,슬와근 Popliteus (교재 p.157),"슬와근 (Popliteus) — 교재 p.157:
+
+기시 (Origin): 대퇴골 외측과(Lateral condyle of femur)
+정지 (Insertion): 경골의 후면 근위부(Posterior proximal tibial shaft)
+작용 (Action): 경골을 내회전하여, 슬관절 굴곡을 시작하게 한다
+
+무릎 뒤쪽 오금(Popliteal fossa)에 위치하는 작은 심부 근육입니다."
+8dbfa52a-327d-4477-9104-3152bc662d1d,8d123e29-7999-4833-b497-854816841e9f,햄스트링과 하퇴 근육,하지 근육,4,quiz,가자미근(Soleus)은 비복근(Gastrocnemius)과 달리 슬관절 움직임에 관여하지 않는다.,"교재 p.156: 가자미근은 비골·경골에서 기시하여 무릎을 지나지 않으므로 슬관절 움직임과 무관하며, 발목관절 저측굴곡만 담당합니다. 비복근은 대퇴골에서 기시하여 무릎을 지나므로 슬관절 굴곡에도 관여합니다."
+7cbf5f6c-45ef-44ec-abaf-55a75c8ffab3,8d123e29-7999-4833-b497-854816841e9f,햄스트링과 하퇴 근육,하지 근육,5,quiz,햄스트링 3근의 공통 Action은?,"교재 p.153-155: 대퇴이두근, 반막양근, 반건양근 모두 공통적으로 '고관절 신전(Hip extension), 슬관절 굴곡(Knee flexion)'을 Action으로 가집니다."
+9472330b-9190-49be-a282-aa8948b12073,8d123e29-7999-4833-b497-854816841e9f,햄스트링과 하퇴 근육,하지 근육,6,exam,다음 근육의 이름은 무엇이고 어떤 움직임을 만들어 내는가?,"교재 p.156: 가자미근(Soleus)은 비골·경골에서 기시(무릎 아래)하여 발목관절 저측굴곡(Plantar flexion)만 담당합니다. Knee extension은 가자미근·비복근 어느 쪽도 담당하지 않는 대퇴사두근의 기능이므로 보기 1,2는 틀립니다."
+092393e9-95c5-4f3f-918b-c7eb0db9b738,c42d3012-1506-40b6-9b17-f3e8c0fe566b,발목 근육,하지 근육,1,lesson,전경골근과 후경골근 (교재 p.158),"전경골근 (Tibialis anterior) — 교재 p.158:
+  O: 경골의 외측, 골간막
+  I: 제1중족골 기저부, 제1(내측)설상골
+  A: 발목관절 배측굴곡(Dorsiflexion), 내번(Inversion)
+
+후경골근 (Tibialis posterior) — 교재 p.158:
+  O: 경골과 비골의 후면, 골간막
+  I: 주상골, 족근골, 중족골 기저부
+  A: 발목관절 저측굴곡(Plantar flexion), 내번(Inversion)"
+a1142dd8-2755-404c-8160-1c705777232b,c42d3012-1506-40b6-9b17-f3e8c0fe566b,발목 근육,하지 근육,2,lesson,비골근군: 장비골근과 단비골근 (교재 p.159),"단비골근 (Fibularis brevis) — 교재 p.159:
+  O: 비골 원위부 표면 외측 2/3
+  I: 제5중족골 조면
+  A: 발목관절 저측굴곡, 외번(Eversion)
+
+장비골근 (Fibularis longus) — 교재 p.159:
+  O: 비골두, 비골 근위부 표면 외측 2/3
+  I: 내측설상골, 제1중족골
+  A: 발목관절 저측굴곡, 외번 + 아치 서포트(Arch support)"
+b5dd023e-8fa6-4ed7-854f-7f6753d95a33,c42d3012-1506-40b6-9b17-f3e8c0fe566b,발목 근육,하지 근육,3,quiz,전경골근(Tibialis anterior)과 후경골근(Tibialis posterior)은 모두 내번(Inversion)을 만든다.,"교재 p.158: 전경골근 A=배측굴곡+내번, 후경골근 A=저측굴곡+내번. 두 근육 모두 내번(Inversion)을 공통으로 만듭니다. 배측/저측굴곡은 반대이지만 내번은 같습니다."
+77499c30-e78b-4267-8116-08f6cf884a2d,c42d3012-1506-40b6-9b17-f3e8c0fe566b,발목 근육,하지 근육,4,quiz,장비골근(Fibularis longus)의 Action으로 올바른 것은?,"교재 p.159: 장비골근 Action = 발목관절 저측굴곡(Plantar flexion), 외번(Eversion) + 아치 서포트. 비골근군은 모두 외번을 담당하며, 전/후경골근(내번)과 대조됩니다."
+837a67f4-596d-4fca-9930-dff5b0d56119,c42d3012-1506-40b6-9b17-f3e8c0fe566b,발목 근육,하지 근육,5,exam,후경골근(Tibialis posterior)의 정지(Insertion)로 올바른 것은?,"교재 p.158: 후경골근 I = 주상골(Navicular), 족근골(Tarsal bone), 중족골 기저부(Base of metatarsal bone). 여러 뼈에 걸쳐 넓게 부착하여 발의 내측 아치를 강력하게 지지합니다. 보기 1은 단비골근, 보기 2는 전경골근의 정지점."
+84ae5ec2-7472-49dd-b964-68616c582d39,c42d3012-1506-40b6-9b17-f3e8c0fe566b,발목 근육,하지 근육,6,exam,후경골근(Tibialis posterior)의 약화는 평발(Flat foot)의 주요 원인 중 하나이다.,"후경골근은 주상골, 족근골, 중족골 기저부에 넓게 부착하여 발의 내측 종아치(Medial longitudinal arch)를 강력하게 지지합니다. 이 근육이 약화되거나 손상되면 아치가 무너져 평발(Flat foot, 후경골근 기능부전증) 상태가 발생할 수 있습니다."

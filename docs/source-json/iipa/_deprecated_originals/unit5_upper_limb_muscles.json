@@ -1,0 +1,507 @@
+{
+  "course": {
+    "course_id": "C5",
+    "title": "상지 근육",
+    "title_en": "Upper Limb Muscles",
+    "description": "견갑골 근육(승모근, 능형근, 전거근), 회전근개, 삼각근, 대흉근/소흉근, 광배근, 상완 근육을 학습합니다.",
+    "order": 5,
+    "textbook_reference": "교재 p.118-135"
+  },
+  "chapters": [
+    {
+      "chapter_id": "C5_CH1",
+      "title": "견갑골 근육",
+      "title_en": "Scapular Muscles",
+      "order": 1,
+      "textbook_pages": "p.120-123, 129",
+      "cards": [
+        {
+          "card_id": "C5_CH1_L01",
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 1,
+          "order": 1,
+          "question": "승모근 Trapezius (교재 p.123)",
+          "content_level_1": "승모근(Trapezius)은 3부분으로 나뉩니다. (교재 p.123)\n\n상부 승모근 (Upper Trapezius):\n  O: 후두골, 항인대, C1-C7 극돌기\n  I: 쇄골 외측, 견봉\n  A: 견갑골 거상(Elevation), 상방회전(Upward rotation)\n\n중부 승모근 (Middle Trapezius):\n  O: T1-T4 극돌기\n  I: 견갑극\n  A: 견갑골 후인(Retraction), 상방회전\n\n하부 승모근 (Lower Trapezius):\n  O: T5-T12 극돌기\n  I: 견갑극근\n  A: 견갑골 하강(Depression), 상방회전",
+          "content_level_2": "3부분 모두 상방회전(Upward rotation)에 참여합니다.\n각 부분의 고유 기능: 상부=거상, 중부=후인, 하부=하강.\n\n필라테스에서 '어깨를 내리세요' 큐잉 = 하부 승모근 활성화 + 상부 승모근 이완.",
+          "content_level_3": null,
+          "options": null, "answer_index": null, "explanation": null,
+          "summary": "승모근 3부: 상부(거상+상방회전), 중부(후인+상방회전), 하부(하강+상방회전). 교재 p.123.",
+          "image_url": "PENDING_UPLOAD",
+          "image_description": "승모근 3부분(상부/중부/하부)의 기시-정지와 섬유 방향을 색으로 구분한 후면 일러스트. (교재 p.123 참조)",
+          "reference_text": null, "option_explanations": null,
+          "source": "교재_p123",
+          "tags": ["승모근", "trapezius", "견갑골거상", "후인", "상방회전"]
+        },
+        {
+          "card_id": "C5_CH1_L02",
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 1,
+          "order": 2,
+          "question": "능형근, 견갑거근, 전거근 (교재 p.121-122, 129)",
+          "content_level_1": "능형근 (Rhomboid) — 교재 p.122:\n  소능형근: O=C7-T1 극돌기, I=견갑극근\n  대능형근: O=T2-T5 극돌기, I=견갑골 척추연\n  A: 견갑골 후인(Retraction), 하방회전(Downward rotation)\n\n견갑거근 (Levator scapulae) — 교재 p.121:\n  O: C1-C4 횡돌기\n  I: 견갑골 상각~견갑극근\n  A: 견갑골 거상(Elevation), 하방회전\n\n전거근 (Serratus anterior) — 교재 p.129:\n  O: 상위 8늑골 바깥쪽\n  I: 견갑골 척추연\n  A: 견갑골 전인(Protraction), 상방회전",
+          "content_level_2": "견갑골 움직임과 주동근 정리:\n• 거상(Elevation): 상부 승모근, 견갑거근\n• 하강(Depression): 하부 승모근\n• 후인(Retraction): 중부 승모근, 능형근\n• 전인(Protraction): 전거근\n• 상방회전(Upward rotation): 승모근(전체), 전거근\n• 하방회전(Downward rotation): 능형근, 견갑거근\n\n전거근은 'Boxer's muscle'이라 불립니다 — 펀치 동작 시 견갑골 전인.",
+          "content_level_3": null,
+          "options": null, "answer_index": null, "explanation": null,
+          "summary": "능형근=후인+하방회전. 견갑거근=거상+하방회전. 전거근=전인+상방회전(Boxer's muscle).",
+          "image_url": "PENDING_UPLOAD",
+          "image_description": "능형근, 견갑거근, 전거근의 위치와 기시-정지를 후면/측면에서 보여주는 일러스트.",
+          "reference_text": null, "option_explanations": null,
+          "source": "교재_p121-122_p129",
+          "tags": ["능형근", "견갑거근", "전거근", "retraction", "protraction"]
+        },
+        {
+          "card_id": "C5_CH1_Q01",
+          "content_type": "quiz",
+          "question_format": "true_false",
+          "difficulty": 2,
+          "order": 3,
+          "question": "전거근(Serratus anterior)의 작용은 견갑골 전인(Protraction)과 상방회전(Upward rotation)이다.",
+          "content_level_1": "교재 p.129의 전거근 작용을 떠올리세요.",
+          "content_level_2": null, "content_level_3": null,
+          "options": ["O", "X"],
+          "answer_index": [0],
+          "explanation": "교재 p.129: 전거근의 작용 = '견갑골 전인(Scapula protraction), 상방회전(Upward rotation)'. Boxer's muscle이라 불리며, 팔을 앞으로 밀 때 견갑골을 전인시킵니다.",
+          "summary": "전거근 = 전인 + 상방회전 → O (교재 p.129)",
+          "image_url": null, "image_description": null, "reference_text": null, "option_explanations": null,
+          "source": "교재_p129",
+          "tags": ["전거근", "전인", "상방회전", "OX"]
+        },
+        {
+          "card_id": "C5_CH1_Q02",
+          "content_type": "quiz",
+          "question_format": "multiple_choice",
+          "difficulty": 2,
+          "order": 4,
+          "question": "견갑골 후인(Retraction)을 담당하는 근육으로 올바른 것은?",
+          "content_level_1": "날개뼈를 모으는 근육을 떠올리세요.",
+          "content_level_2": null, "content_level_3": null,
+          "options": [
+            "전거근 (Serratus anterior)",
+            "견갑거근 (Levator scapulae)",
+            "능형근 (Rhomboid)",
+            "하부 승모근 (Lower trapezius)"
+          ],
+          "answer_index": [2],
+          "explanation": "교재 p.122: 능형근의 작용 = '견갑골 후인(Retraction), 하방회전'. 중부 승모근(p.123)도 후인을 담당합니다. 전거근=전인, 견갑거근=거상, 하부 승모근=하강.",
+          "summary": "후인(Retraction) = 능형근 + 중부 승모근. 교재 p.122.",
+          "image_url": null, "image_description": null, "reference_text": null,
+          "option_explanations": [
+            "전거근 = 전인(Protraction). 후인의 반대.",
+            "견갑거근 = 거상(Elevation).",
+            "정답. 능형근 = 후인(Retraction). 교재 p.122.",
+            "하부 승모근 = 하강(Depression)."
+          ],
+          "source": "교재_p122",
+          "tags": ["능형근", "후인", "retraction"]
+        },
+        {
+          "card_id": "C5_CH1_E01",
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 2,
+          "order": 5,
+          "question": "소흉근(Pectoralis minor)의 작용(Action)으로 올바른 것은?",
+          "content_level_1": "교재 p.133의 소흉근 작용을 떠올리세요.",
+          "content_level_2": null, "content_level_3": null,
+          "options": [
+            "견갑골 후인, 상방회전",
+            "견갑골 전인, 하강, 하방회전",
+            "견관절 내전, 내회전",
+            "견갑골 거상, 상방회전"
+          ],
+          "answer_index": [1],
+          "explanation": "교재 p.133: 소흉근 Action = '견갑골 전인(Protraction), 하강(Depression), 하방회전(Downward rotation)'. O=제3-5 늑골 전면, I=오훼돌기(Coracoid process).",
+          "summary": "소흉근 = 전인+하강+하방회전. O=3-5늑골, I=오훼돌기. 교재 p.133.",
+          "image_url": null, "image_description": null, "reference_text": null,
+          "option_explanations": [
+            "후인+상방회전 = 중부 승모근의 작용.",
+            "정답. 소흉근 = 전인, 하강, 하방회전 (교재 p.133).",
+            "내전+내회전 = 대흉근(p.132)이나 광배근(p.130)의 작용.",
+            "거상+상방회전 = 상부 승모근의 작용."
+          ],
+          "source": "교재_p133",
+          "tags": ["소흉근", "pectoralis_minor"]
+        }
+      ]
+    },
+    {
+      "chapter_id": "C5_CH2",
+      "title": "회전근개와 삼각근",
+      "title_en": "Rotator Cuff & Deltoid",
+      "order": 2,
+      "textbook_pages": "p.124-128",
+      "cards": [
+        {
+          "card_id": "C5_CH2_L01",
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 2,
+          "order": 1,
+          "question": "회전근개 Rotator Cuff 4근 (교재 p.124)",
+          "content_level_1": "회전근개(Rotator cuff)는 어깨 관절(GH joint)의 동적 안정화를 담당하는 4개의 근육입니다. (교재 p.124)\n\n① 극상근 (Supraspinatus):\n  O: 극상와(Supraspinous fossa)\n  I: 대결절(Greater tubercle)\n  A: 견관절 외전(Shoulder abduction)\n\n② 극하근 (Infraspinatus):\n  O: 극하와(Infraspinatus fossa)\n  I: 대결절\n  A: 견관절 신전, 외회전(Extension, External rotation)\n\n③ 소원근 (Teres minor):\n  O: 견갑골 액와연(Upper axillary border)\n  I: 대결절\n  A: 견관절 신전, 외회전\n\n④ 견갑하근 (Subscapularis):\n  O: 견갑하와(Subscapular fossa)\n  I: 소결절(Lesser tubercle)\n  A: 견관절 내회전(Internal rotation)",
+          "content_level_2": "외우기 — SITS:\nS = Supraspinatus(극상근)\nI = Infraspinatus(극하근)\nT = Teres minor(소원근)\nS = Subscapularis(견갑하근)\n\n⚠️ Teres MAJOR(대원근)는 회전근개가 아닙니다! (기출 2차 Q11 함정)\n\n부착 정리:\n• 대결절(Greater tubercle): 극상근, 극하근, 소원근 = S.I.T (외회전근 3개)\n• 소결절(Lesser tubercle): 견갑하근 = S (내회전근 1개)",
+          "content_level_3": null,
+          "options": null, "answer_index": null, "explanation": null,
+          "summary": "회전근개 SITS: 극상근(외전)+극하근(외회전)+소원근(외회전)+견갑하근(내회전). 대원근은 미포함!",
+          "image_url": "PENDING_UPLOAD",
+          "image_description": "회전근개 4근의 위치(전면: 견갑하근, 후면: 극상근/극하근/소원근)를 보여주는 전후면 견갑골 일러스트. (교재 p.124 참조)",
+          "reference_text": null, "option_explanations": null,
+          "source": "교재_p124",
+          "tags": ["회전근개", "rotator_cuff", "SITS", "극상근", "극하근", "소원근", "견갑하근"]
+        },
+        {
+          "card_id": "C5_CH2_L02",
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 1,
+          "order": 2,
+          "question": "삼각근 Deltoid (교재 p.126-127)",
+          "content_level_1": "삼각근(Deltoid)은 3부분으로 나뉩니다. (교재 p.126-127)\n\n전면 삼각근 (Anterior part):\n  O: 쇄골 외측 1/3\n  I: 삼각근 조면(Deltoid tuberosity)\n  A: 견관절 굴곡, 내회전, 수평내전\n\n중면 삼각근 (Middle part):\n  O: 견봉 외측\n  I: 삼각근 조면\n  A: 견관절 외전(Abduction)\n\n후면 삼각근 (Posterior part):\n  O: 견갑극\n  I: 삼각근 조면\n  A: 견관절 신전, 외회전, 수평외전",
+          "content_level_2": "3부분 모두 정지점(Insertion)이 같음: 삼각근 조면(Deltoid tuberosity of humerus)\n\n교재 p.128: 상완견갑리듬(Humeroscapular rhythm)\n• 외전(Abduction) 시 상완골과 견갑골이 2:1 비율로 움직임\n• 90° 외전 시: 견관절 60° + 견갑골 상방회전 30°",
+          "content_level_3": null,
+          "options": null, "answer_index": null, "explanation": null,
+          "summary": "삼각근: 전면(굴곡/내회전), 중면(외전), 후면(신전/외회전). 모두 I=삼각근 조면. 교재 p.126-127.",
+          "image_url": null, "image_description": null, "reference_text": null, "option_explanations": null,
+          "source": "교재_p126-128",
+          "tags": ["삼각근", "deltoid", "외전"]
+        },
+        {
+          "card_id": "C5_CH2_Q01",
+          "content_type": "quiz",
+          "question_format": "true_false",
+          "difficulty": 2,
+          "order": 3,
+          "question": "대원근(Teres major)은 회전근개(Rotator cuff)에 포함된다.",
+          "content_level_1": "회전근개 4근의 구성을 떠올리세요. SITS.",
+          "content_level_2": null, "content_level_3": null,
+          "options": ["O", "X"],
+          "answer_index": [1],
+          "explanation": "교재 p.124: 회전근개 = 극상근(Supraspinatus), 극하근(Infraspinatus), 소원근(Teres minor), 견갑하근(Subscapularis). 대원근(Teres major)은 회전근개에 포함되지 않습니다. 소원근(Teres MINOR)과 혼동 주의!",
+          "summary": "대원근(Teres major) ≠ 회전근개. 소원근(Teres minor) = 회전근개 → X",
+          "image_url": null, "image_description": null, "reference_text": null, "option_explanations": null,
+          "source": "교재_p124",
+          "tags": ["회전근개", "대원근", "소원근", "OX"]
+        },
+        {
+          "card_id": "C5_CH2_Q02",
+          "content_type": "quiz",
+          "question_format": "multiple_choice",
+          "difficulty": 2,
+          "order": 4,
+          "question": "견갑하근(Subscapularis)의 정지(Insertion)는?",
+          "content_level_1": "회전근개 중 유일하게 소결절에 부착하는 근육입니다.",
+          "content_level_2": null, "content_level_3": null,
+          "options": [
+            "대결절 (Greater tubercle)",
+            "소결절 (Lesser tubercle)",
+            "견봉 (Acromion)",
+            "오훼돌기 (Coracoid process)"
+          ],
+          "answer_index": [1],
+          "explanation": "교재 p.124: 견갑하근 I=소결절(Lesser tubercle). 나머지 3개(극상근, 극하근, 소원근)는 모두 대결절(Greater tubercle)에 부착.",
+          "summary": "견갑하근 = 소결절(Lesser tubercle). 나머지 3개 = 대결절. 교재 p.124.",
+          "image_url": null, "image_description": null, "reference_text": null,
+          "option_explanations": [
+            "대결절 = 극상근/극하근/소원근의 정지.",
+            "정답. 소결절 = 견갑하근의 정지 (교재 p.124).",
+            "견봉 = 승모근/삼각근의 기시/정지 부위.",
+            "오훼돌기 = 소흉근/상완이두근 단두의 기시."
+          ],
+          "source": "교재_p124",
+          "tags": ["견갑하근", "소결절"]
+        },
+        {
+          "card_id": "C5_CH2_E01",
+          "content_type": "exam",
+          "question_format": "multiple_select",
+          "difficulty": 2,
+          "order": 5,
+          "question": "다음 중 Rotator cuff (회전근개)를 모두 고르시오.",
+          "content_level_1": "SITS를 떠올리세요.",
+          "content_level_2": "Teres MAJOR vs Teres MINOR를 구분하세요.",
+          "content_level_3": null,
+          "options": [
+            "Subscapularis (견갑하근)",
+            "Teres major (대원근)",
+            "Supraspinatus (극상근)",
+            "Infraspinatus (극하근)"
+          ],
+          "answer_index": [0, 2, 3],
+          "explanation": "교재 p.124: 회전근개 = Supraspinatus(극상근) + Infraspinatus(극하근) + Teres minor(소원근) + Subscapularis(견갑하근). Teres major(대원근)는 포함 안 됨! 보기 중 회전근개 = a(견갑하근), c(극상근), d(극하근).",
+          "summary": "회전근개 = SITS. Teres MAJOR 제외! 정답: a,c,d.",
+          "image_url": null, "image_description": null, "reference_text": null,
+          "option_explanations": [
+            "회전근개 ✓ — 내회전 (교재 p.124).",
+            "회전근개 ✗ — 대원근은 회전근개 아님. 소원근(Teres minor)이 회전근개.",
+            "회전근개 ✓ — 외전 (교재 p.124).",
+            "회전근개 ✓ — 외회전 (교재 p.124)."
+          ],
+          "source": "기출_2차Q11",
+          "source_note": "2차 Q11 원문. 복수정답. 정답 2) a,c,d.",
+          "tags": ["회전근개", "기출", "복수정답"]
+        },
+        {
+          "card_id": "C5_CH2_E02",
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 2,
+          "order": 6,
+          "question": "다음 근육의 이름과 움직임은 무엇인가?",
+          "content_level_1": "이미지에서 견갑골 뒤쪽의 근육 위치를 확인하세요.",
+          "content_level_2": null, "content_level_3": null,
+          "options": [
+            "Deltoid (삼각근), Shoulder abduction",
+            "Infraspinatus (극하근), Shoulder External rotation",
+            "Supraspinatus (극상근), Shoulder abduction",
+            "Subscapularis (견갑하근), Shoulder Internal rotation"
+          ],
+          "answer_index": [3],
+          "explanation": "이미지에서 견갑골 전면(앞쪽)에 위치한 근육은 견갑하근(Subscapularis)입니다. 교재 p.124: 견갑하근 Action = Shoulder internal rotation(견관절 내회전). 견갑하근은 견갑하와(Subscapular fossa)를 채우는 근육입니다.",
+          "summary": "견갑골 전면 근육 = 견갑하근(Subscapularis) → Shoulder internal rotation.",
+          "image_url": "PENDING_UPLOAD",
+          "image_description": "견갑골 전면에서 견갑하근(Subscapularis)이 녹색으로 하이라이트된 일러스트.",
+          "reference_text": null,
+          "option_explanations": [
+            "삼각근은 어깨 위를 덮는 근육. 견갑골 전면 아님.",
+            "극하근은 견갑골 후면(극하와)에 위치.",
+            "극상근은 견갑골 후면(극상와)에 위치.",
+            "정답. 견갑하근 = 견갑골 전면, Internal rotation."
+          ],
+          "source": "기출_1차Q5_2차Q5_참고",
+          "source_note": "1차/2차 Q5 유형. 정확한 이미지/정답은 PM 세션에서 이미지 대조 후 확정.",
+          "_flag": "⚠️ 1차/2차 Q5 이미지 대조 필요 — 실제 정답이 다를 수 있음.",
+          "tags": ["견갑하근", "회전근개", "기출"]
+        }
+      ]
+    },
+    {
+      "chapter_id": "C5_CH3",
+      "title": "대흉근, 광배근, 대원근",
+      "title_en": "Pec Major, Lat, Teres Major",
+      "order": 3,
+      "textbook_pages": "p.130-132",
+      "cards": [
+        {
+          "card_id": "C5_CH3_L01",
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 2,
+          "order": 1,
+          "question": "광배근과 대원근 (교재 p.130-131)",
+          "content_level_1": "광배근 (Latissimus dorsi) — 교재 p.130:\n  O: T7~장골능 흉요건막, 하부 3-4 늑골, 견갑골 하각\n  I: 상완골 이두근구(Bicipital groove)\n  A: 견관절 신전(Extension), 내전(Adduction), 내회전(Internal rotation)\n\n대원근 (Teres major) — 교재 p.131:\n  O: 견갑골 하각(Inferior angle)\n  I: 상완골 이두근구 내측순면\n  A: 견관절 신전, 내전, 내회전",
+          "content_level_2": "광배근과 대원근의 Action이 동일합니다: 신전 + 내전 + 내회전.\n두 근육은 '짝꿍 근육'이라 불릴 정도로 같은 동작을 합니다.\n\n차이점: 광배근은 인체에서 가장 넓은 근육(Lat = '넓은')으로 등 전체를 덮지만, 대원근은 견갑골 하각에서만 시작하는 작은 근육입니다.",
+          "content_level_3": null,
+          "options": null, "answer_index": null, "explanation": null,
+          "summary": "광배근 & 대원근: 둘 다 A=견관절 신전+내전+내회전. 교재 p.130-131.",
+          "image_url": "PENDING_UPLOAD",
+          "image_description": "광배근(넓은 배 근육)과 대원근(견갑골 하각~상완골)의 위치를 후면에서 보여주는 일러스트. (교재 p.130-131 참조)",
+          "reference_text": null, "option_explanations": null,
+          "source": "교재_p130-131",
+          "tags": ["광배근", "대원근", "latissimus_dorsi", "teres_major"]
+        },
+        {
+          "card_id": "C5_CH3_L02",
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 2,
+          "order": 2,
+          "question": "대흉근 Pectoralis Major (교재 p.132)",
+          "content_level_1": "대흉근 (Pectoralis major) — 교재 p.132:\n\n  쇄골두(Clavicular head):\n    O: 쇄골 내측(Medial half of clavicle)\n  흉골두(Sternal head):\n    O: 흉골, 상위 6늑연골(Sternum, cartilages of upper 6 ribs)\n\n  I: 상완골 이두근구(Lateral lip of bicipital groove)\n\n  A: 견관절 내회전(Internal rotation), 내전(Adduction), 수평내전(Horizontal adduction)",
+          "content_level_2": "대흉근 vs 광배근 비교:\n• 대흉근: 가슴 앞쪽, 내회전+내전+수평내전\n• 광배근: 등 뒤쪽, 내회전+내전+신전\n\n공통 Action: 내회전, 내전\n차이점: 대흉근은 수평내전(팔을 앞으로 모으기), 광배근은 신전(팔을 뒤로)",
+          "content_level_3": null,
+          "options": null, "answer_index": null, "explanation": null,
+          "summary": "대흉근: O=쇄골+흉골+늑연골, I=이두근구, A=내회전+내전+수평내전. 교재 p.132.",
+          "image_url": null, "image_description": null, "reference_text": null, "option_explanations": null,
+          "source": "교재_p132",
+          "tags": ["대흉근", "pectoralis_major"]
+        },
+        {
+          "card_id": "C5_CH3_Q01",
+          "content_type": "quiz",
+          "question_format": "multiple_choice",
+          "difficulty": 2,
+          "order": 3,
+          "question": "광배근(Latissimus dorsi)의 Action에 포함되지 않는 것은?",
+          "content_level_1": "교재 p.130의 광배근 작용 3가지를 떠올리세요.",
+          "content_level_2": null, "content_level_3": null,
+          "options": [
+            "견관절 신전 (Extension)",
+            "견관절 내전 (Adduction)",
+            "견관절 외전 (Abduction)",
+            "견관절 내회전 (Internal rotation)"
+          ],
+          "answer_index": [2],
+          "explanation": "교재 p.130: 광배근 Action = 신전 + 내전 + 내회전. 외전(Abduction)은 포함되지 않습니다. 외전은 삼각근(중면)과 극상근의 작용입니다.",
+          "summary": "광배근 = 신전+내전+내회전. 외전은 포함 안 됨.",
+          "image_url": null, "image_description": null, "reference_text": null,
+          "option_explanations": [
+            "신전 ✓ 광배근 Action에 포함.",
+            "내전 ✓ 광배근 Action에 포함.",
+            "정답. 외전은 광배근 Action 아님. 삼각근/극상근의 작용.",
+            "내회전 ✓ 광배근 Action에 포함."
+          ],
+          "source": "교재_p130",
+          "tags": ["광배근", "latissimus_dorsi"]
+        },
+        {
+          "card_id": "C5_CH3_E01",
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 2,
+          "order": 4,
+          "question": "견관절 신전(Extension), 내전(Adduction), 내회전(Internal rotation)을 모두 수행하는 근육은?",
+          "content_level_1": "같은 Action 3가지를 공유하는 '짝꿍 근육'을 떠올리세요.",
+          "content_level_2": null, "content_level_3": null,
+          "options": [
+            "삼각근 전면 (Anterior deltoid)",
+            "극상근 (Supraspinatus)",
+            "광배근 (Latissimus dorsi)",
+            "전거근 (Serratus anterior)"
+          ],
+          "answer_index": [2],
+          "explanation": "교재 p.130: 광배근 Action = 신전+내전+내회전. 대원근(p.131)도 같은 Action. 삼각근 전면=굴곡+내회전+수평내전, 극상근=외전, 전거근=견갑골 전인.",
+          "summary": "신전+내전+내회전 = 광배근(+대원근). 교재 p.130.",
+          "image_url": null, "image_description": null, "reference_text": null,
+          "option_explanations": [
+            "전면 삼각근 = 굴곡+내회전+수평내전.",
+            "극상근 = 외전.",
+            "정답. 광배근 = 신전+내전+내회전 (교재 p.130).",
+            "전거근 = 견갑골 전인+상방회전."
+          ],
+          "source": "교재_p130",
+          "tags": ["광배근", "신전", "내전", "내회전"]
+        }
+      ]
+    },
+    {
+      "chapter_id": "C5_CH4",
+      "title": "상완 근육",
+      "title_en": "Arm Muscles",
+      "order": 4,
+      "textbook_pages": "p.134-135",
+      "cards": [
+        {
+          "card_id": "C5_CH4_L01",
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 1,
+          "order": 1,
+          "question": "상완이두근과 상완삼두근 (교재 p.134-135)",
+          "content_level_1": "상완이두근 (Biceps brachii) — 교재 p.134:\n  O 장두: 견갑골 관절상결절(Supraglenoid tubercle)\n  O 단두: 오훼돌기(Coracoid process)\n  I: 요골조면(Tuberosity of radius)\n  A: 주관절 굴곡(Elbow flexion), 견관절 굴곡(Shoulder flexion)\n\n상완삼두근 (Triceps brachii) — 교재 p.135:\n  O 장두: 관절하결절(Infraglenoid tubercle)\n  O 외측두/내측두: 상완골 후면\n  I: 주두돌기(Olecranon process of ulna)\n  A: 주관절 신전(Elbow extension), 견관절 신전(Shoulder extension)",
+          "content_level_2": "이두근과 삼두근은 주관절에서 주동근-길항근 관계:\n• 이두근 = 주관절 굴곡의 주동근 (삼두근이 길항근)\n• 삼두근 = 주관절 신전의 주동근 (이두근이 길항근)\n\n기출 1차 Q6 포인트: 이미지로 근육을 보여주고 이름+Action을 묻는 문제.",
+          "content_level_3": null,
+          "options": null, "answer_index": null, "explanation": null,
+          "summary": "이두근: A=Elbow flexion+Shoulder flexion. 삼두근: A=Elbow extension+Shoulder extension. 교재 p.134-135.",
+          "image_url": "PENDING_UPLOAD",
+          "image_description": "상완이두근(전면)과 상완삼두근(후면)의 기시-정지를 라벨로 표시한 상완 전후면 일러스트. (교재 p.134-135 참조)",
+          "reference_text": null, "option_explanations": null,
+          "source": "교재_p134-135",
+          "tags": ["상완이두근", "상완삼두근", "biceps", "triceps"]
+        },
+        {
+          "card_id": "C5_CH4_Q01",
+          "content_type": "quiz",
+          "question_format": "true_false",
+          "difficulty": 1,
+          "order": 2,
+          "question": "상완삼두근(Triceps brachii)의 주된 작용은 주관절 신전(Elbow extension)이다.",
+          "content_level_1": "교재 p.135의 삼두근 작용을 떠올리세요.",
+          "content_level_2": null, "content_level_3": null,
+          "options": ["O", "X"],
+          "answer_index": [0],
+          "explanation": "교재 p.135: 상완삼두근의 작용 = '주관절 신전(Elbow extension), 견관절 신전(Shoulder extension)'. 주관절 신전이 주된 작용입니다.",
+          "summary": "삼두근 = Elbow extension → O (교재 p.135)",
+          "image_url": null, "image_description": null, "reference_text": null, "option_explanations": null,
+          "source": "교재_p135",
+          "tags": ["상완삼두근", "elbow_extension", "OX"]
+        },
+        {
+          "card_id": "C5_CH4_E01",
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 1,
+          "order": 3,
+          "question": "다음 근육의 이름과 움직임(Action)을 고르시오.",
+          "content_level_1": "이미지에서 상완 후면의 근육을 확인하세요.",
+          "content_level_2": null, "content_level_3": null,
+          "options": [
+            "Biceps brachii (상완이두근), Elbow extension (주관절 신전)",
+            "Triceps brachii (상완삼두근), Elbow extension (주관절 신전)",
+            "Biceps brachii (상완이두근), Elbow flexion (주관절 굴곡)",
+            "Triceps brachii (상완삼두근), Elbow flexion (주관절 굴곡)"
+          ],
+          "answer_index": [1],
+          "explanation": "이미지에서 상완 후면의 3두 구조 근육은 상완삼두근(Triceps brachii)입니다. 교재 p.135: 삼두근 Action = Elbow extension(주관절 신전). 이두근(Biceps)은 전면에 위치하며 Elbow flexion이 작용.",
+          "summary": "상완 후면 3두 근육 = Triceps brachii → Elbow extension.",
+          "image_url": "PENDING_UPLOAD",
+          "image_description": "상완 후면에서 상완삼두근(Triceps brachii, 장두/외측두/내측두)이 녹색으로 하이라이트된 일러스트.",
+          "reference_text": null,
+          "option_explanations": [
+            "이두근의 작용은 Elbow extension이 아닌 flexion.",
+            "정답. 삼두근 = Elbow extension (교재 p.135).",
+            "이두근+Elbow flexion은 올바른 조합이지만 이미지가 후면 근육.",
+            "삼두근의 작용은 Elbow flexion이 아닌 extension."
+          ],
+          "source": "기출_1차Q6",
+          "source_note": "1차 Q6 원문.",
+          "tags": ["상완삼두근", "triceps", "기출"]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "unit": 5,
+    "unit_title": "상지 근육",
+    "total_chapters": 4,
+    "total_cards": 18,
+    "card_breakdown": {
+      "lesson": 7,
+      "quiz": 6,
+      "exam": 5
+    },
+    "difficulty_distribution": {
+      "1": 6,
+      "2": 12,
+      "3": 0
+    },
+    "ox_balance": {
+      "total_ox_questions": 4,
+      "O_answers": 2,
+      "X_answers": 2,
+      "O_ratio": "50%",
+      "cumulative_units_1_to_5": {
+        "total_ox": 24,
+        "O_answers": 12,
+        "X_answers": 12,
+        "O_ratio": "50%",
+        "status": "✅ 45-55% 범위 유지"
+      }
+    },
+    "exam_source_mapping": {
+      "기출_2차Q11": "회전근개 구성 (Teres major 함정, 정답 a,c,d)",
+      "기출_1차Q5_2차Q5_참고": "근육+Action 이미지 (⚠️이미지 검증 필요)",
+      "기출_1차Q6": "Triceps brachii + Elbow extension"
+    },
+    "textbook_verification": {
+      "교재_p121": "견갑거근 — O:C1-C4 횡돌기, A:거상+하방회전",
+      "교재_p122": "능형근 — O:C7-T5 극돌기, A:후인+하방회전",
+      "교재_p123": "승모근 3부 — 상부(거상), 중부(후인), 하부(하강) + 모두 상방회전",
+      "교재_p124": "회전근개 SITS — 극상근/극하근/소원근→대결절, 견갑하근→소결절",
+      "교재_p126-127": "삼각근 3부 — 전면(굴곡), 중면(외전), 후면(신전)",
+      "교재_p128": "상완견갑리듬 2:1",
+      "교재_p129": "전거근 — A:전인+상방회전 (Boxer's muscle)",
+      "교재_p130": "광배근 — A:신전+내전+내회전",
+      "교재_p131": "대원근 — A:신전+내전+내회전 (광배근과 동일 Action)",
+      "교재_p132": "대흉근 — A:내회전+내전+수평내전",
+      "교재_p133": "소흉근 — A:전인+하강+하방회전",
+      "교재_p134": "이두근 — A:Elbow flexion+Shoulder flexion",
+      "교재_p135": "삼두근 — A:Elbow extension+Shoulder extension"
+    },
+    "flags": [
+      "⚠️ C5_CH2_E02: 1차/2차 Q5 이미지 대조 필요 — 실제 정답 확인",
+      "📌 교재 대조 완료 — 모든 카드에 교재 페이지 번호 명시"
+    ]
+  }
+}

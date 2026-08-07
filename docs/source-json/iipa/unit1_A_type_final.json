@@ -1,0 +1,256 @@
+{
+  "unit": "C1 해부학 기초",
+  "batch": "A유형 16장 (C1 전체)",
+  "cards": [
+    {
+      "card_id": "C1_CH1_L01",
+      "content_type": "lesson",
+      "question_format": null,
+      "difficulty": 1,
+      "question": "해부학적 자세 (Anatomical Position)란?",
+      "explanation": "해부학적 자세(Anatomical Position)는 인체의 위치와 방향을 설명하기 위해 전 세계 의료·운동과학 분야가 공통으로 사용하는 표준 기준 자세입니다. 이 자세를 기준으로 삼아야 '위/아래', '안쪽/바깥쪽' 같은 방향 용어와 관절의 움직임을 누구나 같은 의미로 이해할 수 있습니다.\n\n해부학적 자세는 다음 다섯 가지 조건을 모두 만족해야 합니다.\n\n1. 몸을 똑바로 세운 직립 자세를 취합니다.\n2. 시선은 정면을 바라봅니다.\n3. 양팔은 몸통 옆에 자연스럽게 늘어뜨립니다.\n4. 손바닥은 앞(전방)을 향하게 합니다.\n5. 양 발은 약간 벌려 서로 평행하게 놓습니다.\n\n이 중에서도 특히 주의해야 할 부분은 손바닥의 방향입니다. 팔을 그냥 몸 옆으로 자연스럽게 늘어뜨리면 손바닥은 보통 몸쪽을 향하게 되는데, 해부학적 자세에서는 전완(forearm)이 바깥쪽으로 살짝 돌아간 회외(supination) 상태를 기준으로 삼기 때문에 손바닥이 반드시 앞을 향해야 합니다. 만약 손바닥이 뒤나 옆을 향하고 있다면 그 자세는 해부학적 자세가 아닙니다.\n\n이 기준은 실제 임상과 지도 현장에서도 그대로 쓰입니다. 예를 들어 회원의 좌우를 이야기할 때는 항상 회원 자신을 기준으로 한 오른쪽·왼쪽을 말하며, 필라테스 큐잉에서 '안쪽(medial)'이나 '바깥쪽(lateral)' 같은 표현을 쓸 때도 이 해부학적 자세를 기준점으로 삼아 방향을 판단합니다.",
+      "key_points": [
+        "해부학적 자세는 직립·정면 주시·양팔을 몸통 옆에·손바닥 전방·양 발 평행의 5가지 조건을 모두 갖춘 자세다",
+        "손바닥이 앞을 향하는 것은 전완의 회외 상태를 기준으로 삼기 때문이며, 몸쪽이나 뒤를 향하면 해부학적 자세가 아니다",
+        "모든 방향 용어(medial/lateral 등)와 움직임 설명은 이 자세를 기준으로 한다"
+      ],
+      "source_page": 3,
+      "image_url": null
+    },
+    {
+      "card_id": "C1_CH1_L02",
+      "content_type": "lesson",
+      "question_format": null,
+      "difficulty": 1,
+      "question": "운동 기본 자세의 종류",
+      "explanation": "필라테스와 운동 지도 현장에서는 몇 가지 기본 자세를 정해진 이름으로 부르며, 이 이름들을 정확히 구분해서 쓰는 것이 큐잉의 기본입니다.\n\n1. Supine position(앙와위, 바로 누운 자세): 등을 바닥에 대고 위를 보고 눕는 자세입니다.\n2. Prone position(복와위, 엎드린 자세): 배를 바닥에 대고 엎드리는 자세입니다.\n3. Side-lying position(측와위, 옆으로 누운 자세): 몸의 한쪽 면을 바닥에 대고 옆으로 눕는 자세입니다.\n4. Quadruped position(네발기기 자세): 양손과 양 무릎, 네 지점으로 바닥을 짚는 자세입니다.\n5. Kneeling position(무릎 꿇기 자세): 양 무릎으로 바닥을 짚고 상체는 곧게 세우는 자세입니다.\n6. Standing position(기립 자세): 두 발로 서 있는 자세입니다.\n\n이 중 Quadruped와 Kneeling은 이름이 비슷해 보이지만 실제로는 지지하는 지점 수가 다릅니다. Quadruped는 양손과 양 무릎, 총 네 지점으로 바닥을 짚는 반면 Kneeling은 양 무릎 두 지점만으로 지지하면서 상체를 곧게 세웁니다. 한쪽 무릎만 바닥에 대는 자세는 따로 Half-kneeling이라고 부릅니다.\n\n각 자세에서 관절이 어떤 위치에 놓이는지도 함께 알아두면 동작을 분석할 때 도움이 됩니다. 예를 들어 Quadruped에서는 고관절과 슬관절이 모두 약 90도 굴곡된 상태이고, Kneeling에서는 고관절이 중립에서 약간 신전된 상태에 가깝습니다. Supine에서는 특별히 힘을 주지 않는 한 모든 관절이 중립 위치에 놓입니다.\n\n자격시험에서는 사진 속 자세를 보고 정확한 명칭을 구분해내는 문제가 자주 출제되므로, 이름과 실제 자세를 짝지어 기억해두는 것이 중요합니다.",
+      "key_points": [
+        "Supine(바로 누운), Prone(엎드린), Side-lying(옆으로 누운), Quadruped(네발기기), Kneeling(무릎 꿇기), Standing(기립)의 6가지 기본 자세를 구분한다",
+        "Quadruped는 양손+양무릎 네 지점 지지, Kneeling은 양무릎 두 지점 지지로 상체를 세운 자세다",
+        "Quadruped와 Kneeling에서는 고관절·슬관절의 각도가 다르므로 자세 이름과 관절 위치를 함께 기억한다"
+      ],
+      "source_page": 8,
+      "image_url": null
+    },
+    {
+      "card_id": "C1_CH1_L03",
+      "content_type": "lesson",
+      "question_format": null,
+      "difficulty": 2,
+      "question": "자세에 따른 관절 움직임 분석",
+      "explanation": "운동 자세를 정확히 분석하려면 그 자세에서 각 관절이 어떤 상태에 놓여 있는지를 하나씩 짚어낼 수 있어야 합니다. 이것이 동작 분석(Movement analysis)의 기초입니다.\n\n예를 들어 Quadruped position(네발기기 자세)에서는 여러 관절이 동시에 특정 각도를 이루고 있습니다. 견관절(어깨)은 팔이 바닥을 짚기 위해 몸통에서 앞으로 약 90도 굴곡되어 있고, 주관절(팔꿈치)은 몸을 지탱하기 위해 곧게 펴진 신전 상태입니다. 아래쪽으로는 고관절과 슬관절이 각각 약 90도씩 굴곡되어 몸통과 허벅지, 허벅지와 정강이가 서로 직각에 가깝게 접혀 있습니다.\n\n반면 Kneeling position(무릎 꿇기 자세)에서는 고관절이 중립에서 약간 신전된 상태이고, 슬관절은 완전히 굴곡되어 있으며, 발목은 발끝이 아래로 향한 저측굴곡 상태가 됩니다.\n\n동작을 분석해서 기록할 때는 '어떤 관절이 어떤 움직임 상태인지'를 짝지어 표현하는 습관이 중요합니다. 예를 들어 '오른쪽 고관절 굴곡'처럼 방향과 관절명, 움직임을 함께 적어야 정확한 분석이 됩니다.\n\n실제로는 하나의 동작 안에서 여러 관절의 움직임이 동시에 일어나는 경우가 대부분입니다. 런지(Lunge) 동작을 예로 들면, 앞다리는 고관절과 슬관절이 함께 굴곡되고 뒷다리는 고관절이 신전되면서 발목이 배측굴곡되는 등, 여러 관절의 움직임이 한 번에 조합되어 나타납니다. 이런 식으로 자세 하나를 여러 관절의 조합으로 나누어 보는 연습이 실기시험 대비에도 그대로 활용됩니다.",
+      "key_points": [
+        "동작 분석은 자세 안에서 각 관절이 어떤 움직임 상태에 있는지 하나씩 짚어내는 것이다",
+        "Quadruped는 견관절 굴곡, 주관절 신전, 고관절 굴곡, 슬관절 굴곡이 함께 나타나는 자세다",
+        "분석 기록은 관절명과 움직임을 짝지어 표현한다(예: 고관절 굴곡)",
+        "하나의 동작에는 여러 관절의 움직임이 동시에 조합되어 나타난다(예: 런지)"
+      ],
+      "source_page": 8,
+      "image_url": null
+    },
+    {
+      "card_id": "C1_CH1_E01",
+      "content_type": "exam",
+      "question_format": "multiple_choice",
+      "difficulty": 1,
+      "question": "해부학적 자세(Anatomical Position)에 대한 설명으로 옳은 것을 모두 포함한 보기는?",
+      "options": [
+        "똑바로 서서 정면을 보고, 손바닥은 앞을 향하며, 양 발은 약간 벌린다",
+        "똑바로 서서 정면을 보고, 손바닥은 몸쪽을 향하며, 양 발은 모은다",
+        "똑바로 서서 정면을 보고, 손바닥은 뒤를 향하며, 양 발은 약간 벌린다",
+        "똑바로 서서 옆을 보고, 손바닥은 앞을 향하며, 양 발은 약간 벌린다"
+      ],
+      "answer_index": [
+        0
+      ],
+      "explanation": "해부학적 자세는 몸을 곧게 세우고 정면을 바라보며, 양팔은 몸통 옆에 자연스럽게 내리고, 손바닥은 앞을 향하며, 양 발은 살짝 벌려 평행하게 놓는 자세입니다. 보기 중 손바닥이 몸쪽을 향하거나 뒤를 향한다고 설명하는 것, 그리고 정면이 아닌 옆을 본다고 설명하는 것은 모두 이 조건에서 벗어나므로 오답입니다.",
+      "key_points": [],
+      "source_page": 3,
+      "image_url": null
+    },
+    {
+      "card_id": "C1_CH2_L01",
+      "content_type": "lesson",
+      "question_format": null,
+      "difficulty": 1,
+      "question": "해부학적 면 (Anatomical Planes)의 개념",
+      "explanation": "해부학적 면(Plane)은 인체를 가상의 평평한 면으로 잘라서 그 단면을 기준으로 위치와 움직임을 설명하기 위한 개념입니다. 인체를 나누는 방향에 따라 세 가지 기본 면으로 나뉩니다.\n\n1. 시상면(Sagittal Plane): 인체를 좌우로 나누는 면입니다.\n2. 전두면 또는 관상면(Frontal Plane, Coronal Plane): 인체를 앞과 뒤로 나누는 면입니다.\n3. 횡단면 또는 수평면(Transverse Plane, Horizontal Plane): 인체를 위와 아래로 나누는 면입니다.\n\n여기서 반드시 기억해야 할 점은, Frontal Plane과 Coronal Plane은 서로 다른 면이 아니라 같은 면을 부르는 두 가지 이름이라는 것입니다. 마찬가지로 Transverse Plane과 Horizontal Plane도 같은 면을 가리키는 동의어입니다. 시험에서는 이 두 쌍의 용어를 마치 서로 다른 보기처럼 나열해 혼동을 유도하는 경우가 있으므로, 이름이 다르다고 해서 다른 면이라고 착각하지 않도록 주의해야 합니다.\n\n각 면은 그 면에 수직인 축(Axis)을 중심으로 회전 움직임이 일어난다는 특징도 함께 이해해두면 좋습니다. 시상면에서 일어나는 움직임은 전두축을 중심으로, 전두면에서 일어나는 움직임은 시상축을 중심으로, 횡단면에서 일어나는 움직임은 수직축을 중심으로 돌아갑니다. 즉 면과 축은 서로 수직 관계를 이루며, 어떤 동작이 어느 면에서 일어나는지를 알면 그 동작이 어느 축을 중심으로 도는지도 함께 파악할 수 있습니다.",
+      "key_points": [
+        "인체를 나누는 3가지 기본 면은 시상면(좌우), 전두면=관상면(전후), 횡단면=수평면(상하)이다",
+        "Frontal Plane과 Coronal Plane은 같은 면의 다른 이름이며, Transverse Plane과 Horizontal Plane도 마찬가지다",
+        "각 면에서 일어나는 움직임은 그 면에 수직인 축을 중심으로 회전한다"
+      ],
+      "source_page": 4,
+      "image_url": null
+    },
+    {
+      "card_id": "C1_CH2_L02",
+      "content_type": "lesson",
+      "question_format": null,
+      "difficulty": 1,
+      "question": "시상면 (Sagittal Plane)",
+      "explanation": "시상면(Sagittal Plane)은 인체를 왼쪽과 오른쪽으로 나누는 수직면입니다. 정확히 좌우 대칭이 되도록 정중앙을 지나는 면은 정중시상면(Midsagittal Plane, Median Plane)이라 부르고, 정중앙에서 벗어나 좌우 어느 한쪽에 치우쳐 지나는 면은 방시상면(Parasagittal Plane)이라 부릅니다.\n\n시상면에서 일어나는 움직임은 몸을 앞뒤로 구부리고 펴는 동작들입니다. 대표적으로 굴곡(Flexion)과 신전(Extension)이 있고, 발목에서는 이를 배측굴곡(Dorsiflexion)과 저측굴곡(Plantarflexion)이라는 별도의 이름으로 부릅니다.\n\n일상 동작과 연결해서 생각하면 이해하기 쉽습니다. 팔꿈치를 구부리는 동작, 스쿼트처럼 무릎과 고관절을 굽혔다 펴는 동작, 걸을 때 팔다리가 앞뒤로 흔들리는 움직임은 모두 시상면에서 일어나는 대표적인 예시입니다.",
+      "key_points": [
+        "시상면은 인체를 좌우로 나누는 면이며, 정중앙을 지나면 정중시상면, 한쪽으로 치우치면 방시상면이라 한다",
+        "시상면에서는 굴곡·신전, 발목의 배측굴곡·저측굴곡처럼 앞뒤로 구부리고 펴는 움직임이 일어난다",
+        "스쿼트, 걷기의 팔다리 움직임 등 일상 동작 대부분이 시상면 움직임에 해당한다"
+      ],
+      "source_page": 10,
+      "image_url": null
+    },
+    {
+      "card_id": "C1_CH2_L03",
+      "content_type": "lesson",
+      "question_format": null,
+      "difficulty": 1,
+      "question": "관상면/전두면 (Frontal/Coronal Plane)",
+      "explanation": "관상면(Frontal Plane, Coronal Plane)은 인체를 앞과 뒤로 나누는 수직면입니다. 이름이 두 가지이지만 가리키는 면은 완전히 동일하므로, 두 용어를 마주치면 서로 다른 것이 아니라 같은 면의 다른 표현이라는 점을 먼저 떠올려야 합니다.\n\n관상면에서 일어나는 움직임은 몸의 정중선을 기준으로 옆으로 벌어지거나 모이는 동작, 또는 몸통이 옆으로 기우는 동작입니다. 대표적으로 외전(Abduction, 정중선에서 멀어짐)과 내전(Adduction, 정중선으로 가까워짐)이 있고, 몸통이나 목이 옆으로 구부러지는 외측굴곡(Lateral Flexion), 발목이 안쪽 또는 바깥쪽으로 기우는 내번(Inversion)과 외번(Eversion)도 이 면에서 일어납니다.\n\n예를 들어 팔을 옆으로 들어 올리는 동작(어깨 외전)이나 몸통을 옆으로 기울이는 동작은 모두 관상면에서 일어나는 움직임입니다. 시험에서는 Frontal Plane과 Coronal Plane을 각각 별개의 보기로 나열해 혼동을 유도하는 경우가 있으므로, 두 용어가 동시에 등장하면 그중 하나는 정답이 될 수 없는 함정이라는 점을 기억해두면 좋습니다.",
+      "key_points": [
+        "관상면(Frontal Plane=Coronal Plane)은 인체를 앞뒤로 나누는 면이며, 두 이름은 같은 면을 가리킨다",
+        "관상면에서는 외전·내전, 외측굴곡, 내번·외번처럼 옆으로 벌어지거나 기우는 움직임이 일어난다",
+        "어깨를 옆으로 들어 올리는 동작(외전)이 관상면 움직임의 대표적인 예다"
+      ],
+      "source_page": 10,
+      "image_url": null
+    },
+    {
+      "card_id": "C1_CH2_L04",
+      "content_type": "lesson",
+      "question_format": null,
+      "difficulty": 1,
+      "question": "횡단면/수평면 (Transverse/Horizontal Plane)",
+      "explanation": "횡단면(Transverse Plane, Horizontal Plane)은 인체를 위와 아래로 나누는 수평면입니다. 이 역시 이름이 두 가지이지만 같은 면을 가리키는 동의어입니다.\n\n횡단면에서 일어나는 움직임은 모두 회전(Rotation) 계열입니다. 몸의 안쪽으로 도는 내회전(Internal Rotation)과 바깥쪽으로 도는 외회전(External Rotation), 전완에서 손바닥이 아래를 향하도록 도는 회내(Pronation)와 위를 향하도록 도는 회외(Supination), 그리고 팔을 앞뒤로 수평하게 움직이는 수평외전·수평내전(Horizontal Abduction/Adduction)이 모두 이 면에서 일어납니다.\n\n고개를 좌우로 돌리는 동작, 몸통을 비트는 동작, 어깨를 안쪽이나 바깥쪽으로 돌리는 동작은 모두 횡단면에서 일어나는 대표적인 움직임입니다. 수직으로 세워진 축을 중심으로 돌아가는 움직임이라면 대부분 횡단면 움직임이라고 이해하면 쉽습니다.",
+      "key_points": [
+        "횡단면(Transverse Plane=Horizontal Plane)은 인체를 상하로 나누는 면이다",
+        "횡단면에서는 내·외회전, 회내·회외, 수평외전·수평내전 등 회전 계열 움직임이 일어난다",
+        "고개 돌리기, 몸통 비틀기처럼 수직축을 중심으로 도는 동작은 대부분 횡단면 움직임이다"
+      ],
+      "source_page": 10,
+      "image_url": null
+    },
+    {
+      "card_id": "C1_CH3_L01",
+      "content_type": "lesson",
+      "question_format": null,
+      "difficulty": 1,
+      "question": "기본 방향 용어: Superior/Inferior, Anterior/Posterior",
+      "explanation": "해부학적 방향 용어는 신체의 한 부위가 다른 부위에 비해 어느 쪽에 있는지를 정확하고 일관되게 표현하기 위해 사용하는 표준 용어입니다.\n\n먼저 상하 관계를 나타내는 용어로 상방(Superior)과 하방(Inferior)이 있습니다. Superior는 머리 쪽에 더 가까운 위쪽을, Inferior는 발 쪽에 더 가까운 아래쪽을 의미합니다. 예를 들어 머리는 목보다 Superior에 있고, 발은 무릎보다 Inferior에 있습니다. 몸통 부위에서는 이를 각각 두개 방향(Cranial), 꼬리 방향(Caudal)이라는 동의어로 부르기도 합니다.\n\n앞뒤 관계를 나타내는 용어로는 전방(Anterior)과 후방(Posterior)이 있습니다. Anterior는 몸의 앞쪽을, Posterior는 몸의 뒤쪽을 의미하며, 예를 들어 가슴은 등보다 Anterior에 있고 엉덩이는 배보다 Posterior에 있습니다. 사지에서는 이를 각각 배쪽(Ventral), 등쪽(Dorsal)이라는 동의어로도 부르는데, 손등(Dorsum of hand)에서는 Dorsal이 손바닥의 반대쪽인 뒤쪽을 의미하고 발등(Dorsum of foot)에서는 Dorsal이 위쪽을 의미하므로, 부위에 따라 방향이 조금씩 다르게 해석된다는 점에 주의해야 합니다.",
+      "key_points": [
+        "Superior(상방)는 머리 쪽, Inferior(하방)는 발 쪽을 의미하며, 몸통에서는 Cranial·Caudal이라고도 한다",
+        "Anterior(전방)는 앞쪽, Posterior(후방)는 뒤쪽을 의미하며, 사지에서는 Ventral·Dorsal이라고도 한다",
+        "손등에서 Dorsal은 뒤쪽, 발등에서 Dorsal은 위쪽을 의미하므로 부위별 맥락에 주의한다"
+      ],
+      "source_page": 5,
+      "image_url": null
+    },
+    {
+      "card_id": "C1_CH3_L02",
+      "content_type": "lesson",
+      "question_format": null,
+      "difficulty": 1,
+      "question": "기본 방향 용어: Medial/Lateral, Proximal/Distal",
+      "explanation": "몸의 좌우 위치를 표현하는 용어로 내측(Medial)과 외측(Lateral)이 있습니다. Medial은 몸의 정중선(정중앙을 지나는 가상의 선)에 가까운 쪽을, Lateral은 정중선에서 먼 쪽을 의미합니다. 해부학적 자세를 기준으로 하면 엄지손가락은 새끼손가락보다 Lateral에 있고, 무릎의 안쪽 면은 Medial knee라고 부릅니다.\n\n사지에서 몸통과의 거리를 표현할 때는 근위(Proximal)와 원위(Distal)를 사용합니다. Proximal은 몸통에 더 가까운 쪽을, Distal은 몸통에서 더 먼 쪽을 의미합니다. 예를 들어 어깨는 손목보다 Proximal에 있고, 손가락은 팔꿈치보다 Distal에 있습니다. 이 용어는 팔다리처럼 몸통에서 뻗어 나온 구조에서만 사용되며, 심장에서 가까운지 먼지로 바꿔 생각하면 쉽게 판단할 수 있습니다.\n\n해부학적 자세를 기준으로 판단할 때 주의할 점도 있습니다. 손바닥이 앞을 향한 해부학적 자세에서는 엄지가 Lateral, 새끼손가락이 Medial이 되며, 하지에서는 안쪽에 있는 굵은 뼈인 경골(Tibia)이 Medial, 바깥쪽에 있는 가는 뼈인 비골(Fibula)이 Lateral에 해당합니다.",
+      "key_points": [
+        "Medial(내측)은 정중선에 가까운 쪽, Lateral(외측)은 정중선에서 먼 쪽을 의미한다",
+        "Proximal(근위)은 몸통에 가까운 쪽, Distal(원위)은 몸통에서 먼 쪽을 의미하며 사지에서만 사용한다",
+        "해부학적 자세에서 엄지는 Lateral, 새끼손가락은 Medial이며, 경골은 Medial, 비골은 Lateral에 해당한다"
+      ],
+      "source_page": 6,
+      "image_url": null
+    },
+    {
+      "card_id": "C1_CH3_L03",
+      "content_type": "lesson",
+      "question_format": null,
+      "difficulty": 2,
+      "question": "추가 방향 용어: Superficial/Deep, Ipsilateral/Contralateral",
+      "explanation": "몸 표면과의 거리를 표현하는 용어로 표재(Superficial)와 심부(Deep)가 있습니다. Superficial은 피부 표면에 가까운 쪽을, Deep은 피부 표면에서 멀리 떨어진 몸 안쪽을 의미합니다. 예를 들어 피부는 그 아래에 있는 근육보다 Superficial하고, 뼈는 그 위를 덮고 있는 근육보다 Deep한 위치에 있습니다.\n\n몸의 좌우 어느 쪽에 있는지를 서로 비교할 때는 동측(Ipsilateral)과 반대측(Contralateral)을 사용합니다. Ipsilateral은 두 구조물이 같은 쪽에 있다는 뜻이고, Contralateral은 서로 반대쪽에 있다는 뜻입니다. 예를 들어 오른손과 오른발은 Ipsilateral 관계이고, 오른손과 왼발은 Contralateral 관계입니다.\n\n이 용어들은 필라테스 지도 현장에서도 실제로 자주 쓰입니다. 복부 근육의 층을 설명할 때 표면에 가까운 복직근(Rectus abdominis)은 Superficial, 가장 깊은 층에 있는 복횡근(Transverse abdominis)은 Deep이라고 표현합니다. 또한 한쪽 팔과 반대쪽 다리를 동시에 뻗는 Bird-dog 같은 동작은 Contralateral arm-leg raise라고 부르는데, 이렇게 근육의 깊이와 신체 좌우 관계를 정확한 용어로 설명할 수 있으면 동작을 더 명확하게 지도할 수 있습니다.",
+      "key_points": [
+        "Superficial(표재)은 피부 표면에 가까운 쪽, Deep(심부)은 몸 안쪽 깊은 쪽을 의미한다",
+        "Ipsilateral(동측)은 같은 쪽, Contralateral(반대측)은 서로 반대쪽에 있다는 뜻이다",
+        "복직근은 Superficial, 복횡근은 Deep이며, Bird-dog처럼 팔다리를 반대로 뻗는 동작을 Contralateral 움직임이라 한다"
+      ],
+      "source_page": 6,
+      "image_url": null
+    },
+    {
+      "card_id": "C1_CH4_L01",
+      "content_type": "lesson",
+      "question_format": null,
+      "difficulty": 1,
+      "question": "기본 움직임 용어: Flexion/Extension",
+      "explanation": "굴곡(Flexion)은 관절을 구부려 두 뼈 사이의 각도가 줄어드는 움직임이고, 신전(Extension)은 관절을 펴서 그 각도가 다시 늘어나는 움직임입니다. 팔꿈치를 구부리는 동작, 다리를 앞으로 들어 올리는 고관절 굴곡, 무릎을 구부리는 슬관절 굴곡이 모두 Flexion의 예이며, 이들을 다시 펴는 동작이 각각의 Extension입니다. 정상적인 가동범위를 넘어서까지 신전이 일어나는 경우는 과신전(Hyperextension)이라 부르는데, 허리를 지나치게 뒤로 젖히는 동작이 대표적입니다.\n\n이 움직임들은 시상면(Sagittal Plane)에서 일어나며, 전두축(Frontal Axis)을 중심으로 회전이 일어난다는 공통점이 있습니다.\n\n발목 관절에서는 Flexion과 Extension이라는 이름 대신 별도의 용어를 사용합니다. 발끝을 정강이 쪽으로 당기는 움직임은 배측굴곡(Dorsiflexion), 발끝을 아래로 내리는 움직임은 저측굴곡(Plantarflexion)이라 부르며, 이 두 용어는 발목에서만 쓰입니다.\n\n굴곡과 신전을 판단하는 기본 원칙은 해부학적 자세를 기준으로 관절 각도가 줄어들면 Flexion, 원래 각도로 돌아가거나 더 벌어지면 Extension이라는 것입니다. 다만 슬관절은 해부학적 자세에서 이미 완전히 펴진 상태이므로, 무릎을 구부리는 쪽이 Flexion이고 다시 펴는 쪽이 Extension이 됩니다. Flexion과 Extension은 필라테스 동작 대부분에서 등장하는 가장 기본적인 움직임 용어입니다.",
+      "key_points": [
+        "Flexion(굴곡)은 관절 각도가 줄어드는 움직임, Extension(신전)은 각도가 늘어나는 움직임이다",
+        "정상 범위를 넘어선 신전은 Hyperextension(과신전)이라 부른다",
+        "발목에서는 Flexion/Extension 대신 Dorsiflexion(배측굴곡)·Plantarflexion(저측굴곡)이라는 별도 용어를 쓴다",
+        "슬관절은 해부학적 자세에서 이미 펴진 상태이므로 구부리는 쪽이 Flexion, 펴는 쪽이 Extension이다"
+      ],
+      "source_page": 15,
+      "image_url": null
+    },
+    {
+      "card_id": "C1_CH4_L02",
+      "content_type": "lesson",
+      "question_format": null,
+      "difficulty": 1,
+      "question": "기본 움직임 용어: Abduction/Adduction",
+      "explanation": "외전(Abduction)은 팔다리가 몸의 정중선에서 멀어지는 움직임이고, 내전(Adduction)은 반대로 정중선을 향해 가까워지는 움직임입니다. 팔을 옆으로 들어 올리는 어깨 외전, 다리를 옆으로 벌리는 고관절 외전이 대표적인 예이며, 벌어진 팔이나 다리를 다시 몸쪽으로 모으는 동작이 각각의 Adduction입니다. 이 움직임들은 관상면(Frontal Plane, Coronal Plane)에서 일어납니다.\n\n몸통이나 목처럼 사지가 아닌 부위가 옆으로 구부러지는 움직임은 별도로 외측굴곡(Lateral Flexion)이라고 부릅니다. 목을 옆으로 기울이거나 몸통을 옆으로 구부리는 동작이 여기에 해당하며, 이 역시 관상면에서 일어납니다.\n\n여기서 구분해야 할 점은, Abduction과 Adduction은 팔다리(사지)에 사용하는 용어이고, Lateral Flexion은 몸통이나 목처럼 사지가 아닌 체간 부위에 사용하는 용어라는 것입니다. 같은 관상면 움직임이라도 어느 부위의 움직임인지에 따라 부르는 이름이 달라진다는 점을 기억해두면 헷갈리지 않습니다.",
+      "key_points": [
+        "Abduction(외전)은 정중선에서 멀어짐, Adduction(내전)은 정중선으로 가까워지는 움직임이며 관상면에서 일어난다",
+        "몸통·목이 옆으로 구부러지는 움직임은 Lateral Flexion(외측굴곡)이라는 별도 이름으로 부른다",
+        "Abduction/Adduction은 사지에, Lateral Flexion은 체간에 사용하는 용어라는 점으로 구분한다"
+      ],
+      "source_page": 10,
+      "image_url": null
+    },
+    {
+      "card_id": "C1_CH4_L03",
+      "content_type": "lesson",
+      "question_format": null,
+      "difficulty": 2,
+      "question": "기본 움직임 용어: Rotation, Pronation/Supination",
+      "explanation": "내회전(Internal Rotation)은 팔다리가 몸의 안쪽으로 돌아가는 움직임이고, 외회전(External Rotation)은 바깥쪽으로 돌아가는 움직임입니다. 어깨나 고관절처럼 여러 방향으로 움직일 수 있는 관절에서 팔이나 다리를 안쪽 또는 바깥쪽으로 돌릴 때 이 용어를 사용합니다.\n\n전완(팔꿈치와 손목 사이 부위)에서는 회전을 표현할 때 다른 이름을 씁니다. 손바닥이 아래를 향하도록 돌리는 움직임을 회내(Pronation), 손바닥이 위를 향하도록 돌리는 움직임을 회외(Supination)라고 부릅니다. Rotation이 어깨나 고관절처럼 다축 관절 전반에 쓰이는 용어라면, Pronation과 Supination은 요골이 척골 위를 넘어가며 만들어내는 전완 특유의 움직임에만 쓰이는 용어라는 차이가 있습니다. 이 움직임들은 모두 횡단면(Transverse Plane)에서 일어납니다.\n\n여기서 반드시 짚어야 할 부분은, Pronation이 어깨 관절 자체의 움직임이 아니라는 점입니다. 어깨 관절에서 가능한 움직임은 굴곡·신전, 외전·내전, 내회전·외회전, 수평외전·수평내전이며, 회내·회외는 어깨보다 아래쪽인 전완에서 일어나는 별개의 움직임입니다.\n\n어깨의 내회전과 외회전은 회전근개(Rotator cuff)라는 네 개의 근육이 주로 담당하며, 이 근육들이 어깨 관절의 안정성을 유지하는 데도 핵심적인 역할을 합니다.",
+      "key_points": [
+        "Internal/External Rotation(내·외회전)은 어깨·고관절 등 다축 관절에서 팔다리가 안팎으로 도는 움직임이다",
+        "Pronation(회내)·Supination(회외)은 전완에서만 쓰는 용어로, 요골이 척골 위를 넘어가며 만드는 움직임이다",
+        "Pronation은 어깨 관절의 움직임이 아니라 전완의 움직임이라는 점을 주의해야 한다",
+        "어깨의 내·외회전은 회전근개 근육들이 주로 담당한다"
+      ],
+      "source_page": 10,
+      "image_url": null
+    },
+    {
+      "card_id": "C1_CH4_L04",
+      "content_type": "lesson",
+      "question_format": null,
+      "difficulty": 2,
+      "question": "특수 움직임 용어: 발목, 견갑골",
+      "explanation": "발목 관절에는 배측굴곡·저측굴곡 외에도 발바닥이 옆으로 기우는 움직임이 있습니다. 발바닥이 몸의 안쪽을 향하도록 기울이는 움직임을 내번(Inversion), 바깥쪽을 향하도록 기울이는 움직임을 외번(Eversion)이라고 부릅니다.\n\n견갑골(어깨뼈)도 여러 방향으로 움직이며, 각각 고유한 이름이 있습니다. 견갑골을 위로 올리는 움직임은 거상(Elevation), 아래로 내리는 움직임은 하강(Depression)이라 부릅니다. 견갑골을 앞으로 밀어내는 움직임은 전인(Protraction), 뒤로 당겨 날개뼈를 모으는 움직임은 후인(Retraction)이라 부릅니다. 또한 견갑골 아래쪽 끝(하각)이 바깥 위쪽으로 회전하면 상방회전(Upward Rotation), 안쪽 아래로 회전하면 하방회전(Downward Rotation)이라고 부릅니다.\n\n이 견갑골의 움직임들은 견흉관절(Scapulothoracic joint)이라는 곳에서 일어나는데, 이 관절은 실제 뼈와 뼈가 만나는 해부학적 관절이 아니라 견갑골이 흉곽 위를 미끄러지듯 움직이는 기능적인 관절입니다. 그래서 '가짜 관절'이라고 부르기도 합니다.\n\n여기서 자주 헷갈리는 부분이 하나 있는데, 하강(Depression)은 어깨 관절(Glenohumeral joint) 자체의 움직임이 아니라 견갑골의 움직임이라는 점입니다. 전인은 주로 전거근(Serratus anterior)이, 후인은 주로 능형근(Rhomboid)이 만들어내며, 이 두 근육의 작용을 함께 알아두면 이해가 쉬워집니다.\n\n팔을 옆으로 들어 올릴 때는 어깨 관절과 견갑골이 따로 움직이는 것이 아니라 일정한 비율로 함께 움직입니다. 이를 견갑상완 리듬(Scapulohumeral rhythm)이라 부르는데, 대략 팔을 180도 들어 올리는 동안 어깨 관절이 120도, 견갑골의 상방회전이 60도를 담당하는 2대1 비율로 함께 움직입니다. 이런 협응이 잘 이루어지도록 견갑골을 안정시키는 것은 상지 운동을 지도할 때 가장 기본이 되는 부분입니다.",
+      "key_points": [
+        "발목의 내번(Inversion)은 발바닥이 안쪽으로, 외번(Eversion)은 바깥쪽으로 기우는 움직임이다",
+        "견갑골은 거상·하강, 전인·후인, 상방회전·하방회전의 세 쌍으로 움직인다",
+        "견갑골 움직임이 일어나는 견흉관절은 해부학적 관절이 아닌 기능적 관절이다",
+        "하강(Depression)은 견갑골의 움직임이지 어깨 관절 자체의 움직임이 아니다",
+        "팔을 들어 올릴 때 어깨 관절과 견갑골은 2대1 비율로 함께 움직이는 견갑상완 리듬을 따른다"
+      ],
+      "source_page": 10,
+      "image_url": null
+    },
+    {
+      "card_id": "C1_CH4_L05",
+      "content_type": "lesson",
+      "question_format": null,
+      "difficulty": 2,
+      "question": "어깨 관절 vs 견갑골 움직임 구분",
+      "explanation": "어깨는 하나의 관절이 아니라 여러 관절이 모인 복합체이며, 그중 어느 관절의 움직임을 말하는지에 따라 사용하는 용어가 달라집니다.\n\n어깨 관절(Glenohumeral joint, 상완골과 견갑골이 직접 만나는 관절)에서 일어나는 움직임은 굴곡·신전, 외전·내전, 내회전·외회전, 그리고 팔을 앞뒤로 수평하게 움직이는 수평외전·수평내전입니다.\n\n이와 별개로 견갑골 자체가 흉곽 위에서 움직이는 견흉관절(Scapulothoracic joint)의 움직임으로는 거상·하강, 전인·후인, 상방회전·하방회전이 있습니다.\n\n이 둘을 구분하지 못하면 '어깨 관절의 움직임이 아닌 것은?' 같은 유형의 문제에서 자주 틀리게 됩니다. 실제로 회내(Pronation)는 전완의 움직임이므로 어깨 관절의 움직임이 아니고, 하강(Depression)은 견갑골의 움직임이므로 이 역시 어깨 관절 자체의 움직임은 아닙니다. 이렇게 어느 관절에서 일어나는 움직임인지를 먼저 구분해두면, 비슷해 보이는 보기들 사이에서 정답을 훨씬 쉽게 골라낼 수 있습니다.",
+      "key_points": [
+        "어깨 관절(GH joint)의 움직임은 굴곡·신전, 외전·내전, 내·외회전, 수평외전·수평내전이다",
+        "견갑골(견흉관절)의 움직임은 거상·하강, 전인·후인, 상방·하방회전이다",
+        "Pronation(전완의 움직임)과 Depression(견갑골의 움직임)은 어깨 관절 자체의 움직임이 아니라는 점이 시험에서 자주 출제된다"
+      ],
+      "source_page": 12,
+      "image_url": null
+    }
+  ]
+}

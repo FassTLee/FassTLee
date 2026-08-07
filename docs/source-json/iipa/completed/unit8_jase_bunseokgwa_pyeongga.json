@@ -1,0 +1,580 @@
+{
+  "course": {
+    "title": "자세분석과 평가",
+    "description": "Kendall의 4가지 대표 자세 유형과 골반·하지 정렬 평가 기준을 다루는 Lv2 전용 단원",
+    "category": "ASSUMPTION: 기존 단원1-6과 동일 컨벤션 필요 (예: '이론') - PM 확인 필요",
+    "phase": "ASSUMPTION: Lv2_Tier3 - PM 확인 필요 (기존 courses.phase 값 컨벤션에 맞춰 조정)",
+    "order_index": 8,
+    "subject_id": "7538c34d-5b36-4955-91fd-3f7fe4e7f244",
+    "certification_id": "5e130f49-0439-4f34-8585-a8d26f197e3e",
+    "page_range": "원본교재 p.197-221",
+    "note": "기출 매핑: 0건 (필기 1차/2차 80문항 전량 단원1-6 범위). 챕터테스트/모의고사 관련 5번 규칙 적용."
+  },
+  "chapters": [
+    {
+      "chapter_title": "자세의 이해",
+      "chapter_order_index": 1,
+      "page_range": "p.198-205",
+      "cards": [
+        {
+          "order_index": 1,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 1,
+          "question": "자세(Posture)란 무엇인가",
+          "options": [],
+          "answer_index": null,
+          "explanation": "자세는 신체 각 분절이 공간에서 서로에 대해 배열되어 있는 상태를 말합니다. 이 단원에서는 자세를 눈으로 관찰하고 평가하는 방법을 다룹니다.\n\n이상적인 자세란 모든 사람이 반드시 도달해야 하는 \"평균적인 자세\"를 의미하는 것이 아니라, 개인의 자세 변화를 비교하기 위해 필요한 기초 기준선(baseline)이라는 점이 중요합니다. 즉, 자세평가의 목적은 회원을 특정 \"정답 자세\"에 맞추는 것이 아니라, 그 사람의 현재 상태를 기록하고 변화를 추적할 기준을 세우는 데 있습니다.\n\n이런 관점은 이후 배울 Kendall의 4가지 대표 자세 유형을 \"문제\"로만 보지 않고, 각 개인의 현재 정렬 상태를 이해하는 도구로 다루는 데에도 이어집니다.",
+          "key_points": [
+            "자세=신체 분절들이 공간에서 서로에 대해 배열된 상태",
+            "이상적 자세=평균적 자세가 아니라 비교를 위한 기초 기준선",
+            "자세평가의 목적은 '정답'에 맞추는 것이 아니라 현재 상태 기록과 변화 추적"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 204
+        },
+        {
+          "order_index": 2,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 2,
+          "question": "부적절한 자세와 근골격계 통증의 관계",
+          "options": [],
+          "answer_index": null,
+          "explanation": "부적절한 자세는 근골격계 통증, 관절의 가동범위 제한, 전반적인 신체 불편함과 관련이 있을 수 있다고 알려져 있습니다.\n\n다만 여기서 신중하게 짚어야 할 부분이 있습니다. \"부적절한 자세 = 근골격계 통증\"이라는 등식이 항상 성립하는 것은 아닙니다. 자세와 통증의 관계는 개인마다 다르며, 특정 자세를 가진 사람이라고 해서 반드시 통증을 겪는 것도, 통증이 있는 사람이 반드시 특정 자세를 가진 것도 아닙니다. 지도자는 자세만 보고 통증의 원인을 단정하기보다, 자세를 여러 평가 요소 중 하나로 다뤄야 합니다.\n\n이러한 신중한 관점은 필라테스 지도자가 회원에게 \"자세가 나빠서 아픈 것\"이라고 단정적으로 말하는 것을 피하고, 통증에 대한 전문적 진단은 의료진의 영역임을 인정하는 태도와도 연결됩니다.",
+          "key_points": [
+            "부적절한 자세는 근골격계 통증·가동범위 제한과 관련될 수 있음",
+            "다만 '부적절한 자세=통증'이라는 등식이 항상 성립하지는 않음",
+            "지도자는 자세만으로 통증 원인을 단정하지 않아야 함"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 202
+        },
+        {
+          "order_index": 3,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 2,
+          "question": "자세에 영향을 미치는 요인",
+          "options": [],
+          "answer_index": null,
+          "explanation": "자세는 하나의 원인만으로 결정되지 않고 여러 요인이 함께 작용해 만들어집니다. 대표적으로 다음과 같은 요인을 고려할 수 있습니다.\n\n1. 생활 습관: 오래 앉아 있는 시간, 스마트폰 사용 자세 등 반복되는 일상 동작\n2. 근육의 길이-장력 불균형: 특정 근육군이 짧아지거나 약해지는 패턴\n3. 구조적 요인: 타고난 뼈의 형태나 관절 구조\n4. 심리·정서적 요인: 스트레스나 피로도가 자세 유지 근육의 긴장도에 영향\n\n지도자는 이 요인들을 종합적으로 고려하되, 자신의 전문 영역(운동 지도)을 벗어나는 심리·의료적 판단은 삼가고 관찰된 사실을 기록하는 데 집중해야 합니다.",
+          "key_points": [
+            "자세는 생활습관, 근육 불균형, 구조적 요인, 심리·정서적 요인 등이 복합적으로 작용해 형성됨",
+            "지도자는 관찰된 사실 기록에 집중하고, 의료적 판단은 삼가야 함"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 203
+        },
+        {
+          "order_index": 4,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 1,
+          "question": "자세평가의 목적과 시기",
+          "options": [],
+          "answer_index": null,
+          "explanation": "자세평가를 하는 이유는 다음 네 가지로 정리할 수 있습니다.\n\n1. 정확한 정보의 획득: 눈대중이 아닌 체계적인 관찰로 현재 상태를 파악\n2. 시간 절약: 초기에 문제 영역을 파악해두면 이후 프로그램 설계 시간을 줄일 수 있음\n3. 기본 상태(baseline)의 설정: 이후 변화를 비교할 기준을 만듦\n4. 전체적인 관리: 자세 하나만이 아니라 회원의 전반적인 신체 상태 관리에 활용\n\n또한 \"어떤 경우에\", \"어떻게\", \"언제\" 자세평가를 해야 하는지도 함께 고려해야 합니다. 예를 들어 신규 회원 등록 시점, 프로그램 중간 점검 시점 등 일정한 시점에 반복 평가를 하면 변화를 객관적으로 추적할 수 있습니다.",
+          "key_points": [
+            "자세평가 목적: 정확한 정보 획득, 시간 절약, 기본 상태 설정, 전체적 관리",
+            "신규 등록 시점·중간 점검 시점 등 일정한 시점에 반복 평가하면 변화 추적이 가능"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 205
+        },
+        {
+          "order_index": 5,
+          "content_type": "quiz",
+          "question_format": "true_false",
+          "difficulty": 2,
+          "question": "부적절한 자세를 가진 사람은 반드시 근골격계 통증을 겪는다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "자세와 통증의 관계는 개인마다 다르며, 부적절한 자세가 반드시 통증으로 이어지는 것은 아닙니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 202
+        },
+        {
+          "order_index": 6,
+          "content_type": "quiz",
+          "question_format": "multiple_choice",
+          "difficulty": 1,
+          "question": "이상적인 자세(Ideal posture)에 대한 설명으로 가장 적절한 것은?",
+          "options": [
+            "모든 사람이 반드시 도달해야 하는 평균적 자세",
+            "개인의 변화를 비교하기 위한 기초 기준선",
+            "통증이 없는 사람만이 가질 수 있는 자세",
+            "교정이 불가능한 고정된 상태"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "이상적 자세는 평균적 정답이 아니라, 개인의 자세 변화를 비교하기 위한 기초 기준선으로 이해해야 합니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 204
+        },
+        {
+          "order_index": 7,
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 2,
+          "question": "자세평가를 실시하는 목적으로 옳지 않은 것은?",
+          "options": [
+            "정확한 정보의 획득",
+            "기본 상태(baseline) 설정",
+            "특정 통증의 의학적 진단 확정",
+            "전체적인 관리"
+          ],
+          "answer_index": [
+            2
+          ],
+          "explanation": "자세평가는 정보 획득, 기본 상태 설정, 전체적 관리를 목적으로 하며, 통증에 대한 의학적 진단 확정은 지도자의 영역이 아닙니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 205
+        },
+        {
+          "order_index": 8,
+          "content_type": "exam",
+          "question_format": "true_false",
+          "difficulty": 1,
+          "question": "자세에 영향을 미치는 요인에는 생활습관, 근육 불균형, 구조적 요인뿐 아니라 심리·정서적 요인도 포함된다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            0
+          ],
+          "explanation": "자세는 생활습관, 근육의 길이-장력 불균형, 구조적 요인과 함께 스트레스 등 심리·정서적 요인의 영향도 받습니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 203
+        },
+        {
+          "order_index": 9,
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 2,
+          "question": "지도자가 회원의 자세를 평가할 때 취해야 할 가장 적절한 태도는?",
+          "options": [
+            "자세만으로 통증의 원인을 단정하여 안내한다",
+            "관찰된 사실을 기록하고 통증에 대한 의학적 판단은 삼간다",
+            "심리적 요인은 자세와 무관하므로 고려하지 않는다",
+            "기초 기준선 없이 교정을 먼저 시작한다"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "지도자는 관찰된 사실을 기록하는 데 집중하고, 통증에 대한 의학적 판단이나 진단은 전문 의료진의 영역임을 인정해야 합니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 202
+        }
+      ]
+    },
+    {
+      "chapter_title": "자세 평가 방법",
+      "chapter_order_index": 2,
+      "page_range": "p.206-219",
+      "cards": [
+        {
+          "order_index": 1,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 1,
+          "question": "이상적 정렬(Normal Posture) 기준",
+          "options": [],
+          "answer_index": null,
+          "explanation": "자세평가의 출발점은 이상적 정렬(Normal Posture) 기준을 이해하는 것입니다. Kendall의 기준에 따른 이상적 정렬은 다음과 같습니다.\n\n1. 머리: 중립 위치\n2. 경추: 정상적인 전만, 전방으로 약간 볼록\n3. 견갑골: 올바른 정렬, 등 상부가 편평함\n4. 흉추: 정상적인 후만, 후방으로 약간 볼록\n5. 요추: 정상적인 전만\n6. 골반: 중립 위치 — ASIS가 치골결합(Pubic symphysis)과 동일한 수직선상에 위치\n7. 고관절/무릎관절/발목관절: 모두 중립 위치이며, 다리가 수직 상태로 발바닥과 직각을 이룸\n\n이 기준선을 알아야 이후 배우는 Kendall의 4가지 대표 자세 유형이 이 기준에서 각각 어떻게, 어느 분절에서 벗어나는지를 비교하며 이해할 수 있습니다.",
+          "key_points": [
+            "이상적 정렬은 경추 전만-흉추 후만-요추 전만의 자연스러운 곡선이 유지된 상태",
+            "골반 중립=ASIS가 치골결합과 동일 수직선상에 위치",
+            "고관절·무릎·발목 모두 중립이며 다리가 수직으로 발바닥과 직각"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 207
+        },
+        {
+          "order_index": 2,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 2,
+          "question": "Kendall 4체형 개관 및 척추전만·후만-전만 자세",
+          "options": [],
+          "answer_index": null,
+          "explanation": "Kendall은 이상적 정렬에서 벗어나는 대표적인 자세를 4가지로 분류했습니다: 척추전만 자세(Lordosis), 후만-전만 자세(Kyphosis-Lordosis), 편평등 자세(Flat-back), 굽은등 자세(Sway-back). 이번 카드에서는 앞의 두 가지를 다룹니다.\n\n[척추전만 자세(Lordosis)]\n- 머리: 중립 위치\n- 경추/흉추: 정상적인 곡선 유지\n- 요추: 과전만\n- 골반: 전방경사\n- 무릎관절: 약간 과신전\n- 발목관절: 약간 저측굴곡(Plantar flexion)\n\n[후만-전만 자세(Kyphosis-Lordosis)]\n- 머리: 전방으로 경사\n- 경추: 과신전\n- 견갑골: 외전\n- 흉추: 과후만\n- 요추: 과전만\n- 골반: 전방경사\n- 무릎관절: 약간 과신전\n- 발목관절: 약간 저측굴곡\n\n두 유형 모두 골반이 전방경사되고 요추가 과전만이라는 공통점이 있지만, 후만-전만 자세는 여기에 더해 머리가 전방으로 나가고 흉추까지 과후만이 겹친다는 점에서 구별됩니다.",
+          "key_points": [
+            "척추전만(Lordosis)=요추 과전만+골반 전방경사가 핵심 특징",
+            "후만-전만(Kyphosis-Lordosis)=척추전만 특징에 흉추 과후만+전방머리자세가 겹친 형태",
+            "두 유형 모두 골반 전방경사·무릎 약간 과신전이 공통으로 나타남"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 211
+        },
+        {
+          "order_index": 3,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 2,
+          "question": "Kendall 편평등·굽은등 자세",
+          "options": [],
+          "answer_index": null,
+          "explanation": "Kendall 4체형 중 나머지 두 가지는 편평등 자세와 굽은등 자세입니다.\n\n[편평등 자세(Flat-back)]\n- 머리: 전방으로 경사\n- 경추: 약간 신전\n- 흉추: 상부는 굴곡 증가, 하부는 일직선\n- 요추: 굴곡(일직선)\n- 골반: 후방경사\n- 고관절/무릎관절: 신전\n- 발목관절: 약간 저측굴곡\n\n[굽은등 자세(Sway-back)]\n- 머리: 전방으로 기울어짐\n- 경추: 약간 신전\n- 흉추: 굴곡 증가(광범위한 후만), 체간 상부가 뒤쪽으로 변위\n- 요추: 하부요추의 굴곡(편평등처럼 보임)\n- 골반: 후방경사이면서 골반과 대퇴부가 앞쪽으로 변위\n- 고관절: 과신전(골반의 전방변위와 함께)\n- 무릎관절: 과신전\n- 발목관절: 중립 — 보통 무릎 과신전은 발목 저측굴곡을 동반하지만, 골반·대퇴부가 앞으로 변위되어 있어 이 패턴이 나타나지 않음\n\n⚠️ 용어 주의: 이 교재에서 \"굽은등 자세\"는 위 표의 Sway-back을 가리키는 고유 명칭입니다. 어깨가 앞으로 말리는 \"라운드숄더/둥근어깨\"와는 전혀 다른 별개의 개념이므로 혼동하지 않아야 합니다.",
+          "key_points": [
+            "편평등(Flat-back)=요추 굴곡(일직선)+골반 후방경사+고관절·무릎 신전",
+            "굽은등(Sway-back)=골반·대퇴부 전방변위를 동반한 무릎 과신전+체간상부 후방변위",
+            "'굽은등'은 Sway-back의 명칭이며 라운드숄더(둥근어깨)와는 다른 개념"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 213
+        },
+        {
+          "order_index": 4,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 2,
+          "question": "골반 위치 평가 — 후면 정렬",
+          "options": [],
+          "answer_index": null,
+          "explanation": "후면에서 자세를 평가할 때는 척추와 견갑골의 좌우 대칭, 그리고 골반의 수평 여부를 함께 확인합니다.\n\n1. 이상적 정렬(후면): 척추가 정중선을 따라 곧게 배열되고, 좌우 견갑골이 대칭적인 위치(대략 T2~T7 높이 사이)에 놓입니다.\n2. 골반 위치 평가 기준:\n   - ASIS와 치골결합(Pubic symphysis)이 동일한 수직선상에 위치하는지 확인 — 전방/후방 경사 평가\n   - 좌우 ASIS와 PSIS가 0~15도 범위 안에서 수평을 이루는지 확인 — 좌우 회전 및 기울기 평가\n\n골반이 한쪽으로 회전되어 있거나 기울어져 있으면 좌우 다리 길이 차이처럼 보이는 착시나, 실제 보행 패턴의 비대칭으로 이어질 수 있어 정확한 촉지 기반 확인이 중요합니다.",
+          "key_points": [
+            "후면 평가=척추 정중선 정렬+좌우 견갑골 대칭(약 T2~T7 높이) 확인",
+            "골반 전후 경사=ASIS와 치골결합의 수직선 일치 여부로 평가",
+            "골반 좌우 회전/기울기=ASIS·PSIS가 0~15도 범위에서 수평인지로 평가"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 216
+        },
+        {
+          "order_index": 5,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 2,
+          "question": "하지 정렬 평가 — 내반슬/외반슬, 아치 평가",
+          "options": [],
+          "answer_index": null,
+          "explanation": "자세평가는 척추·골반뿐 아니라 무릎과 발의 정렬도 함께 확인합니다.\n\n1. 내반슬(Genu varus, O자 다리)/외반슬(Genu valgus, X자 다리): 양발을 모으고 섰을 때 무릎 사이 간격이 벌어지면 내반슬, 양쪽 복사뼈를 모았을 때 무릎이 먼저 닿으며 벌어지는 형태면 외반슬로 관찰합니다.\n2. 아치 평가: 발의 아치는 체중을 지지하지 않은 상태(NWB, Non-Weight-Bearing)와 체중을 지지한 상태(WB, Weight-Bearing) 두 가지로 나누어 평가합니다.\n   - 구조적 평발: 체중을 싣지 않아도 아치가 낮게 유지되는 경우\n   - 기능적 평발: 체중을 싣지 않았을 때는 아치가 있으나 체중을 실으면 아치가 무너지는 경우\n3. Navicular drop test: 주상골(Navicular)에 표시를 한 뒤, 체중을 지지하지 않은 상태와 지지한 상태에서의 높이 차이를 측정합니다. 10mm 이상 떨어지면 양성(과도한 회내를 시사)으로 판단합니다.\n\n무릎·발 정렬 문제는 위쪽의 골반·고관절 정렬과도 서로 영향을 주고받으므로, 한 부위만 보지 않고 하지 전체를 연결해서 관찰하는 것이 중요합니다.",
+          "key_points": [
+            "내반슬(O자다리)=무릎 사이 벌어짐, 외반슬(X자다리)=무릎이 먼저 닿고 벌어지는 형태",
+            "아치 평가는 NWB(비체중지지)와 WB(체중지지) 두 조건을 비교해서 구조적/기능적 평발을 구분",
+            "Navicular drop test=주상골 높이 변화 10mm 이상이면 양성(과도한 회내 시사)"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 219
+        },
+        {
+          "order_index": 6,
+          "content_type": "quiz",
+          "question_format": "true_false",
+          "difficulty": 2,
+          "question": "Kendall의 4가지 대표 자세 중 후만-전만 자세(Kyphosis-Lordosis)에서는 흉추가 과후만되고 골반은 후방경사된다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "후만-전만 자세는 흉추 과후만은 맞지만, 골반은 후방경사가 아니라 전방경사가 나타납니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 211
+        },
+        {
+          "order_index": 7,
+          "content_type": "quiz",
+          "question_format": "multiple_choice",
+          "difficulty": 2,
+          "question": "Kendall 4체형 중 요추가 굴곡되어 일직선에 가깝고 골반이 후방경사되는 자세는?",
+          "options": [
+            "척추전만 자세",
+            "후만-전만 자세",
+            "편평등 자세",
+            "굽은등 자세"
+          ],
+          "answer_index": [
+            2
+          ],
+          "explanation": "편평등 자세(Flat-back)는 요추가 굴곡되어 일직선에 가깝고 골반이 후방경사되는 것이 특징입니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 212
+        },
+        {
+          "order_index": 8,
+          "content_type": "quiz",
+          "question_format": "true_false",
+          "difficulty": 2,
+          "question": "ASIS와 PSIS가 이루는 각도가 0~15도 범위 안에 있으면 골반 좌우 수평 정렬이 정상 범위로 평가된다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            0
+          ],
+          "explanation": "좌우 ASIS와 PSIS가 0~15도 범위에서 수평을 이루면 정상 범위의 골반 정렬로 평가합니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 216
+        },
+        {
+          "order_index": 9,
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 3,
+          "question": "다음 중 굽은등 자세(Sway-back)의 특징으로 옳은 것은?",
+          "options": [
+            "골반이 전방경사되고 요추가 과전만된다",
+            "골반과 대퇴부가 전방으로 변위되면서 고관절과 무릎이 과신전된다",
+            "흉추와 요추 모두 정상 곡선을 유지한다",
+            "발목관절이 뚜렷한 배측굴곡을 보인다"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "굽은등 자세는 골반과 대퇴부가 앞으로 변위되면서 고관절과 무릎이 과신전되는 것이 핵심 특징이며, 이 때문에 무릎 과신전에도 불구하고 발목은 중립을 유지합니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 213
+        },
+        {
+          "order_index": 10,
+          "content_type": "exam",
+          "question_format": "true_false",
+          "difficulty": 2,
+          "question": "굽은등 자세(Sway-back)는 어깨가 앞으로 말리는 라운드숄더와 동일한 개념이다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "굽은등 자세(Sway-back)는 Kendall의 척추-골반-하지 정렬 분류이며, 어깨·견갑골의 전인 패턴을 가리키는 라운드숄더와는 별개의 개념입니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 213
+        },
+        {
+          "order_index": 11,
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 2,
+          "question": "Navicular drop test에서 양성(과도한 회내 시사)으로 판단하는 기준은?",
+          "options": [
+            "5mm 이상 하강",
+            "10mm 이상 하강",
+            "15mm 이상 하강",
+            "20mm 이상 하강"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "주상골이 체중 지지 시 10mm 이상 떨어지면 양성으로 판단하며, 이는 과도한 회내를 시사합니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 219
+        },
+        {
+          "order_index": 12,
+          "content_type": "exam",
+          "question_format": "true_false",
+          "difficulty": 2,
+          "question": "구조적 평발은 체중을 싣지 않은 상태(NWB)에서도 아치가 낮게 유지되는 경우를 말한다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            0
+          ],
+          "explanation": "구조적 평발은 체중 지지 여부와 관계없이 아치가 낮게 유지되는 경우이며, 기능적 평발은 체중을 실을 때만 아치가 무너지는 경우입니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 219
+        },
+        {
+          "order_index": 13,
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 1,
+          "question": "이상적 정렬(Normal posture)에서 골반 중립을 판단하는 기준으로 옳은 것은?",
+          "options": [
+            "ASIS가 PSIS보다 높게 위치",
+            "ASIS가 치골결합과 동일한 수직선상에 위치",
+            "좌우 ASIS 높이가 서로 다름",
+            "ASIS가 대전자보다 아래 위치"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "골반 중립 위치는 ASIS가 치골결합(Pubic symphysis)과 동일한 수직선상에 위치하는 것을 기준으로 판단합니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 207
+        }
+      ]
+    },
+    {
+      "chapter_title": "자세평가 실습",
+      "chapter_order_index": 3,
+      "page_range": "p.220-221",
+      "note_for_pm": "원문 분량이 짧고 이미지 위주인 페이지라 지침(섹션 2-3)에 따라 카드 수를 적게 구성했습니다.",
+      "cards": [
+        {
+          "order_index": 1,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 1,
+          "question": "자세평가 실습 절차 개요",
+          "options": [],
+          "answer_index": null,
+          "explanation": "자세평가 실습은 앞서 배운 이론(이상적 정렬, Kendall 4체형, 골반·하지 정렬 평가 기준)을 실제 회원에게 적용해보는 단계입니다. 이 단계에서는 체크리스트를 활용해 다음 순서로 진행하는 것을 권장합니다.\n\n1. 전면·측면·후면 순서로 사진을 찍거나 육안으로 관찰한다.\n2. 머리부터 발까지 위에서 아래로 순서대로 각 분절의 정렬을 확인한다.\n3. 이상적 정렬 기준과 비교하여 벗어난 부분을 체크리스트에 기록한다.\n4. 기록한 내용을 바탕으로 Kendall 4체형 중 가장 가까운 패턴이 있는지 참고하되, 반드시 하나의 유형에 끼워 맞추려 하지 않는다.\n\n실습은 이미지(사진) 기반 관찰이 중심이 되므로, 실제 실습 시에는 동일한 조건(같은 거리, 같은 조명, 같은 자세 지시)에서 촬영해 비교의 신뢰도를 높이는 것이 중요합니다.",
+          "key_points": [
+            "실습 순서: 전면→측면→후면 관찰, 위에서 아래로 분절별 확인",
+            "이상적 정렬 기준과 비교해 벗어난 부분을 체크리스트에 기록",
+            "동일한 촬영 조건(거리·조명·자세 지시)을 유지해야 비교 신뢰도가 높아짐"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 221
+        },
+        {
+          "order_index": 2,
+          "content_type": "lesson",
+          "question_format": null,
+          "difficulty": 2,
+          "question": "체크리스트 활용 시 주의점",
+          "options": [],
+          "answer_index": null,
+          "explanation": "체크리스트를 활용한 자세평가 실습에서는 다음을 주의해야 합니다.\n\n1. 하나의 항목만 보고 전체 자세를 단정하지 않는다 — 예를 들어 골반 전방경사만 보고 척추전만 자세라고 바로 단정하기보다, 경추·흉추·무릎·발목까지 체크리스트 전체를 확인한다.\n2. 좌우 비교를 항상 함께 기록한다 — 한쪽만 관찰하면 비대칭을 놓칠 수 있다.\n3. 실습 결과는 회원에게 \"문제\"로 전달하기보다 \"현재 상태\"로 전달한다 — 앞서 배운 것처럼 이상적 정렬은 절대적 정답이 아니라 비교 기준선이기 때문이다.\n\n체크리스트는 결국 회원의 현재 상태를 있는 그대로 기록해 이후 변화를 추적하기 위한 도구라는 점을 실습 내내 기억해야 합니다.",
+          "key_points": [
+            "한 항목만으로 전체 자세 유형을 단정하지 않고 체크리스트 전 항목을 확인",
+            "좌우 비교를 항상 함께 기록해 비대칭을 놓치지 않는다",
+            "평가 결과는 '문제'가 아니라 '현재 상태'로 회원에게 전달한다"
+          ],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 221
+        },
+        {
+          "order_index": 3,
+          "content_type": "quiz",
+          "question_format": "true_false",
+          "difficulty": 2,
+          "question": "자세평가 실습에서는 골반 전방경사 하나만 확인되면 척추전만 자세로 즉시 단정해도 된다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "하나의 항목만으로 전체 자세 유형을 단정해서는 안 되며, 경추부터 발목까지 체크리스트 전체를 확인해야 합니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": null,
+          "source_page": 221
+        },
+        {
+          "order_index": 4,
+          "content_type": "exam",
+          "question_format": "multiple_choice",
+          "difficulty": 1,
+          "question": "자세평가 실습 시 촬영 조건에 대한 설명으로 가장 적절한 것은?",
+          "options": [
+            "매번 다른 거리와 조명에서 촬영해도 무방하다",
+            "동일한 거리·조명·자세 지시 조건을 유지해야 비교 신뢰도가 높아진다",
+            "측면 사진만 촬영하면 충분하다",
+            "좌우 중 한쪽만 촬영해도 무방하다"
+          ],
+          "answer_index": [
+            1
+          ],
+          "explanation": "같은 조건(거리·조명·자세 지시)에서 촬영해야 이전 평가와 비교했을 때 신뢰도 있는 변화 추적이 가능합니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 221
+        },
+        {
+          "order_index": 5,
+          "content_type": "exam",
+          "question_format": "true_false",
+          "difficulty": 1,
+          "question": "자세평가 실습 결과는 회원에게 '문제'가 아니라 '현재 상태'로 전달하는 것이 권장된다.",
+          "options": [
+            "O",
+            "X"
+          ],
+          "answer_index": [
+            0
+          ],
+          "explanation": "이상적 정렬은 절대적 정답이 아니라 비교를 위한 기준선이므로, 평가 결과는 문제로 낙인찍기보다 현재 상태로 전달하는 것이 바람직합니다.",
+          "key_points": [],
+          "reference_text": null,
+          "exam_years": null,
+          "star_rating": 1,
+          "source_page": 221
+        }
+      ]
+    }
+  ]
+}

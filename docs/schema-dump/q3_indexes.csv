@@ -1,0 +1,101 @@
+﻿tablename,indexname,indexdef
+access_codes,access_codes_code_key,CREATE UNIQUE INDEX access_codes_code_key ON public.access_codes USING btree (code)
+access_codes,access_codes_pkey,CREATE UNIQUE INDEX access_codes_pkey ON public.access_codes USING btree (id)
+ad_banners,ad_banners_pkey,CREATE UNIQUE INDEX ad_banners_pkey ON public.ad_banners USING btree (id)
+categories,categories_pkey,CREATE UNIQUE INDEX categories_pkey ON public.categories USING btree (id)
+certification_subjects,certification_subjects_pkey,CREATE UNIQUE INDEX certification_subjects_pkey ON public.certification_subjects USING btree (id)
+certifications,certifications_pkey,CREATE UNIQUE INDEX certifications_pkey ON public.certifications USING btree (id)
+chapter_cards,chapter_questions_pkey,CREATE UNIQUE INDEX chapter_questions_pkey ON public.chapter_cards USING btree (id)
+chapter_cards,idx_chapter_questions_chapter_id,CREATE INDEX idx_chapter_questions_chapter_id ON public.chapter_cards USING btree (chapter_id)
+chapter_cards,idx_cq_chapter_id,CREATE INDEX idx_cq_chapter_id ON public.chapter_cards USING btree (chapter_id)
+chapter_cards,idx_cq_star_rating,CREATE INDEX idx_cq_star_rating ON public.chapter_cards USING btree (star_rating DESC)
+chapter_session_logs,chapter_session_logs_pkey,CREATE UNIQUE INDEX chapter_session_logs_pkey ON public.chapter_session_logs USING btree (id)
+chapter_session_logs,idx_session_logs_exit,CREATE INDEX idx_session_logs_exit ON public.chapter_session_logs USING btree (exit_point)
+chapter_session_logs,idx_session_logs_user,CREATE INDEX idx_session_logs_user ON public.chapter_session_logs USING btree (user_id)
+chapter_stats,chapter_stats_pkey,CREATE UNIQUE INDEX chapter_stats_pkey ON public.chapter_stats USING btree (id)
+chapter_stats,chapter_stats_user_chapter_cert_uidx,"CREATE UNIQUE INDEX chapter_stats_user_chapter_cert_uidx ON public.chapter_stats USING btree (user_id, chapter_id, certification_id) WHERE (certification_id IS NOT NULL)"
+chapter_stats,chapter_stats_user_chapter_null_cert_uidx,"CREATE UNIQUE INDEX chapter_stats_user_chapter_null_cert_uidx ON public.chapter_stats USING btree (user_id, chapter_id) WHERE (certification_id IS NULL)"
+chapter_stats,idx_chapter_stats_user_attempt,"CREATE INDEX idx_chapter_stats_user_attempt ON public.chapter_stats USING btree (user_id, last_attempt_at)"
+chapter_stats,idx_chapter_stats_user_id,CREATE INDEX idx_chapter_stats_user_id ON public.chapter_stats USING btree (user_id)
+chapter_test_history,chapter_test_history_pkey,CREATE UNIQUE INDEX chapter_test_history_pkey ON public.chapter_test_history USING btree (id)
+chapter_test_history,idx_test_history_created_at,CREATE INDEX idx_test_history_created_at ON public.chapter_test_history USING btree (created_at)
+chapter_test_history,idx_test_history_user_chapter,"CREATE INDEX idx_test_history_user_chapter ON public.chapter_test_history USING btree (user_id, chapter_id)"
+chapter_test_results,chapter_test_results_pkey,CREATE UNIQUE INDEX chapter_test_results_pkey ON public.chapter_test_results USING btree (id)
+chapter_test_results,idx_ctr_passed,"CREATE INDEX idx_ctr_passed ON public.chapter_test_results USING btree (user_id, passed)"
+chapter_test_results,idx_ctr_user,CREATE INDEX idx_ctr_user ON public.chapter_test_results USING btree (user_id)
+chapter_test_results,idx_ctr_user_chapter,"CREATE INDEX idx_ctr_user_chapter ON public.chapter_test_results USING btree (user_id, chapter_id)"
+chapters,chapters_pkey,CREATE UNIQUE INDEX chapters_pkey ON public.chapters USING btree (id)
+chapters,idx_chapters_course_id,CREATE INDEX idx_chapters_course_id ON public.chapters USING btree (course_id)
+content_purchases,content_purchases_pkey,CREATE UNIQUE INDEX content_purchases_pkey ON public.content_purchases USING btree (id)
+course_certifications,course_certifications_course_id_certification_id_key,"CREATE UNIQUE INDEX course_certifications_course_id_certification_id_key ON public.course_certifications USING btree (course_id, certification_id)"
+course_certifications,course_certifications_pkey,CREATE UNIQUE INDEX course_certifications_pkey ON public.course_certifications USING btree (id)
+course_certifications,idx_course_certifications_cert,CREATE INDEX idx_course_certifications_cert ON public.course_certifications USING btree (certification_id)
+course_certifications,idx_course_certifications_course,CREATE INDEX idx_course_certifications_course ON public.course_certifications USING btree (course_id)
+courses,courses_pkey,CREATE UNIQUE INDEX courses_pkey ON public.courses USING btree (id)
+courses,idx_courses_certification_id,CREATE INDEX idx_courses_certification_id ON public.courses USING btree (certification_id)
+courses,idx_courses_subject_cert,"CREATE INDEX idx_courses_subject_cert ON public.courses USING btree (subject_id, certification_id)"
+exam_registrations,exam_registrations_pkey,CREATE UNIQUE INDEX exam_registrations_pkey ON public.exam_registrations USING btree (id)
+exam_results,exam_results_pkey,CREATE UNIQUE INDEX exam_results_pkey ON public.exam_results USING btree (id)
+exam_schedules,exam_schedules_pkey,CREATE UNIQUE INDEX exam_schedules_pkey ON public.exam_schedules USING btree (id)
+guest_test_results,guest_test_results_pkey,CREATE UNIQUE INDEX guest_test_results_pkey ON public.guest_test_results USING btree (id)
+landing_test_sessions,landing_test_sessions_pkey,CREATE UNIQUE INDEX landing_test_sessions_pkey ON public.landing_test_sessions USING btree (id)
+leaderboard,leaderboard_pkey,CREATE UNIQUE INDEX leaderboard_pkey ON public.leaderboard USING btree (id)
+leaderboard,leaderboard_user_id_key,CREATE UNIQUE INDEX leaderboard_user_id_key ON public.leaderboard USING btree (user_id)
+learning_progress,idx_lp_completed,"CREATE INDEX idx_lp_completed ON public.learning_progress USING btree (user_id, completed_at DESC)"
+learning_progress,idx_lp_user,CREATE INDEX idx_lp_user ON public.learning_progress USING btree (user_id)
+learning_progress,idx_lp_user_chapter,"CREATE INDEX idx_lp_user_chapter ON public.learning_progress USING btree (user_id, chapter)"
+learning_progress,learning_progress_pkey,CREATE UNIQUE INDEX learning_progress_pkey ON public.learning_progress USING btree (id)
+learning_progress,learning_progress_user_id_chapter_section_key,"CREATE UNIQUE INDEX learning_progress_user_id_chapter_section_key ON public.learning_progress USING btree (user_id, chapter, section)"
+learning_progress_v2,learning_progress_v2_pkey,CREATE UNIQUE INDEX learning_progress_v2_pkey ON public.learning_progress_v2 USING btree (id)
+learning_progress_v2,learning_progress_v2_user_id_certification_id_idx,"CREATE INDEX learning_progress_v2_user_id_certification_id_idx ON public.learning_progress_v2 USING btree (user_id, certification_id)"
+learning_progress_v2,learning_progress_v2_user_id_chapter_id_key,"CREATE UNIQUE INDEX learning_progress_v2_user_id_chapter_id_key ON public.learning_progress_v2 USING btree (user_id, chapter_id)"
+learning_progress_v2,learning_progress_v2_user_id_course_id_idx,"CREATE INDEX learning_progress_v2_user_id_course_id_idx ON public.learning_progress_v2 USING btree (user_id, course_id)"
+learning_progress_v2,learning_progress_v2_user_id_idx,CREATE INDEX learning_progress_v2_user_id_idx ON public.learning_progress_v2 USING btree (user_id)
+lesson_questions,lesson_questions_pkey,CREATE UNIQUE INDEX lesson_questions_pkey ON public.lesson_questions USING btree (id)
+lesson_slide_logs,idx_lesson_slide_logs_user_id,CREATE INDEX idx_lesson_slide_logs_user_id ON public.lesson_slide_logs USING btree (user_id)
+lesson_slide_logs,idx_slide_logs_chapter,CREATE INDEX idx_slide_logs_chapter ON public.lesson_slide_logs USING btree (chapter_id)
+lesson_slide_logs,idx_slide_logs_user,CREATE INDEX idx_slide_logs_user ON public.lesson_slide_logs USING btree (user_id)
+lesson_slide_logs,lesson_slide_logs_pkey,CREATE UNIQUE INDEX lesson_slide_logs_pkey ON public.lesson_slide_logs USING btree (id)
+lessons,lessons_pkey,CREATE UNIQUE INDEX lessons_pkey ON public.lessons USING btree (id)
+mock_exam_bookings,idx_mock_exam_unique,"CREATE UNIQUE INDEX idx_mock_exam_unique ON public.mock_exam_bookings USING btree (user_id, certification_id, exam_type, selected_date)"
+mock_exam_bookings,idx_mock_exam_week,"CREATE INDEX idx_mock_exam_week ON public.mock_exam_bookings USING btree (user_id, certification_id, exam_type, week_number)"
+mock_exam_bookings,mock_exam_bookings_pkey,CREATE UNIQUE INDEX mock_exam_bookings_pkey ON public.mock_exam_bookings USING btree (id)
+oral_exam_registrations,idx_oral_reg_exam_date,CREATE INDEX idx_oral_reg_exam_date ON public.oral_exam_registrations USING btree (exam_date)
+oral_exam_registrations,idx_oral_reg_user_id,CREATE INDEX idx_oral_reg_user_id ON public.oral_exam_registrations USING btree (user_id)
+oral_exam_registrations,oral_exam_registrations_pkey,CREATE UNIQUE INDEX oral_exam_registrations_pkey ON public.oral_exam_registrations USING btree (id)
+partners,partners_pkey,CREATE UNIQUE INDEX partners_pkey ON public.partners USING btree (id)
+profiles,idx_profiles_certification_id,CREATE INDEX idx_profiles_certification_id ON public.profiles USING btree (certification_id)
+profiles,idx_profiles_phone,CREATE INDEX idx_profiles_phone ON public.profiles USING btree (phone) WHERE (phone IS NOT NULL)
+profiles,idx_profiles_sub,CREATE INDEX idx_profiles_sub ON public.profiles USING btree (sub) WHERE (sub IS NOT NULL)
+profiles,profiles_email_unique,CREATE UNIQUE INDEX profiles_email_unique ON public.profiles USING btree (email)
+profiles,profiles_phone_key,CREATE UNIQUE INDEX profiles_phone_key ON public.profiles USING btree (phone)
+profiles,profiles_pkey,CREATE UNIQUE INDEX profiles_pkey ON public.profiles USING btree (id)
+profiles,profiles_sub_key,CREATE UNIQUE INDEX profiles_sub_key ON public.profiles USING btree (sub)
+question_stats,question_stats_pkey,CREATE UNIQUE INDEX question_stats_pkey ON public.question_stats USING btree (id)
+question_stats,question_stats_user_id_question_id_key,"CREATE UNIQUE INDEX question_stats_user_id_question_id_key ON public.question_stats USING btree (user_id, question_id)"
+quiz_performance_logs,idx_quiz_logs_user,CREATE INDEX idx_quiz_logs_user ON public.quiz_performance_logs USING btree (user_id)
+quiz_performance_logs,quiz_performance_logs_pkey,CREATE UNIQUE INDEX quiz_performance_logs_pkey ON public.quiz_performance_logs USING btree (id)
+subjects,subjects_pkey,CREATE UNIQUE INDEX subjects_pkey ON public.subjects USING btree (id)
+subscription_features,subscription_features_pkey,CREATE UNIQUE INDEX subscription_features_pkey ON public.subscription_features USING btree (plan)
+subscription_plans,subscription_plans_name_key,CREATE UNIQUE INDEX subscription_plans_name_key ON public.subscription_plans USING btree (name)
+subscription_plans,subscription_plans_pkey,CREATE UNIQUE INDEX subscription_plans_pkey ON public.subscription_plans USING btree (id)
+test_results,test_results_pkey,CREATE UNIQUE INDEX test_results_pkey ON public.test_results USING btree (id)
+user_access_codes,idx_uac_user_id,CREATE INDEX idx_uac_user_id ON public.user_access_codes USING btree (user_id)
+user_access_codes,user_access_codes_pkey,CREATE UNIQUE INDEX user_access_codes_pkey ON public.user_access_codes USING btree (id)
+user_access_codes,user_access_codes_user_id_code_id_key,"CREATE UNIQUE INDEX user_access_codes_user_id_code_id_key ON public.user_access_codes USING btree (user_id, code_id)"
+user_badges,user_badges_pkey,CREATE UNIQUE INDEX user_badges_pkey ON public.user_badges USING btree (id)
+user_badges,user_badges_user_id_badge_type_key,"CREATE UNIQUE INDEX user_badges_user_id_badge_type_key ON public.user_badges USING btree (user_id, badge_type)"
+user_certifications,idx_user_certifications_active,"CREATE INDEX idx_user_certifications_active ON public.user_certifications USING btree (user_id, is_active)"
+user_certifications,idx_user_certifications_user_id,CREATE INDEX idx_user_certifications_user_id ON public.user_certifications USING btree (user_id)
+user_certifications,user_certifications_pkey,CREATE UNIQUE INDEX user_certifications_pkey ON public.user_certifications USING btree (id)
+user_events,user_events_pkey,CREATE UNIQUE INDEX user_events_pkey ON public.user_events USING btree (id)
+user_gamification,user_gamification_pkey,CREATE UNIQUE INDEX user_gamification_pkey ON public.user_gamification USING btree (id)
+user_gamification,user_gamification_user_id_key,CREATE UNIQUE INDEX user_gamification_user_id_key ON public.user_gamification USING btree (user_id)
+user_goals,user_goals_pkey,CREATE UNIQUE INDEX user_goals_pkey ON public.user_goals USING btree (id)
+user_reviews,user_reviews_pkey,CREATE UNIQUE INDEX user_reviews_pkey ON public.user_reviews USING btree (id)
+user_subscriptions,user_subscriptions_pkey,CREATE UNIQUE INDEX user_subscriptions_pkey ON public.user_subscriptions USING btree (id)
+user_wrong_answers,idx_user_wrong_answers_chapter,CREATE INDEX idx_user_wrong_answers_chapter ON public.user_wrong_answers USING btree (chapter_id)
+user_wrong_answers,idx_user_wrong_answers_user,CREATE INDEX idx_user_wrong_answers_user ON public.user_wrong_answers USING btree (user_id)
+user_wrong_answers,user_wrong_answers_pkey,CREATE UNIQUE INDEX user_wrong_answers_pkey ON public.user_wrong_answers USING btree (id)
+user_wrong_answers,user_wrong_answers_user_id_question_id_key,"CREATE UNIQUE INDEX user_wrong_answers_user_id_question_id_key ON public.user_wrong_answers USING btree (user_id, question_id)"
+video_bookmarks,video_bookmarks_pkey,CREATE UNIQUE INDEX video_bookmarks_pkey ON public.video_bookmarks USING btree (id)

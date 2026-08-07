@@ -1,0 +1,464 @@
+﻿table_name,ordinal_position,column_name,data_type,udt_name,is_nullable,column_default,character_maximum_length,numeric_precision,numeric_scale
+access_codes,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+access_codes,2,code,text,text,NO,null,null,null,null
+access_codes,3,certification_id,uuid,uuid,YES,null,null,null,null
+access_codes,4,expires_at,timestamp with time zone,timestamptz,YES,null,null,null,null
+access_codes,5,max_uses,integer,int4,YES,null,null,32,0
+access_codes,6,current_uses,integer,int4,YES,0,null,32,0
+access_codes,7,is_active,boolean,bool,YES,TRUE,null,null,null
+access_codes,8,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+access_codes,9,label,text,text,YES,null,null,null,null
+access_codes,10,source,text,text,YES,null,null,null,null
+ad_banners,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+ad_banners,2,title,text,text,YES,null,null,null,null
+ad_banners,3,image_url,text,text,YES,null,null,null,null
+ad_banners,4,link_url,text,text,YES,null,null,null,null
+ad_banners,5,position,text,text,YES,null,null,null,null
+ad_banners,6,is_active,boolean,bool,YES,TRUE,null,null,null
+ad_banners,7,click_count,integer,int4,YES,0,null,32,0
+ad_banners,8,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+categories,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+categories,2,name,text,text,NO,null,null,null,null
+categories,3,icon,text,text,YES,null,null,null,null
+categories,4,display_order,integer,int4,YES,0,null,32,0
+categories,5,is_active,boolean,bool,YES,TRUE,null,null,null
+categories,6,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+certification_subjects,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+certification_subjects,2,certification_id,uuid,uuid,YES,null,null,null,null
+certification_subjects,3,subject_id,uuid,uuid,YES,null,null,null,null
+certification_subjects,4,is_required,boolean,bool,YES,TRUE,null,null,null
+certification_subjects,5,display_order,integer,int4,YES,0,null,32,0
+certifications,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+certifications,2,category_id,uuid,uuid,YES,null,null,null,null
+certifications,3,name,text,text,NO,null,null,null,null
+certifications,4,type,text,text,YES,'national'::text,null,null,null
+certifications,5,level,text,text,YES,null,null,null,null
+certifications,6,exam_date,date,date,YES,null,null,null,null
+certifications,7,is_active,boolean,bool,YES,TRUE,null,null,null
+certifications,8,description,text,text,YES,null,null,null,null
+certifications,9,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+certifications,10,exam_type,text,text,YES,'written'::text,null,null,null
+certifications,11,phase,text,text,YES,'mvp'::text,null,null,null
+certifications,12,order_index,integer,int4,YES,null,null,32,0
+certifications,13,partner_id,uuid,uuid,YES,null,null,null,null
+certifications,14,slug,text,text,YES,null,null,null,null
+chapter_cards,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+chapter_cards,2,chapter_id,uuid,uuid,NO,null,null,null,null
+chapter_cards,3,question,text,text,NO,null,null,null,null
+chapter_cards,4,options,jsonb,jsonb,NO,null,null,null,null
+chapter_cards,6,explanation,text,text,YES,null,null,null,null
+chapter_cards,7,order_index,integer,int4,YES,0,null,32,0
+chapter_cards,8,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+chapter_cards,9,image_url,text,text,YES,null,null,null,null
+chapter_cards,10,image_caption,text,text,YES,null,null,null,null
+chapter_cards,11,image_source,text,text,YES,null,null,null,null
+chapter_cards,12,reference_text,text,text,YES,null,null,null,null
+chapter_cards,14,exam_years,jsonb,jsonb,YES,'[]'::jsonb,null,null,null
+chapter_cards,15,star_rating,smallint,int2,YES,0,null,16,0
+chapter_cards,16,key_points,jsonb,jsonb,YES,'[]'::jsonb,null,null,null
+chapter_cards,17,content_type,text,text,YES,null,null,null,null
+chapter_cards,18,question_format,text,text,YES,null,null,null,null
+chapter_cards,19,difficulty,integer,int4,YES,2,null,32,0
+chapter_cards,20,answer_index,jsonb,jsonb,YES,null,null,null,null
+chapter_cards,21,linked_quiz_id,uuid,uuid,YES,null,null,null,null
+chapter_session_logs,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+chapter_session_logs,2,user_id,uuid,uuid,NO,null,null,null,null
+chapter_session_logs,3,chapter_id,uuid,uuid,NO,null,null,null,null
+chapter_session_logs,4,session_id,uuid,uuid,YES,gen_random_uuid(),null,null,null
+chapter_session_logs,5,session_start,timestamp with time zone,timestamptz,YES,now(),null,null,null
+chapter_session_logs,6,session_end,timestamp with time zone,timestamptz,YES,null,null,null,null
+chapter_session_logs,7,last_slide,integer,int4,YES,null,null,32,0
+chapter_session_logs,8,exit_point,text,text,YES,null,null,null,null
+chapter_session_logs,9,is_completed,boolean,bool,YES,FALSE,null,null,null
+chapter_session_logs,10,page_type,text,text,YES,'test'::text,null,null,null
+chapter_session_logs,11,slide_total,integer,int4,YES,null,null,32,0
+chapter_session_logs,12,completion_rate,double precision,float8,YES,null,null,53,null
+chapter_session_logs,13,day_of_week,smallint,int2,YES,null,null,16,0
+chapter_session_logs,14,hour_of_day,smallint,int2,YES,null,null,16,0
+chapter_session_logs,15,last_sub_slide,smallint,int2,YES,null,null,16,0
+chapter_stats,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+chapter_stats,2,user_id,text,text,YES,null,null,null,null
+chapter_stats,3,chapter_id,text,text,YES,null,null,null,null
+chapter_stats,4,subject_id,text,text,YES,null,null,null,null
+chapter_stats,5,total_attempts,integer,int4,YES,0,null,32,0
+chapter_stats,6,total_correct,integer,int4,YES,0,null,32,0
+chapter_stats,7,avg_score,double precision,float8,YES,0,null,53,null
+chapter_stats,8,wrong_rate,double precision,float8,YES,0,null,53,null
+chapter_stats,9,last_attempt_at,timestamp with time zone,timestamptz,YES,null,null,null,null
+chapter_stats,10,updated_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+chapter_stats,11,lesson_completed,boolean,bool,YES,FALSE,null,null,null
+chapter_stats,12,mini_quiz_correct,integer,int4,YES,0,null,32,0
+chapter_stats,13,mini_quiz_total,integer,int4,YES,0,null,32,0
+chapter_stats,14,lesson_completed_at,timestamp with time zone,timestamptz,YES,null,null,null,null
+chapter_stats,15,latest_score,integer,int4,YES,null,null,32,0
+chapter_stats,16,best_score,integer,int4,YES,null,null,32,0
+chapter_stats,17,test_attempts,integer,int4,YES,0,null,32,0
+chapter_stats,18,study_duration,integer,int4,YES,0,null,32,0
+chapter_stats,19,total_questions,integer,int4,YES,null,null,32,0
+chapter_stats,20,certification_id,uuid,uuid,YES,null,null,null,null
+chapter_test_history,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+chapter_test_history,2,user_id,uuid,uuid,YES,null,null,null,null
+chapter_test_history,3,chapter_id,uuid,uuid,YES,null,null,null,null
+chapter_test_history,4,score,integer,int4,NO,null,null,32,0
+chapter_test_history,5,attempt_number,integer,int4,NO,null,null,32,0
+chapter_test_history,6,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+chapter_test_results,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+chapter_test_results,2,user_id,uuid,uuid,NO,null,null,null,null
+chapter_test_results,3,chapter_id,uuid,uuid,NO,null,null,null,null
+chapter_test_results,4,score,integer,int4,NO,null,null,32,0
+chapter_test_results,5,total,integer,int4,NO,null,null,32,0
+chapter_test_results,6,passed,boolean,bool,YES,FALSE,null,null,null
+chapter_test_results,7,xp_earned,integer,int4,YES,0,null,32,0
+chapter_test_results,8,answers_json,jsonb,jsonb,YES,null,null,null,null
+chapter_test_results,9,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+chapters,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+chapters,2,course_id,uuid,uuid,NO,null,null,null,null
+chapters,3,title,text,text,NO,null,null,null,null
+chapters,4,description,text,text,YES,null,null,null,null
+chapters,5,order_index,integer,int4,YES,0,null,32,0
+chapters,6,is_active,boolean,bool,YES,TRUE,null,null,null
+chapters,7,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+chapters,8,video_url,text,text,YES,null,null,null,null
+chapters,9,audio_url,text,text,YES,null,null,null,null
+chapters,10,image_url,text,text,YES,null,null,null,null
+chapters,11,content_type,text,text,YES,'image_slide'::text,null,null,null
+chapters,12,year_tags,ARRAY,_text,YES,'{}'::text[],null,null,null
+chapters,13,frequency_score,integer,int4,YES,0,null,32,0
+chapters,14,content_json,jsonb,jsonb,YES,null,null,null,null
+content_purchases,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+content_purchases,2,user_id,uuid,uuid,YES,null,null,null,null
+content_purchases,3,subject_id,uuid,uuid,YES,null,null,null,null
+content_purchases,4,price,integer,int4,YES,null,null,32,0
+content_purchases,5,purchased_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+content_purchases,6,payment_id,text,text,YES,null,null,null,null
+course_certifications,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+course_certifications,2,course_id,uuid,uuid,NO,null,null,null,null
+course_certifications,3,certification_id,uuid,uuid,NO,null,null,null,null
+course_certifications,4,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+courses,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+courses,2,title,text,text,NO,null,null,null,null
+courses,3,description,text,text,YES,null,null,null,null
+courses,4,category,text,text,NO,null,null,null,null
+courses,5,phase,text,text,YES,'mvp'::text,null,null,null
+courses,6,level,text,text,YES,null,null,null,null
+courses,7,xp_reward,integer,int4,YES,10,null,32,0
+courses,8,order_index,integer,int4,YES,0,null,32,0
+courses,9,is_locked,boolean,bool,YES,FALSE,null,null,null
+courses,10,unlock_condition,text,text,YES,null,null,null,null
+courses,11,thumbnail_url,text,text,YES,null,null,null,null
+courses,12,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+courses,13,subject_id,uuid,uuid,YES,null,null,null,null
+courses,14,certification_id,uuid,uuid,YES,null,null,null,null
+exam_registrations,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+exam_registrations,2,name,text,text,NO,null,null,null,null
+exam_registrations,3,phone,text,text,NO,null,null,null,null
+exam_registrations,4,email,text,text,YES,null,null,null,null
+exam_registrations,5,round,integer,int4,NO,null,null,32,0
+exam_registrations,6,user_id,uuid,uuid,YES,null,null,null,null
+exam_registrations,7,created_at,timestamp with time zone,timestamptz,NO,now(),null,null,null
+exam_results,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+exam_results,2,user_id,uuid,uuid,NO,null,null,null,null
+exam_results,3,schedule_id,uuid,uuid,YES,null,null,null,null
+exam_results,4,round,integer,int4,NO,null,null,32,0
+exam_results,5,score,integer,int4,NO,null,null,32,0
+exam_results,6,total_questions,integer,int4,NO,100,null,32,0
+exam_results,7,subject_scores,jsonb,jsonb,YES,null,null,null,null
+exam_results,8,created_at,timestamp with time zone,timestamptz,NO,now(),null,null,null
+exam_results,9,passed,boolean,bool,YES,null,null,null,null
+exam_results,10,abandoned,boolean,bool,YES,FALSE,null,null,null
+exam_results,11,time_remaining,integer,int4,YES,null,null,32,0
+exam_schedules,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+exam_schedules,2,round,integer,int4,NO,null,null,32,0
+exam_schedules,3,exam_date,date,date,NO,null,null,null,null
+exam_schedules,4,start_time,time without time zone,time,NO,'10:00:00'::time without time zone,null,null,null
+exam_schedules,5,title,text,text,NO,null,null,null,null
+exam_schedules,6,description,text,text,YES,null,null,null,null
+exam_schedules,7,is_active,boolean,bool,NO,TRUE,null,null,null
+exam_schedules,8,created_at,timestamp with time zone,timestamptz,NO,now(),null,null,null
+exam_schedules,9,certification_id,uuid,uuid,YES,null,null,null,null
+exam_schedules,10,exam_type,text,text,YES,'written'::text,null,null,null
+exam_schedules,11,frequency,text,text,YES,'weekly'::text,null,null,null
+guest_test_results,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+guest_test_results,2,guest_id,uuid,uuid,NO,null,null,null,null
+guest_test_results,3,score,integer,int4,YES,null,null,32,0
+guest_test_results,4,total_questions,integer,int4,YES,null,null,32,0
+guest_test_results,5,correct_answers,integer,int4,YES,null,null,32,0
+guest_test_results,6,level_result,text,text,YES,null,null,null,null
+guest_test_results,7,answers_json,jsonb,jsonb,YES,null,null,null,null
+guest_test_results,8,is_converted,boolean,bool,YES,FALSE,null,null,null
+guest_test_results,9,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+guest_test_results,10,is_major,boolean,bool,YES,FALSE,null,null,null
+landing_test_sessions,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+landing_test_sessions,2,google_user_id,text,text,YES,null,null,null,null
+landing_test_sessions,3,email,text,text,YES,null,null,null,null
+landing_test_sessions,4,name,text,text,YES,null,null,null,null
+landing_test_sessions,5,avatar_url,text,text,YES,null,null,null,null
+landing_test_sessions,6,score,integer,int4,YES,null,null,32,0
+landing_test_sessions,7,total_questions,integer,int4,YES,5,null,32,0
+landing_test_sessions,8,weak_areas,text,text,YES,null,null,null,null
+landing_test_sessions,9,answers_json,jsonb,jsonb,YES,null,null,null,null
+landing_test_sessions,10,app_download_clicked,boolean,bool,YES,FALSE,null,null,null
+landing_test_sessions,11,ip_address,text,text,YES,null,null,null,null
+landing_test_sessions,12,is_guest,boolean,bool,YES,FALSE,null,null,null
+landing_test_sessions,13,guest_id,uuid,uuid,YES,null,null,null,null
+landing_test_sessions,14,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+leaderboard,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+leaderboard,2,user_id,uuid,uuid,NO,null,null,null,null
+leaderboard,3,weekly_xp,integer,int4,YES,0,null,32,0
+leaderboard,4,monthly_xp,integer,int4,YES,0,null,32,0
+leaderboard,5,rank,integer,int4,YES,null,null,32,0
+leaderboard,6,updated_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+learning_progress,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+learning_progress,2,user_id,uuid,uuid,NO,null,null,null,null
+learning_progress,3,chapter,text,text,NO,null,null,null,null
+learning_progress,4,section,text,text,NO,null,null,null,null
+learning_progress,5,is_skipped,boolean,bool,YES,FALSE,null,null,null
+learning_progress,6,completed_at,timestamp with time zone,timestamptz,YES,null,null,null,null
+learning_progress,7,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+learning_progress_v2,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+learning_progress_v2,2,user_id,uuid,uuid,NO,null,null,null,null
+learning_progress_v2,3,chapter_id,uuid,uuid,YES,null,null,null,null
+learning_progress_v2,4,course_id,uuid,uuid,YES,null,null,null,null
+learning_progress_v2,5,certification_id,uuid,uuid,YES,null,null,null,null
+learning_progress_v2,6,status,text,text,YES,'not_started'::text,null,null,null
+learning_progress_v2,7,completed_at,timestamp with time zone,timestamptz,YES,null,null,null,null
+learning_progress_v2,8,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+lesson_questions,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+lesson_questions,2,lesson_id,uuid,uuid,NO,null,null,null,null
+lesson_questions,3,question,text,text,NO,null,null,null,null
+lesson_questions,4,options,jsonb,jsonb,NO,null,null,null,null
+lesson_questions,5,answer_index,integer,int4,NO,null,null,32,0
+lesson_questions,6,explanation,text,text,YES,null,null,null,null
+lesson_questions,7,order_index,integer,int4,YES,0,null,32,0
+lesson_questions,8,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+lesson_slide_logs,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+lesson_slide_logs,2,user_id,uuid,uuid,NO,null,null,null,null
+lesson_slide_logs,3,chapter_id,uuid,uuid,NO,null,null,null,null
+lesson_slide_logs,4,session_id,uuid,uuid,YES,null,null,null,null
+lesson_slide_logs,5,slide_index,integer,int4,NO,null,null,32,0
+lesson_slide_logs,6,slide_total,integer,int4,YES,null,null,32,0
+lesson_slide_logs,7,slide_retention_time,double precision,float8,YES,null,null,53,null
+lesson_slide_logs,8,checkbox_click_interval,double precision,float8,YES,null,null,53,null
+lesson_slide_logs,9,checkbox_intervals_raw,jsonb,jsonb,YES,null,null,null,null
+lesson_slide_logs,10,is_completed,boolean,bool,YES,FALSE,null,null,null
+lesson_slide_logs,11,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+lesson_slide_logs,12,checkbox_order_raw,jsonb,jsonb,YES,null,null,null,null
+lesson_slide_logs,13,checkbox_total,integer,int4,YES,null,null,32,0
+lesson_slide_logs,14,revisit_count,integer,int4,YES,0,null,32,0
+lesson_slide_logs,15,is_revisit,boolean,bool,YES,FALSE,null,null,null
+lesson_slide_logs,16,image_zoom_count,integer,int4,YES,0,null,32,0
+lesson_slide_logs,17,sub_slide,smallint,int2,YES,null,null,16,0
+lessons,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+lessons,2,course_id,uuid,uuid,NO,null,null,null,null
+lessons,3,title,text,text,NO,null,null,null,null
+lessons,4,content_json,jsonb,jsonb,YES,null,null,null,null
+lessons,5,lesson_type,text,text,NO,null,null,null,null
+lessons,6,xp_reward,integer,int4,YES,5,null,32,0
+lessons,7,order_index,integer,int4,YES,0,null,32,0
+lessons,8,duration_minutes,integer,int4,YES,5,null,32,0
+lessons,9,is_required,boolean,bool,YES,FALSE,null,null,null
+lessons,10,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+mock_exam_bookings,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+mock_exam_bookings,2,user_id,uuid,uuid,YES,null,null,null,null
+mock_exam_bookings,3,certification_id,uuid,uuid,YES,null,null,null,null
+mock_exam_bookings,4,exam_type,text,text,NO,null,null,null,null
+mock_exam_bookings,5,week_number,integer,int4,NO,null,null,32,0
+mock_exam_bookings,6,week_start_date,date,date,NO,null,null,null,null
+mock_exam_bookings,7,selected_date,date,date,NO,null,null,null,null
+mock_exam_bookings,8,status,text,text,YES,'confirmed'::text,null,null,null
+mock_exam_bookings,9,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+oral_exam_registrations,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+oral_exam_registrations,2,user_id,uuid,uuid,YES,null,null,null,null
+oral_exam_registrations,3,certification_id,uuid,uuid,YES,null,null,null,null
+oral_exam_registrations,4,exam_date,date,date,NO,null,null,null,null
+oral_exam_registrations,5,week_number,integer,int4,NO,null,null,32,0
+oral_exam_registrations,6,slot_number,integer,int4,NO,null,null,32,0
+oral_exam_registrations,7,ticket_number,integer,int4,NO,null,null,32,0
+oral_exam_registrations,8,start_time,time without time zone,time,NO,null,null,null,null
+oral_exam_registrations,9,is_completed,boolean,bool,YES,FALSE,null,null,null
+oral_exam_registrations,10,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+partners,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+partners,2,name,text,text,NO,null,null,null,null
+partners,3,logo_url,text,text,YES,null,null,null,null
+partners,4,website_url,text,text,YES,null,null,null,null
+partners,5,revenue_share,numeric,numeric,YES,0.3,null,null,null
+partners,6,contact_email,text,text,YES,null,null,null,null
+partners,7,is_active,boolean,bool,YES,TRUE,null,null,null
+partners,8,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+profiles,1,id,uuid,uuid,NO,null,null,null,null
+profiles,2,email,text,text,YES,null,null,null,null
+profiles,3,name,text,text,YES,null,null,null,null
+profiles,4,avatar_url,text,text,YES,null,null,null,null
+profiles,5,role,text,text,YES,'trainer'::text,null,null,null
+profiles,6,gender,text,text,YES,null,null,null,null
+profiles,7,age_group,text,text,YES,null,null,null,null
+profiles,8,occupation,text,text,YES,null,null,null,null
+profiles,9,occupation_custom,text,text,YES,null,null,null,null
+profiles,10,onboarding_completed,boolean,bool,YES,FALSE,null,null,null
+profiles,11,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+profiles,12,learning_style,text,text,YES,null,null,null,null
+profiles,13,style_tested_at,timestamp with time zone,timestamptz,YES,null,null,null,null
+profiles,14,selected_subjects,jsonb,jsonb,YES,'[]'::jsonb,null,null,null
+profiles,15,selected_cert,text,text,YES,null,null,null,null
+profiles,16,required_subjects,jsonb,jsonb,YES,'[]'::jsonb,null,null,null
+profiles,17,additional_subjects,jsonb,jsonb,YES,'[]'::jsonb,null,null,null
+profiles,18,exam_target_date,date,date,YES,null,null,null,null
+profiles,19,region,text,text,YES,null,null,null,null
+profiles,20,daily_study_hours,integer,int4,YES,null,null,32,0
+profiles,21,subscription_plan,text,text,YES,'free'::text,null,null,null
+profiles,22,subscription_started_at,timestamp with time zone,timestamptz,YES,null,null,null,null
+profiles,23,subscription_expires_at,timestamp with time zone,timestamptz,YES,null,null,null,null
+profiles,24,trial_started_at,timestamp with time zone,timestamptz,YES,null,null,null,null
+profiles,25,trial_expires_at,timestamp with time zone,timestamptz,YES,null,null,null,null
+profiles,26,sub,text,text,YES,null,null,null,null
+profiles,27,phone,text,text,YES,null,null,null,null
+profiles,28,primary_provider,text,text,YES,null,null,null,null
+profiles,29,linked_providers,ARRAY,_text,YES,'{}'::text[],null,null,null
+profiles,30,daily_study_time,integer,int4,YES,null,null,32,0
+profiles,31,daily_study_count,integer,int4,YES,null,null,32,0
+profiles,32,study_time_slot,text,text,YES,null,null,null,null
+profiles,33,push_enabled,boolean,bool,YES,FALSE,null,null,null
+profiles,34,certification_id,uuid,uuid,YES,null,null,null,null
+profiles,35,is_major,boolean,bool,YES,FALSE,null,null,null
+profiles,36,cert_type,text,text,YES,null,null,null,null
+profiles,37,style_acknowledged_at,timestamp with time zone,timestamptz,YES,null,null,null,null
+profiles,38,mode_intro_acknowledged_at,timestamp with time zone,timestamptz,YES,null,null,null,null
+profiles,39,code_popup_shown,boolean,bool,YES,FALSE,null,null,null
+profiles,40,survey_completed,boolean,bool,YES,FALSE,null,null,null
+profiles,41,access_code_used,text,text,YES,null,null,null,null
+profiles,42,chapter_star_ratings,jsonb,jsonb,YES,'{}'::jsonb,null,null,null
+profiles,43,access_unlocked,boolean,bool,YES,FALSE,null,null,null
+profiles,44,streak_days,integer,int4,YES,0,null,32,0
+profiles,45,last_study_date,date,date,YES,null,null,null,null
+profiles,46,tendency_analyzed,boolean,bool,YES,FALSE,null,null,null
+profiles,47,learning_style_answers,jsonb,jsonb,YES,null,null,null,null
+question_stats,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+question_stats,2,user_id,uuid,uuid,YES,null,null,null,null
+question_stats,3,question_id,text,text,YES,null,null,null,null
+question_stats,4,chapter_id,text,text,YES,null,null,null,null
+question_stats,5,total_attempts,integer,int4,YES,0,null,32,0
+question_stats,6,total_correct,integer,int4,YES,0,null,32,0
+question_stats,7,wrong_rate,double precision,float8,YES,0,null,53,null
+question_stats,8,updated_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+quiz_performance_logs,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+quiz_performance_logs,2,user_id,uuid,uuid,NO,null,null,null,null
+quiz_performance_logs,3,chapter_id,uuid,uuid,YES,null,null,null,null
+quiz_performance_logs,4,question_id,uuid,uuid,NO,null,null,null,null
+quiz_performance_logs,5,question_type,integer,int4,NO,null,null,32,0
+quiz_performance_logs,6,quiz_bridge_time,double precision,float8,YES,null,null,53,null
+quiz_performance_logs,7,response_time,double precision,float8,YES,null,null,53,null
+quiz_performance_logs,8,answer_given,integer,int4,YES,null,null,32,0
+quiz_performance_logs,9,is_correct,boolean,bool,YES,null,null,null,null
+quiz_performance_logs,10,wrong_answer_vulnerability,double precision,float8,YES,0,null,53,null
+quiz_performance_logs,11,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+quiz_performance_logs,12,quiz_entered_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+quiz_performance_logs,13,after_wrong_action,text,text,YES,null,null,null,null
+quiz_performance_logs,14,retry_count,integer,int4,YES,0,null,32,0
+quiz_performance_logs,15,explanation_viewed,boolean,bool,YES,FALSE,null,null,null
+subjects,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+subjects,2,name,text,text,NO,null,null,null,null
+subjects,3,description,text,text,YES,null,null,null,null
+subjects,4,icon,text,text,YES,null,null,null,null
+subjects,5,phase,text,text,YES,'mvp'::text,null,null,null
+subjects,6,order_index,integer,int4,YES,null,null,32,0
+subjects,7,is_active,boolean,bool,YES,TRUE,null,null,null
+subjects,8,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+subjects,9,category_id,uuid,uuid,YES,null,null,null,null
+subjects,10,event,text,text,YES,null,null,null,null
+subscription_features,1,plan,text,text,NO,null,null,null,null
+subscription_features,2,max_chapters_per_subject,integer,int4,YES,null,null,32,0
+subscription_features,3,full_report,boolean,bool,YES,FALSE,null,null,null
+subscription_features,4,d_day_plan,boolean,bool,YES,FALSE,null,null,null
+subscription_features,5,ai_questions,boolean,bool,YES,FALSE,null,null,null
+subscription_features,6,pass_prediction,boolean,bool,YES,FALSE,null,null,null
+subscription_features,7,wrong_note,boolean,bool,YES,FALSE,null,null,null
+subscription_features,8,ads,boolean,bool,YES,TRUE,null,null,null
+subscription_plans,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+subscription_plans,2,name,text,text,NO,null,null,null,null
+subscription_plans,3,price_monthly,integer,int4,YES,0,null,32,0
+subscription_plans,4,price_yearly,integer,int4,YES,0,null,32,0
+subscription_plans,5,features_json,jsonb,jsonb,YES,null,null,null,null
+subscription_plans,6,is_active,boolean,bool,YES,TRUE,null,null,null
+test_results,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+test_results,2,user_id,uuid,uuid,NO,null,null,null,null
+test_results,3,chapter,text,text,NO,null,null,null,null
+test_results,4,score,integer,int4,NO,null,null,32,0
+test_results,5,total,integer,int4,NO,null,null,32,0
+test_results,6,type_scores_json,jsonb,jsonb,YES,null,null,null,null
+test_results,7,weak_muscles,ARRAY,_text,YES,null,null,null,null
+test_results,8,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+user_access_codes,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+user_access_codes,2,user_id,uuid,uuid,YES,null,null,null,null
+user_access_codes,3,code_id,uuid,uuid,YES,null,null,null,null
+user_access_codes,4,used_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+user_badges,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+user_badges,2,user_id,uuid,uuid,NO,null,null,null,null
+user_badges,3,badge_type,text,text,NO,null,null,null,null
+user_badges,4,badge_name,text,text,NO,null,null,null,null
+user_badges,5,earned_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+user_certifications,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+user_certifications,2,user_id,uuid,uuid,NO,null,null,null,null
+user_certifications,3,cert_id,text,text,NO,null,null,null,null
+user_certifications,4,cert_label,text,text,NO,null,null,null,null
+user_certifications,5,subjects,jsonb,jsonb,NO,'[]'::jsonb,null,null,null
+user_certifications,6,exam_type,text,text,NO,'written'::text,null,null,null
+user_certifications,7,is_active,boolean,bool,NO,TRUE,null,null,null
+user_certifications,8,order_index,integer,int4,NO,0,null,32,0
+user_certifications,9,added_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+user_certifications,10,last_studied_at,timestamp with time zone,timestamptz,YES,null,null,null,null
+user_events,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+user_events,2,user_id,uuid,uuid,YES,null,null,null,null
+user_events,3,event_type,text,text,YES,null,null,null,null
+user_events,4,meta,jsonb,jsonb,YES,null,null,null,null
+user_events,5,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+user_gamification,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+user_gamification,2,user_id,uuid,uuid,NO,null,null,null,null
+user_gamification,3,xp,integer,int4,YES,0,null,32,0
+user_gamification,4,level,integer,int4,YES,1,null,32,0
+user_gamification,5,streak_days,integer,int4,YES,0,null,32,0
+user_gamification,6,last_study_date,date,date,YES,null,null,null,null
+user_gamification,7,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+user_gamification,8,updated_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+user_goals,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+user_goals,2,profile_id,uuid,uuid,YES,null,null,null,null
+user_goals,3,user_id,uuid,uuid,YES,null,null,null,null
+user_goals,4,title,text,text,YES,null,null,null,null
+user_goals,5,target_date,date,date,YES,null,null,null,null
+user_goals,6,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+user_reviews,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+user_reviews,2,user_id,uuid,uuid,YES,null,null,null,null
+user_reviews,3,star_rating,smallint,int2,NO,null,null,16,0
+user_reviews,4,review_text,text,text,YES,null,null,null,null
+user_reviews,5,is_public,boolean,bool,YES,FALSE,null,null,null
+user_reviews,6,is_featured,boolean,bool,YES,FALSE,null,null,null
+user_reviews,7,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+user_reviews,8,survey_answers,jsonb,jsonb,YES,null,null,null,null
+user_reviews,9,feedback_text,text,text,YES,null,null,null,null
+user_subscriptions,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+user_subscriptions,2,user_id,uuid,uuid,YES,null,null,null,null
+user_subscriptions,3,plan_id,uuid,uuid,YES,null,null,null,null
+user_subscriptions,4,started_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+user_subscriptions,5,expires_at,timestamp with time zone,timestamptz,YES,null,null,null,null
+user_subscriptions,6,payment_status,text,text,YES,'active'::text,null,null,null
+user_wrong_answers,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+user_wrong_answers,2,user_id,uuid,uuid,NO,null,null,null,null
+user_wrong_answers,3,question_id,uuid,uuid,NO,null,null,null,null
+user_wrong_answers,4,chapter_id,uuid,uuid,YES,null,null,null,null
+user_wrong_answers,5,selected_index,integer,int4,NO,null,null,32,0
+user_wrong_answers,6,correct_index,integer,int4,YES,null,null,32,0
+user_wrong_answers,7,wrong_count,integer,int4,NO,1,null,32,0
+user_wrong_answers,8,last_wrong_at,timestamp with time zone,timestamptz,NO,now(),null,null,null
+user_wrong_answers,9,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+video_bookmarks,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+video_bookmarks,2,user_id,uuid,uuid,YES,null,null,null,null
+video_bookmarks,3,video_url,text,text,YES,null,null,null,null
+video_bookmarks,4,video_title,text,text,YES,null,null,null,null
+video_bookmarks,5,video_thumbnail,text,text,YES,null,null,null,null
+video_bookmarks,6,bookmarked_at,timestamp with time zone,timestamptz,YES,now(),null,null,null
+wrong_answers,1,id,uuid,uuid,NO,gen_random_uuid(),null,null,null
+wrong_answers,2,user_id,uuid,uuid,YES,null,null,null,null
+wrong_answers,3,chapter_id,uuid,uuid,NO,null,null,null,null
+wrong_answers,4,question_id,uuid,uuid,NO,null,null,null,null
+wrong_answers,5,selected_option,text,text,YES,null,null,null,null
+wrong_answers,6,correct_option,text,text,YES,null,null,null,null
+wrong_answers,7,created_at,timestamp with time zone,timestamptz,YES,now(),null,null,null

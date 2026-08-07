@@ -1,0 +1,57 @@
+﻿tablename,policyname,cmd,roles,qual,with_check
+ad_banners,ads_select_active,SELECT,{public},(is_active = true),null
+certifications,certifications_public_read,SELECT,{anon},(is_active = true),null
+chapter_cards,allow_read_chapter_questions,SELECT,{public},TRUE,null
+chapter_cards,anyone can read questions,SELECT,{public},TRUE,null
+chapter_cards,chapter_questions_select_all,SELECT,{public},TRUE,null
+chapter_stats,allow_insert_chapter_stats,INSERT,{public},null,TRUE
+chapter_stats,allow_select_chapter_stats,SELECT,{public},TRUE,null
+chapter_stats,allow_update_chapter_stats,UPDATE,{public},TRUE,null
+chapter_stats,users can insert own stats,INSERT,{public},null,(user_id = (auth.uid())::text)
+chapter_stats,users can read own stats,SELECT,{public},(user_id = (auth.uid())::text),null
+chapter_stats,users can update own stats,UPDATE,{public},(user_id = (auth.uid())::text),null
+chapter_test_history,본인 데이터만 접근,ALL,{public},((auth.uid())::text = (user_id)::text),null
+chapter_test_results,chapter_test_results_self_insert,INSERT,{public},null,(user_id = auth.uid())
+chapter_test_results,chapter_test_results_self_select,SELECT,{public},(user_id = auth.uid()),null
+chapters,chapters_select_all,SELECT,{public},TRUE,null
+content_purchases,purchases_self_insert,INSERT,{public},null,(user_id = auth.uid())
+content_purchases,purchases_self_select,SELECT,{public},(user_id = auth.uid()),null
+course_certifications,course_certifications_select_all,SELECT,{public},TRUE,null
+courses,courses_select_all,SELECT,{public},TRUE,null
+exam_registrations,users can insert own registration,INSERT,{public},null,TRUE
+exam_registrations,users can read own registration,SELECT,{public},TRUE,null
+exam_results,users can insert own result,INSERT,{public},null,(auth.uid() = user_id)
+exam_results,users can read own result,SELECT,{public},(auth.uid() = user_id),null
+guest_test_results,guest_test_insert,INSERT,{public},null,TRUE
+guest_test_results,guest_test_select,SELECT,{public},TRUE,null
+guest_test_results,guest_test_update_converted,UPDATE,{public},TRUE,null
+landing_test_sessions,landing_insert_anon,INSERT,{public},null,TRUE
+landing_test_sessions,landing_select_self,SELECT,{public},(google_user_id = (auth.jwt() ->> 'sub'::text)),null
+leaderboard,leaderboard_insert_self,INSERT,{public},null,(user_id = auth.uid())
+leaderboard,leaderboard_select_all,SELECT,{public},TRUE,null
+leaderboard,leaderboard_update_self,UPDATE,{public},(user_id = auth.uid()),null
+learning_progress,learning_insert,INSERT,{public},null,(user_id = auth.uid())
+learning_progress,learning_self,ALL,{public},(user_id = auth.uid()),null
+learning_progress,learning_update,UPDATE,{public},(user_id = auth.uid()),null
+lesson_questions,lesson_questions_select_all,SELECT,{public},TRUE,null
+lessons,lessons_select_all,SELECT,{public},TRUE,null
+oral_exam_registrations,본인 신청 등록,INSERT,{public},null,(auth.uid() = user_id)
+oral_exam_registrations,본인 신청 조회 ,SELECT,{public},(auth.uid() = user_id),null
+profiles,profiles_insert,INSERT,{public},null,(id = auth.uid())
+profiles,profiles_self,ALL,{public},(id = auth.uid()),null
+subjects,subjects_select_all,SELECT,{public},TRUE,null
+subscription_plans,plans_select_all,SELECT,{public},TRUE,null
+test_results,test_results_insert,INSERT,{public},null,(user_id = auth.uid())
+test_results,test_results_self,ALL,{public},(user_id = auth.uid()),null
+user_access_codes,본인 코드 등록,INSERT,{public},null,(auth.uid() = user_id)
+user_access_codes,본인 코드 조회,SELECT,{public},(auth.uid() = user_id),null
+user_badges,badges_insert,INSERT,{public},null,(user_id = auth.uid())
+user_badges,badges_self,ALL,{public},(user_id = auth.uid()),null
+user_certifications,Users can update own certifications,UPDATE,{public},((user_id)::text = (auth.uid())::text),((user_id)::text = (auth.uid())::text)
+user_certifications,user_certifications_self,ALL,{authenticated},(user_id = auth.uid()),(user_id = auth.uid())
+user_gamification,gamification_insert,INSERT,{public},null,(user_id = auth.uid())
+user_gamification,gamification_self,ALL,{public},(user_id = auth.uid()),null
+user_gamification,gamification_update,UPDATE,{public},(user_id = auth.uid()),null
+user_subscriptions,subscriptions_self_insert,INSERT,{public},null,(user_id = auth.uid())
+user_subscriptions,subscriptions_self_select,SELECT,{public},(user_id = auth.uid()),null
+user_subscriptions,subscriptions_self_update,UPDATE,{public},(user_id = auth.uid()),null
