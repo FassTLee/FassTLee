@@ -1,15 +1,16 @@
-# Kinepia — Codex 작업 지침 v2.1
+# Kinepia — Codex 작업 지침 v2.2
 
 _2026-08-01 역할 이원화 반영. PM 지침 v1.8 동기화._
+_v2.2(2026-08-05): DB 조회 권한 범위 신설, FK 규칙 실측 정정, RLS 정책 조항 수정._
 
 ## 역할과 권한
 
 - Kinepia(kinepia.com)의 **직접 코딩 담당**이다. 코드 작성·수정·리팩터링을 수행한다.
 - 채널 분담:
-  - **PM 세션(claude.ai)** — 오너와의 논의, 판단, BM 확립, 명령문 작성
-  - **Claude Code** — 데이터 확인·분석·검증
-  - **Codex(본 문서)** — 직접 코딩
-- 교차 배치(Codex가 검증, Claude Code가 코딩)는 **오너 또는 PM의 명시적 지시가 있을 때만** 발생한다. 스스로 상대 채널의 역할을 수행하지 않는다.
+  - **PM 세션(claude.ai)** — 오너와의 논의, 판단, BM 확립, 명령문 작성, **SQL·마이그레이션 SQL 작성**
+  - **Claude Code** — 브라우저·API 검증, prod DB 조회, 검증 판정
+  - **Codex(본 문서)** — 직접 코딩, 파일 실측, **dev DB 조회 및 prod anon 조회**
+- 교차 배치는 **오너 또는 PM의 명시적 지시가 있을 때만** 발생한다. 스스로 상대 채널의 역할을 수행하지 않는다.
 
 ### 권한 표
 
@@ -20,18 +21,28 @@ _2026-08-01 역할 이원화 반영. PM 지침 v1.8 동기화._
 | `git status` / `git diff` / `git log` / `git branch --show-current` | **허용** (읽기 전용) |
 | `git pull` / `git add` / `git commit` / `git push` | **금지. 전부 오너가 실행한다** |
 | 배포 `npx vercel --prod` | **금지. 예외 없이 오너 단독** |
-| DB SELECT (읽기) | 허용 — 대상 ref와 키 유형 명시 필수 |
-| DB INSERT/UPDATE/DELETE | **금지** |
-| DDL, `db push` | **금지** |
+| **dev** DB SELECT (anon·service_role) | 허용 — 키 유형 명시 필수 |
+| **prod** DB SELECT (anon) | 허용 — 키 유형 명시 필수 |
+| **prod** DB SELECT (service_role) | **금지.** 필요하면 정지하고 보고한다 |
+| DB INSERT/UPDATE/DELETE | **금지** (환경 불문) |
+| DDL, `db push` | **금지** (환경 불문) |
 
 - Windows 샌드박스가 `.git` 쓰기를 차단하므로 git 쓰기 작업은 성립하지 않는다.
   실패를 우회하려 ACL·권한 설정을 변경하거나 스크립트를 작성하지 않는다.
 - git 쓰기가 필요하면 **오너가 실행할 명령을 제시**하고 대기한다.
+- `supabase/migrations/` 디렉터리는 ACL로 쓰기가 차단될 수 있다(2026-08-05 실측). 실패하면 우회하지 말고 보고한다.
+
+### DB 조회 수행 방법 (v2.2 신규)
+
+- 호출은 **Node `fetch`**로 수행한다. PowerShell `Invoke-WebRequest`와 Windows `curl.exe`는 Schannel 오류로 실패한다(2026-08-05 실측).
+- 접속 정보는 `.env.local`(dev) / `.env.prod.local`(prod)에서 읽는다. **키 값을 출력하거나 보고에 포함하지 않는다.**
+- prod service_role 키는 `.env.prod.local`에서 읽을 수 있으나 **사용하지 않는다.** 읽을 수 있다는 것이 사용 권한을 뜻하지 않는다.
+- PostgREST는 `public` 스키마만 노출한다. `pg_tables`·`information_schema`·`pg_constraint`는 직접 조회할 수 없다. 대신 **OpenAPI 정의(`GET /rest/v1/`)** 를 라이브 메타데이터로 사용하고, 그 한계를 보고에 명시한다.
 
 ### 검증·커밋 대기 규칙
 
 - **수정 완료는 커밋 완료가 아니다.** 수정 후 보고하고 대기한다.
-- 검증 주체는 Claude Code다. **자기가 작성한 코드를 자기가 검증해 완료 처리하지 않는다.**
+- 사용자 화면 변화·DB 쓰기 경로의 최종 검증 주체는 Claude Code다. **자기가 작성한 코드를 자기가 검증해 완료 처리하지 않는다.**
 - 검증 통과 여부와 무관하게 커밋·push·배포는 오너가 실행한다.
 - 수정 완료 후 다음을 보고한다:
   1. `git diff` 전문
@@ -46,15 +57,16 @@ _2026-08-01 역할 이원화 반영. PM 지침 v1.8 동기화._
 - **면제 가능** — 문서·주석·README, 로그 메시지, 사용자 화면에 도달하지 않는 변경
 - **면제 불가** — 사용자 화면 변화 / DB 쓰기 경로 / 인증·권한 / 환경변수 / 스키마
 
-### 채널 배분 기준
+### 채널 배분 기준 (v2.2 개정)
 
 발주는 근거 유형으로 배분한다.
 
 | 근거 유형 | 담당 |
 |---|---|
 | (d) 파일 실측 — 코드 읽기, grep, CSV 대조, 구조 분석 | Codex |
-| (a) 브라우저·API 라운드트립 | Claude Code |
-| (b) DB 조회 | Claude Code |
+| (a) 브라우저 렌더링·API 라운드트립 | Claude Code |
+| (b) DB 조회 — dev 전체, prod anon, 결과를 그대로 반환하는 확인성 조회 | **Codex** |
+| (b) DB 조회 — prod service_role, 전수 집계·정합성 조사·스키마 대조 | Claude Code |
 | (c) 로직 재현 | 발주 시 지정 |
 
 다음 두 유형은 양 채널에 동일 발주하여 결과를 대조한다(이중화).
@@ -86,7 +98,6 @@ _2026-08-01 역할 이원화 반영. PM 지침 v1.8 동기화._
     [CC-##] 제목        ← Claude Code 수신
     [CX-##] 제목        ← Codex 수신
     [OW-##] 제목        ← 오너 수신
-    수신: <채널> | 권한: <범위> | 산출물: <형태>
 
 - **헤더의 수신처가 자기 채널이 아니면 수행하지 않고 오너에게 알린다.**
 - 헤더가 없는 지시는 수신처를 오너에게 확인한 뒤 착수한다.
@@ -103,10 +114,11 @@ _2026-08-01 역할 이원화 반영. PM 지침 v1.8 동기화._
 
 ### 전제 반증 의무 (필수)
 
-PM 명령문에 포함된 전제 — 파일 경로, 기존 값, 컬럼명·타입, 함수 존재 여부 — 가 **실측과 다르면 작업을 계속하지 말고 즉시 정지·보고한다.**
+PM 명령문에 포함된 전제 — 파일 경로, 기존 값, 컬럼명·타입, 함수 존재 여부, **판정 규칙** — 이 **실측과 다르면 작업을 계속하지 말고 즉시 정지·보고한다.**
 
 - 전제가 틀린 채로 진행해 만든 산출물은 폐기 대상이다. 진행보다 정지가 항상 옳다.
 - 보고에는 "명령문의 전제 X / 실측 결과 Y / 근거 (d) 파일경로:행번호"를 명시한다.
+- **판정 규칙 자체가 틀린 경우도 정지 사유다.** 예: 2026-08-05, "route.ts가 삭제하는 6개 테이블의 자식 행 수로 202/200을 가른다"는 PM의 판정 규칙이 실측과 달라(해당 테이블은 전부 CASCADE라 차단력 없음) 되돌릴 수 없는 작업의 예측이 정반대로 뒤집힐 뻔했다.
 
 ### 해법 우선 원칙
 
@@ -124,16 +136,19 @@ PM 명령문에 포함된 전제 — 파일 경로, 기존 값, 컬럼명·타�
 
 - 대조군 없는 테스트는 통과해도 아무것도 증명하지 않는다.
 - 수정 전 실패 → 수정 후 성공이 확인돼야 한다. 수정 전에도 통과하는 테스트는 효과를 증명하지 못한다.
+- **"0건" 보고는 검색·조회가 정상 동작함을 함께 입증해야 성립한다.** 같은 방법으로 반드시 잡혀야 할 대상을 하나 넣어 1건 이상이 나오는지 확인한 뒤에만 0건을 사실로 받는다.
+- **행이 0건인 테이블의 RLS 상태는 읽기만으로 판별할 수 없다.** "RLS 활성 + 정책 없음"과 "RLS 비활성인데 마침 0건"이 같은 결과를 낸다. 행이 존재하는 시점에 service_role과 anon의 결과가 갈리는지로 판별한다.
 
 ## 프로젝트 기준 정보
 
-- GitHub: `FassTLee/FassTLee`
+- GitHub: `FassTLee/FassTLee`, 브랜치 `master`
 - 로컬 저장소: `C:\Kinepia\kinepia`
 - Supabase prod: `sbketzgadjvzedbayesc`
 - Supabase dev: `jgweeoeikhdjcgkitjfl` (Seoul, Free)
 - 배포 명령: `npx vercel --prod` — 오너만 실행한다.
 - 인증: NextAuth. `auth.users`가 아니라 `profiles(id uuid)`가 정본이며, `session.user.id === profiles.id`다.
-- 개발자 계정: `4b3089c3-f85b-56ec-99e1-1c959ba4f878` — dev와 prod가 동일한 stableId이므로 dev 분석에서 제외하지 않는다.
+- `profiles.id`는 `uuidv5('{provider}:{providerAccountId}', NAMESPACE)`로 생성되는 단방향 해시다. **provider가 다르면 반드시 다른 uuid가 나오므로, 같은 이메일이라도 소셜 제공자별로 profiles 행이 별개다.** id에서 provider를 역산할 수 없다.
+- 개발자 계정: `4b3089c3-f85b-56ec-99e1-1c959ba4f878` — dev와 prod가 동일한 stableId이므로 dev 분석에서 제외하지 않는다. 이 행의 `primary_provider`는 `kakao`다.
 
 ### 환경변수 파일 구조 (2026-07-30 `3dcf4ec` 기준)
 
@@ -180,6 +195,7 @@ PM 명령문에 포함된 전제 — 파일 경로, 기존 값, 컬럼명·타�
 
 - 실데이터 행 값은 스냅샷에 담지 않는다. 스키마 메타데이터와 코드 위치 정보만 담는다.
 - 2026-07-31 실측: dev·prod **컬럼 구성 완전 동일**(49테이블/495컬럼, 차이 0건).
+  ※ 2026-08-04 `deletion_requests` 추가로 양측 50테이블이 되었다.
 - 단 제약 레벨에는 차이가 있다. 예: `profiles_certification_id_fkey`가
   prod=SET NULL / dev=NO ACTION. **dev 검증 결과를 prod에 그대로 적용하지 않는다.**
 
@@ -187,8 +203,8 @@ PM 명령문에 포함된 전제 — 파일 경로, 기존 값, 컬럼명·타�
 
 각 검증 결과에 다음 근거 유형을 표시한다.
 
-- `(a)` 실제 브라우저 렌더링·상호작용 확인
-- `(b)` DB 조회 결과
+- `(a)` 실제 브라우저 렌더링·상호작용 또는 API 라운드트립
+- `(b)` DB 조회 결과 — **anon / service_role 중 어느 키인지 항목마다 명시한다**
 - `(c)` 코드 로직 재현 또는 스크립트 계산 — **완료 표시(✅)를 붙이지 않는다.**
 - `(d)` 파일 실측
 
@@ -196,72 +212,85 @@ PM 명령문에 포함된 전제 — 파일 경로, 기존 값, 컬럼명·타�
 - 화면 동작·데이터 결과는 코드 분석만으로 확정하지 않는다. API 라운드트립, DOM 또는 브라우저 실측으로 검증한다.
 - 콘텐츠 작업은 DB SELECT만으로 완료 처리하지 않는다. 표본 3~5건을 실제 브라우저로 렌더링해 `explanation`과 `key_points` 표시를 확인한다.
 - `Success. No rows returned`만으로 적용을 판정하지 않는다. 별도 검증 쿼리를 제시한다.
+- **일부 통과를 전체 통과로 보고하지 않는다.** 조건이 갖춰지지 않아 검증하지 못한 항목은 "미검증"으로 명시하고, 획득 수단을 함께 제시한다.
 
 ## Supabase와 데이터 안전
 
 - 조사에 DB가 필요하면 먼저 대상 프로젝트를 확인하고, 기본값은 dev로 명시한다.
 - Codex는 INSERT/UPDATE/DELETE, DDL, `db push`, 데이터 조작을 실행하지 않는다.
 - DB 조회 보고에는 프로젝트(ref)와 키 유형을 반드시 적는다.
-  - `service_role`: RLS 우회. 전수 집계·정합성 조사에 적합하지만 **화면 표시 판단의 유일 근거로 쓰지 않는다.**
+  - `service_role`: RLS 우회. 전수 집계·정합성 조사에 적합하지만 **화면 표시 판단의 유일 근거로 쓰지 않는다.** prod에서는 사용 금지.
   - `anon`: RLS 적용. 화면에서 보이는 데이터·권한 판단은 anon 조회 또는 브라우저/API 실측을 우선한다.
 - `certifications`는 anon 기준 `is_active = true` 행만 보일 수 있다.
 
-## Git
+## 스키마·마이그레이션 초안 규칙 (v2.2 개정)
 
-- Git은 **읽기 전용 명령만** 사용한다: `git status`, `git diff`, `git log`, `git branch --show-current`.
-- `pull`·`add`·`commit`·`push`·배포는 전부 오너가 실행한다. 요청받아도 실행하지 않고,
-  **오너가 실행할 명령을 제시**한다.
-- 병렬 작업 시 오너가 착수 전 `git pull`을 실행한다. Codex는 `git status`로
-  워킹트리 상태를 확인하고, 미반영 변경이 있으면 보고 후 대기한다.
-- 커밋 분할 기준: 문서 / 기능 수정 / 정적 자산은 서로 다른 커밋이다.
-  되돌리기 단위와 검증 단위가 다르기 때문이다.
+**SQL과 마이그레이션 SQL은 원칙적으로 PM이 작성한다.** 아래는 PM이 명시적으로 파일 저장 또는 초안 작성을 요청한 경우에만 적용한다.
 
-## 정적 자산 주의사항
-
-- `public/` 하위 파일은 코드가 경로로 직접 참조한다. 삭제·이름 변경 시
-  `src/app/layout.tsx`, `src/app/manifest.ts`, `src/middleware.ts` 등의 참조를
-  먼저 실측하고 함께 수정한다.
-- `og-image.png`는 카카오톡·SNS 공유 썸네일이다. 외부 캐시가 남아 파일을
-  되돌려도 즉시 복구되지 않는다. 삭제·교체는 반드시 참조 수정과 같은 작업 단위로 한다.
-- 압축 파일(`.zip`)·원본 소스는 저장소에 커밋 대상이 아니다. git은 커밋된 바이너리를
-  영구 보존하고, `public/` 하위는 배포 시 URL로 공개된다.
-
-## 스키마·마이그레이션 초안 규칙
-
-SQL 또는 마이그레이션 초안 작성을 명시적으로 요청받은 경우에만 적용한다.
-
-- 작성 전 `information_schema.columns` 등으로 실제 테이블·컬럼·제약을 확인한다.
+- 작성 전 실제 테이블·컬럼·제약을 확인한다.
 - 파일명은 `YYYYMMDD_설명.sql` (8자리, 시간부 없음). `00000000000000_baseline_schema.sql`만 예외다.
 - 기존 동일 테이블·행위의 마이그레이션을 먼저 조사한다.
+- 적용 이력(언제 어느 환경에 선적용했는지)을 파일 상단 주석에 남긴다.
 - 멱등성 필수: `IF NOT EXISTS`, 제약은 `DO $$ ... pg_constraint ... $$`, UPDATE에 조건절.
-- 새 테이블에는 RLS 및 필요한 정책을 함께 명시한다(미설정 시 anon 무제한 접근).
+  `SET NOT NULL`은 `information_schema.columns`로 현재 상태를 확인한 뒤 조건부 실행한다.
+- **신규 테이블은 RLS를 반드시 활성화하되, 정책을 둘지는 판단해 주석으로 남긴다.** RLS만 켜고 정책을 만들지 않으면 전체 차단인데, **이것이 의도인 경우가 있다.** 그때는 "정책 0개가 의도이며 누락이 아니다"를 주석에 명시한다.
+  > 예: `deletion_requests`(2026-08-04) — 탈퇴한 사용자는 인증 주체가 없어 authenticated 정책이 성립하지 않는다. 접근은 service_role 전용.
 - 여러 DDL은 `BEGIN; ... COMMIT;`으로 묶는다.
 - 적용 순서는 dev 후 prod다.
-- SQL 블록에는 `[실행]`, `[참고]`, `[파일]` 중 용도를 표시한다.
+- **PM이 제시하는 SQL 블록에는 환경 표기가 붙는다.** `[실행:dev]` / `[실행:prod]` / `[실행:dev→prod]` / `[실행:양측]` / `[참고]` / `[파일]`. 환경 표기가 없는 SQL 블록은 불완전한 산출물이며, Codex는 이를 파일로 저장하지 않고 PM에게 확인을 요청한다.
 
 ## 코드·데이터 구조 주의사항
 
 - `courses.title`과 `certifications.name`은 테이블별 명칭이 다르다.
-- `chapter_stats.user_id`는 text이고 `profiles.id`는 uuid다. 조인 시 `p.id::text` 캐스팅을 검토한다.
+- `chapter_stats.user_id` / `chapter_id` / `subject_id`는 uuid가 아니라 **text**다. `profiles.id`는 uuid이므로 조인 시 `p.id::text` 캐스팅을 검토한다.
 - **`user_id` 컬럼에 무엇이 들어 있는지 반드시 확인한다.** 테이블마다 uuid / text / email이 섞여 있을 수 있다. 매칭 조건을 작성하기 전 실제 저장 값을 확인한다.
-- **`profiles.id`를 참조하는 FK는 대부분 `ON DELETE NO ACTION`이다.** 자식 행이 있으면
-  `profiles` 삭제가 FK 위반(23503)으로 거부된다. 사용자 삭제 로직은 이를 전제로 설계한다.
+
+### `profiles` 참조 FK — 2026-08-05 prod 실측 (전 21건)
+
+**`NO ACTION`(삭제 차단) 5건** — 이 테이블들에 자식 행이 있으면 `profiles` 삭제가 FK 위반(23503)으로 거부된다:
+`question_stats.user_id` / `video_bookmarks.user_id` / `user_goals.profile_id` / `user_events.user_id` / `user_reviews.user_id`
+
+**`CASCADE` 16건** — 차단력이 없다:
+`learning_progress` / `test_results` / `user_gamification` / `user_badges` / `leaderboard` / `user_subscriptions` / `content_purchases` / `chapter_test_results` / `exam_results` / `mock_exam_bookings` / `user_certifications` / `oral_exam_registrations` / `user_access_codes` / `wrong_answers` / `user_wrong_answers` / `user_consents`
+
+**`chapter_stats`에는 `profiles` 참조 FK가 없다.** 차단하지도, CASCADE로 삭제되지도 않고 그대로 남는다.
+
+⚠️ `/api/v1/user/delete`가 명시적으로 DELETE하는 5개 자식 테이블(`user_gamification`, `user_badges`, `leaderboard`, `learning_progress`, `test_results`)은 **전부 CASCADE라 차단력이 없다.** 202(FK 차단) 발생 여부를 이 테이블들로 판정하면 안 된다. 판정자는 위 `NO ACTION` 5개다.
+
+### 기타
+
 - 과목·자격증 매핑의 정본은 `course_certifications`다. `courses.certification_id`만으로 공유 course를 판단하지 않는다.
+- `course : certification = 1:1` 복제를 유지한다. 하나의 course를 두 certification이 공유하면 IIPA 5공유에서 겪은 문제가 재발한다.
+- 계층 정의: `subjects → courses(단원) → chapters`
+- `profiles.updated_at`은 양쪽 DB 모두에 없다.
+- `onboarding_completed`는 온보딩 질문이 아니라 **과목 선택** 시 설정된다.
+- `streak_days` / `last_study_date`는 한 번도 기록되지 않는다. 원천은 `chapter_session_logs`다.
+- `access_unlocked`는 유령 컬럼이다. 실제 접근 제어는 `user_access_codes`가 한다.
+- `profiles.email`은 약 73%가 null이다(카카오 scope에 이메일 동의 항목이 없다).
 - 0건이 정상일 수 있는 조회에는 `.single()` 대신 `.maybeSingle()`을 검토한다.
 - 순서가 의미 있는 SELECT에는 `ORDER BY`를 명시한다.
-- 신규 테이블 탐색 시 `information_schema.tables`만 신뢰하지 말고 `pg_tables`도 교차 확인한다.
 - 신규 course 생성 시 `course_certifications` 매핑까지 같은 작업 단위에서 확인한다.
-- 서버 쓰기는 `supabaseAdmin`(service_role) 경로를 사용한다. **service_role은 RLS를 우회하므로
-  인증 검증이 코드 책임이 된다.** 세션 검사 없이 service_role을 쓰지 않는다.
+- 서버 쓰기는 `supabaseAdmin`(service_role) 경로를 사용한다. **service_role은 RLS를 우회하므로 인증 검증이 코드 책임이 된다.** 세션 검사 없이 service_role을 쓰지 않는다.
 - 보안 채점은 서버에서만 수행하고 `answer_index`를 클라이언트에 노출하지 않는다.
 - 기존 courses/chapters는 DELETE하지 않고 `is_active = false`로 비활성화한다. 행동 로그는 chapter_id만 보유할 수 있어 원본 삭제 시 추적이 불가능해진다.
 - **`.catch(() => 기본값)`으로 예외를 삼키지 않는다.** 실패가 조용히 통과하면 파손을 발견할 수 없다.
-- **DELETE/UPDATE가 0행에 매칭돼도 오류가 아니다.** 쓰기 작업은 `{ count: 'exact' }`로
-  영향 행 수를 받고, 0행일 때 성공으로 응답하지 않는다.
+- **DELETE/UPDATE가 0행에 매칭돼도 오류가 아니다.** 쓰기 작업은 `{ count: 'exact' }`로 영향 행 수를 받고, 0행일 때 성공으로 응답하지 않는다.
+- **API 라우트에서 body 파싱은 `getToken()`보다 앞에 둔다.** `getToken`이 request stream을 소비하므로 순서를 어기면 body가 빈 값으로 읽히는 무증상 파손이 난다. 기존 사례: `chapter-session-log/route.ts`, `quiz-performance-log/route.ts`, `user/delete/route.ts`.
+
+## 정적 자산 주의사항
+
+- `public/` 하위 파일은 코드가 경로로 직접 참조한다. 삭제·이름 변경 시 `src/app/layout.tsx`, `src/app/manifest.ts`, `src/middleware.ts` 등의 참조를 먼저 실측하고 함께 수정한다.
+- **정적 grep의 "참조 없음"을 삭제 근거로 쓰지 않는다.** 템플릿 리터럴로 경로를 조립하는 코드가 있으면 파일명이 소스에 문자열로 등장하지 않는다. 예: `BottomTabBar.tsx`의 `` `/assets/icons/tab/tab-${icon}-${state}.svg` ``.
+- `og-image.png`는 카카오톡·SNS 공유 썸네일이다. 외부 캐시가 남아 파일을 되돌려도 즉시 복구되지 않는다. 삭제·교체는 반드시 참조 수정과 같은 작업 단위로 한다.
+- 압축 파일(`.zip`)·원본 소스는 저장소에 커밋 대상이 아니다. git은 커밋된 바이너리를 영구 보존하고, `public/` 하위는 배포 시 URL로 공개된다.
+- 2026-08-05 실측: `public/` 60파일 97.5MB. **SVG 36개 전부가 PNG를 base64로 임베드한 래퍼**이며 임베드 비율이 약 75%다. 벡터 아이콘이 하나도 없다.
 
 ## 콘텐츠·명령 전달
 
 - 콘텐츠 JSON은 `docs/source-json/<자격증>/` 하위 위치를 실제로 확인한 뒤 사용한다.
+- **교재 페이지 인용 표기를 콘텐츠에 넣지 않는다.** 저작권과 무관하게 학습 콘텐츠 품질 문제다.
+- 도표·그림·사진은 원본을 사용하지 않고 재제작한다. IIPA는 권리 확보 완료로 이 제약에서 제외된다.
+- **설문을 학습자 분류 기제로 서술하지 않는다.** 설문은 콜드스타트 시드이며, 실제 분류는 행동 데이터가 수행한다. 특허 1의 진보성에 해당한다.
 
 ## 모델·추론 강도 선택
 
