@@ -51,6 +51,6 @@ next-env.d.ts
 # Claude Code
 .claude/
 
-# Å¸»ç ÀúÀÛ¹° ? ÀúÀå¼Ò Á¦¿Ü
+# íƒ€ì‚¬ ì €ì‘ë¬¼ â€” ì €ì¥ì†Œ ì œì™¸
 docs/source-pdf/
 *.zip
