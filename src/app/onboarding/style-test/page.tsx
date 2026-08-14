@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { ChevronRight } from 'lucide-react'
 import { isLearningType, type LearningType } from '@/lib/learning-types'
+import { shuffle } from '@/lib/shuffle'
 
 const STYLE_TYPE_KEY = 'kinepia_learning_type'
 
@@ -92,7 +93,7 @@ const QUESTIONS: Question[] = [
 function shuffleOptions(questions: Question[]): Question[] {
   return questions.map((q) => ({
     ...q,
-    options: [...q.options].sort(() => Math.random() - 0.5),
+    options: shuffle(q.options),
   }))
 }
 

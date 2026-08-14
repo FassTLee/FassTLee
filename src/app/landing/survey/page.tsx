@@ -7,6 +7,7 @@ import { ChevronRight } from 'lucide-react'
 import { track } from '@vercel/analytics'
 import { LearningTypeIcon } from '@/components/common/LearningTypeIcon'
 import { LEARNING_TYPES, isLearningType, type LearningType } from '@/lib/learning-types'
+import { shuffle } from '@/lib/shuffle'
 
 const STYLE_TYPE_KEY = 'kinepia_learning_type'
 const GUEST_ID_KEY   = 'kinepia_guest_id'
@@ -67,7 +68,7 @@ const QUESTIONS: SurveyQuestion[] = [
 function shuffleOptions(questions: SurveyQuestion[]): SurveyQuestion[] {
   return questions.map((q) => ({
     ...q,
-    options: [...q.options].sort(() => Math.random() - 0.5),
+    options: shuffle(q.options),
   }))
 }
 
