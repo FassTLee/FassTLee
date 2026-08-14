@@ -6,7 +6,6 @@ export type Tab = 'home' | 'classroom' | 'exam' | 'profile'
 /* ── localStorage 키 상수 ──────────────────────────────────────────── */
 export const SUBJECTS_KEY = 'kinepia_selected_subjects'
 export const CERT_KEY     = 'kinepia_selected_cert'
-export const STYLE_KEY    = 'kinepia_learning_style'
 
 export const ADMIN_EMAILS = ['shotace@naver.com', 'prehabex@naver.com']
 
@@ -81,13 +80,6 @@ export const SUBJECT_META: Record<string, { icon: string; desc: string }> = {
   '운동영양학':       { icon: '🥩', desc: '영양소·식이 전략' },
   '응급처치':         { icon: '🚑', desc: '응급처치·안전 관리' },
   '협회 규정':        { icon: '📋', desc: '협회 규정·절차' },
-}
-
-export const STYLE_META: Record<string, { emoji: string; label: string; desc: string; color: string }> = {
-  conceptualizer: { emoji: '💡', label: '이해형',  desc: '개념을 먼저 이해하고 응용하는 스타일',        color: '#F5A623' },
-  memorizer:      { emoji: '🧠', label: '암기형',  desc: '반복과 암기로 실력을 쌓아가는 스타일',        color: '#6C63FF' },
-  planner:        { emoji: '📅', label: '계획형',  desc: '체계적인 계획으로 꾸준히 나아가는 스타일',    color: '#00A651' },
-  intensive:      { emoji: '🔥', label: '강제형',  desc: '집중 훈련으로 단기간에 성과를 내는 스타일',   color: '#E24B4A' },
 }
 
 export const CERT_EXAM_DATES: Record<number, string> = {

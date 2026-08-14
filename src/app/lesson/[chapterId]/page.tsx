@@ -9,9 +9,10 @@ import { track } from '@vercel/analytics'
 import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
 import { PrivacyConsent } from '@/components/common/PrivacyConsent'
 import { useConsentGate } from '@/hooks/useConsentGate'
+import { getLearningTypeMeta, isLearningType, type LearningType } from '@/lib/learning-types'
 // Zap used in completion screen
 
-const STYLE_KEY   = 'kinepia_learning_style'
+const LEARNING_TYPE_KEY = 'kinepia_learning_type'
 const CERT_KEY    = 'kinepia_selected_cert'
 const SUBJECT_KEY = 'kinepia_current_subject_id'
 const MODE_KEY    = 'lesson_slide_mode'
@@ -117,7 +118,7 @@ export default function LessonPage() {
   const [chapterAudioUrl, setChapterAudioUrl] = useState<string | null>(null)
   const [questions, setQuestions]       = useState<Question[]>([])
   const [slides, setSlides]             = useState<Slide[]>([])
-  const [style, setStyle]               = useState<'memorizer' | 'conceptualizer'>('conceptualizer')
+  const [style, setStyle]               = useState<LearningType | null>(null)
   const [certLabel, setCertLabel]       = useState('')
   const [subjectId, setSubjectId]       = useState<string | null>(null)
   const [loading, setLoading]           = useState(true)
@@ -313,8 +314,8 @@ export default function LessonPage() {
     if (status === 'unauthenticated') { router.replace('/landing'); return }
     // 동의 전에는 콘텐츠 로드·수집을 시작하지 않는다 (동의 후 재실행)
     if (consentBlocked) return
-    const s = localStorage.getItem(STYLE_KEY) as 'memorizer' | 'conceptualizer' | null
-    if (s) setStyle(s)
+    const s = localStorage.getItem(LEARNING_TYPE_KEY)
+    setStyle(isLearningType(s) ? s : null)
     const cert = localStorage.getItem(CERT_KEY)
     if (cert && CERT_LABELS[cert]) setCertLabel(CERT_LABELS[cert])
     setSubjectId(localStorage.getItem(SUBJECT_KEY))
@@ -781,7 +782,8 @@ export default function LessonPage() {
     )
   }
 
-  const isMemorizer  = style === 'memorizer'
+  const styleMeta    = getLearningTypeMeta(style)
+  const isConcise    = styleMeta?.lessonMode === 'concise'
   const currentSlide = slides[slideIndex]
 
   const parsed = currentSlide?.explanation
@@ -834,14 +836,16 @@ export default function LessonPage() {
               {certLabel}
             </span>
           )}
-          <span
-            className="text-[10px] font-bold px-2 py-0.5 rounded-full"
-            style={isMemorizer
-              ? { backgroundColor: '#378ADD20', color: '#378ADD' }
-              : { backgroundColor: '#63992220', color: '#639922' }}
-          >
-            {isMemorizer ? '🧠 암기형' : '💡 이해형'}
-          </span>
+          {styleMeta && (
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+              style={isConcise
+                ? { backgroundColor: '#378ADD20', color: '#378ADD' }
+                : { backgroundColor: '#63992220', color: '#639922' }}
+            >
+              {styleMeta.label}
+            </span>
+          )}
         </div>
 
         {/* Breadcrumb */}

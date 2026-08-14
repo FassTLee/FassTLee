@@ -7,39 +7,7 @@ import { ChevronRight, ChevronDown, ChevronUp } from 'lucide-react'
 import Image from 'next/image'
 import type { TestResult, TestQuestion } from '@/lib/landingTest'
 import { SharePanel } from '@/components/common/SharePanel'
-
-type LearningType = 'conceptualizer' | 'memorizer' | 'planner' | 'intensive'
-
-const TYPE_META: Record<LearningType, { label: string; icon: string; color: string; badge: string; desc: string }> = {
-  conceptualizer: {
-    label: '이해형',
-    icon:  '/assets/icons/user/user-learning-conceptual.svg',
-    color: '#639922',
-    badge: '원리 탐구 학습자',
-    desc:  '원리와 개념 중심으로 학습해요.',
-  },
-  memorizer: {
-    label: '암기형',
-    icon:  '/assets/icons/user/user-learning-memory.svg',
-    color: '#378ADD',
-    badge: '핵심 반복 학습자',
-    desc:  '핵심 키워드 반복으로 효율적으로 암기해요.',
-  },
-  planner: {
-    label: '계획형',
-    icon:  '/assets/icons/user/user-learning-planner.svg',
-    color: '#9B59B6',
-    badge: '체계적 전략 학습자',
-    desc:  '계획을 세워 체계적으로 학습해요.',
-  },
-  intensive: {
-    label: '강제형',
-    icon:  '/assets/icons/user/user-learning-intensive.svg',
-    color: '#E24B4A',
-    badge: '집중 몰입 학습자',
-    desc:  '압박감과 데드라인으로 최대 집중력을 발휘해요.',
-  },
-}
+import { LEARNING_TYPES, getLearningTypeMeta, type LearningType } from '@/lib/learning-types'
 
 function ScoreEmoji(pct: number) {
   return pct >= 80 ? '🏆' : pct >= 60 ? '💪' : '📖'
@@ -107,8 +75,8 @@ export default function LandingReportPage() {
     const qs = localStorage.getItem('landingTestQuestions')
     if (qs) setQuestions(JSON.parse(qs))
 
-    const lt = localStorage.getItem('kinepia_learning_type') as LearningType | null
-    if (lt && TYPE_META[lt]) setLearningType(lt)
+    const learningTypeMeta = getLearningTypeMeta(localStorage.getItem('kinepia_learning_type'))
+    if (learningTypeMeta) setLearningType(learningTypeMeta.key)
   }, [])
 
   if (!result) {
@@ -121,7 +89,7 @@ export default function LandingReportPage() {
 
   const pct      = result.percentage ?? Math.round((result.score / result.totalQuestions) * 100)
   const msg      = ScoreMsg(pct)
-  const meta     = learningType ? TYPE_META[learningType] : null
+  const meta     = learningType ? LEARNING_TYPES[learningType] : null
   const wrongQs  = questions.filter((_, i) => result.answers[i] !== undefined && result.answers[i] !== _.correctIndex)
   const isBlurred = status === 'unauthenticated'
 

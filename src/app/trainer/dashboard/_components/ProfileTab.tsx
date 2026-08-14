@@ -2,11 +2,11 @@
 
 import { ChevronRight, Plus, MapPin, Clock, Bell } from 'lucide-react'
 import { signOut } from 'next-auth/react'
+import Image from 'next/image'
 import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
+import { isLearningType, LEARNING_TYPES } from '@/lib/learning-types'
 import { useDashboard } from './DashboardContext'
 import {
-  STYLE_META,
-  STYLE_KEY,
   REQUIRED_SUBJECTS,
   CERT_LABELS,
   SUBJECT_META,
@@ -19,7 +19,7 @@ import {
 // ══════════════════════════════════════════════════════════════════
 export default function ProfileTab() {
   const {
-    styleType, style,
+    styleType,
     certLabel, profileCert, certKey,
     healthCertSubjects,
     dbRequiredNames,
@@ -50,8 +50,8 @@ export default function ProfileTab() {
     showLogoutModal, setShowLogoutModal,
   } = useDashboard()
 
-    const currentStyle   = styleType ?? style
-    const styleMeta      = currentStyle ? STYLE_META[currentStyle] : null
+    const currentStyle   = styleType
+    const styleMeta      = isLearningType(currentStyle) ? LEARNING_TYPES[currentStyle] : null
 
     // 자격증/과목 섹션용 (DB 우선, 하드코딩 폴백)
     const displayCertName   = certLabel || profileCert || ''
@@ -126,10 +126,10 @@ export default function ProfileTab() {
           {styleMeta ? (
             <div className="bg-white rounded-2xl border border-[#E5E5E5] px-4 py-4 flex items-center gap-3">
               <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center text-[26px] flex-shrink-0"
+                className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
                 style={{ backgroundColor: `${styleMeta.color}18` }}
               >
-                {styleMeta.emoji}
+                <Image src={styleMeta.icon} alt="" width={28} height={28} aria-hidden="true" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[16px] font-black text-[#1A1A1A]">{styleMeta.label}</p>
@@ -137,7 +137,6 @@ export default function ProfileTab() {
               </div>
               <button
                 onClick={() => {
-                  localStorage.removeItem(STYLE_KEY)
                   localStorage.removeItem('kinepia_learning_type')
                   router.push('/onboarding/style-test')
                 }}

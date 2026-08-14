@@ -4,11 +4,9 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { ChevronRight } from 'lucide-react'
+import { isLearningType, type LearningType } from '@/lib/learning-types'
 
-const STYLE_KEY      = 'kinepia_learning_style'   // memorizer | conceptualizer (레슨 동작용)
-const STYLE_TYPE_KEY = 'kinepia_learning_type'     // 4가지 상세 유형
-
-type LearningType = 'conceptualizer' | 'memorizer' | 'planner' | 'intensive'
+const STYLE_TYPE_KEY = 'kinepia_learning_type'
 
 interface Question {
   q: string
@@ -19,73 +17,73 @@ const QUESTIONS: Question[] = [
   {
     q: '새로운 개념을 배울 때 나는?',
     options: [
-      { text: '원리를 이해하며 깊이 파고든다', type: 'conceptualizer' },
-      { text: '핵심 단어부터 반복 암기한다',   type: 'memorizer'      },
-      { text: '순서대로 계획을 세워 공부한다',  type: 'planner'        },
-      { text: '일단 빠르게 훑고 몰아서 집중',  type: 'intensive'      },
+      { text: '원리와 이유를 끝까지 따져본다', type: 'explorer' },
+      { text: '핵심 단어부터 반복해서 익힌다', type: 'repeater' },
+      { text: '순서를 정해 단계별로 나아간다', type: 'planner'  },
+      { text: '전체를 훑으며 감을 먼저 잡는다', type: 'spotter'  },
     ],
   },
   {
     q: '공부할 때 가장 중요하게 생각하는 것은?',
     options: [
-      { text: '왜 그런지 이유를 아는 것',      type: 'conceptualizer' },
-      { text: '핵심을 빠르게 외우는 것',        type: 'memorizer'      },
-      { text: '정해진 분량을 지키는 것',        type: 'planner'        },
-      { text: '짧게 집중해서 효율을 높이는 것', type: 'intensive'      },
+      { text: '왜 그런지 이유를 아는 것',        type: 'explorer' },
+      { text: '여러 번 봐서 몸에 익히는 것',     type: 'repeater' },
+      { text: '정한 분량을 지켜내는 것',          type: 'planner'  },
+      { text: '핵심이 뭔지 빠르게 알아채는 것',   type: 'spotter'  },
     ],
   },
   {
     q: '모르는 내용이 나오면?',
     options: [
-      { text: '이해될 때까지 끝까지 파고든다',  type: 'conceptualizer' },
-      { text: '정답을 반복해서 외워버린다',     type: 'memorizer'      },
-      { text: '복습 날짜에 맞춰 따로 표시해둔다', type: 'planner'      },
-      { text: '일단 넘기고 나중에 한꺼번에',    type: 'intensive'      },
+      { text: '이해될 때까지 파고든다',              type: 'explorer' },
+      { text: '정답을 반복해서 외워둔다',            type: 'repeater' },
+      { text: '복습할 날을 정해 표시해둔다',         type: 'planner'  },
+      { text: '떠오르는 답을 먼저 고르고 확인한다',  type: 'spotter'  },
     ],
   },
   {
     q: '선호하는 학습 자료는?',
     options: [
-      { text: '교재·상세 설명 위주',           type: 'conceptualizer' },
-      { text: '요약본·핵심 정리 노트',          type: 'memorizer'      },
-      { text: '스케줄러·계획표',               type: 'planner'        },
-      { text: '기출 문제·빠른 정답 풀이',       type: 'intensive'      },
+      { text: '교재·상세 설명',                   type: 'explorer' },
+      { text: '요약본·핵심 정리 노트',            type: 'repeater' },
+      { text: '스케줄러·진도 체크리스트',         type: 'planner'  },
+      { text: '도표·그림으로 한눈에 보는 자료',   type: 'spotter'  },
     ],
   },
   {
     q: '시험 준비는 보통?',
     options: [
-      { text: '꾸준히 이해하며 오랫동안 준비',  type: 'conceptualizer' },
-      { text: '핵심 포인트 반복 암기 위주',      type: 'memorizer'      },
-      { text: '날짜별 분량 계획 세우기',        type: 'planner'        },
-      { text: '시험 직전 집중 몰아치기',        type: 'intensive'      },
+      { text: '원리를 이해하며 오랫동안 준비',   type: 'explorer' },
+      { text: '핵심을 여러 번 되짚으며 준비',    type: 'repeater' },
+      { text: '날짜별 분량을 정해 준비',          type: 'planner'  },
+      { text: '전체 흐름을 잡고 감으로 채우기',  type: 'spotter'  },
     ],
   },
   {
     q: '학습 중 집중이 잘되는 환경은?',
     options: [
-      { text: '조용히 혼자 깊이 생각할 수 있을 때', type: 'conceptualizer' },
-      { text: '짧은 반복 플래시카드나 퀴즈',        type: 'memorizer'      },
-      { text: '체크리스트를 하나씩 지워갈 때',       type: 'planner'        },
-      { text: '데드라인이나 압박감이 있을 때',        type: 'intensive'      },
+      { text: '혼자 조용히 깊이 생각할 수 있을 때',       type: 'explorer' },
+      { text: '짧은 반복 퀴즈나 플래시카드가 있을 때',    type: 'repeater' },
+      { text: '체크리스트를 하나씩 지워갈 때',            type: 'planner'  },
+      { text: '설명 없이도 흐름이 보일 때',                type: 'spotter'  },
     ],
   },
   {
     q: '오답이 나왔을 때 나는?',
     options: [
-      { text: '왜 틀렸는지 원인을 분석한다',    type: 'conceptualizer' },
-      { text: '정답을 여러 번 반복해서 외운다', type: 'memorizer'      },
-      { text: '오답 노트에 정리해 계획적으로',  type: 'planner'        },
-      { text: '비슷한 문제를 빠르게 많이 푼다', type: 'intensive'      },
+      { text: '왜 틀렸는지 원인을 분석한다',                 type: 'explorer' },
+      { text: '정답을 여러 번 되새겨 외운다',                type: 'repeater' },
+      { text: '오답 노트에 정리해 다시 볼 날을 잡는다',      type: 'planner'  },
+      { text: '어디서 감이 어긋났는지 되짚는다',             type: 'spotter'  },
     ],
   },
   {
     q: '하루 학습 스타일에 가장 가까운 것은?',
     options: [
-      { text: '매일 조금씩 깊이 있게',           type: 'conceptualizer' },
-      { text: '매일 핵심만 짧게 반복',           type: 'memorizer'      },
-      { text: '주간 계획대로 규칙적으로',         type: 'planner'        },
-      { text: '필요할 때 집중적으로 몰아서',      type: 'intensive'      },
+      { text: '매일 조금씩 깊이 있게',          type: 'explorer' },
+      { text: '매일 핵심만 짧게 되풀이',        type: 'repeater' },
+      { text: '주간 계획대로 규칙적으로',        type: 'planner'  },
+      { text: '매일 전체를 빠르게 훑으며',       type: 'spotter'  },
     ],
   },
 ]
@@ -100,17 +98,9 @@ function shuffleOptions(questions: Question[]): Question[] {
 
 // 점수 집계 후 최다 득표 유형 반환
 function calcType(votes: LearningType[]): LearningType {
-  const count: Record<LearningType, number> = { conceptualizer: 0, memorizer: 0, planner: 0, intensive: 0 }
+  const count: Record<LearningType, number> = { spotter: 0, planner: 0, repeater: 0, explorer: 0 }
   votes.forEach((v) => { count[v]++ })
   return (Object.keys(count) as LearningType[]).reduce((a, b) => count[a] >= count[b] ? a : b)
-}
-
-// 레슨 동작용 2-type 매핑
-const LESSON_STYLE_MAP: Record<LearningType, 'memorizer' | 'conceptualizer'> = {
-  conceptualizer: 'conceptualizer',
-  planner:        'conceptualizer',
-  memorizer:      'memorizer',
-  intensive:      'memorizer',
 }
 
 export default function StyleTestPage() {
@@ -127,7 +117,7 @@ export default function StyleTestPage() {
     if (status === 'loading') return
     if (status === 'unauthenticated') { router.replace('/landing'); return }
     const existing = localStorage.getItem(STYLE_TYPE_KEY)
-    if (existing) router.replace('/select-subject')
+    if (isLearningType(existing)) router.replace('/select-subject')
   }, [status, router])
 
   const handleSelect = async (type: LearningType) => {
@@ -146,11 +136,9 @@ export default function StyleTestPage() {
 
       // 마지막 문항 → 결과 계산
       setSaving(true)
-      const result      = calcType(newVotes)
-      const lessonStyle = LESSON_STYLE_MAP[result]
+      const result = calcType(newVotes)
 
       localStorage.setItem(STYLE_TYPE_KEY, result)
-      localStorage.setItem(STYLE_KEY, lessonStyle)
 
       // DB 저장 실패 시 sessionStorage에 pending 마킹 — 대시보드에서 재시도 가능하도록
       try {
@@ -158,17 +146,17 @@ export default function StyleTestPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            learning_style: lessonStyle,
+            learning_style: result,
             learning_style_answers: newVotes,
           }),
         })
         const json = await res.json()
         if (!json.saved) {
-          sessionStorage.setItem('kinepia_style_pending', lessonStyle)
+          sessionStorage.setItem('kinepia_style_pending', result)
           console.warn('[style-test] DB 저장 실패 — pending 마킹')
         }
       } catch {
-        sessionStorage.setItem('kinepia_style_pending', lessonStyle)
+        sessionStorage.setItem('kinepia_style_pending', result)
         console.warn('[style-test] API 호출 실패 — pending 마킹')
       }
 

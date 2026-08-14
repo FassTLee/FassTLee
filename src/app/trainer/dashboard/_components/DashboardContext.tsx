@@ -37,8 +37,6 @@ export interface DashboardContextType {
   setCertKey: Dispatch<string>
   subjects: string[]
   setSubjects: Dispatch<string[]>
-  style: string | null
-  setStyle: Dispatch<string | null>
   styleType: string | null
   setStyleType: Dispatch<string | null>
   setUserName: Dispatch<string>

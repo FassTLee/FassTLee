@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { ChevronRight, Check } from 'lucide-react'
 import { track } from '@vercel/analytics'
+import { isLearningType } from '@/lib/learning-types'
 
 // ================================================================
 // 온보딩 서베이 — 로그인 직후 최초 1회만 표시
@@ -12,7 +13,7 @@ import { track } from '@vercel/analytics'
 // ================================================================
 
 const ONBOARDING_KEY = 'kinepia_onboarding_done'
-const STYLE_KEY  = 'kinepia_learning_style'
+const LEARNING_TYPE_KEY = 'kinepia_learning_type'
 const CERT_KEY   = 'kinepia_selected_cert'
 const DESTINATION = '/onboarding/style-test'
 
@@ -57,7 +58,8 @@ export default function OnboardingPage() {
 
     // 이미 온보딩 완료 → 다음 미완료 단계로 이동
     if (typeof window !== 'undefined' && localStorage.getItem(ONBOARDING_KEY)) {
-      if (!localStorage.getItem(STYLE_KEY)) {
+      const learningType = localStorage.getItem(LEARNING_TYPE_KEY)
+      if (!isLearningType(learningType)) {
         router.replace(DESTINATION)          // 성향 테스트
       } else if (!localStorage.getItem(CERT_KEY)) {
         router.replace('/select-cert')       // 자격증 선택

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
+import { isLearningType } from '@/lib/learning-types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getUserId(token: any): string | null {
@@ -26,12 +27,12 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const { learning_style, learning_style_answers } = await req.json()
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
   const userId = getUserId(token)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { learning_style, learning_style_answers } = await req.json()
-  if (learning_style !== 'memorizer' && learning_style !== 'conceptualizer') {
+  if (!isLearningType(learning_style)) {
     return NextResponse.json({ error: 'Invalid learning_style' }, { status: 400 })
   }
   if (!isSupabaseAdminConfigured) {

@@ -2,12 +2,14 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { PhoneFrame, StatusBar, Header } from '@/components/common'
+import { getLearningTypeMeta } from '@/lib/learning-types'
 import { useEducationStore } from '@/store/educationStore'
 import { COURSES, getLevelName, getXPForNextLevel } from '@/types/education'
 import { ChevronLeft, ChevronRight, Settings, RefreshCw } from 'lucide-react'
 
-const STYLE_KEY    = 'kinepia_learning_style'
+const LEARNING_TYPE_KEY = 'kinepia_learning_type'
 const SUBJECTS_KEY = 'kinepia_selected_subjects'
 const CERT_KEY     = 'kinepia_selected_cert'
 
@@ -48,11 +50,18 @@ export default function ProfilePage() {
 
   useEffect(() => {
     // 학습 성향
-    const cached = localStorage.getItem(STYLE_KEY)
-    if (cached) setStyleInfo({ learning_style: cached, style_tested_at: null })
+    const cached = localStorage.getItem(LEARNING_TYPE_KEY)
+    const cachedMeta = getLearningTypeMeta(cached)
+    if (cachedMeta) setStyleInfo({ learning_style: cachedMeta.key, style_tested_at: null })
     fetch('/api/v1/learning-style')
       .then((r) => r.json())
-      .then((d) => { if (d.learning_style) setStyleInfo(d) })
+      .then((d) => {
+        const meta = getLearningTypeMeta(d.learning_style)
+        setStyleInfo({
+          learning_style: meta?.key ?? null,
+          style_tested_at: d.style_tested_at ?? null,
+        })
+      })
       .catch(() => {})
 
     // 자격증 + 과목
@@ -88,6 +97,7 @@ export default function ProfilePage() {
   const totalMvp       = COURSES.filter((c) => c.phase === 'mvp').length
   const completedCount = progress.completedCourses.length
   const levelName      = getLevelName(gamification.level)
+  const styleMeta      = getLearningTypeMeta(styleInfo.learning_style)
 
   const STATS = [
     { label: '완료한 강의', value: `${completedCount}개`, sub: `/ ${totalMvp}개` },
@@ -152,16 +162,15 @@ export default function ProfilePage() {
           <div className="mx-3 mt-2.5">
             <p className="text-[10px] font-bold text-[#ADADAD] uppercase tracking-wider mb-1.5">학습 성향</p>
             <div className="bg-white rounded-xl border border-[#E5E5E5] p-3 flex items-center gap-3">
-              <div className="text-[24px]">
-                {styleInfo.learning_style === 'memorizer' ? '🧠' : styleInfo.learning_style === 'conceptualizer' ? '💡' : '❓'}
+              <div className="w-8 h-8 flex items-center justify-center">
+                {styleMeta
+                  ? <Image src={styleMeta.icon} alt="" width={24} height={24} aria-hidden="true" />
+                  : <span className="text-[24px]">❓</span>
+                }
               </div>
               <div className="flex-1">
                 <div className="text-[13px] font-bold text-[#1A1A1A]">
-                  {styleInfo.learning_style === 'memorizer'
-                    ? '암기형'
-                    : styleInfo.learning_style === 'conceptualizer'
-                    ? '이해형'
-                    : '미측정'}
+                  {styleMeta?.label ?? '미분류'}
                 </div>
                 {styleInfo.style_tested_at && (
                   <div className="text-[10px] text-[#ADADAD] mt-0.5">
@@ -171,7 +180,7 @@ export default function ProfilePage() {
               </div>
               <button
                 onClick={() => {
-                  localStorage.removeItem(STYLE_KEY)
+                  localStorage.removeItem(LEARNING_TYPE_KEY)
                   router.push('/onboarding/style-test')
                 }}
                 className="flex items-center gap-1 text-[11px] text-[#E24B4A] font-semibold"

@@ -8,6 +8,7 @@ import { Heart as _Heart } from 'lucide-react'
 import BottomTabBar from '@/components/common/BottomTabBar'
 import { PrivacyConsent } from '@/components/common/PrivacyConsent'
 import { useConsentGate } from '@/hooks/useConsentGate'
+import { isLearningType } from '@/lib/learning-types'
 import { DashboardProvider, type DashboardContextType } from './_components/DashboardContext'
 import HomeTab from './_components/HomeTab'
 import ClassroomTab from './_components/ClassroomTab'
@@ -21,7 +22,7 @@ type Tab = 'home' | 'classroom' | 'exam' | 'profile'
 
 const SUBJECTS_KEY  = 'kinepia_selected_subjects'
 const CERT_KEY      = 'kinepia_selected_cert'
-const STYLE_KEY     = 'kinepia_learning_style'
+const LEARNING_TYPE_KEY = 'kinepia_learning_type'
 // ExamTab으로 이동, 분리 완료 후 일괄 제거 예정
 const _ADMIN_EMAILS  = ['shotace@naver.com', 'prehabex@naver.com']
 
@@ -97,14 +98,6 @@ const SUBJECT_META: Record<string, { icon: string; desc: string }> = {
   '운동영양학':       { icon: '🥩', desc: '영양소·식이 전략' },
   '응급처치':         { icon: '🚑', desc: '응급처치·안전 관리' },
   '협회 규정':        { icon: '📋', desc: '협회 규정·절차' },
-}
-
-// ProfileTab으로 이동, 분리 완료 후 일괄 제거 예정
-const _STYLE_META: Record<string, { emoji: string; label: string; desc: string; color: string }> = {
-  conceptualizer: { emoji: '💡', label: '이해형',  desc: '개념을 먼저 이해하고 응용하는 스타일',        color: '#F5A623' },
-  memorizer:      { emoji: '🧠', label: '암기형',  desc: '반복과 암기로 실력을 쌓아가는 스타일',        color: '#6C63FF' },
-  planner:        { emoji: '📅', label: '계획형',  desc: '체계적인 계획으로 꾸준히 나아가는 스타일',    color: '#00A651' },
-  intensive:      { emoji: '🔥', label: '강제형',  desc: '집중 훈련으로 단기간에 성과를 내는 스타일',   color: '#E24B4A' },
 }
 
 // ProfileTab으로 이동, 분리 완료 후 일괄 제거 예정
@@ -292,7 +285,6 @@ function DashboardContent() {
   const [certLabel, setCertLabel] = useState('')
   const [certKey, setCertKey]     = useState('')
   const [subjects, setSubjects]   = useState<string[]>([])
-  const [style, setStyle]         = useState<string | null>(null)
   const [styleType, setStyleType] = useState<string | null>(null)
   const [_userName, setUserName]  = useState('')
 
@@ -550,12 +542,10 @@ function DashboardContent() {
   const initCommon = async () => {
     const cert     = localStorage.getItem(CERT_KEY)
     const subs     = localStorage.getItem(SUBJECTS_KEY)
-    const styleVal = localStorage.getItem(STYLE_KEY)
+    const learningTypeVal = localStorage.getItem(LEARNING_TYPE_KEY)
 
     if (cert)     { setCertKey(cert); setCertLabel(CERT_LABELS[cert] ?? cert) }
-    if (styleVal) setStyle(styleVal)
-    const styleTypeVal = localStorage.getItem('kinepia_learning_type')
-    if (styleTypeVal) setStyleType(styleTypeVal)
+    if (isLearningType(learningTypeVal)) setStyleType(learningTypeVal)
     if (session?.user?.name) setUserName(session.user.name.split(' ')[0])
 
     // userId: 이후 모든 API 호출에서 공통 사용
@@ -609,39 +599,41 @@ function DashboardContent() {
     // 코드 팝업 — 챕터 1 테스트 완료 후로 이동
     // if (session && pm.codePopupShown === false) setShowCodePopup(true)
     surveyCompletedRef.current = Boolean(pm.surveyCompleted)
-    const localLessonStyle = localStorage.getItem(STYLE_KEY)
-    console.log('[stylePopup] pm.learningStyle:', pm.learningStyle, '| localStorage:', localLessonStyle,
+    const localLearningType = localStorage.getItem(LEARNING_TYPE_KEY)
+    const dbLearningType = isLearningType(pm.learningStyle) ? pm.learningStyle : null
+    const cachedLearningType = isLearningType(localLearningType) ? localLearningType : null
+    console.log('[stylePopup] pm.learningStyle:', pm.learningStyle, '| localStorage:', localLearningType,
       '| sessionStorage dismissed:', sessionStorage.getItem('kinepia_style_dismissed'),
       '| sessionStorage pending:', sessionStorage.getItem('kinepia_style_pending'))
-    if (pm.learningStyle || localLessonStyle) {
-      const resolved = (pm.learningStyle ?? localLessonStyle) as string
+    if (localLearningType && !cachedLearningType) {
+      localStorage.removeItem(LEARNING_TYPE_KEY)
+    }
+    if (dbLearningType || cachedLearningType) {
+      const resolved = dbLearningType ?? cachedLearningType
       console.log('[stylePopup] → 팝업 없음. resolved:', resolved)
       setProfileLearningStyle(resolved)
+      setStyleType(resolved)
       sessionStorage.removeItem('kinepia_style_pending')
 
-      // DB → localStorage 동기화: DB에 값 있고 localStorage에 없을 때
-      if (pm.learningStyle && !localLessonStyle) {
-        const dbStyle = pm.learningStyle as string
-        localStorage.setItem(STYLE_KEY, dbStyle)
-        // learning_type은 style과 동일값으로 역매핑 (memorizer→memorizer, conceptualizer→conceptualizer)
-        if (!localStorage.getItem('kinepia_learning_type')) {
-          localStorage.setItem('kinepia_learning_type', dbStyle)
-        }
-        console.log('[stylePopup] DB → localStorage 동기화:', dbStyle)
-      }
-
-      if (!pm.learningStyle && localLessonStyle) {
-        console.log('[stylePopup] DB 없음, localStorage 있음 → 백그라운드 동기화 시도')
-        fetch('/api/v1/learning-style', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ learning_style: localLessonStyle }),
-        }).then(r => r.json()).then(j => console.log('[stylePopup] 동기화 결과:', j)).catch(() => {})
+      // DB → localStorage 동기화: 유효한 4-type 키만 캐시
+      if (dbLearningType) {
+        localStorage.setItem(LEARNING_TYPE_KEY, dbLearningType)
+        console.log('[stylePopup] DB → localStorage 동기화:', dbLearningType)
       }
     } else {
       const dismissed = sessionStorage.getItem('kinepia_style_dismissed')
-      console.log('[stylePopup] → DB·localStorage 없음. dismissed:', dismissed, '→ popup:', !dismissed)
-      setProfileLearningStyle(dismissed ? 'dismissed' : null)
+      console.log('[stylePopup] → 유효한 DB·localStorage 값 없음. dismissed:', dismissed, '→ popup:', !dismissed)
+      setStyleType(null)
+      setProfileLearningStyle(pm.learningStyle || localLearningType ? null : (dismissed ? 'dismissed' : null))
+    }
+
+    if (cachedLearningType && !pm.learningStyle) {
+      console.log('[stylePopup] DB 없음, localStorage 있음 → 백그라운드 동기화 시도')
+      fetch('/api/v1/learning-style', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ learning_style: cachedLearningType }),
+      }).then(r => r.json()).then(j => console.log('[stylePopup] 동기화 결과:', j)).catch(() => {})
     }
 
     // ── user-certifications 결과 처리 ──
@@ -1563,7 +1555,7 @@ function DashboardContent() {
     session, router,
     tab, setTab, showLoginPrompt, setShowLoginPrompt, loading, setLoading,
     certLabel, setCertLabel, certKey, setCertKey, subjects, setSubjects,
-    style, setStyle, styleType, setStyleType, setUserName,
+    styleType, setStyleType, setUserName,
     profileName, setProfileName, profileAvatar, setProfileAvatar,
     avatarError, setAvatarError, showLogoutModal, setShowLogoutModal,
     profileCert, setProfileCert, profileExamDate, setProfileExamDate, streak, setStreak,

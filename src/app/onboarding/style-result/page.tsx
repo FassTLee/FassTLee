@@ -5,69 +5,9 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { ChevronRight } from 'lucide-react'
 import Image from 'next/image'
+import { LEARNING_TYPES, getLearningTypeMeta, type LearningType } from '@/lib/learning-types'
 
 const STYLE_TYPE_KEY = 'kinepia_learning_type'
-const STYLE_KEY      = 'kinepia_learning_style'
-
-type LearningType = 'conceptualizer' | 'memorizer' | 'planner' | 'intensive'
-
-const RESULTS: Record<LearningType, {
-  title: string
-  badge: string
-  icon: string
-  desc: string
-  tips: { icon: string; text: string }[]
-  color: string
-}> = {
-  conceptualizer: {
-    title: '이해형',
-    badge: '원리 탐구 학습자',
-    icon:  '/assets/icons/user/user-learning-conceptual.svg',
-    desc:  '원리와 개념 중심으로 학습해요. 상세한 설명으로 깊이 있는 이해를 추구합니다.',
-    tips: [
-      { icon: '📖', text: '레슨에서 상세 설명 전체 제공' },
-      { icon: '🔍', text: '원리·이유 중심 해설' },
-      { icon: '🔗', text: '개념 간 연결고리 학습' },
-    ],
-    color: '#639922',
-  },
-  memorizer: {
-    title: '암기형',
-    badge: '핵심 반복 학습자',
-    icon:  '/assets/icons/user/user-learning-memory.svg',
-    desc:  '핵심 키워드 중심으로 학습해요. 짧고 반복적인 노출로 효율적인 암기를 완성합니다.',
-    tips: [
-      { icon: '✨', text: '레슨에서 핵심 키워드 강조 표시' },
-      { icon: '⚡', text: '빠른 반복 테스트로 기억 강화' },
-      { icon: '🃏', text: '플래시카드 방식 핵심 정리' },
-    ],
-    color: '#378ADD',
-  },
-  planner: {
-    title: '계획형',
-    badge: '체계적 전략 학습자',
-    icon:  '/assets/icons/user/user-learning-planner.svg',
-    desc:  '계획을 세워 체계적으로 학습해요. 목표와 일정을 관리하며 꾸준히 나아갑니다.',
-    tips: [
-      { icon: '📅', text: '주간 학습 스케줄 자동 설정' },
-      { icon: '✅', text: '진도 체크리스트로 성취감 확인' },
-      { icon: '📊', text: '목표 달성률 리포트 제공' },
-    ],
-    color: '#9B59B6',
-  },
-  intensive: {
-    title: '강제형',
-    badge: '집중 몰입 학습자',
-    icon:  '/assets/icons/user/user-learning-intensive.svg',
-    desc:  '집중해서 몰아서 공부해요. 압박감과 데드라인을 활용해 최대 집중력을 끌어냅니다.',
-    tips: [
-      { icon: '🔥', text: '짧고 강한 집중 세션 제공' },
-      { icon: '⏱', text: '타이머 기반 스프린트 학습' },
-      { icon: '🎯', text: '기출 문제 빠른 풀이 위주' },
-    ],
-    color: '#E24B4A',
-  },
-}
 
 export default function StyleResultPage() {
   const { status } = useSession()
@@ -79,15 +19,14 @@ export default function StyleResultPage() {
     if (status === 'loading') return
     if (status === 'unauthenticated') { router.replace('/landing'); return }
 
-    // 신규 4-type 키 우선, 없으면 기존 2-type 키로 fallback
-    const saved = (localStorage.getItem(STYLE_TYPE_KEY) ??
-                   localStorage.getItem(STYLE_KEY)) as LearningType | null
+    const saved = localStorage.getItem(STYLE_TYPE_KEY)
+    const savedMeta = getLearningTypeMeta(saved)
 
-    if (!saved || !RESULTS[saved]) {
+    if (!savedMeta) {
       router.replace('/onboarding/style-test')
       return
     }
-    setType(saved)
+    setType(savedMeta.key)
 
     // cert_type이 이미 있으면 자격증 선택 건너뛰고 대시보드로
     // localStorage에 cert가 있어도 이미 선택한 것으로 간주
@@ -110,7 +49,7 @@ export default function StyleResultPage() {
     )
   }
 
-  const r = RESULTS[type]
+  const r = LEARNING_TYPES[type]
 
   return (
     <div className="min-h-screen bg-[#F5F5F3] flex flex-col">
@@ -125,7 +64,7 @@ export default function StyleResultPage() {
             >
               <Image
                 src={r.icon}
-                alt={r.title}
+                alt={r.label}
                 width={64}
                 height={64}
               />
@@ -137,7 +76,7 @@ export default function StyleResultPage() {
               {r.badge}
             </div>
             <h1 className="text-[26px] font-black text-[#1A1A1A] mb-2">
-              당신은 <span style={{ color: r.color }}>{r.title}</span>입니다!
+              당신은 <span style={{ color: r.color }}>{r.label}</span>입니다!
             </h1>
             <p className="text-[14px] text-[#6B6B6B] leading-relaxed">{r.desc}</p>
           </div>

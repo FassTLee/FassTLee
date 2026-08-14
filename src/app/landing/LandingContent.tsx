@@ -11,7 +11,7 @@ const FEATURES = [
   {
     icon: '🧠',
     title: '성향 맞춤 학습',
-    desc: '암기형·이해형 진단 후 내 스타일에 맞게 최적화된 학습 콘텐츠 제공',
+    desc: '4가지 학습 유형 진단 후 내 스타일에 맞게 최적화된 학습 콘텐츠 제공',
   },
   {
     icon: '📝',
@@ -554,7 +554,7 @@ export default function LandingContent() {
           {/*
           <div className="space-y-3">
             {[
-              { name: '김민준', text: '성향 진단이 정말 정확해요. 이해형으로 나왔는데 딱 맞는 설명 방식이 이해가 잘 됩니다.', score: '필기 89점' },
+              { name: '김민준', text: '성향 진단이 정말 정확해요. 탐구형으로 나왔는데 딱 맞는 설명 방식이 이해가 잘 됩니다.', score: '필기 89점' },
               { name: '박서연', text: '오답 리포트 덕분에 취약 챕터를 집중 공략할 수 있었어요. 3개월 만에 합격했습니다!', score: '1회 합격' },
             ].map((t, i) => (
               <div key={i} className="bg-[#F5F5F3] rounded-2xl p-4 text-left">

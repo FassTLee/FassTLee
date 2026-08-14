@@ -22,7 +22,7 @@ export async function GET() {
 
   const { data } = await supabaseAdmin
     .from('profiles')
-    .select('name, email, avatar_url, cert_type, selected_cert, exam_target_date, learning_style, code_popup_shown, access_code_used, survey_completed, consent_completed_at, created_at')
+    .select('name, email, avatar_url, cert_type, selected_cert, exam_target_date, learning_style, style_tested_at, code_popup_shown, access_code_used, survey_completed, consent_completed_at, created_at')
     .eq('id', userId)
     .single()
 
@@ -65,6 +65,7 @@ export async function GET() {
     certType,
     examDate:      data?.exam_target_date ?? null,
     learningStyle:    data?.learning_style    ?? null,
+    styleTestedAt:    data?.style_tested_at   ?? null,
     codePopupShown:   data?.code_popup_shown  ?? null,
     accessCodeUsed:   activeCodeRow?.code        ?? data?.access_code_used ?? null,
     // ── 2026-06-24 수정 (P0-9): 활성 코드 만료일 ──
