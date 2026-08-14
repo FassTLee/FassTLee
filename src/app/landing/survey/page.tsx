@@ -5,7 +5,7 @@ import { useSession, signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { ChevronRight } from 'lucide-react'
 import { track } from '@vercel/analytics'
-import Image from 'next/image'
+import { LearningTypeIcon } from '@/components/common/LearningTypeIcon'
 import { LEARNING_TYPES, isLearningType, type LearningType } from '@/lib/learning-types'
 
 const STYLE_TYPE_KEY = 'kinepia_learning_type'
@@ -182,7 +182,7 @@ function SurveyContent() {
               className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-4"
               style={{ backgroundColor: `${meta.color}15` }}
             >
-              <Image src={meta.icon} alt={meta.label} width={52} height={52} />
+              <LearningTypeIcon type={meta.key} size={52} />
             </div>
             <div
               className="inline-block text-[10px] font-bold px-3 py-1 rounded-full mb-3"

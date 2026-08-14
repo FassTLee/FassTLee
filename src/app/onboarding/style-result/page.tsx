@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { ChevronRight } from 'lucide-react'
-import Image from 'next/image'
+import { LearningTypeIcon } from '@/components/common/LearningTypeIcon'
 import { LEARNING_TYPES, getLearningTypeMeta, type LearningType } from '@/lib/learning-types'
 
 const STYLE_TYPE_KEY = 'kinepia_learning_type'
@@ -62,12 +62,7 @@ export default function StyleResultPage() {
               className="w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-4"
               style={{ backgroundColor: `${r.color}15` }}
             >
-              <Image
-                src={r.icon}
-                alt={r.label}
-                width={64}
-                height={64}
-              />
+              <LearningTypeIcon type={r.key} size={64} />
             </div>
             <div
               className="inline-block text-[10px] font-bold px-3 py-1 rounded-full mb-3"

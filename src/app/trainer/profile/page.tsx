@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
 import { PhoneFrame, StatusBar, Header } from '@/components/common'
+import { LearningTypeIcon } from '@/components/common/LearningTypeIcon'
 import { getLearningTypeMeta } from '@/lib/learning-types'
 import { useEducationStore } from '@/store/educationStore'
 import { COURSES, getLevelName, getXPForNextLevel } from '@/types/education'
@@ -164,7 +164,7 @@ export default function ProfilePage() {
             <div className="bg-white rounded-xl border border-[#E5E5E5] p-3 flex items-center gap-3">
               <div className="w-8 h-8 flex items-center justify-center">
                 {styleMeta
-                  ? <Image src={styleMeta.icon} alt="" width={24} height={24} aria-hidden="true" />
+                  ? <LearningTypeIcon type={styleMeta.key} size={24} />
                   : <span className="text-[24px]">❓</span>
                 }
               </div>

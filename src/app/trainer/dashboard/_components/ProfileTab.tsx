@@ -2,8 +2,8 @@
 
 import { ChevronRight, Plus, MapPin, Clock, Bell } from 'lucide-react'
 import { signOut } from 'next-auth/react'
-import Image from 'next/image'
 import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
+import { LearningTypeIcon } from '@/components/common/LearningTypeIcon'
 import { isLearningType, LEARNING_TYPES } from '@/lib/learning-types'
 import { useDashboard } from './DashboardContext'
 import {
@@ -129,7 +129,7 @@ export default function ProfileTab() {
                 className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0"
                 style={{ backgroundColor: `${styleMeta.color}18` }}
               >
-                <Image src={styleMeta.icon} alt="" width={28} height={28} aria-hidden="true" />
+                <LearningTypeIcon type={styleMeta.key} size={28} />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[16px] font-black text-[#1A1A1A]">{styleMeta.label}</p>

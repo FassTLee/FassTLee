@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession, signIn } from 'next-auth/react'
 import { ChevronRight, ChevronDown, ChevronUp } from 'lucide-react'
-import Image from 'next/image'
 import type { TestResult, TestQuestion } from '@/lib/landingTest'
 import { SharePanel } from '@/components/common/SharePanel'
+import { LearningTypeIcon } from '@/components/common/LearningTypeIcon'
 import { LEARNING_TYPES, getLearningTypeMeta, type LearningType } from '@/lib/learning-types'
 
 function ScoreEmoji(pct: number) {
@@ -265,7 +265,7 @@ export default function LandingReportPage() {
               className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
               style={{ backgroundColor: `${meta.color}20` }}
             >
-              <Image src={meta.icon} alt={meta.label} width={36} height={36} />
+              <LearningTypeIcon type={meta.key} size={36} />
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-[10px] font-bold mb-0.5" style={{ color: meta.color }}>
