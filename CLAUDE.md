@@ -1,8 +1,9 @@
-# Kinepia — Claude Code 작업 지침 v2.1
+# Kinepia — Claude Code 작업 지침 v2.2
 
 이 파일은 세션 시작 시 자동으로 로드됩니다.
 
-_PM 지침 v1.8 동기화 (2026-08-01 역할 이원화 반영)_
+*PM 지침 v1.8 동기화 (2026-08-01 역할 이원화 반영)*
+*v2.2(2026-08-14): 실행 환경 조항 신설, SQL 환경 표기 동기화, dev 리전 정정.*
 
 ## 역할과 권한
 
@@ -96,6 +97,31 @@ _PM 지침 v1.8 동기화 (2026-08-01 역할 이원화 반영)_
 - 하나의 발주는 한 채널에만 배정됩니다. 다른 채널의 작업이 필요하면
   임의로 수행하지 말고 별도 발주가 필요함을 보고합니다.
 
+## 실행 환경 (v2.2 신규)
+
+### 검색 도구
+
+- **`rg` / `findstr` / `Select-String` 을 사용하지 않습니다.**
+  PowerShell 경유 `rg` 에 한글 패턴을 넘기면 오류 없이 0건을 반환하는
+  침묵 실패가 확인됐습니다(2026-08-07).
+- 모든 검색은 **Node `fs.readdirSync` 재귀 순회 +
+  `readFileSync(p,'utf8')` + 정규식**으로 수행합니다.
+- 제외 경로와 순회한 파일 총 개수를 보고에 명시합니다.
+- 과거 `rg` 로 얻은 검색 결과는 전부 재검증 대상입니다.
+
+### 터미널
+
+- CMD 기본 코드페이지는 CP949 입니다. 착수 시 `chcp 65001` 로
+  UTF-8 전환합니다.
+- git 조작은 CMD 로 합니다. PowerShell 은 실행 정책 제약이 있습니다.
+
+### 병렬 작업 중 근거 고정
+
+- Codex 가 동시에 `src/` 를 편집 중이면 행번호가 이동합니다.
+  **"현재 배포된 코드"를 묻는 발주는 `git show HEAD:<path>` 로
+  근거를 고정**하고, 작업 트리를 읽었는지 HEAD 를 읽었는지
+  보고에 명시합니다.
+
 ## 절대 원칙
 
 - 파일은 **항상 읽고 나서** 판단합니다. 구조를 가정하지 않습니다.
@@ -144,10 +170,26 @@ PM 명령문에 포함된 전제 — 파일 경로, 기존 값, 컬럼명·타�
 - 보고에 프로젝트(ref)와 키 유형을 항목마다 명시합니다.
 - 예: `certifications`는 anon에게 `is_active = true` 행만 보입니다.
 
+### 임의 SQL 실행 수단 없음 (2026-08-13 실측)
+
+- 이 환경에는 `pg`·`postgres` 드라이버가 없고, PostgREST 에 노출된
+  RPC 가 0건이며, `.env` 파일에 DB 접속 문자열이 없고,
+  Supabase CLI 도 미인증입니다.
+- 따라서 `information_schema`·`pg_constraint`·`pg_policies`·
+  `pg_class.relrowsecurity` 를 직접 조회할 수 없습니다.
+- 대체 수단: **PostgREST OpenAPI 정의(`GET /rest/v1/`, service_role)**
+  로 컬럼·타입·NOT NULL 을, **행동 프로브**(anon 과 service_role 의
+  결과 차이)로 RLS 효과를 판정합니다.
+- 대체 수단으로 얻지 못한 항목은 **"미검증"으로 명시하고 오너가 SQL
+  Editor 에서 실행할 쿼리를 함께 제시**합니다. 정지하지 않습니다.
+
 ## 환경
 
 - prod Supabase: `sbketzgadjvzedbayesc`
-- dev Supabase: `jgweeoeikhdjcgkitjfl` (Seoul, Free)
+- Supabase dev: `jgweeoeikhdjcgkitjfl` (Singapore, Free)
+
+  ※ 2026-08-14 실측 정정. prod `sbketzgadjvzedbayesc` 는 Seoul 이다.
+
 - 로컬 저장소: `C:\Kinepia\kinepia` / GitHub: `FassTLee/FassTLee`
 - 개발자 user_id `4b3089c3-f85b-56ec-99e1-1c959ba4f878`는 dev와 prod가 **동일**합니다. dev 분석 시 제외 필터를 쓰면 안 됩니다.
 - 인증: NextAuth. `profiles(id uuid)`가 정본이며 `session.user.id === profiles.id`입니다.
@@ -202,7 +244,10 @@ PM 명령문에 포함된 전제 — 파일 경로, 기존 값, 컬럼명·타�
 - **신규 테이블은 RLS를 함께 설정합니다** (미설정 시 anon 무제한 접근).
 - 여러 DDL은 `BEGIN; ... COMMIT;`으로 묶습니다.
 - 적용 순서는 dev 후 prod. **`Success. No rows returned`는 적용 확인이 아닙니다** → 별도 검증 쿼리 필수.
-- SQL 블록에는 `[실행]`, `[참고]`, `[파일]` 중 용도를 표시합니다.
+- **PM 이 제시하는 SQL 블록에는 환경 표기가 붙습니다.**
+  `[실행:dev]` / `[실행:prod]` / `[실행:dev→prod]` / `[실행:양측]` /
+  `[참고]` / `[파일]`. 환경 표기가 없는 SQL 블록은 불완전한 산출물이며,
+  파일로 저장하지 않고 PM 에게 확인을 요청합니다.
 
 ### upsert 주의
 
