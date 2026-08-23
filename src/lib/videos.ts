@@ -41,6 +41,18 @@ export const ALL_VIDEOS: VideoMeta[] = [
     title:       '힘 안들이고 살빠지는 습관?',
     description: '일상에서 실천하는 체중 관리 습관',
   },
+  // DEMO — 2026-08-25 미팅용. 미팅 후 이 블록만 삭제한다.
+  {
+    src:         '/videos/shorts/shorts-demo-07.mp4',
+    title:       '보디빌딩 규정포즈 — 남자',
+    description: '남자 규정포즈의 순서와 핵심 동작',
+  },
+  {
+    src:         '/videos/shorts/shorts-demo-08.mp4',
+    title:       '보디빌딩 규정포즈 — 여자',
+    description: '여자 규정포즈의 순서와 핵심 동작',
+  },
+  // DEMO — 2026-08-25 미팅용. 미팅 후 이 블록만 삭제한다.
 ]
 
 export const HOME_VIDEO_COUNT = 3
