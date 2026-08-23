@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Check, AlertCircle, ChevronLeft, Plus } from 'lucide-react'
 import { track } from '@vercel/analytics'
+import { BODYBUILDING_DEMO_CERT_ID } from '@/app/trainer/dashboard/_components/constants'
 
 const CERT_KEY       = 'kinepia_selected_cert'
 const SUBJECTS_KEY   = 'kinepia_selected_subjects'
@@ -124,6 +125,14 @@ const CERT_CONFIG: Record<string, CertConfig> = {
     ],
     additional: [],
   },
+  [BODYBUILDING_DEMO_CERT_ID]: {
+    label: '보디빌딩 규정포즈 데모',
+    mode: 'all-required',
+    subjects: [
+      { name: '보디빌딩', icon: '🏋️', desc: '규정포즈 데모 학습' },
+    ],
+    additional: [],
+  },
   'iipa-pilates-lv1': {
     label: 'IIPA 필라테스 지도자 자격증 Lv1',
     mode: 'all-required',
@@ -201,8 +210,15 @@ export default function SelectSubjectPage() {
     // ('sports-instructor-2-practical' 등)이 존재해 이 조회가 0행이 되는 경로가 있음.
     // slug UNIQUE 제약으로도 막을 수 없어 maybeSingle()로 0행을 허용하고,
     // deprecated 행을 집지 않도록 is_active=true 조건을 추가한다.
-    const { data: certRow } = await supabase
-      .from('certifications').select('id').eq('slug', cert).eq('is_active', true).maybeSingle()
+    const certLookup = supabase
+      .from('certifications')
+      .select('id')
+      .eq('is_active', true)
+    const { data: certRow } = await (
+      cert === BODYBUILDING_DEMO_CERT_ID
+        ? certLookup.eq('id', cert)
+        : certLookup.eq('slug', cert)
+    ).maybeSingle()
     const certUuid = certRow?.id ?? null
 
     const withDb: SubjectWithDb[] = await Promise.all(

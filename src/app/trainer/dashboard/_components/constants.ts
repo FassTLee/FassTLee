@@ -7,6 +7,12 @@ export type Tab = 'home' | 'classroom' | 'exam' | 'profile'
 export const SUBJECTS_KEY = 'kinepia_selected_subjects'
 export const CERT_KEY     = 'kinepia_selected_cert'
 
+/* PM이 access_codes.label과 certifications.id를 확정하면 아래 두 값만 교체한다.
+ * 빈 문자열인 동안 보디빌딩 데모 전용 진입 버튼은 노출되지 않는다.
+ */
+export const BODYBUILDING_DEMO_ACCESS_CODE_LABEL = ''
+export const BODYBUILDING_DEMO_CERT_ID = ''
+
 export const ADMIN_EMAILS = ['shotace@naver.com', 'prehabex@naver.com']
 
 export const CERT_LABELS: Record<string, string> = {
@@ -176,6 +182,7 @@ export interface CodeInfo {
 }
 export interface CodeResultData {
   status: 'upgraded' | 'kept' | 'duplicate'
+  label: string | null
   enteredCode: CodeInfo
   activeCode: CodeInfo
   prevCode: CodeInfo | null

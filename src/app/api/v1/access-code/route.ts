@@ -70,6 +70,7 @@ export async function POST(req: NextRequest) {
   if (owned.some(o => o.code_id === accessCode.id)) {
     return NextResponse.json({
       status: 'duplicate',
+      label: accessCode.label ?? null,
       enteredCode: enteredInfo,
       activeCode: prevInfo ?? enteredInfo,
       prevCode: null,
@@ -86,6 +87,7 @@ export async function POST(req: NextRequest) {
     if (insertError.code === '23505') {
       return NextResponse.json({
         status: 'duplicate',
+        label: accessCode.label ?? null,
         enteredCode: enteredInfo,
         activeCode: prevInfo ?? enteredInfo,
         prevCode: null,
@@ -114,6 +116,7 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     status,
+    label: accessCode.label ?? null,
     enteredCode: enteredInfo,
     activeCode,
     prevCode: prevInfo,

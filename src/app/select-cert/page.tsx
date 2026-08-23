@@ -23,6 +23,7 @@ const HIDDEN_CERT_IDS = [
   // 이 행을 가려주던 slug 중복 제거(아래 seen.has(c.slug))에 더 이상 걸리지 않게 됨.
   // course_certifications 매핑 0건인 폐기 행이므로 목록에서 숨긴다.
   '3cd928fe-f820-4335-adb7-25fd904c898c', // 2급 생활스포츠지도사 (deprecated)
+  // TODO(CX-08): PM이 실제 UUID를 전달하면 BODYBUILDING_DEMO_CERT_ID를 이 배열에 추가한다.
 ]
 
 const CERT_META: Record<string, {

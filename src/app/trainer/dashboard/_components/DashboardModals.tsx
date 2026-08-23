@@ -4,7 +4,11 @@ import { X, Trash2, Calendar, Plus } from 'lucide-react'
 import { signIn } from 'next-auth/react'
 import PhoneRegisterModal from '@/components/PhoneRegisterModal'
 import { useDashboard } from './DashboardContext'
-import { fmtCodeDate } from './constants'
+import {
+  BODYBUILDING_DEMO_ACCESS_CODE_LABEL,
+  BODYBUILDING_DEMO_CERT_ID,
+  fmtCodeDate,
+} from './constants'
 
 const EXAM_DATES = [
   { round: 1, date: '5월 2일 (토)',  dateValue: '2026-05-02' },
@@ -61,6 +65,12 @@ export default function DashboardModals() {
     handleAddDDayGoal, handleClearDDay,
     showToast, toastMessage,
   } = useDashboard()
+
+  const showBodybuildingDemoButton = Boolean(
+    BODYBUILDING_DEMO_ACCESS_CODE_LABEL &&
+    BODYBUILDING_DEMO_CERT_ID &&
+    codeResult?.label === BODYBUILDING_DEMO_ACCESS_CODE_LABEL
+  )
 
   return (
     <>
@@ -759,6 +769,18 @@ export default function DashboardModals() {
                   {codeResult.enteredCode.code} 코드는 이미 등록되어 있어요.
                 </p>
               </>
+            )}
+            {showBodybuildingDemoButton && (
+              <button
+                onClick={() => {
+                  localStorage.setItem('kinepia_selected_cert', BODYBUILDING_DEMO_CERT_ID)
+                  setCodeResult(null)
+                  router.push('/select-subject')
+                }}
+                className="w-full py-3.5 mb-2 bg-indigo-600 text-white rounded-2xl text-[15px] font-bold"
+              >
+                테스트 과목 보기
+              </button>
             )}
             <button
               onClick={() => setCodeResult(null)}
