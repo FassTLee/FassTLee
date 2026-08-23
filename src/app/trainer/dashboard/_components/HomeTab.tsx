@@ -305,7 +305,9 @@ export default function HomeTab() {
       </div>
 
       {/* ③ 추천 영상 — 중앙 85% + 좌우 peek 캐러셀 */}
-      {false && <div className="py-2">
+      {/* TEMP — 2026-08-25 미팅용 임시 활성화. 미팅 후 false 로 복원할 것. */}
+      {/* 원래 오너·PM 결정으로 비활성화된 섹션임(실사용·로딩 최적화 목적). */}
+      {true && <div className="py-2">
         <p className="text-[12px] font-bold text-[#ADADAD] uppercase tracking-wider px-4 mb-2">
           오늘의 추천 영상
         </p>
@@ -325,9 +327,14 @@ export default function HomeTab() {
             overscrollBehaviorX: 'contain',
           } as React.CSSProperties}
         >
-          {ALL_VIDEOS.slice(0, HOME_VIDEO_COUNT).map((vid, i) => {
+          {[
+            ...ALL_VIDEOS.slice(0, HOME_VIDEO_COUNT),
+            // DEMO — 2026-08-25 미팅용. 미팅 후 이 블록만 삭제한다.
+            ...ALL_VIDEOS.filter((video) => video.title.startsWith('보디빌딩 규정포즈')),
+            // DEMO — 2026-08-25 미팅용. 미팅 후 이 블록만 삭제한다.
+          ].map((vid, i, homeVideos) => {
             const isFirst = i === 0
-            const isLast  = i === HOME_VIDEO_COUNT - 1
+            const isLast  = i === homeVideos.length - 1
             return (
               <div
                 key={i}
