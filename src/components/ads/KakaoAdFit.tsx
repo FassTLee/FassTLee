@@ -18,7 +18,7 @@ export function KakaoAdFit({ unit, width, height }: Props) {
     if (!ins) return
 
     const script = document.createElement('script')
-    script.src = '//t1.kakaocdn.net/kas/static/ba.min.js'
+    script.src = 'https://t1.kakaocdn.net/kas/static/ba.min.js'
     script.async = true
     ins.parentNode?.insertBefore(script, ins.nextSibling)
 

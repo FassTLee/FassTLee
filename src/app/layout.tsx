@@ -86,7 +86,7 @@ export default function RootLayout({
       <body>
         <Providers>{children}</Providers>
         <Analytics />
-        <Script src="//t1.kakaocdn.net/kas/static/ba.min.js" strategy="afterInteractive" />
+        <Script src="https://t1.kakaocdn.net/kas/static/ba.min.js" strategy="afterInteractive" />
       </body>
     </html>
   )
