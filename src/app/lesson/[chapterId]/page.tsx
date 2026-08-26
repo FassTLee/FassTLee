@@ -8,9 +8,26 @@ import { ChevronLeft, ChevronRight as ArrowRight, Check, Zap, ZoomIn, X } from '
 import { track } from '@vercel/analytics'
 import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
 import { PrivacyConsent } from '@/components/common/PrivacyConsent'
+import { LoadingState } from '@/components/common/LoadingState'
 import { useConsentGate } from '@/hooks/useConsentGate'
 import { getLearningTypeMeta, isLearningType, type LearningType } from '@/lib/learning-types'
 // Zap used in completion screen
+
+function waitForRetry(delayMs: number, signal: AbortSignal) {
+  return new Promise<void>((resolve) => {
+    const finish = () => {
+      signal.removeEventListener('abort', onAbort)
+      resolve()
+    }
+    const timeoutId = setTimeout(finish, delayMs)
+    const onAbort = () => {
+      clearTimeout(timeoutId)
+      finish()
+    }
+    signal.addEventListener('abort', onAbort, { once: true })
+    if (signal.aborted) onAbort()
+  })
+}
 
 const LEARNING_TYPE_KEY = 'kinepia_learning_type'
 const CERT_KEY    = 'kinepia_selected_cert'
@@ -122,7 +139,10 @@ export default function LessonPage() {
   const [certLabel, setCertLabel]       = useState('')
   const [subjectId, setSubjectId]       = useState<string | null>(null)
   const [loading, setLoading]           = useState(true)
+  const [loadError, setLoadError]       = useState(false)
   const [lessonSessionId, setLessonSessionId] = useState<string | null>(null)
+  const loadAbortRef = useRef<AbortController | null>(null)
+  const loadInFlightRef = useRef(false)
 
   /* ── 가입 동의 게이트 (2차) — 수집(세션·슬라이드 로그) 시작 전 차단 ──── */
   const consent = useConsentGate()
@@ -321,7 +341,12 @@ export default function LessonPage() {
     setSubjectId(localStorage.getItem(SUBJECT_KEY))
     const m = localStorage.getItem(MODE_KEY) as 'manual' | 'auto' | null
     if (m) setSlideMode(m)
-    fetchData()
+    void loadLesson()
+    return () => {
+      loadAbortRef.current?.abort()
+      loadAbortRef.current = null
+      loadInFlightRef.current = false
+    }
   }, [status, chapterId, consentBlocked]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── chapter-init: 첫 로드 시 chapter_stats row 생성 (없을 때만) ──────────
@@ -362,13 +387,16 @@ export default function LessonPage() {
       .catch(() => { enterSentRef.current = null }) // 실패 시 가드 해제 — 재시도 가능하게
   }, [session?.user?.id, chapterId, consentBlocked]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fetchData = async () => {
-    const [{ data: ch }, { data: qs }] = await Promise.all([
-      supabase.from('chapters').select('id, title, course_id, video_url, audio_url, image_url').eq('id', chapterId).single(),
+  const fetchData = async (signal: AbortSignal) => {
+    const [{ data: ch, error: chapterError }, { data: qs, error: cardsError }] = await Promise.all([
+      supabase.from('chapters').select('id, title, course_id, video_url, audio_url, image_url').eq('id', chapterId).abortSignal(signal).single(),
       supabase.from('chapter_cards')
         .select('id, chapter_id, question, options, answer_index, explanation, order_index, content_type, question_format, image_url, reference_text, key_points, exam_years, star_rating, linked_quiz_id')
-        .eq('chapter_id', chapterId),
+        .eq('chapter_id', chapterId)
+        .abortSignal(signal),
     ])
+    if (chapterError) throw chapterError
+    if (cardsError) throw cardsError
 
     if (ch) {
       setChapterTitle(ch.title)
@@ -376,11 +404,11 @@ export default function LessonPage() {
       if (ch.audio_url) setChapterAudioUrl(ch.audio_url)
       if (ch.course_id) {
         const { data: course } = await supabase
-          .from('courses').select('id, subject_id, description, certification_id').eq('id', ch.course_id).single()
+          .from('courses').select('id, subject_id, description, certification_id').eq('id', ch.course_id).abortSignal(signal).single()
         if (course?.description) setCourseDesc(course.description)
         if (course?.subject_id) {
           const { data: subj } = await supabase
-            .from('subjects').select('name').eq('id', course.subject_id).single()
+            .from('subjects').select('name').eq('id', course.subject_id).abortSignal(signal).single()
           if (subj?.name) setSubjectName(subj.name)
         }
         if (course?.certification_id) {
@@ -388,6 +416,7 @@ export default function LessonPage() {
             .from('certifications')
             .select('name')
             .eq('id', course.certification_id)
+            .abortSignal(signal)
             .single()
           if (cert?.name) setCertLabel(cert.name)
         }
@@ -418,7 +447,43 @@ export default function LessonPage() {
     setSlides(slideArray)
 
     track('lesson_started', { chapterId })
-    setLoading(false)
+  }
+
+  const loadLesson = async (manual = false) => {
+    if (loadInFlightRef.current) return
+    loadInFlightRef.current = true
+
+    const controller = new AbortController()
+    loadAbortRef.current = controller
+    setLoading(true)
+    setLoadError(false)
+
+    const maxAttempts = manual ? 1 : 3
+    try {
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          await fetchData(controller.signal)
+          if (controller.signal.aborted) return
+          setLoading(false)
+          return
+        } catch (error) {
+          if (controller.signal.aborted) return
+          if (attempt === maxAttempts - 1) {
+            console.warn('[lesson] required data load failed:', error)
+            setLoadError(true)
+            setLoading(false)
+          } else {
+            await waitForRetry(attempt === 0 ? 500 : 1500, controller.signal)
+            if (controller.signal.aborted) return
+          }
+        }
+      }
+    } finally {
+      if (loadAbortRef.current === controller) {
+        loadAbortRef.current = null
+        loadInFlightRef.current = false
+      }
+    }
   }
 
   /* ── 슬라이드 체류/상호작용 로깅 + Auto 타이머 ─────────── */
@@ -775,11 +840,11 @@ export default function LessonPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
+    return <LoadingState status="loading" />
+  }
+
+  if (loadError) {
+    return <LoadingState status="error" onRetry={() => { void loadLesson(true) }} />
   }
 
   const styleMeta    = getLearningTypeMeta(style)

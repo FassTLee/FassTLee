@@ -1,9 +1,26 @@
 'use client'
 
-import { useEffect, useState, useCallback, Suspense } from 'react'
+import { useEffect, useState, useCallback, useRef, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { ChevronLeft, X, CheckCircle2, XCircle, RotateCcw, BookOpen } from 'lucide-react'
+import { LoadingState } from '@/components/common/LoadingState'
+
+function waitForRetry(delayMs: number, signal: AbortSignal) {
+  return new Promise<void>((resolve) => {
+    const finish = () => {
+      signal.removeEventListener('abort', onAbort)
+      resolve()
+    }
+    const timeoutId = setTimeout(finish, delayMs)
+    const onAbort = () => {
+      clearTimeout(timeoutId)
+      finish()
+    }
+    signal.addEventListener('abort', onAbort, { once: true })
+    if (signal.aborted) onAbort()
+  })
+}
 
 // ── 상수 ──────────────────────────────────────────────
 const _MAIN_Q = 3   // 메인 모의고사 문제 수 (API 서버에서 3문제 고정)
@@ -82,7 +99,10 @@ function OralExamContent() {
   const [questions,  setQuestions]  = useState<OralQuestion[]>([])
   const [loading,    setLoading]    = useState(true)
   const [fetchError, setFetchError] = useState(false)
+  const [loadError,  setLoadError]  = useState(false)
   const [nextExamDate, setNextExamDate] = useState<string | null>(null)
+  const loadAbortRef = useRef<AbortController | null>(null)
+  const loadInFlightRef = useRef(false)
 
   // ── oral 자기평가 state ──────────────────────────
   const [userAnswers,     setUserAnswers]     = useState<Record<string, string>>({})
@@ -111,28 +131,73 @@ function OralExamContent() {
     if (!isPreview && status === 'unauthenticated') router.replace('/landing')
   }, [status, router, isPreview])
 
+  const loadQuestions = async (manual = false) => {
+    if (loadInFlightRef.current) return
+    loadInFlightRef.current = true
+
+    const controller = new AbortController()
+    loadAbortRef.current = controller
+    setLoading(true)
+    setLoadError(false)
+    setFetchError(false)
+
+    const url = `/api/v1/oral-exam/draw?courseId=${courseId}${isPreview ? '&count=2' : ''}`
+    const maxAttempts = manual ? 1 : 3
+    try {
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          const res = await fetch(url, { signal: controller.signal })
+          if (!res.ok) throw new Error(`oral-exam draw ${res.status}`)
+          const d = await res.json()
+          if (controller.signal.aborted) return
+
+          if (!d.questions?.length) {
+            setFetchError(true)
+            setLoading(false)
+            return
+          }
+          setQuestions(
+            d.questions.map((q: { id: string; question: string; options: string[]; explanation?: string; exam_years?: number[]; star_rating?: number | null }) => ({
+              ...q,
+              explanation:     q.explanation  ?? null,
+              originalIndices: q.options.map((_: string, i: number) => i),
+              exam_years:      q.exam_years   ?? [],
+              star_rating:     q.star_rating  ?? null,
+            })),
+          )
+          setLoading(false)
+          return
+        } catch (error) {
+          if (controller.signal.aborted) return
+          if (attempt === maxAttempts - 1) {
+            console.warn('[oral-exam] questions load failed:', error)
+            setLoadError(true)
+            setLoading(false)
+          } else {
+            await waitForRetry(attempt === 0 ? 500 : 1500, controller.signal)
+            if (controller.signal.aborted) return
+          }
+        }
+      }
+    } finally {
+      if (loadAbortRef.current === controller) {
+        loadAbortRef.current = null
+        loadInFlightRef.current = false
+      }
+    }
+  }
+
   // ── 문제 fetch ────────────────────────────────────
   useEffect(() => {
     if (!isPreview && status !== 'authenticated') return
     if (isPreview && status === 'loading') return
-    const url = `/api/v1/oral-exam/draw?courseId=${courseId}${isPreview ? '&count=2' : ''}`
-    fetch(url)
-      .then((r) => r.json())
-      .then((d) => {
-        if (!d.questions?.length) { setFetchError(true); setLoading(false); return }
-        setQuestions(
-          d.questions.map((q: { id: string; question: string; options: string[]; explanation?: string; exam_years?: number[]; star_rating?: number | null }) => ({
-            ...q,
-            explanation:     q.explanation  ?? null,
-            originalIndices: q.options.map((_, i) => i),
-            exam_years:      q.exam_years   ?? [],
-            star_rating:     q.star_rating  ?? null,
-          })),
-        )
-        setLoading(false)
-      })
-      .catch(() => { setFetchError(true); setLoading(false) })
-  }, [status, courseId, isPreview])
+    void loadQuestions()
+    return () => {
+      loadAbortRef.current?.abort()
+      loadAbortRef.current = null
+      loadInFlightRef.current = false
+    }
+  }, [status, courseId, isPreview]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── 다음 모의고사 일정 fetch (없으면 무시) ───────────
   useEffect(() => {
@@ -230,10 +295,10 @@ function OralExamContent() {
 
   // ════════════════════════════════════════════════
   // ── 로딩 ────────────────────────────────────────
-  if (loading) return (
-    <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
-    </div>
+  if (loading) return <LoadingState status="loading" />
+
+  if (loadError) return (
+    <LoadingState status="error" onRetry={() => { void loadQuestions(true) }} />
   )
 
   if (fetchError) return (
@@ -618,9 +683,7 @@ function OralExamContent() {
 export default function OralExamPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
-      </div>
+      <LoadingState status="loading" />
     }>
       <OralExamContent />
     </Suspense>

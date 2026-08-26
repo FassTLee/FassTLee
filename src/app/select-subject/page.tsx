@@ -1,12 +1,29 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Check, AlertCircle, ChevronLeft, Plus } from 'lucide-react'
 import { track } from '@vercel/analytics'
 import { BODYBUILDING_DEMO_CERT_ID } from '@/app/trainer/dashboard/_components/constants'
+import { LoadingState } from '@/components/common/LoadingState'
+
+function waitForRetry(delayMs: number, signal: AbortSignal) {
+  return new Promise<void>((resolve) => {
+    const finish = () => {
+      signal.removeEventListener('abort', onAbort)
+      resolve()
+    }
+    const timeoutId = setTimeout(finish, delayMs)
+    const onAbort = () => {
+      clearTimeout(timeoutId)
+      finish()
+    }
+    signal.addEventListener('abort', onAbort, { once: true })
+    if (signal.aborted) onAbort()
+  })
+}
 
 const CERT_KEY       = 'kinepia_selected_cert'
 const SUBJECTS_KEY   = 'kinepia_selected_subjects'
@@ -164,6 +181,9 @@ export default function SelectSubjectPage() {
   const [showWarning, setShowWarning] = useState(false)
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const loadAbortRef = useRef<AbortController | null>(null)
+  const loadInFlightRef = useRef(false)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -192,15 +212,22 @@ export default function SelectSubjectPage() {
       } catch { /* ignore */ }
     }
 
-    initDb(cert)
-  }, [status, router])
+    void loadSubjects(cert)
+    return () => {
+      loadAbortRef.current?.abort()
+      loadAbortRef.current = null
+      loadInFlightRef.current = false
+    }
+  }, [status, router]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const initDb = async (cert: string) => {
+  const initDb = async (cert: string, signal: AbortSignal): Promise<SubjectWithDb[]> => {
     const config = CERT_CONFIG[cert]
-    const { data: dbSubjects } = await supabase
+    const { data: dbSubjects, error: subjectsError } = await supabase
       .from('subjects')
       .select('id, name')
       .in('name', config.subjects.map((s) => s.name))
+      .abortSignal(signal)
+    if (subjectsError) throw subjectsError
 
     // cert slug(예: 'iipa-pilates-lv1') → certifications.id(uuid). 같은 subject를
     // 여러 자격증이 공유하는 경우(예: IIPA Lv1/Lv2) course_certifications으로
@@ -216,8 +243,8 @@ export default function SelectSubjectPage() {
       .eq('is_active', true)
     const { data: certRow } = await (
       cert === BODYBUILDING_DEMO_CERT_ID
-        ? certLookup.eq('id', cert)
-        : certLookup.eq('slug', cert)
+        ? certLookup.eq('id', cert).abortSignal(signal)
+        : certLookup.eq('slug', cert).abortSignal(signal)
     ).maybeSingle()
     const certUuid = certRow?.id ?? null
 
@@ -226,7 +253,7 @@ export default function SelectSubjectPage() {
         const db = dbSubjects?.find((d) => d.name === s.name) ?? null
         let chapterCount = 0
         if (db) {
-          const { data: courses } = await supabase.from('courses').select('id').eq('subject_id', db.id)
+          const { data: courses } = await supabase.from('courses').select('id').eq('subject_id', db.id).abortSignal(signal)
           let courseIds = (courses ?? []).map((c) => c.id)
           if (certUuid && courseIds.length > 0) {
             const { data: mappedCourses } = await supabase
@@ -234,6 +261,7 @@ export default function SelectSubjectPage() {
               .select('course_id')
               .eq('certification_id', certUuid)
               .in('course_id', courseIds)
+              .abortSignal(signal)
             // 매핑된 course가 하나라도 있을 때만 좁힘 — 없으면(미등록 자격증) 전체 사용
             const mappedIds = (mappedCourses ?? []).map((m) => m.course_id)
             if (mappedIds.length > 0) courseIds = mappedIds
@@ -242,14 +270,52 @@ export default function SelectSubjectPage() {
             const { count } = await supabase
               .from('chapters').select('id', { count: 'exact', head: true })
               .in('course_id', courseIds)
+              .abortSignal(signal)
             chapterCount = count ?? 0
           }
         }
         return { ...s, dbId: db?.id ?? null, chapterCount }
       })
     )
-    setMainWithDb(withDb)
-    setLoading(false)
+    return withDb
+  }
+
+  const loadSubjects = async (cert: string, manual = false) => {
+    if (loadInFlightRef.current) return
+    loadInFlightRef.current = true
+
+    const controller = new AbortController()
+    loadAbortRef.current = controller
+    setLoading(true)
+    setLoadError(false)
+
+    const maxAttempts = manual ? 1 : 3
+    try {
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          const withDb = await initDb(cert, controller.signal)
+          if (controller.signal.aborted) return
+          setMainWithDb(withDb)
+          setLoading(false)
+          return
+        } catch (error) {
+          if (controller.signal.aborted) return
+          if (attempt === maxAttempts - 1) {
+            console.warn('[select-subject] subjects load failed:', error)
+            setLoadError(true)
+            setLoading(false)
+          } else {
+            await waitForRetry(attempt === 0 ? 500 : 1500, controller.signal)
+            if (controller.signal.aborted) return
+          }
+        }
+      }
+    } finally {
+      if (loadAbortRef.current === controller) {
+        loadAbortRef.current = null
+        loadInFlightRef.current = false
+      }
+    }
   }
 
   // select-n 토글
@@ -339,10 +405,15 @@ export default function SelectSubjectPage() {
 
   // ── 로딩 ───────────────────────────────────────────────────────
   if (loading) {
+    return <LoadingState status="loading" />
+  }
+
+  if (loadError) {
     return (
-      <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
-      </div>
+      <LoadingState
+        status="error"
+        onRetry={() => { if (certId) void loadSubjects(certId, true) }}
+      />
     )
   }
 

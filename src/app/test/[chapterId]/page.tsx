@@ -1,11 +1,28 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
 import { track } from '@vercel/analytics'
 import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
+import { LoadingState } from '@/components/common/LoadingState'
+
+function waitForRetry(delayMs: number, signal: AbortSignal) {
+  return new Promise<void>((resolve) => {
+    const finish = () => {
+      signal.removeEventListener('abort', onAbort)
+      resolve()
+    }
+    const timeoutId = setTimeout(finish, delayMs)
+    const onAbort = () => {
+      clearTimeout(timeoutId)
+      finish()
+    }
+    signal.addEventListener('abort', onAbort, { once: true })
+    if (signal.aborted) onAbort()
+  })
+}
 
 const RESULT_KEY = 'kinepia_test_result'
 const CERT_KEY   = 'kinepia_selected_cert'
@@ -58,6 +75,7 @@ export default function TestPage() {
   const [answers, setAnswers]             = useState<Record<number, number>>({})
   const [showReview, setShowReview]       = useState(false)
   const [loading, setLoading]             = useState(true)
+  const [loadError, setLoadError]         = useState(false)
   const [showExitConfirm, setShowExitConfirm] = useState(false)
   const [submitting, setSubmitting]           = useState(false)
   const [certLabel, setCertLabel]         = useState('')
@@ -66,6 +84,8 @@ export default function TestPage() {
   const [userAnswers, setUserAnswers]         = useState<Record<string, string>>({})
   const [revealedAnswers, setRevealedAnswers] = useState<Set<string>>(new Set())
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const loadAbortRef = useRef<AbortController | null>(null)
+  const loadInFlightRef = useRef(false)
 
   // ── 2026-06-16 수정: 이탈 시 exit 누락 방지 — sendBeacon 추가 ──
   useEffect(() => {
@@ -105,7 +125,12 @@ export default function TestPage() {
     if (status === 'unauthenticated') { router.replace('/landing'); return }
     const cert = localStorage.getItem(CERT_KEY)
     if (cert && CERT_LABELS[cert]) setCertLabel(CERT_LABELS[cert])
-    fetchQuestions()
+    void fetchQuestions()
+    return () => {
+      loadAbortRef.current?.abort()
+      loadAbortRef.current = null
+      loadInFlightRef.current = false
+    }
   }, [status, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 챕터 테스트 진입 로깅
@@ -134,15 +159,50 @@ export default function TestPage() {
   }, [reportUrl, countdown]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── 2026-06-16 수정: P0-3 Supabase 직접 호출 → API 전환 (answer_index 클라이언트 노출 차단) ──
-  const fetchQuestions = async () => {
-    const res = await fetch(`/api/v1/chapter-test?chapterId=${chapterId}`)
-    if (!res.ok) { setLoading(false); return }
-    const { basic, oral }: { basic: Question[]; oral: Question[] } = await res.json()
-    const basicQ = shuffle(basic ?? []).slice(0, 5)
-    const oralQ  = shuffle(oral  ?? []).slice(0, 5)
-    setQuestions([...basicQ, ...oralQ])
-    track('chapter_test_started', { chapterId })
-    setLoading(false)
+  const fetchQuestions = async (manual = false) => {
+    if (loadInFlightRef.current) return
+    loadInFlightRef.current = true
+
+    const controller = new AbortController()
+    loadAbortRef.current = controller
+    setLoading(true)
+    setLoadError(false)
+
+    const maxAttempts = manual ? 1 : 3
+    try {
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          const res = await fetch(`/api/v1/chapter-test?chapterId=${chapterId}`, {
+            signal: controller.signal,
+          })
+          if (!res.ok) throw new Error(`chapter-test ${res.status}`)
+          const { basic, oral }: { basic: Question[]; oral: Question[] } = await res.json()
+          if (controller.signal.aborted) return
+
+          const basicQ = shuffle(basic ?? []).slice(0, 5)
+          const oralQ  = shuffle(oral  ?? []).slice(0, 5)
+          setQuestions([...basicQ, ...oralQ])
+          track('chapter_test_started', { chapterId })
+          setLoading(false)
+          return
+        } catch (error) {
+          if (controller.signal.aborted) return
+          if (attempt === maxAttempts - 1) {
+            console.warn('[test] questions load failed:', error)
+            setLoadError(true)
+            setLoading(false)
+          } else {
+            await waitForRetry(attempt === 0 ? 500 : 1500, controller.signal)
+            if (controller.signal.aborted) return
+          }
+        }
+      }
+    } finally {
+      if (loadAbortRef.current === controller) {
+        loadAbortRef.current = null
+        loadInFlightRef.current = false
+      }
+    }
   }
 
   const handleNext = () => {
@@ -247,11 +307,11 @@ export default function TestPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
+    return <LoadingState status="loading" />
+  }
+
+  if (loadError) {
+    return <LoadingState status="error" onRetry={() => { void fetchQuestions(true) }} />
   }
 
   // 테스트 완료 후 전면 광고 화면

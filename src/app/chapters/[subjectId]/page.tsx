@@ -1,11 +1,28 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { ChevronLeft, ChevronRight, BookOpen, Flame, Check, Lock } from 'lucide-react'
 import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
+import { LoadingState } from '@/components/common/LoadingState'
+
+function waitForRetry(delayMs: number, signal: AbortSignal) {
+  return new Promise<void>((resolve) => {
+    const finish = () => {
+      signal.removeEventListener('abort', onAbort)
+      resolve()
+    }
+    const timeoutId = setTimeout(finish, delayMs)
+    const onAbort = () => {
+      clearTimeout(timeoutId)
+      finish()
+    }
+    signal.addEventListener('abort', onAbort, { once: true })
+    if (signal.aborted) onAbort()
+  })
+}
 
 interface Chapter {
   id: string
@@ -65,7 +82,7 @@ export default function ChaptersPage() {
   const [statsMap, setStatsMap] = useState<Record<string, ChapterStat>>({})
   const [chapterStarMap, setChapterStarMap] = useState<Record<string, { fire: number; star: number }>>({})
   const [loading, setLoading] = useState(true)
-  const [fetchError, setFetchError] = useState<string | null>(null)
+  const [fetchError, setFetchError] = useState(false)
   const [accessCodeUsed, setAccessCodeUsed] = useState<string | null>(null)
   // ── 2026-06-24 추가 (P0-8): 만료 코드 접근 차단용 만료일 ──
   const [codeExpiresAt, setCodeExpiresAt] = useState<string | null>(null)
@@ -73,6 +90,8 @@ export default function ChaptersPage() {
   const [codeInput, setCodeInput]           = useState('')
   const [codeError, setCodeError]           = useState<string | null>(null)
   const [codeSubmitting, setCodeSubmitting] = useState(false)
+  const loadAbortRef = useRef<AbortController | null>(null)
+  const loadInFlightRef = useRef(false)
 
 
   // ── 2026-06-24 수정 (P0-8): 코드 존재 + (만료일 없으면 무기한 허용 OR 만료일 미래)일 때만 구독 인정 ──
@@ -101,11 +120,16 @@ export default function ChaptersPage() {
         if (pm.codeExpiresAt) setCodeExpiresAt(pm.codeExpiresAt)
       })
       .catch(() => {})
-    fetchData()
+    void loadChapters()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const userId = session?.user?.id ?? (session?.user as any)?.supabaseId ?? (session?.user as any)?.stableId
     console.log('[chapters] fetchStats userId:', userId)
     if (userId) fetchStats(userId)
+    return () => {
+      loadAbortRef.current?.abort()
+      loadAbortRef.current = null
+      loadInFlightRef.current = false
+    }
   }, [status, subjectId, certIdFilter]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // userId가 늦게 확보되는 경우 추가 보장
@@ -175,25 +199,18 @@ export default function ChaptersPage() {
     }
   }
 
-  const fetchData = async () => {
-    const timeoutId = setTimeout(() => {
-      setFetchError('불러오는 시간이 너무 오래 걸려요. 잠시 후 다시 시도해주세요.')
-      setLoading(false)
-    }, 15000)
-
+  const fetchData = async (signal: AbortSignal) => {
     try {
       // Step 1: subject 정보
       const { data: subjectData, error: subjectErr } = await supabase
         .from('subjects')
         .select('id, name')
         .eq('id', subjectId)
+        .abortSignal(signal)
         .single()
 
       if (subjectErr || !subjectData) {
-        clearTimeout(timeoutId)
-        setFetchError('과목 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')
-        setLoading(false)
-        return
+        throw subjectErr ?? new Error('Subject not found')
       }
 
       setSubject({ id: subjectData.id, name: subjectData.name })
@@ -205,12 +222,10 @@ export default function ChaptersPage() {
         .from('courses')
         .select('id, title, order_index')
         .eq('subject_id', subjectId)
+        .abortSignal(signal)
 
       if (coursesErr) {
-        clearTimeout(timeoutId)
-        setFetchError('강의 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')
-        setLoading(false)
-        return
+        throw coursesErr
       }
 
       let courseIds = (coursesData ?? []).map((c) => c.id)
@@ -239,6 +254,7 @@ export default function ChaptersPage() {
           .select('course_id')
           .eq('certification_id', certIdFilter)
           .in('course_id', courseIds)
+          .abortSignal(signal)
 
         if (!mapErr && mappedCourses && mappedCourses.length > 0) {
           const allowedCourseIds = new Set(mappedCourses.map((m) => m.course_id))
@@ -257,6 +273,7 @@ export default function ChaptersPage() {
           .select('course_id')
           .eq('certification_id', IIPA_LV1_CERT_ID)
           .in('course_id', courseIds)
+          .abortSignal(signal)
         setLv1MappedCourseIds(new Set((lv1Mapped ?? []).map((m) => m.course_id)))
       }
 
@@ -271,12 +288,10 @@ export default function ChaptersPage() {
 
         const { data: chaptersData, error: chaptersErr } = await chapQuery
           .order('order_index', { ascending: true })
+          .abortSignal(signal)
 
         if (chaptersErr) {
-          clearTimeout(timeoutId)
-          setFetchError('챕터 목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.')
-          setLoading(false)
-          return
+          throw chaptersErr
         }
 
         // 1차: course.order_index, 2차: chapter.order_index — 여러 course의
@@ -298,6 +313,7 @@ export default function ChaptersPage() {
         .in('chapter_id', chapterIds)
         .or('content_type.eq.lesson,question_format.eq.short_answer')
         .limit(1000)
+        .abortSignal(signal)
 
       const theorySet = new Set((theoryCheck ?? []).map((t) => t.chapter_id))
       // theory/oral 슬라이드가 있는 챕터만 표시 (없는 챕터는 숨김)
@@ -313,6 +329,7 @@ export default function ChaptersPage() {
           .select('chapter_id, star_rating')
           .in('chapter_id', finalIds)
           .in('star_rating', [4, 5])
+          .abortSignal(signal)
         if (starData) {
           const starAcc: Record<string, { fire: number; star: number }> = {}
           for (const row of starData) {
@@ -324,12 +341,66 @@ export default function ChaptersPage() {
         }
       }
 
-      clearTimeout(timeoutId)
+    } catch (error) {
+      throw error
+    }
+  }
+
+  const loadChapters = async (manual = false) => {
+    if (loadInFlightRef.current) return
+    loadInFlightRef.current = true
+
+    const controller = new AbortController()
+    loadAbortRef.current = controller
+    setLoading(true)
+    setFetchError(false)
+
+    const maxAttempts = manual ? 1 : 3
+    let timedOut = false
+    const timeoutId = setTimeout(() => {
+      timedOut = true
+      controller.abort()
+    }, 15000)
+    const showTimeoutError = () => {
+      console.warn('[chapters] required data load timed out after 15 seconds')
+      setFetchError(true)
       setLoading(false)
-    } catch {
+    }
+
+    try {
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          await fetchData(controller.signal)
+          if (controller.signal.aborted) {
+            if (timedOut) showTimeoutError()
+            return
+          }
+          setLoading(false)
+          return
+        } catch (error) {
+          if (controller.signal.aborted) {
+            if (timedOut) showTimeoutError()
+            return
+          }
+          if (attempt === maxAttempts - 1) {
+            console.warn('[chapters] required data load failed:', error)
+            setFetchError(true)
+            setLoading(false)
+          } else {
+            await waitForRetry(attempt === 0 ? 500 : 1500, controller.signal)
+            if (controller.signal.aborted) {
+              if (timedOut) showTimeoutError()
+              return
+            }
+          }
+        }
+      }
+    } finally {
       clearTimeout(timeoutId)
-      setFetchError('네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요.')
-      setLoading(false)
+      if (loadAbortRef.current === controller) {
+        loadAbortRef.current = null
+        loadInFlightRef.current = false
+      }
     }
   }
 
@@ -356,33 +427,11 @@ export default function ChaptersPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
+    return <LoadingState status="loading" />
   }
 
   if (fetchError) {
-    return (
-      <div className="min-h-screen bg-[#F5F5F3] flex flex-col items-center justify-center p-6 text-center">
-        <div className="text-[40px] mb-3">⚠️</div>
-        <p className="text-[15px] font-bold text-[#1A1A1A] mb-2">불러오기 실패</p>
-        <p className="text-[13px] text-[#6B6B6B] mb-6 leading-relaxed">{fetchError}</p>
-        <button
-          onClick={() => { setFetchError(null); setLoading(true); fetchData() }}
-          className="px-6 py-3 bg-[#00A651] text-white rounded-2xl text-[14px] font-bold"
-        >
-          다시 시도
-        </button>
-        <button
-          onClick={() => router.push('/trainer/dashboard')}
-          className="mt-3 px-6 py-3 text-[13px] text-[#6B6B6B]"
-        >
-          홈으로
-        </button>
-      </div>
-    )
+    return <LoadingState status="error" onRetry={() => { void loadChapters(true) }} />
   }
 
   const visibleChapters = chapters.filter(

@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { Heart as _Heart } from 'lucide-react'
 import BottomTabBar from '@/components/common/BottomTabBar'
 import { PrivacyConsent } from '@/components/common/PrivacyConsent'
+import { LoadingState } from '@/components/common/LoadingState'
 import { useConsentGate } from '@/hooks/useConsentGate'
 import { isLearningType } from '@/lib/learning-types'
 import { DashboardProvider, type DashboardContextType } from './_components/DashboardContext'
@@ -17,6 +18,22 @@ import ProfileTab from './_components/ProfileTab'
 import DashboardModals from './_components/DashboardModals'
 import type { CodeResultData } from './_components/constants'
 import { getNextExamDate } from './_components/constants'
+
+function waitForRetry(delayMs: number, signal: AbortSignal) {
+  return new Promise<void>((resolve) => {
+    const finish = () => {
+      signal.removeEventListener('abort', onAbort)
+      resolve()
+    }
+    const timeoutId = setTimeout(finish, delayMs)
+    const onAbort = () => {
+      clearTimeout(timeoutId)
+      finish()
+    }
+    signal.addEventListener('abort', onAbort, { once: true })
+    if (signal.aborted) onAbort()
+  })
+}
 
 type Tab = 'home' | 'classroom' | 'exam' | 'profile'
 
@@ -221,9 +238,7 @@ function MarqueeText({ text, className }: { text: string; className?: string }) 
 export default function DashboardPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
-      </div>
+      <LoadingState status="loading" />
     }>
       <DashboardContent />
     </Suspense>
@@ -280,6 +295,9 @@ function DashboardContent() {
     setTab(tabParam)
   }, [tabParam, session, status])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
+  const loadAbortRef = useRef<AbortController | null>(null)
+  const loadInFlightRef = useRef(false)
 
   /* ── Common ──────────────────────────────────────────────────────── */
   const [certLabel, setCertLabel] = useState('')
@@ -435,13 +453,19 @@ function DashboardContent() {
     if (status === 'loading') return
     if (status === 'unauthenticated') {
       setLoading(false)  // 비로그인도 대시보드 렌더링 허용
+      setLoadError(false)
       return
     }
     if ((session as { error?: string } | null)?.error === 'RefreshTokenExpired') {
       signOut({ callbackUrl: '/trainer/dashboard' })
       return
     }
-    initCommon()
+    void loadDashboard()
+    return () => {
+      loadAbortRef.current?.abort()
+      loadAbortRef.current = null
+      loadInFlightRef.current = false
+    }
   }, [status, session, router]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── 구술/실기 과목별 star_rating 집계 ──────────────────────────────────
@@ -539,7 +563,63 @@ function DashboardContent() {
     }
   }, [userCerts]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const initCommon = async () => {
+  const loadDashboard = async (manual = false) => {
+    if (loadInFlightRef.current) return
+    loadInFlightRef.current = true
+
+    const controller = new AbortController()
+    loadAbortRef.current = controller
+    setLoading(true)
+    setLoadError(false)
+
+    const maxAttempts = manual ? 1 : 3
+    let pm: Record<string, unknown> | null = null
+
+    try {
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          const res = await fetch('/api/v1/profile-me', {
+            cache: 'no-store',
+            signal: controller.signal,
+          })
+          if (!res.ok) throw new Error(`profile-me ${res.status}`)
+          pm = await res.json()
+          if (controller.signal.aborted) return
+          break
+        } catch (error) {
+          if (controller.signal.aborted) return
+          if (attempt === maxAttempts - 1) {
+            console.warn('[dashboard] required profile load failed:', error)
+            setLoadError(true)
+            setLoading(false)
+            return
+          } else {
+            await waitForRetry(attempt === 0 ? 500 : 1500, controller.signal)
+            if (controller.signal.aborted) return
+          }
+        }
+      }
+
+      if (!pm || controller.signal.aborted) return
+
+      try {
+        await hydrateDashboard(pm, controller.signal)
+      } catch (error) {
+        // profile-me 외 초기화 조회는 기존처럼 fail-open으로 유지한다.
+        if (!controller.signal.aborted) console.warn('[initCommon] optional load failed:', error)
+      }
+      if (!controller.signal.aborted) setLoading(false)
+    } finally {
+      if (loadAbortRef.current === controller) {
+        loadAbortRef.current = null
+        loadInFlightRef.current = false
+      }
+    }
+  }
+
+  const initCommon = () => loadDashboard()
+
+  const hydrateDashboard = async (pm: Record<string, unknown>, signal: AbortSignal) => {
     const cert     = localStorage.getItem(CERT_KEY)
     const subs     = localStorage.getItem(SUBJECTS_KEY)
     const learningTypeVal = localStorage.getItem(LEARNING_TYPE_KEY)
@@ -560,30 +640,27 @@ function DashboardContent() {
       setCertSlugToId(map)
     })
 
-    // ── 병렬 fetch: profile-me · user-certifications · chapter-stats ──
-    // 세 API는 서로 의존 관계 없으므로 동시에 요청해 왕복 시간 단축
-    // eslint-disable-next-line prefer-const
-    let pm: Record<string, unknown> = {}
+    // ── 보조 병렬 fetch: user-certifications · chapter-stats ──
+    // 두 API는 서로 의존 관계 없으므로 동시에 요청해 왕복 시간 단축
     // eslint-disable-next-line prefer-const
     let certsData: { data?: UserCertification[] } = {}
     // eslint-disable-next-line prefer-const
     let statsRawData: { chapter_stats?: ChapterStat[] } = {}
     try {
-      const [pmRes, certsRes, statsRes] = await Promise.all([
-        fetch('/api/v1/profile-me', { cache: 'no-store' }),
+      const [certsRes, statsRes] = await Promise.all([
         userId
-          ? fetch(`/api/v1/user-certifications?userId=${encodeURIComponent(userId)}`)
+          ? fetch(`/api/v1/user-certifications?userId=${encodeURIComponent(userId)}`, { signal })
           : Promise.resolve(new Response(JSON.stringify({}))),
         userId
-          ? fetch(`/api/v1/report?userId=${encodeURIComponent(userId)}`, { cache: 'no-store' })
+          ? fetch(`/api/v1/report?userId=${encodeURIComponent(userId)}`, { cache: 'no-store', signal })
           : Promise.resolve(new Response(JSON.stringify({}))),
       ])
-      ;[pm, certsData, statsRawData] = await Promise.all([
-        pmRes.json(),
+      ;[certsData, statsRawData] = await Promise.all([
         certsRes.json(),
         statsRes.json(),
       ])
     } catch (e) { console.warn('[initCommon] parallel fetch 실패', e) }
+    if (signal.aborted) return
 
     // ── profile-me 결과 처리 ──
     let loadedExamDate: string | null = null
@@ -663,7 +740,7 @@ function DashboardContent() {
       try {
         const certKey = Object.entries(CERT_LABELS).find(([, v]) => v === loadedCertType)?.[0] ?? ''
         if (certKey) {
-          const csRes  = await fetch(`/api/v1/certification-subjects?certKey=${encodeURIComponent(certKey)}`)
+          const csRes  = await fetch(`/api/v1/certification-subjects?certKey=${encodeURIComponent(certKey)}`, { signal })
           const csData = await csRes.json()
           const autoNames: string[] = (csData.subjects ?? []).map((s: { name: string }) => s.name)
           if (autoNames.length > 0) selectedNames = autoNames
@@ -680,7 +757,7 @@ function DashboardContent() {
 
     // ② profile-settings 조회 (exam_target_date 등 학습 설정 — profiles 단일 소스)
     const [psRes] = await Promise.allSettled([
-      fetch(`/api/v1/profile-settings?userId=${encodeURIComponent(userId)}`, { cache: 'no-store' }),
+      fetch(`/api/v1/profile-settings?userId=${encodeURIComponent(userId)}`, { cache: 'no-store', signal }),
     ])
 
     // profile-settings 처리
@@ -1043,7 +1120,7 @@ function DashboardContent() {
 
     // 건강운동관리사 과목 동적 조회 (certification_subjects DB 기준)
     try {
-      const hcsRes  = await fetch('/api/v1/certification-subjects?cert_id=feddb13b-91c9-461b-a6d5-a1efb0448f17')
+      const hcsRes  = await fetch('/api/v1/certification-subjects?cert_id=feddb13b-91c9-461b-a6d5-a1efb0448f17', { signal })
       const hcsData = await hcsRes.json()
       if (Array.isArray(hcsData.subjects) && hcsData.subjects.length > 0) {
         setHealthCertSubjects(hcsData.subjects as { id: string; name: string }[])
@@ -1056,7 +1133,6 @@ function DashboardContent() {
       setShowCodePopup(true)
     }
 
-    setLoading(false)
   }
 
   const loadClassroom = async () => {
@@ -1528,11 +1604,11 @@ function DashboardContent() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
+    return <LoadingState status="loading" />
+  }
+
+  if (loadError) {
+    return <LoadingState status="error" onRetry={() => { void loadDashboard(true) }} />
   }
 
   // DashboardModals로 이동, 분리 완료 후 일괄 제거 예정

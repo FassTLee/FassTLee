@@ -4,6 +4,23 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { ChevronLeft, ChevronRight, X, Clock } from 'lucide-react'
+import { LoadingState } from '@/components/common/LoadingState'
+
+function waitForRetry(delayMs: number, signal: AbortSignal) {
+  return new Promise<void>((resolve) => {
+    const finish = () => {
+      signal.removeEventListener('abort', onAbort)
+      resolve()
+    }
+    const timeoutId = setTimeout(finish, delayMs)
+    const onAbort = () => {
+      clearTimeout(timeoutId)
+      finish()
+    }
+    signal.addEventListener('abort', onAbort, { once: true })
+    if (signal.aborted) onAbort()
+  })
+}
 
 const TOTAL_MINUTES  = 160
 
@@ -54,21 +71,66 @@ export default function ExamPage() {
 
   const timerRef      = useRef<ReturnType<typeof setInterval> | null>(null)
   const submittingRef = useRef(false)
+  const loadAbortRef  = useRef<AbortController | null>(null)
+  const loadInFlightRef = useRef(false)
+
+  const loadQuestions = async (manual = false) => {
+    if (loadInFlightRef.current) return
+    loadInFlightRef.current = true
+
+    const controller = new AbortController()
+    loadAbortRef.current = controller
+    setFetchError(false)
+    setStep('loading')
+
+    const maxAttempts = manual ? 1 : 3
+    try {
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          const res = await fetch('/api/v1/exam-questions', {
+            cache: 'no-store',
+            signal: controller.signal,
+          })
+          if (!res.ok) throw new Error(`exam-questions ${res.status}`)
+          const d = await res.json()
+          if (controller.signal.aborted) return
+
+          // 교시 순서 정렬
+          const raw: ExamSubject[] = d.subjects ?? []
+          const sorted = SUBJECT_ORDER
+            .map((name) => raw.find((s) => s.name === name))
+            .filter((s): s is ExamSubject => !!s && s.questions.length > 0)
+          setSubjects(sorted.length > 0 ? sorted : raw.filter((s) => s.questions.length > 0))
+          setStep('intro')
+          return
+        } catch (error) {
+          if (controller.signal.aborted) return
+          if (attempt === maxAttempts - 1) {
+            console.warn('[exam] questions load failed:', error)
+            setFetchError(true)
+            setStep('intro')
+          } else {
+            await waitForRetry(attempt === 0 ? 500 : 1500, controller.signal)
+            if (controller.signal.aborted) return
+          }
+        }
+      }
+    } finally {
+      if (loadAbortRef.current === controller) {
+        loadAbortRef.current = null
+        loadInFlightRef.current = false
+      }
+    }
+  }
 
   // ── 문제 로드 ────────────────────────────────────────────────────
   useEffect(() => {
-    fetch('/api/v1/exam-questions', { cache: 'no-store' })
-      .then((r) => r.json())
-      .then((d) => {
-        // 교시 순서 정렬
-        const raw: ExamSubject[] = d.subjects ?? []
-        const sorted = SUBJECT_ORDER
-          .map((name) => raw.find((s) => s.name === name))
-          .filter((s): s is ExamSubject => !!s && s.questions.length > 0)
-        setSubjects(sorted.length > 0 ? sorted : raw.filter((s) => s.questions.length > 0))
-        setStep('intro')
-      })
-      .catch(() => { setFetchError(true); setStep('intro') })
+    void loadQuestions()
+    return () => {
+      loadAbortRef.current?.abort()
+      loadAbortRef.current = null
+      loadInFlightRef.current = false
+    }
   }, [])
 
   // ── 타이머 ───────────────────────────────────────────────────────
@@ -199,22 +261,17 @@ export default function ExamPage() {
 
   // ══════════════════════════════════════════════════════════════════
   // LOADING
+  if (fetchError) {
+    return <LoadingState status="error" onRetry={() => { void loadQuestions(true) }} />
+  }
+
   if (step === 'loading') {
-    return (
-      <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
+    return <LoadingState status="loading" />
   }
 
   // SUBMITTING
   if (step === 'submitting') {
-    return (
-      <div className="min-h-screen bg-[#F5F5F3] flex flex-col items-center justify-center gap-4">
-        <div className="w-10 h-10 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
-        <p className="text-[15px] font-bold text-[#1A1A1A]">결과 저장 중...</p>
-      </div>
-    )
+    return <LoadingState status="loading" message="결과 저장 중..." />
   }
 
   // ══════════════════════════════════════════════════════════════════
@@ -298,16 +355,9 @@ export default function ExamPage() {
             </p>
           </div>
 
-          {fetchError && (
-            <div className="bg-[#E24B4A]/10 border border-[#E24B4A]/20 rounded-2xl p-4 text-center">
-              <p className="text-[13px] font-bold text-[#E24B4A]">문제를 불러오지 못했습니다</p>
-              <p className="text-[12px] text-[#6B6B6B] mt-1">잠시 후 다시 시도해주세요.</p>
-            </div>
-          )}
-
           <button
             onClick={() => setStep('exam')}
-            disabled={fetchError || subjects.length === 0}
+            disabled={subjects.length === 0}
             className="w-full py-4 bg-[#00A651] disabled:opacity-40 text-white rounded-2xl text-[16px] font-bold"
           >
             시험 시작

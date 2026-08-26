@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -8,6 +8,7 @@ import { Check, X, ChevronLeft } from 'lucide-react'
 import { SignupPromptPopup } from '@/components/common/SignupPromptPopup'
 import { InstallPromptBanner, useInstallBannerVisible } from '@/components/common/InstallPromptBanner'
 import { KakaoAdFit } from '@/components/ads/KakaoAdFit'
+import { LoadingState } from '@/components/common/LoadingState'
 
 const RESULT_KEY  = 'kinepia_test_result'
 const SUBJECT_KEY = 'kinepia_current_subject_id'
@@ -53,6 +54,8 @@ export default function ReportPage() {
   const [codeInput, setCodeInput]             = useState('')
   const [codeError, setCodeError]             = useState<string | null>(null)
   const [codeSubmitting, setCodeSubmitting]   = useState(false)
+  const loadAbortRef = useRef<AbortController | null>(null)
+  const loadInFlightRef = useRef(false)
 
   // 배너 노출 판정 — 배너 컴포넌트와 동일한 훅을 사용(단일 소스). 코드 팝업과는 배타 마운트이므로
   // 실제 배너 표시 = 판정 통과 && 코드 팝업 미표시. 이 값으로 스크롤 하단 여백을 조건부 적용한다.
@@ -73,25 +76,36 @@ export default function ReportPage() {
       if (parsed.chapterId === chapterId) setResult(parsed)
     }
     setSubjectId(localStorage.getItem(SUBJECT_KEY))
-    fetchAll(session?.user?.id ?? null)
+    void loadReport(session?.user?.id ?? null)
+    return () => {
+      loadAbortRef.current?.abort()
+      loadAbortRef.current = null
+      loadInFlightRef.current = false
+    }
   }, [status, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const fetchAll = async (userId: string | null) => {
-    await Promise.all([fetchLessonStat(userId), fetchNextChapter()])
-    fetch('/api/v1/profile-me', { cache: 'no-store' })
+  const fetchAll = async (userId: string | null, signal: AbortSignal) => {
+    await Promise.all([
+      fetchLessonStat(userId, signal),
+      fetchNextChapter(signal).catch((error) => {
+        if (!signal.aborted) console.warn('[report] next chapter load failed:', error)
+      }),
+    ])
+    fetch('/api/v1/profile-me', { cache: 'no-store', signal })
       .then((r) => r.json())
       .then((pm) => { if (pm?.accessCodeUsed) setAccessCodeUsed(pm.accessCodeUsed) })
       .catch(() => {})
-    setLoading(false)
   }
 
-  const fetchNextChapter = async () => {
-    const { data: chapter } = await supabase
-      .from('chapters').select('course_id, order_index').eq('id', chapterId).single()
+  const fetchNextChapter = async (signal: AbortSignal) => {
+    const { data: chapter, error: chapterError } = await supabase
+      .from('chapters').select('course_id, order_index').eq('id', chapterId).abortSignal(signal).single()
+    if (chapterError) throw chapterError
     if (!chapter) return
-    const { data: siblings } = await supabase
+    const { data: siblings, error: siblingsError } = await supabase
       .from('chapters').select('id, order_index')
-      .eq('course_id', chapter.course_id).order('order_index', { ascending: true })
+      .eq('course_id', chapter.course_id).order('order_index', { ascending: true }).abortSignal(signal)
+    if (siblingsError) throw siblingsError
     if (siblings) {
       const idx = siblings.findIndex((c) => c.id === chapterId)
       if (idx !== -1 && idx + 1 < siblings.length) setNextChapterId(siblings[idx + 1].id)
@@ -121,25 +135,42 @@ export default function ReportPage() {
     }
   }
 
-  const fetchLessonStat = async (userId: string | null) => {
+  const fetchLessonStat = async (userId: string | null, signal: AbortSignal) => {
     try {
       const url  = userId ? `/api/v1/report?userId=${encodeURIComponent(userId)}` : '/api/v1/report'
-      const res  = await fetch(url)
+      const res  = await fetch(url, { signal })
+      if (!res.ok) return
       const data = await res.json()
       const stat = (data.chapter_stats ?? []).find(
         (s: LessonStat & { chapter_id: string }) => s.chapter_id === chapterId
       )
       if (stat) setLessonStat(stat)
-    } catch { /* ignore */ }
+    } catch { /* fail-open */ }
+  }
+
+  const loadReport = async (userId: string | null) => {
+    if (loadInFlightRef.current) return
+    loadInFlightRef.current = true
+
+    const controller = new AbortController()
+    loadAbortRef.current = controller
+    setLoading(true)
+
+    try {
+      await fetchAll(userId, controller.signal)
+      if (controller.signal.aborted) return
+      setLoading(false)
+    } finally {
+      if (loadAbortRef.current === controller) {
+        loadAbortRef.current = null
+        loadInFlightRef.current = false
+      }
+    }
   }
 
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-[#F5F5F3] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[#00A651] border-t-transparent rounded-full animate-spin" />
-      </div>
-    )
+    return <LoadingState status="loading" />
   }
 
   // 테스트 결과 계산
