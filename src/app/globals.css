@@ -91,3 +91,57 @@
   .text-tertiary { color: #ADADAD; }
   .highlight { background-color: #FFE066; }
 }
+
+.kinepia-loading-mark {
+  position: relative;
+  display: grid;
+  width: 96px;
+  height: 96px;
+  place-items: center;
+}
+
+.kinepia-loading-icon {
+  position: relative;
+  z-index: 1;
+  animation: kinepia-loading-pulse 1.6s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.kinepia-loading-ring {
+  position: absolute;
+  inset: 4px;
+  border: 3px solid rgb(0 166 81 / 20%);
+  border-top-color: #00A651;
+  border-right-color: #00A651;
+  border-radius: 9999px;
+  animation: kinepia-loading-ring-spin 1.2s linear infinite;
+}
+
+@keyframes kinepia-loading-pulse {
+  0%, 100% {
+    opacity: 0.45;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes kinepia-loading-ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kinepia-loading-icon,
+  .kinepia-loading-ring {
+    animation: none;
+  }
+
+  .kinepia-loading-icon {
+    opacity: 1;
+    transform: none;
+  }
+}
