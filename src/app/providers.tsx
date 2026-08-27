@@ -38,6 +38,8 @@ interface PwaInstallContextValue {
   canInstall: boolean
   // 이미 설치되어 standalone으로 실행 중인지
   isStandalone: boolean
+  // iOS 계열 브라우저인지 (navigator.standalone 지원 여부)
+  isIOS: boolean
   // 쿨다운 통과 여부 (거절 2회/14일 규칙) — 배너 노출 판정의 단일 소스
   cooldownOk: boolean
   // 보관한 이벤트의 prompt() 호출 후 userChoice 반환. 호출 후 보관값은 비운다.
@@ -49,6 +51,7 @@ interface PwaInstallContextValue {
 const PwaInstallContext = createContext<PwaInstallContextValue>({
   canInstall: false,
   isStandalone: false,
+  isIOS: false,
   cooldownOk: false,
   promptInstall: async () => null,
   dismissBanner: () => {},
@@ -64,6 +67,7 @@ export function usePwaInstall(): PwaInstallContextValue {
 function PwaInstallProvider({ children }: { children: React.ReactNode }) {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null)
   const [isStandalone, setIsStandalone] = useState(false)
+  const [isIOS, setIsIOS] = useState(false)
   // localStorage 접근은 클라이언트에서만 — 초기 false로 두고 마운트 후 평가(하이드레이션 안전)
   const [cooldownOk, setCooldownOk] = useState(false)
 
@@ -74,8 +78,10 @@ function PwaInstallProvider({ children }: { children: React.ReactNode }) {
     const detectStandalone = () => {
       const mm = window.matchMedia?.('(display-mode: standalone)').matches ?? false
       // iOS Safari 전용 플래그
-      const iosStandalone =
-        (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+      const iosNavigator = window.navigator as Navigator & { standalone?: boolean }
+      const iosDevice = 'standalone' in iosNavigator
+      const iosStandalone = iosNavigator.standalone === true
+      setIsIOS(iosDevice)
       setIsStandalone(Boolean(mm || iosStandalone))
     }
     detectStandalone()
@@ -133,7 +139,7 @@ function PwaInstallProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <PwaInstallContext.Provider
-      value={{ canInstall: deferred !== null, isStandalone, cooldownOk, promptInstall, dismissBanner }}
+      value={{ canInstall: deferred !== null, isStandalone, isIOS, cooldownOk, promptInstall, dismissBanner }}
     >
       {children}
     </PwaInstallContext.Provider>
