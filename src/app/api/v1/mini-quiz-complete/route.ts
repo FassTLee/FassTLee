@@ -2,30 +2,48 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
+import { recordAnswer } from '@/lib/wrongAnswerStore'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   if (!isSupabaseAdminConfigured) {
-    return NextResponse.json({ ok: true, saved: false })
+    return NextResponse.json({ ok: true, saved: false, logId: null })
   }
 
   const session = await getServerSession(authOptions)
   const body = await req.json()
-  const { chapterId, subjectId, questionId, correct, certId } = body as {
-    chapterId:  string
-    subjectId:  string
-    questionId: string
-    correct:    boolean
-    userId?:    string
-    certId?:    string | null
+  const {
+    chapterId,
+    subjectId,
+    questionId,
+    correct,
+    selectedIndex,
+    certId,
+    responseTime,
+    quizEnteredAt,
+    afterWrongAction,
+    explanationViewed,
+  } = body as {
+    chapterId:          string
+    subjectId:          string
+    questionId:         string
+    correct:            boolean
+    selectedIndex?:     number
+    userId?:            string
+    certId?:            string | null
+    responseTime?:      number | null
+    quizEnteredAt?:     string | null
+    afterWrongAction?:  string | null
+    explanationViewed?: boolean | null
   }
 
   // 서버 session 우선, 없으면 클라이언트 userId fallback
   const userId = session?.user?.id ?? body.userId
   if (!chapterId || !userId || !questionId) {
-    return NextResponse.json({ ok: true, saved: false })
+    return NextResponse.json({ ok: true, saved: false, logId: null })
   }
+  const normalizedSelectedIndex = typeof selectedIndex === 'number' ? selectedIndex : -1
 
   // ── 1. chapter_stats: mini_quiz_correct / mini_quiz_total 업데이트 ────
   // certId가 있으면 그 자격증 문맥의 행만, 없으면 certification_id가 NULL인 행만 조회
@@ -83,5 +101,28 @@ export async function POST(req: NextRequest) {
     { onConflict: 'user_id,question_id' }
   )
 
-  return NextResponse.json({ ok: true, saved: true })
+  const { data: questionCard } = await supabaseAdmin
+    .from('chapter_cards')
+    .select('answer_index')
+    .eq('id', questionId)
+    .maybeSingle()
+
+  const enteredAt = quizEnteredAt ? new Date(quizEnteredAt) : null
+  const { logId } = await recordAnswer({
+    userId,
+    questionId,
+    chapterId,
+    surface:            'mini_quiz',
+    selectedIndex:      normalizedSelectedIndex,
+    correctIndex:       questionCard?.answer_index?.[0] ?? null,
+    isCorrect:          correct,
+    answeredAt:         new Date(),
+    responseTime:       responseTime ?? null,
+    quizEnteredAt:      enteredAt && !Number.isNaN(enteredAt.getTime()) ? enteredAt : null,
+    afterWrongAction:   afterWrongAction ?? null,
+    retryCount:         null,
+    explanationViewed:  explanationViewed ?? null,
+  })
+
+  return NextResponse.json({ ok: true, saved: true, logId })
 }

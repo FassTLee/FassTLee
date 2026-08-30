@@ -232,6 +232,17 @@ function OralExamContent() {
 
     const correct = activeSelected === 0   // 알았다=true, 오답노트=false
 
+    if (!isPreview) {
+      fetch('/api/v1/oral-exam/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          questionId: currentQ.id,
+          isCorrect: correct,
+        }),
+      }).catch(() => {})
+    }
+
     const result: QResult = {
       question:      currentQ,
       selectedIndex: activeSelected,

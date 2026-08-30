@@ -249,6 +249,7 @@ export default function LessonPage() {
           mode: 'update',
           logId: p.logId,
           quizBridgeTime: Math.round((Date.now() - p.submittedAt) / 1000),
+          afterWrongAction: 'exit',
           explanationViewed: p.explanationViewed,
         })
       )
@@ -576,6 +577,7 @@ export default function LessonPage() {
         mode: 'update',
         logId: p.logId,
         quizBridgeTime: Math.round((Date.now() - p.submittedAt) / 1000), // 제출~다음 카드(초)
+        afterWrongAction: 'next',
         explanationViewed: p.explanationViewed,
       }),
     }).catch(() => {})
@@ -741,36 +743,13 @@ export default function LessonPage() {
     if (correct) miniCorrectRef.current += 1
 
     // ── per-attempt 로그용 정보 보관(제출 시점) — 다음 카드 이탈 시 quiz_performance_logs로 flush ──
-    // ── 배치3: 제출 즉시 quiz_performance_logs INSERT (attempt 확정 — 이탈해도 유실 방지) ──
+    // ── mini-quiz-complete의 recordAnswer가 attempt INSERT 후 logId를 반환 ──
     const submittedAt = Date.now()
     const responseTime = quizEnteredAtRef.current != null
       ? Math.round((submittedAt - quizEnteredAtRef.current) / 1000) // 진입~제출(초)
       : null
     const explanationViewed0 = correct ? false : true // 오답=해설 자동노출→true, 정답=아직 "해설 보기" 안 누름
     pendingQuizLogRef.current = { logId: null, submittedAt, explanationViewed: explanationViewed0 }
-
-    if (session?.user?.id) {
-      fetch('/api/v1/quiz-performance-log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mode:         'insert',
-          chapterId,
-          questionId:   miniQ.id,
-          questionType: 'mini_quiz',
-          isCorrect:    correct,
-          answerGiven:  miniSelected,   // 고른 선지 인덱스(0=A / 1=B)
-          responseTime,
-          explanationViewed: explanationViewed0,
-          quizEnteredAt: quizEnteredAtRef.current != null
-            ? new Date(quizEnteredAtRef.current).toISOString() : null,
-          // quizBridgeTime은 제출 시점엔 없음 → 전환/이탈 시 UPDATE로 채움
-        }),
-      })
-        .then((r) => r.json())
-        .then((d) => { if (d?.id && pendingQuizLogRef.current) pendingQuizLogRef.current.logId = d.id })
-        .catch(() => {})
-    }
 
     fetch('/api/v1/mini-quiz-complete', {
       method: 'POST',
@@ -780,10 +759,23 @@ export default function LessonPage() {
         subjectId:  localStorage.getItem(SUBJECT_KEY) ?? '',
         questionId: miniQ.id,
         correct,
+        selectedIndex: miniSelected,
         userId: session?.user?.id ?? '',
         certId,
+        responseTime,
+        quizEnteredAt: quizEnteredAtRef.current != null
+          ? new Date(quizEnteredAtRef.current).toISOString() : null,
+        afterWrongAction: correct ? null : 'explanation',
+        explanationViewed: explanationViewed0,
       }),
-    }).catch(() => {})
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.logId && pendingQuizLogRef.current) {
+          pendingQuizLogRef.current.logId = d.logId
+        }
+      })
+      .catch(() => {})
   }
 
   const showToast = (msg: string) => {

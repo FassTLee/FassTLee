@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
+import { recordAnswer } from '@/lib/wrongAnswerStore'
 
 export const dynamic = 'force-dynamic'
 
@@ -181,6 +182,23 @@ export async function POST(req: NextRequest) {
         { onConflict: 'user_id,question_id' }
       )
     })
+  )
+
+  const answeredAt = new Date()
+  await Promise.all(
+    scoredRecords.map((r) => recordAnswer({
+      userId,
+      questionId:       r.questionId,
+      chapterId,
+      surface:          'chapter_test',
+      selectedIndex:    r.selected,
+      correctIndex:     r.answer_index?.[0] ?? null,
+      isCorrect:        r.correct,
+      answeredAt,
+      afterWrongAction: r.question_format === 'short_answer' ? 'self_assessed' : null,
+      retryCount:       null,
+      explanationViewed: r.question_format === 'short_answer' ? true : null,
+    }))
   )
 
   // ── wrong_answers insert (오답 레코드만) ──────────────────────────

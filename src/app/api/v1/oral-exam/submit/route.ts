@@ -2,27 +2,27 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
+import { recordAnswer } from '@/lib/wrongAnswerStore'
 
 export const dynamic = 'force-dynamic'
 
 // POST /api/v1/oral-exam/submit
-// body: { questionId, selectedIndex }
-// 서버에서 answer_index 와 대조 → 정답 여부 + 해설 반환
-// 오답 시 user_wrong_answers 에 upsert (테이블 없으면 무시)
+// body: { questionId, isCorrect }
+// 주관식 자기평가 결과를 신뢰해 통합 오답/이벤트 로그에 기록
 export async function POST(req: NextRequest) {
   if (!isSupabaseAdminConfigured) {
     return NextResponse.json({ correct: false, answerIndex: 0, explanation: null })
   }
 
   const session = await getServerSession(authOptions)
-  const body = await req.json() as { questionId?: string; selectedIndex?: number }
-  const { questionId, selectedIndex } = body
+  const body = await req.json() as { questionId?: string; isCorrect?: boolean }
+  const { questionId, isCorrect } = body
 
-  if (!questionId || selectedIndex === undefined || selectedIndex === null) {
-    return NextResponse.json({ error: 'questionId and selectedIndex required' }, { status: 400 })
+  if (!questionId || typeof isCorrect !== 'boolean') {
+    return NextResponse.json({ error: 'questionId and isCorrect required' }, { status: 400 })
   }
 
-  // 실제 정답 조회
+  // 문제의 챕터·해설 조회. 정오답은 클라이언트 자기평가값을 사용한다.
   const { data: q, error } = await supabaseAdmin
     .from('chapter_cards')
     .select('answer_index, explanation, chapter_id')
@@ -33,49 +33,25 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Question not found' }, { status: 404 })
   }
 
-  const correct = q.answer_index?.includes(selectedIndex)
-
-  // 오답이면 user_wrong_answers 에 저장 (같은 문제 재오답 시 wrong_count 증가)
   const userId = session?.user?.id
-  if (!correct && userId) {
-    const { data: existing } = await supabaseAdmin
-      .from('user_wrong_answers')
-      .select('id, wrong_count')
-      .eq('user_id', userId)
-      .eq('question_id', questionId)
-      .maybeSingle()
-
-    const nowIso = new Date().toISOString()
-
-    const { error: wrongAnswerError } = existing
-      ? await supabaseAdmin
-          .from('user_wrong_answers')
-          .update({
-            selected_index: selectedIndex,
-            correct_index:  q.answer_index?.[0] ?? null,
-            wrong_count:    existing.wrong_count + 1,
-            last_wrong_at:  nowIso,
-          })
-          .eq('id', existing.id)
-      : await supabaseAdmin
-          .from('user_wrong_answers')
-          .insert({
-            user_id:        userId,
-            question_id:    questionId,
-            chapter_id:     q.chapter_id ?? null,
-            selected_index: selectedIndex,
-            correct_index:  q.answer_index?.[0] ?? null,
-            wrong_count:    1,
-            last_wrong_at:  nowIso,
-          })
-
-    if (wrongAnswerError) {
-      console.error('[oral-exam/submit] user_wrong_answers save error:', wrongAnswerError)
-    }
+  if (userId) {
+    await recordAnswer({
+      userId,
+      questionId,
+      chapterId:          q.chapter_id ?? null,
+      surface:            'oral_exam',
+      selectedIndex:      -1,
+      correctIndex:       null,
+      isCorrect,
+      answeredAt:         new Date(),
+      afterWrongAction:   'self_assessed',
+      retryCount:         null,
+      explanationViewed:  true,
+    })
   }
 
   return NextResponse.json({
-    correct,
+    correct: isCorrect,
     answerIndex: q.answer_index,
     explanation: q.explanation ?? null,
   })

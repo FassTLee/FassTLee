@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
       answerGiven,
       responseTime,
       quizBridgeTime,
+      afterWrongAction,
       explanationViewed,
       quizEnteredAt,
     } = body
@@ -50,6 +51,9 @@ export async function POST(req: NextRequest) {
       }
       const patch: Record<string, unknown> = {}
       if (typeof quizBridgeTime === 'number') patch.quiz_bridge_time = quizBridgeTime
+      if (['explanation', 'retry', 'next', 'exit', 'self_assessed'].includes(afterWrongAction)) {
+        patch.after_wrong_action = afterWrongAction
+      }
       if (typeof explanationViewed === 'boolean') patch.explanation_viewed = explanationViewed
       if (Object.keys(patch).length === 0) {
         return NextResponse.json({ ok: true, skipped: true })

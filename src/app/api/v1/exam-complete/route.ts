@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
+import { recordAnswer } from '@/lib/wrongAnswerStore'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
 
   const { data: cards, error: cardsError } = await supabaseAdmin
     .from('chapter_cards')
-    .select('id, question, options, answer_index, explanation')
+    .select('id, chapter_id, question, options, answer_index, explanation')
     .in('id', allIds)
 
   if (cardsError || !cards) {
@@ -83,6 +84,25 @@ export async function POST(req: NextRequest) {
   const hasSubjectFail = scoredSubjects.some((r) => !r.passed)
   const passed         = !hasSubjectFail && totalQuestions > 0
                          && totalScore / totalQuestions >= PASS_RATIO
+
+  const answeredAt = new Date()
+  await Promise.all(
+    scoredSubjects.flatMap((subject) => subject.questions.map((question) => {
+      const card = cardMap.get(question.id)
+      return recordAnswer({
+        userId:             session.user.id,
+        questionId:         question.id,
+        chapterId:          card?.chapter_id ?? null,
+        surface:            'mock_exam',
+        selectedIndex:      question.selected,
+        correctIndex:       question.answer_index?.[0] ?? null,
+        isCorrect:          question.correct,
+        answeredAt,
+        retryCount:         null,
+        explanationViewed:  null,
+      })
+    }))
+  )
 
   const { data, error } = await supabaseAdmin
     .from('exam_results')
