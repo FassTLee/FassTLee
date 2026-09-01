@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
     questionId,
     correct,
     selectedIndex,
+    selectedIndexIsOriginal,
     certId,
     responseTime,
     quizEnteredAt,
@@ -30,6 +31,7 @@ export async function POST(req: NextRequest) {
     questionId:         string
     correct:            boolean
     selectedIndex?:     number
+    selectedIndexIsOriginal?: boolean
     userId?:            string
     certId?:            string | null
     responseTime?:      number | null
@@ -43,7 +45,9 @@ export async function POST(req: NextRequest) {
   if (!chapterId || !userId || !questionId) {
     return NextResponse.json({ ok: true, saved: false, logId: null })
   }
-  const normalizedSelectedIndex = typeof selectedIndex === 'number' ? selectedIndex : -1
+  const normalizedSelectedIndex = selectedIndexIsOriginal === true && typeof selectedIndex === 'number'
+    ? selectedIndex
+    : -1
 
   // ── 1. chapter_stats: mini_quiz_correct / mini_quiz_total 업데이트 ────
   // certId가 있으면 그 자격증 문맥의 행만, 없으면 certification_id가 NULL인 행만 조회

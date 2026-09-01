@@ -192,7 +192,7 @@ export async function POST(req: NextRequest) {
       chapterId,
       surface:          'chapter_test',
       selectedIndex:    r.selected,
-      correctIndex:     r.answer_index?.[0] ?? null,
+      correctIndex:     r.question_format === 'short_answer' ? null : r.answer_index?.[0] ?? null,
       isCorrect:        r.correct,
       answeredAt,
       afterWrongAction: r.question_format === 'short_answer' ? 'self_assessed' : null,

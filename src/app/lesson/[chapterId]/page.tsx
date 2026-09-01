@@ -75,6 +75,7 @@ interface MiniQ {
   explanation: string | null
   imageUrl: string | null
   options: [string, string]
+  originalIndices: [number, number]
   answerIdx: 0 | 1
 }
 
@@ -655,8 +656,12 @@ export default function LessonPage() {
     const q = questions.find((qq) => qq.id === linkedQuizId)
     if (!q || q.answer_index === undefined || q.answer_index === null) return false
 
-    const correct = q.options[q.answer_index?.[0] ?? 0]
-    const wrongOptions = q.options.filter((_, i) => !q.answer_index?.includes(i))
+    const correctOriginalIndex = q.answer_index[0]
+    if (correctOriginalIndex === undefined) return false
+    const correct = q.options[correctOriginalIndex]
+    const wrongOptions = q.options
+      .map((option, originalIndex) => ({ option, originalIndex }))
+      .filter(({ originalIndex }) => !q.answer_index?.includes(originalIndex))
     if (!correct || wrongOptions.length === 0) return false
 
     const wrongOpt = wrongOptions[Math.floor(Math.random() * wrongOptions.length)]
@@ -666,7 +671,10 @@ export default function LessonPage() {
       text: q.question,
       explanation: q.explanation,
       imageUrl: q.image_url ?? null,
-      options: aIsCorrect ? [correct, wrongOpt] : [wrongOpt, correct],
+      options: aIsCorrect ? [correct, wrongOpt.option] : [wrongOpt.option, correct],
+      originalIndices: aIsCorrect
+        ? [correctOriginalIndex, wrongOpt.originalIndex]
+        : [wrongOpt.originalIndex, correctOriginalIndex],
       answerIdx: aIsCorrect ? 0 : 1,
     })
     setMiniSelected(null)
@@ -739,6 +747,7 @@ export default function LessonPage() {
     if (miniConfirmed || !miniQ) return
     setMiniConfirmed(true)
     const correct = miniSelected === miniQ.answerIdx
+    const selectedOriginalIndex = miniQ.originalIndices[miniSelected]
     miniTotalRef.current   += 1
     if (correct) miniCorrectRef.current += 1
 
@@ -759,7 +768,8 @@ export default function LessonPage() {
         subjectId:  localStorage.getItem(SUBJECT_KEY) ?? '',
         questionId: miniQ.id,
         correct,
-        selectedIndex: miniSelected,
+        selectedIndex: selectedOriginalIndex,
+        selectedIndexIsOriginal: true,
         userId: session?.user?.id ?? '',
         certId,
         responseTime,
