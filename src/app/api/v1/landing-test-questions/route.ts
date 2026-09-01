@@ -20,6 +20,8 @@ export async function GET() {
     .select('id, question, options')
     .in('content_type', ['quiz', 'exam'])
     .in('question_format', ['multiple_choice', 'true_false', 'multiple_select'])
+    .not('answer_index', 'is', null)
+    .not('answer_index', 'eq', '[-1]')
     .limit(80)
 
   if (error || !data || data.length < TOTAL_Q) {
