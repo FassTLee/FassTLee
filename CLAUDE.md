@@ -267,6 +267,7 @@ PM 명령문에 포함된 전제 — 파일 경로, 기존 값, 컬럼명·타�
   `[실행:dev]` / `[실행:prod]` / `[실행:dev→prod]` / `[실행:양측]` /
   `[참고]` / `[파일]`. 환경 표기가 없는 SQL 블록은 불완전한 산출물이며,
   파일로 저장하지 않고 PM 에게 확인을 요청합니다.
+- 보고에 첨부하는 SQL은 실행 이력이 없으므로 `[참고]`로 표기합니다. `[실행:dev]` / `[실행:prod]` / `[실행:dev→prod]` / `[실행:양측]` 표기는 PM만 사용합니다.
 
 ### upsert 주의
 
@@ -278,9 +279,15 @@ Supabase JS는 `column = column + 1` 같은 SQL 증분식 upsert를 지원하지
 - 배열·UUID 캐스팅: `text[]` vs `name[]`, `uuid` vs `text` 명시적 캐스팅.
 - `chapter_stats.user_id`는 text, `profiles.id`는 uuid → `p.id::text` 캐스팅.
 - **`user_id` 컬럼에 무엇이 들어 있는지 반드시 확인합니다.** 테이블마다 uuid / text / email이 섞여 있을 수 있습니다. 매칭 조건 작성 전 실제 저장 값을 확인합니다.
-- **`profiles.id`를 참조하는 FK는 대부분 `ON DELETE NO ACTION`입니다.** 자식 행이 있으면
-  `profiles` 삭제가 FK 위반(23503)으로 거부됩니다.
+- **`profiles.id`를 참조하는 FK는 2026-08-05 prod 실측 기준 전 21건 중
+  `ON DELETE NO ACTION` 5건, `CASCADE` 16건입니다.** 삭제를 실제로 차단하는 것은
+  `question_stats.user_id` / `video_bookmarks.user_id` / `user_goals.profile_id` /
+  `user_events.user_id` / `user_reviews.user_id` 5개뿐입니다. 나머지 16건은
+  `CASCADE`라 차단력이 없으므로, 탈퇴 차단 여부를 이 테이블들로 판정하지 않습니다.
+  `chapter_stats`와 `quiz_performance_logs`에는 `profiles` FK가 아예 없어 차단도
+  CASCADE 삭제도 되지 않고 그대로 남습니다(2026-09-03 dev·prod 실측).
 - 과목→자격증 매핑 정본은 `course_certifications`. `courses.certification_id` 직접 컬럼은 공유 course를 누락합니다.
+- `subjects.certification_id`는 컬럼이 실재하지만 prod 41행이 전부 NULL이므로 이 경로로 조인하면 0건이 반환됩니다. 조인 경로로 사용하지 않습니다. (2026-09-03 prod 실측: course 28개 기준 `course_certifications` 28 / `courses.certification_id` 28 / subjects 경유 0)
 - `.single()`은 0행일 때도 PGRST116을 던집니다. 0행 가능성이 있으면 `.maybeSingle()`.
 - `ORDER BY` 없는 SELECT의 순서에 로직이 의존하면 안 됩니다.
 - `information_schema.tables`는 신규 테이블을 누락할 수 있습니다 → `pg_tables` 교차 확인.

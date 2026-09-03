@@ -307,6 +307,7 @@ PM 명령문에 포함된 전제 — 파일 경로, 기존 값, 컬럼명·타�
 - 여러 DDL은 `BEGIN; ... COMMIT;`으로 묶는다.
 - 적용 순서는 dev 후 prod다.
 - **PM이 제시하는 SQL 블록에는 환경 표기가 붙는다.** `[실행:dev]` / `[실행:prod]` / `[실행:dev→prod]` / `[실행:양측]` / `[참고]` / `[파일]`. 환경 표기가 없는 SQL 블록은 불완전한 산출물이며, Codex는 이를 파일로 저장하지 않고 PM에게 확인을 요청한다.
+- 보고에 첨부하는 SQL은 실행 이력이 없으므로 `[참고]`로 표기한다. `[실행:dev]` / `[실행:prod]` / `[실행:dev→prod]` / `[실행:양측]` 표기는 PM만 사용한다.
 
 ## 코드·데이터 구조 주의사항
 
@@ -329,6 +330,7 @@ PM 명령문에 포함된 전제 — 파일 경로, 기존 값, 컬럼명·타�
 ### 기타
 
 - 과목·자격증 매핑의 정본은 `course_certifications`다. `courses.certification_id`만으로 공유 course를 판단하지 않는다.
+- `subjects.certification_id`는 컬럼이 실재하나 prod 41행 전부 NULL이므로 이 경로로 조인하면 0건이 반환된다. 조인 경로로 쓰지 않는다. (2026-09-03 prod 실측: course 28개 기준 `course_certifications` 28 / `courses.certification_id` 28 / subjects 경유 0)
 - `course : certification = 1:1` 복제를 유지한다. 하나의 course를 두 certification이 공유하면 IIPA 5공유에서 겪은 문제가 재발한다.
 - 계층 정의: `subjects → courses(단원) → chapters`
 - `profiles.updated_at`은 양쪽 DB 모두에 없다.
