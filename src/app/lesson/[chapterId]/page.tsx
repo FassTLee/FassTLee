@@ -46,6 +46,7 @@ interface Question {
   options: string[]
   answer_index: number[] | null
   explanation: string | null
+  order_index?: number | null
   difficulty?: string | null
   content_type?: string | null
   question_format?: string | null
@@ -67,6 +68,7 @@ interface Slide {
   content_type: string | null
   question_format: string | null
   linked_quiz_id: string | null
+  order_index: number | null
 }
 
 interface MiniQ {
@@ -77,6 +79,45 @@ interface MiniQ {
   options: [string, string]
   originalIndices: [number, number]
   answerIdx: 0 | 1
+}
+
+function buildMiniQuizAssignmentMap(slides: Slide[], questions: Question[]): Map<string, string> {
+  const assignments = new Map<string, string>()
+  const usedQuestionIds = new Set<string>()
+  const questionsById = new Map(questions.map((question) => [question.id, question]))
+
+  // 저작 데이터인 linked_quiz_id는 중복 링크도 그대로 보존한다.
+  for (const slide of slides) {
+    if (!slide.linked_quiz_id) continue
+    const linkedQuestion = questionsById.get(slide.linked_quiz_id)
+    if (!linkedQuestion || linkedQuestion.answer_index === null) continue
+    assignments.set(slide.id, linkedQuestion.id)
+    usedQuestionIds.add(linkedQuestion.id)
+  }
+
+  const slideIds = new Set(slides.map((slide) => slide.id))
+  const fallbackCandidates = [
+    ...questions.filter((question) => !slideIds.has(question.id) && question.content_type === 'quiz'),
+    ...questions.filter((question) => !slideIds.has(question.id) && question.content_type !== 'quiz'),
+  ]
+  let candidateIndex = 0
+
+  for (const slide of slides) {
+    if (assignments.has(slide.id)) continue
+    while (
+      candidateIndex < fallbackCandidates.length &&
+      usedQuestionIds.has(fallbackCandidates[candidateIndex].id)
+    ) {
+      candidateIndex += 1
+    }
+    const candidate = fallbackCandidates[candidateIndex]
+    if (!candidate) continue
+    assignments.set(slide.id, candidate.id)
+    usedQuestionIds.add(candidate.id)
+    candidateIndex += 1
+  }
+
+  return assignments
 }
 
 // 카드 내부 3슬라이드 위치: 0=학습내용 1=체크포인트 2=미니퀴즈
@@ -144,6 +185,7 @@ export default function LessonPage() {
   const [lessonSessionId, setLessonSessionId] = useState<string | null>(null)
   const loadAbortRef = useRef<AbortController | null>(null)
   const loadInFlightRef = useRef(false)
+  const miniQuizAssignmentsRef = useRef<Map<string, string>>(new Map())
 
   /* ── 가입 동의 게이트 (2차) — 수집(세션·슬라이드 로그) 시작 전 차단 ──── */
   const consent = useConsentGate()
@@ -425,14 +467,24 @@ export default function LessonPage() {
       }
     }
 
-    const allQ = (qs ?? []).filter(q =>
+    const sortedCards = [...(qs ?? [])].sort((a, b) => {
+      const aOrderMissing = a.order_index == null
+      const bOrderMissing = b.order_index == null
+      if (aOrderMissing !== bOrderMissing) return aOrderMissing ? 1 : -1
+      if (!aOrderMissing && !bOrderMissing && a.order_index !== b.order_index) {
+        return a.order_index - b.order_index
+      }
+      return a.id.localeCompare(b.id)
+    })
+
+    const allQ = sortedCards.filter(q =>
       q.answer_index !== null &&
       Array.isArray(q.options) &&
       q.options.length >= 2
     )
     setQuestions(allQ)
 
-    const oralQs = (qs ?? []).filter(q => q.content_type === 'lesson' || q.question_format === 'short_answer')
+    const oralQs = sortedCards.filter(q => q.content_type === 'lesson' || q.question_format === 'short_answer')
     const slideArray = oralQs.map(q => ({
       id: q.id,
       question: q.question,
@@ -445,8 +497,10 @@ export default function LessonPage() {
       content_type: q.content_type ?? null,
       question_format: q.question_format ?? null,
       linked_quiz_id: q.linked_quiz_id ?? null,
+      order_index: q.order_index ?? null,
     }))
     setSlides(slideArray)
+    miniQuizAssignmentsRef.current = buildMiniQuizAssignmentMap(slideArray, allQ)
 
     track('lesson_started', { chapterId })
   }
@@ -646,14 +700,16 @@ export default function LessonPage() {
     }
   }
 
-  // linked_quiz_id로 지목된 카드로 슬라이드3 데이터를 구성. 실패 시 false 반환
-  // (건너뛰기는 호출부에서 처리) — 챕터 풀 순환/생성형 폴백 없음
+  // 챕터 로드 시 고정한 linked/폴백 배정으로 슬라이드3 데이터를 구성. 실패 시 false 반환
+  // (건너뛰기는 호출부에서 처리) — 문항 순환 재사용/생성형 폴백 없음
   // TODO: 문제은행 확장(개념당 quiz 2~3개) 후, 재도전 시 미출제 문항 우선 출제로 전환
   const buildMiniQuizFor = (idx: number): boolean => {
-    const linkedQuizId = slides[idx]?.linked_quiz_id
-    if (!linkedQuizId) return false
+    const slideId = slides[idx]?.id
+    if (!slideId) return false
+    const assignedQuestionId = miniQuizAssignmentsRef.current.get(slideId)
+    if (!assignedQuestionId) return false
 
-    const q = questions.find((qq) => qq.id === linkedQuizId)
+    const q = questions.find((qq) => qq.id === assignedQuestionId)
     if (!q || q.answer_index === undefined || q.answer_index === null) return false
 
     const correctOriginalIndex = q.answer_index[0]
@@ -696,8 +752,8 @@ export default function LessonPage() {
         quizEnteredAtRef.current = Date.now() // 슬라이드3 진입 시각 — response_time 기준점
         setSubSlide(2)
       } else {
-        // linked_quiz_id 없음(현재 IIPA는 없음, 타 자격증 확장 시 발생 가능)
-        // — 슬라이드3 건너뛰고 슬라이드2에서 바로 완료 처리
+        // 배정 Map에 문항이 없음(폴백 후보 소진 포함)
+        // — 미니퀴즈 없이 슬라이드2에서 바로 다음 카드/완료 처리
         goToNextCard()
       }
       return
