@@ -292,5 +292,36 @@ export async function PATCH(req: NextRequest) {
     },
   })
 
-  return NextResponse.json({ success: true })
+  const { data: remainingCerts, error: remainingError } = await supabaseAdmin
+    .from('user_certifications')
+    .select('cert_id, subjects, order_index')
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .order('order_index', { ascending: true, nullsFirst: false })
+
+  if (remainingError) {
+    console.error('[user-certifications PATCH] remaining query error:', remainingError)
+    return NextResponse.json({ error: 'DB error' }, { status: 500 })
+  }
+
+  const activeCerts = remainingCerts ?? []
+  const selectedSubjects = Array.from(new Set(activeCerts.flatMap((cert) => cert.subjects ?? [])))
+  const { error: profileError, count: profileCount } = await supabaseAdmin
+    .from('profiles')
+    .update({
+      selected_subjects: selectedSubjects,
+      selected_cert: activeCerts[0]?.cert_id ?? null,
+    }, { count: 'exact' })
+    .eq('id', userId)
+
+  if (profileError || profileCount === 0) {
+    console.error('[user-certifications PATCH] profile cleanup error:', profileError ?? '0 rows updated')
+    return NextResponse.json({ error: 'DB error' }, { status: 500 })
+  }
+
+  return NextResponse.json({
+    success: true,
+    remaining_count: activeCerts.length,
+    selected_subjects: selectedSubjects,
+  })
 }

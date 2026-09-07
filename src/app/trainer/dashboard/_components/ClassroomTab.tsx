@@ -10,6 +10,7 @@ import {
   REQUIRED_SUBJECTS,
   SUBJECT_META,
   CERT_ICONS,
+  SUBJECTS_KEY,
 } from './constants'
 
 /* ── 과목 행 (renderClassroom 내부 SubjectRow 추출) ───────────────── */
@@ -99,6 +100,7 @@ export default function ClassroomTab() {
     healthCertSubjects,
     dbRequiredNames,
     subjects,
+    setSubjects,
     userCerts,
     certSlugToId,
     session,
@@ -179,6 +181,16 @@ export default function ClassroomTab() {
                           body: JSON.stringify({ userId, certId: uc.id }),
                         })
                         if (res.ok) {
+                          const data = await res.json()
+                          if (Array.isArray(data.selected_subjects)) {
+                            if (data.selected_subjects.length === 0) {
+                              localStorage.removeItem(SUBJECTS_KEY)
+                              setSubjects([])
+                            } else {
+                              localStorage.setItem(SUBJECTS_KEY, JSON.stringify(data.selected_subjects))
+                              setSubjects(data.selected_subjects)
+                            }
+                          }
                           // 삭제 성공 시 로컬 state에서 즉시 제거 (loadClassroom은 최초 1회 이후
                           // classroomLoaded===true면 userCerts를 재조회하지 않아 반영이 안 됨)
                           setUserCerts((prev) => prev.filter((c) => c.id !== uc.id))
