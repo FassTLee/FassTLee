@@ -3,6 +3,7 @@ import { getToken } from 'next-auth/jwt'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
+import { logUserEvent } from '@/lib/eventLog'
 
 export const dynamic = 'force-dynamic'
 
@@ -70,6 +71,13 @@ export async function POST(req: NextRequest) {
 
   const saved = !error && (data?.length ?? 0) > 0
   if (!saved && !error) console.warn('[selected-subjects POST] 0 rows updated — userId:', userId)
+  if (saved) {
+    void logUserEvent({
+      userId,
+      eventType: 'subjects_changed',
+      meta: { selected_cert, selected_subjects, additional_subjects },
+    })
+  }
 
   return NextResponse.json({ ok: true, saved })
 }

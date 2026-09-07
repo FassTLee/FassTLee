@@ -123,6 +123,15 @@ export default function SelectCertPage() {
     }
 
     track('cert_selected', { cert: slug })
+    fetch('/api/v1/event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_type: 'cert_viewed_selected',
+        meta: { cert_id: certId, slug },
+        guest_id: localStorage.getItem('kinepia_guest_id') ?? undefined,
+      }),
+    }).catch(() => {})
     localStorage.setItem(CERT_KEY, certId)
     router.push('/select-subject')
   }

@@ -709,7 +709,7 @@ function DashboardContent() {
       fetch('/api/v1/learning-style', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ learning_style: cachedLearningType }),
+        body: JSON.stringify({ learning_style: cachedLearningType, source: 'sync' }),
       }).then(r => r.json()).then(j => console.log('[stylePopup] 동기화 결과:', j)).catch(() => {})
     }
 

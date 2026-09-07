@@ -13,7 +13,6 @@ const STYLE_TYPE_KEY = 'kinepia_learning_type'
 const GUEST_ID_KEY   = 'kinepia_guest_id'
 
 const GUEST_CLEANUP_KEYS = [
-  'kinepia_guest_id',
   'landingTestResult',
   'landingTestQuestions',
   'kinepia_learning_type',
@@ -147,6 +146,7 @@ function SurveyContent() {
             body: JSON.stringify({
               learning_style: finalType,
               learning_style_answers: newVotes,
+              source: 'survey',
             }),
           })
           const json = await res.json()

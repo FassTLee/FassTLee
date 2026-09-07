@@ -4,7 +4,6 @@ import { signIn } from 'next-auth/react'
 import { X } from 'lucide-react'
 
 const GUEST_CLEANUP_KEYS = [
-  'kinepia_guest_id',
   'landingTestResult',
   'landingTestQuestions',
   'kinepia_learning_type',

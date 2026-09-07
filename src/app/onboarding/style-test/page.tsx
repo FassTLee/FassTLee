@@ -149,6 +149,7 @@ export default function StyleTestPage() {
           body: JSON.stringify({
             learning_style: result,
             learning_style_answers: newVotes,
+            source: 'onboarding',
           }),
         })
         const json = await res.json()

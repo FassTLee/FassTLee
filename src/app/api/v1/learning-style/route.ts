@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
 import { isLearningType } from '@/lib/learning-types'
+import { logUserEvent } from '@/lib/eventLog'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getUserId(token: any): string | null {
@@ -27,7 +28,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { learning_style, learning_style_answers } = await req.json()
+  const body = await req.json()
+  const { learning_style, learning_style_answers } = body
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
   const userId = getUserId(token)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -54,6 +56,17 @@ export async function POST(req: NextRequest) {
 
   const saved = !error && (data?.length ?? 0) > 0
   if (!saved && !error) console.warn('[learning-style POST] 0 rows updated — userId:', userId)
+  if (saved) {
+    void logUserEvent({
+      userId,
+      eventType: 'learning_style_set',
+      meta: {
+        learning_style,
+        answers_present: !!learning_style_answers,
+        source: body.source ?? 'unknown',
+      },
+    })
+  }
 
   return NextResponse.json({ ok: true, saved })
 }

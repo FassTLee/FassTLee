@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { supabaseAdmin, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
+import { logUserEvent } from '@/lib/eventLog'
 
 export const dynamic = 'force-dynamic'
 
@@ -106,6 +107,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'DB error' }, { status: 500 })
     }
 
+    void logUserEvent({
+      userId,
+      eventType: 'cert_reactivated',
+      meta: {
+        cert_id,
+        cert_label,
+        exam_type,
+        subjects_count: (subjects ?? []).length,
+      },
+    })
+
     return NextResponse.json({ data: updated as UserCertification })
   }
 
@@ -147,6 +159,18 @@ export async function POST(req: NextRequest) {
     console.error('[user-certifications POST] insert error:', insertError)
     return NextResponse.json({ error: 'DB error' }, { status: 500 })
   }
+
+  void logUserEvent({
+    userId,
+    eventType: 'cert_added',
+    meta: {
+      cert_id,
+      cert_label,
+      exam_type,
+      subjects_count: (subjects ?? []).length,
+      order_index: count ?? 0,
+    },
+  })
 
   return NextResponse.json({ data: inserted as UserCertification })
 }
@@ -245,16 +269,28 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: 'certId is required' }, { status: 400 })
   }
 
-  const { error } = await supabaseAdmin
+  const { data: deactivatedCert, error } = await supabaseAdmin
     .from('user_certifications')
     .update({ is_active: false })
     .eq('user_id', userId)
     .eq('id', certId)
+    .select('cert_id, cert_label')
+    .maybeSingle()
 
   if (error) {
     console.error('[user-certifications PATCH] error:', error)
     return NextResponse.json({ error: 'DB error' }, { status: 500 })
   }
+
+  void logUserEvent({
+    userId,
+    eventType: 'cert_deactivated',
+    meta: {
+      user_cert_row_id: certId,
+      cert_id: deactivatedCert?.cert_id ?? null,
+      cert_label: deactivatedCert?.cert_label ?? null,
+    },
+  })
 
   return NextResponse.json({ success: true })
 }
