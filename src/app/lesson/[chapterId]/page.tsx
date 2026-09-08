@@ -63,6 +63,7 @@ interface Slide {
   explanation: string
   key_points: string[]
   image_url: string | null
+  video_url: string | null
   reference_text: string | null
   exam_years: number[] | null
   star_rating: number | null
@@ -655,7 +656,7 @@ export default function LessonPage() {
     const [{ data: ch, error: chapterError }, { data: qs, error: cardsError }] = await Promise.all([
       supabase.from('chapters').select('id, title, course_id, video_url, audio_url, image_url').eq('id', chapterId).abortSignal(signal).single(),
       supabase.from('chapter_cards')
-        .select('id, chapter_id, question, options, answer_index, explanation, order_index, content_type, question_format, image_url, reference_text, key_points, exam_years, star_rating, linked_quiz_id')
+        .select('id, chapter_id, question, options, answer_index, explanation, order_index, content_type, question_format, image_url, video_url, reference_text, key_points, exam_years, star_rating, linked_quiz_id')
         .eq('chapter_id', chapterId)
         .abortSignal(signal),
     ])
@@ -711,6 +712,7 @@ export default function LessonPage() {
       explanation: q.explanation ?? '',
       key_points: Array.isArray(q.key_points) ? q.key_points : [],
       image_url: q.image_url ?? null,
+      video_url: q.video_url ?? null,
       reference_text: q.reference_text ?? null,
       exam_years: Array.isArray(q.exam_years) ? q.exam_years : null,
       star_rating: q.star_rating ?? null,
@@ -1127,6 +1129,7 @@ export default function LessonPage() {
   const styleMeta    = getLearningTypeMeta(style)
   const isConcise    = styleMeta?.lessonMode === 'concise'
   const currentSlide = slides[slideIndex]
+  const currentVideoUrl = currentSlide?.video_url || chapterVideoUrl
   const subSlideOrder = orderFor(slideIndex)
   const subSlideCursor = subSlideOrder.indexOf(subSlide)
   const nextSub = nextSubFor(slideIndex, subSlide)
@@ -1288,11 +1291,15 @@ export default function LessonPage() {
               {/* ── 슬라이드1: 학습 내용 (이미지 확대 가능) ── */}
               {subSlide === 0 && (
                 <div ref={bodyRef} onScroll={(event) => observeScroll(event.currentTarget)} className="flex-1 overflow-y-auto">
-                  {/* 영상 (챕터 단위) */}
-                  {chapterVideoUrl && (
+                  {/* 카드별 영상 렌더는 재개 후 유지 가능하며, 카드 영상이 없으면 챕터 영상으로 폴백한다. */}
+                  {/* 촬영용 자동재생. 무음 전제이며 재개 전 재검토 대상. */}
+                  {currentVideoUrl && (
                     <div className="mb-3 rounded-xl overflow-hidden bg-[#1A1A1A]">
                       <video
-                        src={chapterVideoUrl}
+                        key={currentVideoUrl}
+                        src={currentVideoUrl}
+                        autoPlay
+                        muted
                         controls
                         playsInline
                         className="w-full"
