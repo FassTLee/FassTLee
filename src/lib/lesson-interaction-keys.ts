@@ -1,0 +1,30 @@
+// interaction_raw 키 정본 — 미측정 키는 페이로드에 넣지 않는다.
+export const LESSON_INTERACTION_KEYS = {
+  tapCount: 'tap_count',
+  doubleTapCount: 'double_tap_count',
+  longPressCount: 'long_press_count',
+  tapIntervalsMs: 'tap_intervals_ms',
+  scrollMaxVelocity: 'scroll_max_velocity',
+  scrollDirectionChanges: 'scroll_direction_changes',
+  scrollPauseCount: 'scroll_pause_count',
+  reachedBottom: 'reached_bottom',
+  firstInteractionDelayMs: 'first_interaction_delay_ms',
+  idleMaxMs: 'idle_max_ms',
+  activeTimeMs: 'active_time_ms',
+  tabSwitchCount: 'tab_switch_count',
+  backgroundMs: 'background_ms',
+  viewportW: 'viewport_w',
+  viewportH: 'viewport_h',
+  orientation: 'orientation',
+  inputMethod: 'input_method',
+  videoPlaybackSpeed: 'video_playback_speed',
+  videoSkipCount: 'video_skip_count',
+  videoRewindCount: 'video_rewind_count',
+  videoPauseCount: 'video_pause_count',
+  videoCompletionRate: 'video_completion_rate',
+  checkboxRecheckCount: 'checkbox_recheck_count',
+  imageZoomTargets: 'image_zoom_targets',
+  subSlideEntryCount: 'sub_slide_entry_count',
+} as const
+
+export const INTERACTION_UNKNOWN_KEY = 'interaction_unknown'

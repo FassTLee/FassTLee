@@ -11,6 +11,7 @@ import { PrivacyConsent } from '@/components/common/PrivacyConsent'
 import { LoadingState } from '@/components/common/LoadingState'
 import { useConsentGate } from '@/hooks/useConsentGate'
 import { getLearningTypeMeta, isLearningType, type LearningType } from '@/lib/learning-types'
+import { LESSON_INTERACTION_KEYS as IK } from '@/lib/lesson-interaction-keys'
 // Zap used in completion screen
 
 function waitForRetry(delayMs: number, signal: AbortSignal) {
@@ -123,6 +124,114 @@ function buildMiniQuizAssignmentMap(slides: Slide[], questions: Question[]): Map
 // 카드 내부 3슬라이드 위치: 0=학습내용 1=체크포인트 2=미니퀴즈
 type SubSlide = 0 | 1 | 2
 
+type AdvanceTrigger = 'swipe' | 'arrow' | 'button' | 'progressbar' | 'back' | 'retry' | 'auto'
+type QueuedBehaviorLog = {
+  id: string
+  userId: string
+  url: string
+  payload: Record<string, unknown>
+}
+const BEHAVIOR_LOG_QUEUE_KEY = 'kinepia_behavior_log_queue'
+const BEHAVIOR_LOG_URLS = ['/api/v1/lesson-log', '/api/v1/chapter-session-log', '/api/v1/quiz-performance-log']
+let memoryLogQueue: QueuedBehaviorLog[] = []
+const drainingUsers = new Set<string>()
+const inFlightLogs = new Set<string>()
+
+function readLogQueue(): QueuedBehaviorLog[] {
+  try {
+    const value = JSON.parse(sessionStorage.getItem(BEHAVIOR_LOG_QUEUE_KEY) ?? '[]')
+    return Array.isArray(value) ? value.filter((entry) =>
+      entry && typeof entry.id === 'string' && typeof entry.userId === 'string' &&
+      BEHAVIOR_LOG_URLS.includes(entry.url) && entry.payload && typeof entry.payload === 'object'
+    ).slice(-20) : []
+  } catch (error) {
+    console.warn('[lesson-log] retry queue read failed:', error)
+    return memoryLogQueue
+  }
+}
+
+function writeLogQueue(queue: QueuedBehaviorLog[]) {
+  memoryLogQueue = queue.slice(-20)
+  try {
+    sessionStorage.setItem(BEHAVIOR_LOG_QUEUE_KEY, JSON.stringify(memoryLogQueue))
+  } catch (error) {
+    console.warn('[lesson-log] retry queue storage failed; memory only:', error)
+  }
+}
+
+async function postBehaviorLog(entry: QueuedBehaviorLog): Promise<boolean> {
+  try {
+    const res = await fetch(entry.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry.payload),
+      keepalive: true,
+    })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const result = await res.json()
+    if (result.skipped) throw new Error('Log skipped by server')
+    return true
+  } catch (error) {
+    console.warn('[lesson-log] delivery failed:', entry.url, error)
+    return false
+  }
+}
+
+async function drainLogQueue(userId: string) {
+  if (drainingUsers.has(userId)) return
+  drainingUsers.add(userId)
+  try {
+    // 다른 계정으로 로그인한 뒤 이전 사용자의 큐를 재전송하지 않는다.
+    for (let i = 0; i < 20; i++) {
+      const entry = readLogQueue().find((item) => item.userId === userId && !inFlightLogs.has(item.id))
+      if (!entry) break
+      inFlightLogs.add(entry.id)
+      const ok = await postBehaviorLog(entry)
+      inFlightLogs.delete(entry.id)
+      if (!ok) break
+      writeLogQueue(readLogQueue().filter((item) => item.id !== entry.id))
+    }
+  } finally {
+    drainingUsers.delete(userId)
+  }
+}
+
+function deliverBehaviorLog(url: string, payload: Record<string, unknown>, userId: string, exiting = false) {
+  const entry: QueuedBehaviorLog = { id: crypto.randomUUID(), userId, url, payload }
+  if (exiting) {
+    try {
+      if (navigator.sendBeacon(url, new Blob([JSON.stringify(payload)], { type: 'application/json' }))) return
+    } catch (error) {
+      console.warn('[lesson-log] beacon failed:', error)
+    }
+  }
+  // 응답 전에 탭이 닫혀도 회수할 수 있게 먼저 보관하고, 성공한 항목만 제거한다.
+  inFlightLogs.add(entry.id)
+  writeLogQueue([...readLogQueue(), entry])
+  void postBehaviorLog(entry).then((ok) => {
+    inFlightLogs.delete(entry.id)
+    if (ok) {
+      writeLogQueue(readLogQueue().filter((item) => item.id !== entry.id))
+      void drainLogQueue(userId)
+    }
+  })
+}
+
+type SlideLogSegment = {
+  chapterId: string
+  slideId: string
+  index: number
+  sub: SubSlide
+  total: number
+  visits: number
+  sent: boolean
+  scrollDepth: number | null
+  raw: Record<string, unknown>
+  lastTapAt: number | null
+  checkedOnce: Set<number>
+  checkboxTotal: number
+}
+
 function splitSentences(text: string): string[] {
   return text
     // 마침표/물음표/느낌표 뒤 공백을 문장 경계로 인식하되, 바로 뒤에 "("가 오면
@@ -225,6 +334,13 @@ export default function LessonPage() {
   //    "로깅 구간이 속한 카드 인덱스"도 ref로 고정. effect 발화 시점 slideIndex state는 이미
   //    다음 카드로 넘어가 있어(카드 전환이 sub_slide 2 로깅을 발화) state를 직접 쓰면 +1 밀림. ──
   const loggedSlideIndexRef = useRef(0)   // 로깅 구간이 속한 카드 인덱스(방금 떠난 카드)
+  const slideLogRef = useRef<SlideLogSegment | null>(null)
+  const bodyRef = useRef<HTMLDivElement | null>(null)
+  const cardVisitsRef = useRef(new Map<string, number>())
+  const subSlideEntriesRef = useRef(new Map<string, number>())
+  const backgroundStartRef = useRef<number | null>(null)
+  const pointerMethodRef = useRef<string | null>(null)
+  const quizExitSentRef = useRef(false)
 
   /* ── 미니퀴즈(슬라이드3) per-attempt 로그 refs ── */
   // 배치3: 제출 즉시 INSERT로 attempt를 확정 저장(마지막 카드에서 안 넘어가도 유실 방지)하고,
@@ -257,105 +373,191 @@ export default function LessonPage() {
   const [explanationRevealed, setExplanationRevealed] = useState(false)
   const [showComplete, setShowComplete]   = useState(false)
 
-  // ── 이탈 시점 통합 flush: 세션 exit + 미니퀴즈 bridge_time UPDATE + 진행 중 슬라이드 로그 ──
-  // 본문 함수로 정의해 매 렌더 최신 slideIndex/subSlide/slides/sentences를 캡처한다.
-  // (아래 sendExitRef가 항상 최신 클로저를 가리키므로, 언마운트 cleanup도 stale 값을 잡지 않음)
+  // 체류 구간의 식별자·메타데이터를 state 변경 전에 고정한다.
+  const beginSlideLog = (idx: number, sub: SubSlide, reentry = false, resume = false) => {
+    const slide = slides[idx]
+    if (!slide || loading || consentBlocked) return
+    const previous = slideLogRef.current
+    const cardKey = chapterId + ':' + slide.id
+    let visits = cardVisitsRef.current.get(cardKey) ?? 0
+    if (!visits || reentry || previous?.slideId !== slide.id || previous.chapterId !== chapterId) visits++
+    cardVisitsRef.current.set(cardKey, visits)
+    const subKey = cardKey + ':' + sub
+    const entries = (subSlideEntriesRef.current.get(subKey) ?? 0) + (resume ? 0 : 1)
+    subSlideEntriesRef.current.set(subKey, entries)
+    // 최초 콘텐츠 진입만 기준 시각을 초기화한다. 미전송 구간의 시각은 유지한다.
+    if (!previous) slideEnterTimeRef.current = Date.now()
+    const points = slide.key_points.filter((point) => point.length > 1)
+    slideLogRef.current = {
+      chapterId, slideId: slide.id, index: idx, sub, total: slides.length, visits, sent: false,
+      scrollDepth: null, lastTapAt: null, checkedOnce: new Set(),
+      checkboxTotal: (points.length ? points : splitSentences(slide.explanation)).length,
+      raw: {
+        [IK.tapCount]: 0,
+        [IK.tapIntervalsMs]: [],
+        [IK.tabSwitchCount]: 0,
+        [IK.backgroundMs]: 0,
+        [IK.viewportW]: window.innerWidth,
+        [IK.viewportH]: window.innerHeight,
+        [IK.orientation]: window.matchMedia('(orientation: portrait)').matches ? 'portrait' : 'landscape',
+        [IK.subSlideEntryCount]: entries,
+        ...(sub === 0 ? { [IK.imageZoomTargets]: [] } : {}),
+        ...(sub === 1 ? { [IK.checkboxRecheckCount]: 0 } : {}),
+      },
+    }
+    loggedSlideIndexRef.current = idx
+    loggedSubSlideRef.current = sub
+    imageZoomCountRef.current = 0
+    checkboxClicksRef.current = []
+    quizExitSentRef.current = false
+  }
+
+  const observeScroll = (element: HTMLDivElement) => {
+    const segment = slideLogRef.current
+    if (!segment || segment.sent || element.clientHeight <= 0) return
+    const ratio = element.scrollHeight <= element.clientHeight ? 1
+      : Math.max(0, Math.min(1, (element.scrollTop + element.clientHeight) / element.scrollHeight))
+    segment.scrollDepth = Math.max(segment.scrollDepth ?? 0, ratio)
+    segment.raw[IK.reachedBottom] = segment.scrollDepth >= 1
+  }
+
+  const observeInteraction = (method: string) => {
+    const segment = slideLogRef.current
+    if (!segment || segment.sent) return
+    if (!(IK.firstInteractionDelayMs in segment.raw)) {
+      segment.raw[IK.firstInteractionDelayMs] = Math.max(0, Date.now() - slideEnterTimeRef.current)
+    }
+    segment.raw[IK.inputMethod] = method
+  }
+
+  const observeTap = (event: React.MouseEvent) => {
+    observeInteraction(event.detail === 0 ? 'keyboard' : pointerMethodRef.current ?? 'mouse')
+    const segment = slideLogRef.current
+    if (!segment || segment.sent || event.detail === 0) return
+    const now = Date.now()
+    segment.raw[IK.tapCount] = Number(segment.raw[IK.tapCount]) + 1
+    if (segment.lastTapAt != null) (segment.raw[IK.tapIntervalsMs] as number[]).push(now - segment.lastTapAt)
+    segment.lastTapAt = now
+  }
+
+  const observeImageZoom = (targetId: string) => {
+    const segment = slideLogRef.current
+    if (!segment || segment.sent) return
+    const targets = (segment.raw[IK.imageZoomTargets] as string[] | undefined) ?? []
+    targets.push(targetId)
+    segment.raw[IK.imageZoomTargets] = targets
+  }
+
+  const flushSlideLog = (trigger: AdvanceTrigger | null = null, exiting = false, isCompleted = false) => {
+    const segment = slideLogRef.current
+    const uid = session?.user?.id
+    if (!segment || segment.sent || !uid || consentBlocked) return false
+    const now = Date.now()
+    const clicks = checkboxClicksRef.current
+    const intervals = clicks.slice(1).map((click, i) =>
+      Math.round(((click.t - clicks[i].t) / 1000) * 100) / 100)
+    const isCheckpoint = segment.sub === 1
+    const payload = {
+      userId: uid, chapterId: segment.chapterId, slideId: segment.slideId,
+      durationMs: Math.max(0, Math.trunc(now - slideEnterTimeRef.current)),
+      slideIndex: segment.index, subSlide: segment.sub,
+      ...(lessonSessionId ? { sessionId: lessonSessionId } : {}),
+      slideTotal: segment.total, revisitCount: segment.visits, isRevisit: segment.visits > 1,
+      isCompleted, advanceTrigger: trigger, scrollDepth: segment.scrollDepth,
+      interactionRaw: segment.raw,
+      imageZoomCount: segment.sub === 0 ? imageZoomCountRef.current : null,
+      checkboxOrderRaw: isCheckpoint ? clicks.map((click) => click.index) : null,
+      checkboxIntervalsRaw: isCheckpoint ? intervals : null,
+      checkboxClickInterval: isCheckpoint ? (intervals.length
+        ? Math.round((intervals.reduce((sum, value) => sum + value, 0) / intervals.length) * 100) / 100 : 0) : null,
+      checkboxTotal: isCheckpoint ? segment.checkboxTotal : null,
+    }
+    // 세션 exit와 독립된 구간 가드. HTTP 실패는 재전송 큐가 인계한다.
+    segment.sent = true
+    deliverBehaviorLog('/api/v1/lesson-log', payload, uid, exiting)
+    slideEnterTimeRef.current = now
+    return true
+  }
+
+  const changeLoggedPosition = (idx: number, sub: SubSlide, trigger: AdvanceTrigger, reentry = false) => {
+    flushSlideLog(trigger)
+    // 완료 화면 등 이미 전송한 구간의 대기 시간은 새 진입에 합산하지 않는다.
+    if (slideLogRef.current?.sent) slideEnterTimeRef.current = Date.now()
+    beginSlideLog(idx, sub, reentry)
+    if (idx === slideIndex && sub === subSlide && bodyRef.current) observeScroll(bodyRef.current)
+    setSlideIndex(idx)
+    setSubSlide(sub)
+  }
+
+  // 세션 ID가 없어도 슬라이드·퀴즈 flush는 중단하지 않는다.
   const sendExit = () => {
     const uid = session?.user?.id
-    if (!lessonSessionId || !uid) return
-    if (exitSentRef.current || completedRef.current) return // 중복/완료 후 재전송 방지
-    exitSentRef.current = true
-
-    // 1) 세션 exit — last_slide/last_sub_slide에 이탈 위치 기록
-    navigator.sendBeacon(
-      '/api/v1/chapter-session-log',
-      JSON.stringify({
-        userId:       uid,
-        chapterId,
-        action:       'exit',
-        sessionId:    lessonSessionId,
-        pageType:     'lesson',
-        isCompleted:  showComplete,
-        exitPoint:    subSlide === 2 ? 'mini_quiz' : 'slide',
-        lastSlide:    slideIndex,
-        lastSubSlide: subSlide,
-      })
-    )
-
-    // 2) 미니퀴즈 pending → bridge_time·explanation_viewed UPDATE (attempt 본체는 제출 시 이미 저장됨)
-    //    pending은 비우지 않는다 — 돌아와서 정상 전환/재이탈 시 최종값으로 다시 UPDATE 가능.
-    const p = pendingQuizLogRef.current
-    if (p && p.logId) {
-      navigator.sendBeacon(
-        '/api/v1/quiz-performance-log',
-        JSON.stringify({
-          mode: 'update',
-          logId: p.logId,
-          quizBridgeTime: Math.round((Date.now() - p.submittedAt) / 1000),
-          afterWrongAction: 'exit',
-          explanationViewed: p.explanationViewed,
-        })
-      )
+    if (!uid || consentBlocked) return
+    flushSlideLog(null, true)
+    if (lessonSessionId && !exitSentRef.current && !completedRef.current) {
+      exitSentRef.current = true
+      deliverBehaviorLog('/api/v1/chapter-session-log', {
+        userId: uid, chapterId, action: 'exit', sessionId: lessonSessionId,
+        pageType: 'lesson', isCompleted: showComplete,
+        exitPoint: subSlide === 2 ? 'mini_quiz' : 'slide',
+        lastSlide: slideIndex, lastSubSlide: subSlide,
+      }, uid, true)
     }
-
-    // 3) 진행 중 슬라이드의 lesson_slide 로그 flush (전환 없이 중간 이탈하는 경우 커버).
-    //    전환 시엔 effect가 이미 전송하므로, 여기선 마지막 미전송 구간만.
-    const prevSlide = slides[slideIndex]
-    const duration = Math.round((Date.now() - slideEnterTimeRef.current) / 1000)
-    if (prevSlide && duration > 0) {
-      const sub = loggedSubSlideRef.current
-      let imageZoomCount: number | null = null
-      let checkboxOrderRaw: number[] | null = null
-      let checkboxIntervalsRaw: number[] | null = null
-      let checkboxClickInterval: number | null = null
-      let checkboxTotal: number | null = null
-      if (sub === 0) {
-        imageZoomCount = imageZoomCountRef.current
-      } else if (sub === 1) {
-        const clicks = checkboxClicksRef.current
-        checkboxOrderRaw = clicks.map((c) => c.index)
-        const intervals = clicks
-          .slice(1)
-          .map((c, i) => Math.round(((c.t - clicks[i].t) / 1000) * 100) / 100)
-        checkboxIntervalsRaw  = intervals
-        checkboxClickInterval = intervals.length > 0
-          ? Math.round((intervals.reduce((a, b) => a + b, 0) / intervals.length) * 100) / 100
-          : 0
-        checkboxTotal = sentences.length
-      }
-      navigator.sendBeacon(
-        '/api/v1/lesson-log',
-        JSON.stringify({
-          userId: uid, chapterId, slideId: prevSlide.id,
-          durationSeconds: duration, slideIndex, subSlide: sub,
-          imageZoomCount, checkboxOrderRaw, checkboxIntervalsRaw, checkboxClickInterval, checkboxTotal,
-        })
-      )
+    const pending = pendingQuizLogRef.current
+    if (pending?.logId && !quizExitSentRef.current) {
+      quizExitSentRef.current = true
+      deliverBehaviorLog('/api/v1/quiz-performance-log', {
+        mode: 'update', logId: pending.logId,
+        quizBridgeTime: Math.round((Date.now() - pending.submittedAt) / 1000),
+        afterWrongAction: 'exit', explanationViewed: pending.explanationViewed,
+      }, uid, true)
     }
   }
-  // sendExitRef가 항상 "최신 렌더의 sendExit"을 가리키게 → 이벤트/언마운트 모두 현재값으로 flush
   const sendExitRef = useRef(sendExit)
   sendExitRef.current = sendExit
+  const resumeSlideRef = useRef(() => {})
+  resumeSlideRef.current = () => {
+    if (completedRef.current) return
+    exitSentRef.current = false
+    quizExitSentRef.current = false
+    const backgroundStart = backgroundStartRef.current
+    if (slideLogRef.current?.sent) {
+      // 백그라운드 시간은 복귀 구간의 원본 신호로 분리하고 체류 초에 중복 합산하지 않는다.
+      slideEnterTimeRef.current = Date.now()
+      beginSlideLog(slideIndex, subSlide, false, true)
+    }
+    if (backgroundStart != null && slideLogRef.current && !slideLogRef.current.sent) {
+      slideLogRef.current.raw[IK.backgroundMs] = Date.now() - backgroundStart
+    }
+    backgroundStartRef.current = null
+    if (bodyRef.current) observeScroll(bodyRef.current)
+  }
 
-  // ── 이탈 감지 3종 (마운트 1회 등록) ──
-  //   beforeunload  : 탭 닫기/새로고침
-  //   visibilitychange : 모바일 백그라운드/탭 전환 (돌아오면 가드 해제)
-  //   언마운트 cleanup : 앱 내 클라이언트 라우팅 이탈(챕터목록 버튼/앱 내 뒤로가기) — 위 두 이벤트가 안 뜨는 경로
-  //   → 정상완료(completedRef)/이미전송(exitSentRef)이면 sendExit 내부 가드로 skip
   useEffect(() => {
-    const onBeforeUnload = () => sendExitRef.current()
+    const onExit = () => sendExitRef.current()
     const onVisibility = () => {
-      if (document.hidden) sendExitRef.current()
-      else if (!completedRef.current) exitSentRef.current = false // 돌아오면 가드 해제
+      if (document.hidden) {
+        if (backgroundStartRef.current == null) {
+          backgroundStartRef.current = Date.now()
+          const segment = slideLogRef.current
+          if (segment && !segment.sent) segment.raw[IK.tabSwitchCount] = Number(segment.raw[IK.tabSwitchCount]) + 1
+        }
+        onExit()
+      } else resumeSlideRef.current()
     }
-    window.addEventListener('beforeunload', onBeforeUnload)
+    const onPageShow = () => resumeSlideRef.current()
+    window.addEventListener('beforeunload', onExit)
     document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('pagehide', onExit)
+    window.addEventListener('pageshow', onPageShow)
     return () => {
-      window.removeEventListener('beforeunload', onBeforeUnload)
+      window.removeEventListener('beforeunload', onExit)
       document.removeEventListener('visibilitychange', onVisibility)
-      sendExitRef.current() // 언마운트 = 앱 내 라우팅 이탈 flush (가드 통과 시에만 전송)
+      window.removeEventListener('pagehide', onExit)
+      window.removeEventListener('pageshow', onPageShow)
+      onExit()
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   /* ── Mini quiz session score ────────────────── */
   const miniCorrectRef = useRef(0)
@@ -542,82 +744,30 @@ export default function LessonPage() {
     }
   }
 
-  /* ── 슬라이드 체류/상호작용 로깅 + Auto 타이머 ─────────── */
+  /* ── 최초 진입/조회 후 구간 시작. 이동 핸들러가 이미 시작한 구간은 유지한다. ── */
+  useEffect(() => {
+    if (loading || consentBlocked || showComplete) return
+    const segment = slideLogRef.current
+    if (!segment || segment.chapterId !== chapterId ||
+        segment.slideId !== slides[slideIndex]?.id || segment.sub !== subSlide) {
+      if (segment) flushSlideLog()
+      beginSlideLog(slideIndex, subSlide)
+    } else if (segment.sent && !document.hidden) {
+      resumeSlideRef.current()
+    }
+    if (bodyRef.current) observeScroll(bodyRef.current)
+  }, [slides, slideIndex, subSlide, loading, consentBlocked, showComplete, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 기존 타이머는 진행률만 갱신한다. 자동 카드 이동을 새로 만들지 않는다.
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current)
-    if (loading) return
-    if (consentBlocked) return   // 동의 전 슬라이드 로그 전송 차단
-
-    // ── 2026-07-15: 슬라이드 체류시간 + 상호작용 로깅 (수동/자동 모드 공통) ──
-    // (기존엔 slideMode !== 'auto' 게이팅으로 수동모드 로그가 유실됨 — 게이트 위로 이동)
-    const now = Date.now()
-    const duration = Math.round((now - slideEnterTimeRef.current) / 1000)
-    // ── 2026-07-19 수정: slide_index +1 밀림 — slideIndex state 대신 loggedSlideIndexRef 사용 ──
-    // const prevSlide = slides[slideIndex]
-    const prevSlide = slides[loggedSlideIndexRef.current]
-    // 이 row가 나온 subSlide(방금 떠난 슬라이드) — slide_index는 카드 인덱스 유지, sub_slide로 슬라이드 구분
-    const loggedSub = loggedSubSlideRef.current
-    if (prevSlide && duration > 0 && session?.user?.id) {
-      // ── 값 격리: 해당 subSlide에서 실제 일어난 행동만 채우고 나머지는 null 유지 ──
-      let imageZoomCount:        number | null   = null
-      let checkboxOrderRaw:      number[] | null = null
-      let checkboxIntervalsRaw:  number[] | null = null
-      let checkboxClickInterval: number | null   = null
-      let checkboxTotal:         number | null   = null
-
-      if (loggedSub === 0) {
-        // 학습 슬라이드: 이미지 확대 횟수만
-        imageZoomCount = imageZoomCountRef.current
-      } else if (loggedSub === 1) {
-        // 체크포인트 슬라이드: 체크박스 상호작용만
-        const clicks = checkboxClicksRef.current
-        checkboxOrderRaw = clicks.map((c) => c.index)                    // 클릭 순서대로의 인덱스
-        const intervals = clicks
-          .slice(1)
-          .map((c, i) => Math.round(((c.t - clicks[i].t) / 1000) * 100) / 100) // 연속 클릭 간 간격(초)
-        checkboxIntervalsRaw  = intervals
-        checkboxClickInterval = intervals.length > 0
-          ? Math.round((intervals.reduce((a, b) => a + b, 0) / intervals.length) * 100) / 100
-          : 0
-        checkboxTotal = sentences.length
-      }
-      // loggedSub === 2 (미니퀴즈): zoom·checkbox 모두 해당 없음 → 전부 null (미니퀴즈 로그는 배치2)
-
-      fetch('/api/v1/lesson-log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: session.user.id,
-          chapterId,
-          slideId: prevSlide.id,
-          durationSeconds: duration,
-          // ── 2026-07-19 수정: slide_index +1 밀림 — 로깅 구간이 속한 카드 인덱스(ref) 전송 ──
-          // slideIndex,
-          slideIndex: loggedSlideIndexRef.current,
-          subSlide: loggedSub,
-          imageZoomCount,
-          checkboxOrderRaw,
-          checkboxIntervalsRaw,
-          checkboxClickInterval,
-          checkboxTotal,
-        }),
-      }).catch(() => {})
-    }
-    slideEnterTimeRef.current = now
-    // 다음 체류 구간이 속할 subSlide로 갱신 (현재 진입한 subSlide)
-    loggedSubSlideRef.current = subSlide
-    // ── 2026-07-19 수정: 다음 체류 구간이 속할 카드 인덱스도 함께 갱신 (subSlide와 대칭) ──
-    loggedSlideIndexRef.current = slideIndex
-
-    // ── auto 모드에서만 자동진행 타이머 (미니퀴즈 화면 제외) ──
-    if (slideMode !== 'auto' || subSlide === 2) return
+    if (loading || consentBlocked || slideMode !== 'auto' || subSlide === 2) return
     setAutoProgress(0)
     timerRef.current = setInterval(() => {
-      setAutoProgress((p) => Math.min(p + 2, 100)) // 100ms × 50 = 5 s
+      setAutoProgress((p) => Math.min(p + 2, 100))
     }, 100)
-
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
-  }, [slideMode, slideIndex, subSlide, loading, consentBlocked]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [slideMode, slideIndex, subSlide, loading, consentBlocked])
 
   /* ── 미니퀴즈 로그 마무리 (다음 카드로 넘어갈 때 bridge_time·explanation_viewed UPDATE) ── */
   // attempt 본체는 제출 시 이미 INSERT됨. 여기선 생성된 row(logId)에 이탈까지의 값만 갱신.
@@ -625,24 +775,19 @@ export default function LessonPage() {
     const p = pendingQuizLogRef.current
     pendingQuizLogRef.current = null
     if (!p || !p.logId || !session?.user?.id) return
-    fetch('/api/v1/quiz-performance-log', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        mode: 'update',
-        logId: p.logId,
-        quizBridgeTime: Math.round((Date.now() - p.submittedAt) / 1000), // 제출~다음 카드(초)
-        afterWrongAction: 'next',
-        explanationViewed: p.explanationViewed,
-      }),
-    }).catch(() => {})
+    deliverBehaviorLog('/api/v1/quiz-performance-log', {
+      mode: 'update',
+      logId: p.logId,
+      quizBridgeTime: Math.round((Date.now() - p.submittedAt) / 1000), // 제출~다음 카드(초)
+      afterWrongAction: 'next',
+      explanationViewed: p.explanationViewed,
+    }, session.user.id)
   }
 
   /* ── 카드 이동 헬퍼 ─────────────────────────────────── */
-  const goToCard = (idx: number, sub: SubSlide = 0) => {
+  const goToCard = (idx: number, sub: SubSlide = 0, trigger: AdvanceTrigger = 'button') => {
     flushQuizLog() // 이전 카드에 제출된 미니퀴즈 pending 로그가 있으면 전송
-    setSlideIndex(idx)
-    setSubSlide(sub)
+    changeLoggedPosition(idx, sub, trigger, true)
     setCheckedSentences([])
     setAutoProgress(0)
     // 카드 전환 → per-card 상호작용 집계 리셋 (슬라이드별 집계)
@@ -654,7 +799,8 @@ export default function LessonPage() {
     setExplanationRevealed(false)
   }
 
-  const completeLesson = () => {
+  const completeLesson = (trigger: AdvanceTrigger = 'button') => {
+    flushSlideLog(trigger, false, true) // 봉인 전에 마지막 카드·단계의 체류 구간 전송
     flushQuizLog() // 마지막 카드 미니퀴즈 pending 로그 전송 (goToCard를 안 거치는 완료 경로)
     fetch('/api/v1/lesson-complete', {
       method: 'POST',
@@ -673,30 +819,26 @@ export default function LessonPage() {
     completedRef.current = true
     exitSentRef.current  = true
     if (lessonSessionId && session?.user?.id) {
-      fetch('/api/v1/chapter-session-log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId:       session.user.id,
-          chapterId,
-          action:       'exit',
-          sessionId:    lessonSessionId,
-          pageType:     'lesson',
-          isCompleted:  true,
-          exitPoint:    'lesson_complete',
-          lastSlide:    slideIndex,
-          lastSubSlide: subSlide,
-        }),
-      }).catch(() => {})
+      deliverBehaviorLog('/api/v1/chapter-session-log', {
+        userId:       session.user.id,
+        chapterId,
+        action:       'exit',
+        sessionId:    lessonSessionId,
+        pageType:     'lesson',
+        isCompleted:  true,
+        exitPoint:    'lesson_complete',
+        lastSlide:    slideIndex,
+        lastSubSlide: subSlide,
+      }, session.user.id)
     }
     setShowComplete(true)
   }
 
-  const goToNextCard = () => {
+  const goToNextCard = (trigger: AdvanceTrigger = 'button') => {
     if (slideIndex >= slides.length - 1) {
-      completeLesson()
+      completeLesson(trigger)
     } else {
-      goToCard(slideIndex + 1, 0)
+      goToCard(slideIndex + 1, 0, trigger)
     }
   }
 
@@ -740,9 +882,9 @@ export default function LessonPage() {
   }
 
   /* ── 슬라이드 전진(스와이프 좌 / 다음 버튼 / 화살표) ─── */
-  const advance = () => {
+  const advance = (trigger: AdvanceTrigger = 'button') => {
     if (subSlide === 0) {
-      setSubSlide(1)
+      changeLoggedPosition(slideIndex, 1, trigger)
       return
     }
     if (subSlide === 1) {
@@ -750,11 +892,11 @@ export default function LessonPage() {
       const hasQuiz = buildMiniQuizFor(slideIndex)
       if (hasQuiz) {
         quizEnteredAtRef.current = Date.now() // 슬라이드3 진입 시각 — response_time 기준점
-        setSubSlide(2)
+        changeLoggedPosition(slideIndex, 2, trigger)
       } else {
         // 배정 Map에 문항이 없음(폴백 후보 소진 포함)
         // — 미니퀴즈 없이 슬라이드2에서 바로 다음 카드/완료 처리
-        goToNextCard()
+        goToNextCard(trigger)
       }
       return
     }
@@ -765,23 +907,23 @@ export default function LessonPage() {
       setShowRelatedQuestions(true)
       return
     }
-    goToNextCard()
+    goToNextCard(trigger)
   }
 
   /* ── 슬라이드 후진(스와이프 우 / 이전 버튼) ───────────── */
   const goBack = () => {
     if (subSlide > 0) {
-      setSubSlide((s) => (s === 2 ? 1 : 0))
+      changeLoggedPosition(slideIndex, subSlide === 2 ? 1 : 0, 'back', true)
       return
     }
     if (slideIndex > 0) {
-      goToCard(slideIndex - 1, 0)
+      goToCard(slideIndex - 1, 0, 'back')
     }
   }
 
   // 오답 후 "다시 학습하기" — 체크포인트(1)가 아니라 학습내용(0)부터 다시 보게 함
   const retryFromWrong = () => {
-    setSubSlide(0)
+    changeLoggedPosition(slideIndex, 0, 'retry', true)
     setCheckedSentences([])
     setMiniQ(null)
     setMiniSelected(null)
@@ -869,7 +1011,7 @@ export default function LessonPage() {
     const delta = clientX - dragStartX.current
     if (Math.abs(delta) < 50) return
     if (delta < 0) {
-      advance()
+      advance('swipe')
     } else {
       goBack()
     }
@@ -928,7 +1070,15 @@ export default function LessonPage() {
 
   /* ════════════════════════════════════════════════════ */
   return (
-    <div className="min-h-screen bg-[#F5F5F3] flex flex-col">
+    <div
+      className="min-h-screen bg-[#F5F5F3] flex flex-col"
+      onPointerDownCapture={(event) => {
+        pointerMethodRef.current = event.pointerType
+        observeInteraction(event.pointerType)
+      }}
+      onKeyDownCapture={() => observeInteraction('keyboard')}
+      onClickCapture={observeTap}
+    >
 
       {/* Header */}
       <div className="bg-white border-b border-[#E5E5E5] px-5 pt-12 pb-4">
@@ -1018,7 +1168,7 @@ export default function LessonPage() {
               <ChevronLeft size={16} className="text-[#6B6B6B]" />
             </button>
             <button
-              onClick={advance}
+              onClick={() => advance('arrow')}
               className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white border border-[#E5E5E5] flex items-center justify-center shadow-sm disabled:opacity-20 transition-opacity"
             >
               <ArrowRight size={16} className="text-[#6B6B6B]" />
@@ -1052,7 +1202,7 @@ export default function LessonPage() {
 
               {/* ── 슬라이드1: 학습 내용 (이미지 확대 가능) ── */}
               {subSlide === 0 && (
-                <div className="flex-1 overflow-y-auto">
+                <div ref={bodyRef} onScroll={(event) => observeScroll(event.currentTarget)} className="flex-1 overflow-y-auto">
                   {/* 영상 (챕터 단위) */}
                   {chapterVideoUrl && (
                     <div className="mb-3 rounded-xl overflow-hidden bg-[#1A1A1A]">
@@ -1071,7 +1221,8 @@ export default function LessonPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        imageZoomCountRef.current += 1 // 로컬 카운터만 증가 (네트워크 호출 없음)
+                        imageZoomCountRef.current += 1
+                        observeImageZoom(currentSlide.id) // 로컬 카운터만 증가 (네트워크 호출 없음)
                         setZoomImageUrl(currentSlide.image_url)
                       }}
                       className="mb-3 relative w-full rounded-xl overflow-hidden block"
@@ -1108,7 +1259,7 @@ export default function LessonPage() {
 
               {/* ── 슬라이드2: 체크포인트 (전부 체크해야 다음 가능) ── */}
               {subSlide === 1 && (
-                <div className="flex-1 overflow-y-auto">
+                <div ref={bodyRef} onScroll={(event) => observeScroll(event.currentTarget)} className="flex-1 overflow-y-auto">
                   {sentences.length > 0 ? (
                     <div className="space-y-2">
                       {sentences.map((sentence, i) => {
@@ -1120,6 +1271,13 @@ export default function LessonPage() {
                               if (slideMode !== 'manual') return
                               // 클릭마다 {인덱스, 타임스탬프} 축적 (슬라이드 전환 시 payload로 전송)
                               checkboxClicksRef.current.push({ index: i, t: Date.now() })
+                              const segment = slideLogRef.current
+                              if (segment && !segment.sent && !isChecked) {
+                                if (segment.checkedOnce.has(i)) {
+                                  segment.raw[IK.checkboxRecheckCount] = Number(segment.raw[IK.checkboxRecheckCount] ?? 0) + 1
+                                }
+                                segment.checkedOnce.add(i)
+                              }
                               setCheckedSentences((prev) => {
                                 const next = new Array(sentences.length).fill(false)
                                 prev.forEach((v, idx) => { next[idx] = v })
@@ -1153,7 +1311,7 @@ export default function LessonPage() {
 
               {/* ── 슬라이드3: 미니퀴즈 ── */}
               {subSlide === 2 && miniQ && (
-                <div className="flex-1 overflow-y-auto">
+                <div ref={bodyRef} onScroll={(event) => observeScroll(event.currentTarget)} className="flex-1 overflow-y-auto">
                   <p className="text-[14px] font-semibold text-[#1A1A1A] mb-3 leading-snug">
                     {miniQ.text}
                   </p>
@@ -1163,7 +1321,10 @@ export default function LessonPage() {
                   {miniQ.imageUrl && (
                     <button
                       type="button"
-                      onClick={() => setZoomImageUrl(miniQ.imageUrl)}
+                      onClick={() => {
+                        observeImageZoom(miniQ.id)
+                        setZoomImageUrl(miniQ.imageUrl)
+                      }}
                       className="mb-4 relative w-full rounded-xl overflow-hidden block"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1270,7 +1431,7 @@ export default function LessonPage() {
                   key={i}
                   onClick={() => {
                     if (i > slideIndex) { showToast('아직 도달하지 않은 카드예요'); return }
-                    goToCard(i, 0)
+                    goToCard(i, 0, 'progressbar')
                   }}
                   className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${
                     i <= slideIndex ? 'bg-green-500' : 'bg-gray-200'
@@ -1311,7 +1472,7 @@ export default function LessonPage() {
             </button>
           ) : miniSelected === miniQ.answerIdx ? (
             <button
-              onClick={advance}
+              onClick={() => advance('button')}
               className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold"
             >
               {slideIndex >= slides.length - 1 ? '학습 완료 🎉' : '다음 카드 →'}
@@ -1335,7 +1496,7 @@ export default function LessonPage() {
         ) : subSlide === 1 ? (
           slideMode === 'manual' ? (
             <button
-              onClick={advance}
+              onClick={() => advance('button')}
               disabled={!allChecked}
               className={`w-full py-4 rounded-2xl text-[16px] font-bold transition-all ${
                 allChecked ? 'bg-[#00A651] text-white' : 'bg-[#E5E5E5] text-[#ADADAD]'
@@ -1350,7 +1511,7 @@ export default function LessonPage() {
           )
         ) : (
           <button
-            onClick={advance}
+            onClick={() => advance('button')}
             className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold"
           >
             다음
@@ -1377,7 +1538,9 @@ export default function LessonPage() {
           <button
             onClick={() => {
               setShowComplete(false)
-              goToCard(0, 0)
+              completedRef.current = false
+              exitSentRef.current = false
+              goToCard(0, 0, 'retry')
               miniCorrectRef.current = 0
               miniTotalRef.current   = 0
             }}
