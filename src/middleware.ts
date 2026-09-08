@@ -81,7 +81,7 @@ export function middleware(request: NextRequest) {
       limit = 10
     }
 
-    const key = `api:${ip}:${pathname.split('/').slice(0, 3).join('/')}`
+    const key = `api:${ip}:${pathname}`
     const { allowed, remaining } = checkRateLimit(key, limit, windowMs)
 
     if (!allowed) {
