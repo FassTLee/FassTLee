@@ -124,6 +124,18 @@ function buildMiniQuizAssignmentMap(slides: Slide[], questions: Question[]): Map
 // 카드 내부 3슬라이드 위치: 0=학습내용 1=체크포인트 2=미니퀴즈
 type SubSlide = 0 | 1 | 2
 
+// ★ 이 구현은 임시다. 서비스 재개 전에 반드시 제거·교체한다.
+// 확정 설계는 "약 3챕터·100카드 행동 데이터 확보 후 배정"인데
+// 이 버전은 URL 파라미터로 즉시 적용한다. 이대로 재개하면
+// (1) 순환논증 가드 위반 — 처방받은 행동이 분류 신호를 오염시킨다
+// (2) profiles에 대조군 배정 컬럼이 없어 사후 배정이 불가능하다
+const SHOOT_SUB_SLIDE_ORDERS: Record<LearningType, readonly SubSlide[]> = {
+  explorer: [0, 1, 2],
+  repeater: [1, 0, 2],
+  spotter: [2, 0, 1],
+  planner: [0, 2, 1],
+}
+
 type AdvanceTrigger = 'swipe' | 'arrow' | 'button' | 'progressbar' | 'back' | 'retry' | 'auto'
 type QueuedBehaviorLog = {
   id: string
@@ -278,6 +290,9 @@ export default function LessonPage() {
   const searchParams = useSearchParams()
   const certId = searchParams.get('certId')
   const certQuery = certId ? `?certId=${certId}` : ''
+  const styleParam = searchParams.get('style')
+  const isShootMode = styleParam !== null && isLearningType(styleParam)
+  const shootStyle: LearningType = isLearningType(styleParam) ? styleParam : 'explorer'
 
   const [chapterTitle, setChapterTitle] = useState('')
   const [subjectName, setSubjectName]   = useState('')
@@ -295,6 +310,9 @@ export default function LessonPage() {
   const loadAbortRef = useRef<AbortController | null>(null)
   const loadInFlightRef = useRef(false)
   const miniQuizAssignmentsRef = useRef<Map<string, string>>(new Map())
+  const [orderEntry, setOrderEntry] = useState<{ slides: Slide[]; style: LearningType } | null>(null)
+  const orderEntryRef = useRef<typeof orderEntry>(null)
+  const orderReady = !isShootMode || (orderEntry?.slides === slides && orderEntry.style === shootStyle)
 
   /* ── 가입 동의 게이트 (2차) — 수집(세션·슬라이드 로그) 시작 전 차단 ──── */
   const consent = useConsentGate()
@@ -744,9 +762,20 @@ export default function LessonPage() {
     }
   }
 
+  // 조회 완료 후 첫 카드의 첫 단계로 진입한다. 퀴즈부터 시작하면 구성도 먼저 수행한다.
+  useEffect(() => {
+    if (!isShootMode) return
+    if (loading || loadError || consentBlocked || slides.length === 0) return
+    if (orderEntryRef.current?.slides === slides && orderEntryRef.current.style === shootStyle) return
+    goToCard(0, firstSubFor(0), 'auto')
+    const entry = { slides, style: shootStyle }
+    orderEntryRef.current = entry
+    setOrderEntry(entry)
+  }, [slides, shootStyle, isShootMode, loading, loadError, consentBlocked]) // eslint-disable-line react-hooks/exhaustive-deps
+
   /* ── 최초 진입/조회 후 구간 시작. 이동 핸들러가 이미 시작한 구간은 유지한다. ── */
   useEffect(() => {
-    if (loading || consentBlocked || showComplete) return
+    if (loading || consentBlocked || showComplete || !orderReady) return
     const segment = slideLogRef.current
     if (!segment || segment.chapterId !== chapterId ||
         segment.slideId !== slides[slideIndex]?.id || segment.sub !== subSlide) {
@@ -756,7 +785,7 @@ export default function LessonPage() {
       resumeSlideRef.current()
     }
     if (bodyRef.current) observeScroll(bodyRef.current)
-  }, [slides, slideIndex, subSlide, loading, consentBlocked, showComplete, chapterId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [slides, slideIndex, subSlide, loading, consentBlocked, showComplete, chapterId, orderReady]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 기존 타이머는 진행률만 갱신한다. 자동 카드 이동을 새로 만들지 않는다.
   useEffect(() => {
@@ -787,13 +816,20 @@ export default function LessonPage() {
   /* ── 카드 이동 헬퍼 ─────────────────────────────────── */
   const goToCard = (idx: number, sub: SubSlide = 0, trigger: AdvanceTrigger = 'button') => {
     flushQuizLog() // 이전 카드에 제출된 미니퀴즈 pending 로그가 있으면 전송
+    if (sub === 2) {
+      if (buildMiniQuizFor(idx)) {
+        quizEnteredAtRef.current = Date.now()
+      } else {
+        sub = 0 // 구성 불가 시 기존 학습내용 진입으로 폴백
+      }
+    }
     changeLoggedPosition(idx, sub, trigger, true)
     setCheckedSentences([])
     setAutoProgress(0)
     // 카드 전환 → per-card 상호작용 집계 리셋 (슬라이드별 집계)
     imageZoomCountRef.current = 0
     checkboxClicksRef.current = []
-    setMiniQ(null)
+    if (sub !== 2) setMiniQ(null)
     setMiniSelected(null)
     setMiniConfirmed(false)
     setExplanationRevealed(false)
@@ -838,8 +874,37 @@ export default function LessonPage() {
     if (slideIndex >= slides.length - 1) {
       completeLesson(trigger)
     } else {
-      goToCard(slideIndex + 1, 0, trigger)
+      goToCard(slideIndex + 1, firstSubFor(slideIndex + 1), trigger)
     }
+  }
+
+  // 순열 판정 전용: 난수·state·ref 변경 없이 구성 가능 여부만 확인한다.
+  const canBuildMiniQuizFor = (idx: number): boolean => {
+    const slideId = slides[idx]?.id
+    if (!slideId) return false
+    const assignedQuestionId = miniQuizAssignmentsRef.current.get(slideId)
+    if (!assignedQuestionId) return false
+    const q = questions.find((qq) => qq.id === assignedQuestionId)
+    if (!q || q.answer_index === undefined || q.answer_index === null) return false
+    const correctOriginalIndex = q.answer_index[0]
+    if (correctOriginalIndex === undefined || !q.options[correctOriginalIndex]) return false
+    return q.options.some((_, originalIndex) => !q.answer_index?.includes(originalIndex))
+  }
+
+  const orderFor = (idx: number): SubSlide[] => {
+    const hasQuiz = canBuildMiniQuizFor(idx)
+    return SHOOT_SUB_SLIDE_ORDERS[shootStyle].filter((sub) => sub !== 2 || hasQuiz)
+  }
+  const firstSubFor = (idx: number): SubSlide => orderFor(idx)[0]
+  const nextSubFor = (idx: number, sub: SubSlide): SubSlide | null => {
+    const order = orderFor(idx)
+    const cursor = order.indexOf(sub)
+    return cursor < 0 ? null : order[cursor + 1] ?? null
+  }
+  const prevSubFor = (idx: number, sub: SubSlide): SubSlide | null => {
+    const order = orderFor(idx)
+    const cursor = order.indexOf(sub)
+    return cursor < 0 ? null : order[cursor - 1] ?? null
   }
 
   // 챕터 로드 시 고정한 linked/폴백 배정으로 슬라이드3 데이터를 구성. 실패 시 false 반환
@@ -883,41 +948,46 @@ export default function LessonPage() {
 
   /* ── 슬라이드 전진(스와이프 좌 / 다음 버튼 / 화살표) ─── */
   const advance = (trigger: AdvanceTrigger = 'button') => {
-    if (subSlide === 0) {
-      changeLoggedPosition(slideIndex, 1, trigger)
-      return
-    }
     if (subSlide === 1) {
       if (slideMode === 'manual' && !allChecked) { showToast('모든 항목을 체크해주세요'); return }
-      const hasQuiz = buildMiniQuizFor(slideIndex)
-      if (hasQuiz) {
-        quizEnteredAtRef.current = Date.now() // 슬라이드3 진입 시각 — response_time 기준점
-        changeLoggedPosition(slideIndex, 2, trigger)
-      } else {
-        // 배정 Map에 문항이 없음(폴백 후보 소진 포함)
-        // — 미니퀴즈 없이 슬라이드2에서 바로 다음 카드/완료 처리
-        goToNextCard(trigger)
+    }
+    if (subSlide === 2) {
+      if (!miniConfirmed) { showToast('문제를 풀어주세요'); return }
+      const slide = slides[slideIndex]
+      if (miniSelected === miniQ?.answerIdx && slide?.exam_years && slide.exam_years.length > 0) {
+        setShowRelatedQuestions(true)
+        return
       }
-      return
     }
-    // subSlide === 2
-    if (!miniConfirmed) { showToast('문제를 풀어주세요'); return }
-    const slide = slides[slideIndex]
-    if (miniSelected === miniQ?.answerIdx && slide?.exam_years && slide.exam_years.length > 0) {
-      setShowRelatedQuestions(true)
-      return
+    let next = nextSubFor(slideIndex, subSlide)
+    if (!orderFor(slideIndex).includes(subSlide)) {
+      // 순열에 없는 단계는 기존 0→1→2 이동 규칙으로 폴백한다.
+      next = subSlide === 0 ? 1 : subSlide === 1 && canBuildMiniQuizFor(slideIndex) ? 2 : null
     }
-    goToNextCard(trigger)
+    if (next === 2) {
+      if (!buildMiniQuizFor(slideIndex)) { goToNextCard(trigger); return }
+      quizEnteredAtRef.current = Date.now() // 슬라이드3 진입 시각 — response_time 기준점
+    }
+    if (next !== null) changeLoggedPosition(slideIndex, next, trigger)
+    else goToNextCard(trigger)
   }
 
   /* ── 슬라이드 후진(스와이프 우 / 이전 버튼) ───────────── */
   const goBack = () => {
-    if (subSlide > 0) {
-      changeLoggedPosition(slideIndex, subSlide === 2 ? 1 : 0, 'back', true)
+    let previous = prevSubFor(slideIndex, subSlide)
+    if (!orderFor(slideIndex).includes(subSlide) && subSlide > 0) {
+      previous = subSlide === 2 ? 1 : 0
+    }
+    if (previous !== null) {
+      if (previous === 2) {
+        if (!buildMiniQuizFor(slideIndex)) return
+        quizEnteredAtRef.current = Date.now()
+      }
+      changeLoggedPosition(slideIndex, previous, 'back', true)
       return
     }
     if (slideIndex > 0) {
-      goToCard(slideIndex - 1, 0, 'back')
+      goToCard(slideIndex - 1, firstSubFor(slideIndex - 1), 'back')
     }
   }
 
@@ -931,12 +1001,19 @@ export default function LessonPage() {
     setExplanationRevealed(false)
   }
 
+  // 퀴즈 후 계속/관련문제 닫기도 남은 단계를 먼저 진행한다.
+  const continueInOrder = () => {
+    const next = nextSubFor(slideIndex, subSlide)
+    if (next === null) { goToNextCard(); return }
+    changeLoggedPosition(slideIndex, next, 'button')
+  }
+
   const continueAfterWrong = () => {
     const slide = slides[slideIndex]
     if (slide?.exam_years && slide.exam_years.length > 0) {
       setShowRelatedQuestions(true)
     } else {
-      goToNextCard()
+      continueInOrder()
     }
   }
 
@@ -1039,7 +1116,7 @@ export default function LessonPage() {
     )
   }
 
-  if (loading) {
+  if (loading || (!loadError && slides.length > 0 && !orderReady)) {
     return <LoadingState status="loading" />
   }
 
@@ -1050,6 +1127,14 @@ export default function LessonPage() {
   const styleMeta    = getLearningTypeMeta(style)
   const isConcise    = styleMeta?.lessonMode === 'concise'
   const currentSlide = slides[slideIndex]
+  const subSlideOrder = orderFor(slideIndex)
+  const subSlideCursor = subSlideOrder.indexOf(subSlide)
+  const nextSub = nextSubFor(slideIndex, subSlide)
+  const nextStepLabel = nextSub === 0 ? '학습 내용'
+    : nextSub === 1 ? '핵심 포인트 체크'
+    : nextSub === 2 ? '확인 퀴즈'
+    : null
+  const cardEndLabel = slideIndex >= slides.length - 1 ? '학습 완료 🎉' : '다음 카드 →'
 
   const parsed = currentSlide?.explanation
     ? parseExplanation(currentSlide.explanation)
@@ -1135,11 +1220,11 @@ export default function LessonPage() {
             {slides.length}개 중 {slideIndex + 1}번째
           </span>
           <div className="flex items-center gap-1.5">
-            {([0, 1, 2] as const).map((i) => (
+            {subSlideOrder.map((sub, cursor) => (
               <div
-                key={i}
+                key={sub}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
-                  subSlide === i ? 'w-5 bg-[#00A651]' : 'w-1.5 bg-[#E5E5E5]'
+                  subSlideCursor === cursor ? 'w-5 bg-[#00A651]' : 'w-1.5 bg-[#E5E5E5]'
                 }`}
               />
             ))}
@@ -1162,7 +1247,7 @@ export default function LessonPage() {
           <>
             <button
               onClick={goBack}
-              disabled={slideIndex === 0 && subSlide === 0}
+              disabled={slideIndex === 0 && subSlideCursor <= 0}
               className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-white border border-[#E5E5E5] flex items-center justify-center shadow-sm disabled:opacity-20 transition-opacity"
             >
               <ChevronLeft size={16} className="text-[#6B6B6B]" />
@@ -1431,7 +1516,7 @@ export default function LessonPage() {
                   key={i}
                   onClick={() => {
                     if (i > slideIndex) { showToast('아직 도달하지 않은 카드예요'); return }
-                    goToCard(i, 0, 'progressbar')
+                    goToCard(i, firstSubFor(i), 'progressbar')
                   }}
                   className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${
                     i <= slideIndex ? 'bg-green-500' : 'bg-gray-200'
@@ -1475,7 +1560,9 @@ export default function LessonPage() {
               onClick={() => advance('button')}
               className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold"
             >
-              {slideIndex >= slides.length - 1 ? '학습 완료 🎉' : '다음 카드 →'}
+              {isShootMode && nextStepLabel !== null
+                ? nextStepLabel
+                : slideIndex >= slides.length - 1 ? '학습 완료 🎉' : '다음 카드 →'}
             </button>
           ) : (
             <div className="space-y-2">
@@ -1502,7 +1589,7 @@ export default function LessonPage() {
                 allChecked ? 'bg-[#00A651] text-white' : 'bg-[#E5E5E5] text-[#ADADAD]'
               }`}
             >
-              확인 퀴즈
+              {isShootMode ? (nextStepLabel ?? cardEndLabel) : '확인 퀴즈'}
             </button>
           ) : (
             <div className="w-full py-4 text-center text-[14px] text-[#6B6B6B] font-medium">
@@ -1514,7 +1601,7 @@ export default function LessonPage() {
             onClick={() => advance('button')}
             className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[16px] font-bold"
           >
-            다음
+            {isShootMode ? (nextStepLabel ?? cardEndLabel) : '다음'}
           </button>
         )}
       </div>
@@ -1540,7 +1627,7 @@ export default function LessonPage() {
               setShowComplete(false)
               completedRef.current = false
               exitSentRef.current = false
-              goToCard(0, 0, 'retry')
+              goToCard(0, firstSubFor(0), 'retry')
               miniCorrectRef.current = 0
               miniTotalRef.current   = 0
             }}
@@ -1588,7 +1675,7 @@ export default function LessonPage() {
             {/* Backdrop */}
             <div
               className="absolute inset-0 bg-black/60"
-              onClick={() => { setShowRelatedQuestions(false); goToNextCard() }}
+              onClick={() => { setShowRelatedQuestions(false); continueInOrder() }}
             />
 
             <div className="relative bg-white rounded-t-2xl px-5 pt-5 pb-10 max-h-[80vh] overflow-y-auto">
@@ -1635,11 +1722,13 @@ export default function LessonPage() {
               <button
                 onClick={() => {
                   setShowRelatedQuestions(false)
-                  goToNextCard()
+                  continueInOrder()
                 }}
                 className="w-full py-4 bg-[#00A651] text-white rounded-2xl text-[15px] font-bold"
               >
-                {slideIndex >= slides.length - 1 ? '학습 완료 🎉' : '다음 카드로 →'}
+                {isShootMode && nextStepLabel !== null
+                  ? nextStepLabel
+                  : slideIndex >= slides.length - 1 ? '학습 완료 🎉' : '다음 카드로 →'}
               </button>
             </div>
           </div>
