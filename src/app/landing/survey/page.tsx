@@ -17,6 +17,8 @@ const GUEST_CLEANUP_KEYS = [
   'landingTestQuestions',
   'kinepia_learning_type',
   'kinepia_learning_style',
+  'kinepia_learning_answers',
+  'kinepia_learning_tie',
 ]
 
 interface SurveyQuestion {
@@ -71,10 +73,13 @@ function shuffleOptions(questions: SurveyQuestion[]): SurveyQuestion[] {
   }))
 }
 
-function calcType(votes: LearningType[]): LearningType {
+function calcType(votes: LearningType[]): { type: LearningType; isTie: boolean } {
   const count: Record<LearningType, number> = { spotter: 0, planner: 0, repeater: 0, explorer: 0 }
   votes.forEach((v) => { count[v]++ })
-  return (Object.keys(count) as LearningType[]).reduce((a, b) => count[a] >= count[b] ? a : b)
+  const types = Object.keys(count) as LearningType[]
+  const type = types.reduce((a, b) => count[a] >= count[b] ? a : b)
+  const isTie = types.filter((key) => count[key] === count[type]).length > 1
+  return { type, isTie }
 }
 
 function SurveyContent() {
@@ -103,11 +108,15 @@ function SurveyContent() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ guest_id: guestId }),
         })
-          .then((r) => r.json())
-          .then((data) => {
+          .then(async (r) => ({ ok: r.ok, data: await r.json() }))
+          .then(({ ok, data }) => {
             console.log('[survey] convert-guest 결과:', data)
-            GUEST_CLEANUP_KEYS.forEach((k) => localStorage.removeItem(k))
-            console.log('[survey] localStorage guest 키 정리 완료')
+            if (ok && data?.ok === true && data?.converted === true) {
+              GUEST_CLEANUP_KEYS.forEach((k) => localStorage.removeItem(k))
+              console.log('[survey] localStorage guest 키 정리 완료')
+            } else {
+              console.warn('[survey] guest 변환 미완료 — localStorage 키 유지')
+            }
           })
           .catch((e) => {
             console.log('[survey] convert-guest 오류:', e)
@@ -134,9 +143,11 @@ function SurveyContent() {
 
       // 마지막 문항 → 결과 계산 및 저장
       setSaving(true)
-      const finalType = calcType(newVotes)
+      const { type: finalType, isTie } = calcType(newVotes)
 
       localStorage.setItem(STYLE_TYPE_KEY, finalType)
+      localStorage.setItem('kinepia_learning_answers', JSON.stringify(newVotes))
+      localStorage.setItem('kinepia_learning_tie', isTie ? '1' : '0')
 
       if (status === 'authenticated') {
         try {
@@ -146,7 +157,9 @@ function SurveyContent() {
             body: JSON.stringify({
               learning_style: finalType,
               learning_style_answers: newVotes,
-              source: 'survey',
+              is_tie: isTie,
+              answer_count: newVotes.length,
+              source: 'landing',
             }),
           })
           const json = await res.json()

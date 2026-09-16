@@ -706,11 +706,32 @@ function DashboardContent() {
 
     if (cachedLearningType && !pm.learningStyle) {
       console.log('[stylePopup] DB 없음, localStorage 있음 → 백그라운드 동기화 시도')
+      let cachedAnswers: string[] | undefined
+      const answersJson = localStorage.getItem('kinepia_learning_answers')
+      if (answersJson) {
+        try {
+          const parsedAnswers: unknown = JSON.parse(answersJson)
+          if (Array.isArray(parsedAnswers) && parsedAnswers.every(isLearningType)) {
+            cachedAnswers = parsedAnswers
+          } else {
+            console.warn('[stylePopup] 유효하지 않은 응답 캐시 — 유형만 동기화')
+          }
+        } catch (error) {
+          console.warn('[stylePopup] 응답 캐시 파싱 실패 — 유형만 동기화:', error)
+        }
+      }
       fetch('/api/v1/learning-style', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ learning_style: cachedLearningType, source: 'sync' }),
-      }).then(r => r.json()).then(j => console.log('[stylePopup] 동기화 결과:', j)).catch(() => {})
+        body: JSON.stringify({
+          learning_style: cachedLearningType,
+          ...(cachedAnswers ? { learning_style_answers: cachedAnswers } : {}),
+          is_tie: !!cachedAnswers && localStorage.getItem('kinepia_learning_tie') === '1',
+          answer_count: cachedAnswers?.length ?? 0,
+          source: 'deferred_sync',
+        }),
+      }).then(r => r.json()).then(j => console.log('[stylePopup] 동기화 결과:', j))
+        .catch((error) => console.warn('[stylePopup] 동기화 실패:', error))
     }
 
     // ── user-certifications 결과 처리 ──

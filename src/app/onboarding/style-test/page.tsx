@@ -98,10 +98,13 @@ function shuffleOptions(questions: Question[]): Question[] {
 }
 
 // 점수 집계 후 최다 득표 유형 반환
-function calcType(votes: LearningType[]): LearningType {
+function calcType(votes: LearningType[]): { type: LearningType; isTie: boolean } {
   const count: Record<LearningType, number> = { spotter: 0, planner: 0, repeater: 0, explorer: 0 }
   votes.forEach((v) => { count[v]++ })
-  return (Object.keys(count) as LearningType[]).reduce((a, b) => count[a] >= count[b] ? a : b)
+  const types = Object.keys(count) as LearningType[]
+  const type = types.reduce((a, b) => count[a] >= count[b] ? a : b)
+  const isTie = types.filter((key) => count[key] === count[type]).length > 1
+  return { type, isTie }
 }
 
 export default function StyleTestPage() {
@@ -137,7 +140,7 @@ export default function StyleTestPage() {
 
       // 마지막 문항 → 결과 계산
       setSaving(true)
-      const result = calcType(newVotes)
+      const { type: result, isTie } = calcType(newVotes)
 
       localStorage.setItem(STYLE_TYPE_KEY, result)
 
@@ -149,6 +152,8 @@ export default function StyleTestPage() {
           body: JSON.stringify({
             learning_style: result,
             learning_style_answers: newVotes,
+            is_tie: isTie,
+            answer_count: newVotes.length,
             source: 'onboarding',
           }),
         })

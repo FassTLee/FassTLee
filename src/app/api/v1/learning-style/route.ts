@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { learning_style, learning_style_answers } = body
+  const { learning_style, learning_style_answers, source, is_tie } = body
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
   const userId = getUserId(token)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -66,6 +66,27 @@ export async function POST(req: NextRequest) {
         source: body.source ?? 'unknown',
       },
     })
+
+    if (!['landing', 'deferred_sync', 'onboarding'].includes(source)) {
+      console.warn('[learning-style POST] invalid history source — insert skipped:', source)
+    } else if (Array.isArray(learning_style_answers)) {
+      try {
+        const { error: historyError } = await supabaseAdmin
+          .from('learning_style_responses')
+          .insert({
+            user_id: userId,
+            schema_version: 2,
+            source,
+            answers: learning_style_answers,
+            answer_count: learning_style_answers.length,
+            computed_style: learning_style,
+            is_tie: typeof is_tie === 'boolean' ? is_tie : false,
+          })
+        if (historyError) console.error('[learning-style POST] history insert error:', historyError)
+      } catch (historyError) {
+        console.error('[learning-style POST] history insert exception:', historyError)
+      }
+    }
   }
 
   return NextResponse.json({ ok: true, saved })
