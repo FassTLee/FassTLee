@@ -2,6 +2,14 @@
 --   dev  jgweeoeikhdjcgkitjfl  2026-09-16
 --   prod sbketzgadjvzedbayesc  2026-09-16
 --   오너가 Supabase SQL Editor에서 선적용, 검증 통과
+-- 정정 이력:
+--   2026-09-16 source CHECK 제약의 두 번째 값을 deferred_sync 로 교체했다.
+--   dev·prod 양측 DROP CONSTRAINT 후 재생성, pg_get_constraintdef 로 검증 통과.
+--   사유: 클라이언트가 게스트 출신 여부를 서버에 신뢰 가능하게 알릴 방법이
+--   없다. 지연 경로에는 게스트 가입 후 이관 외에 POST 실패 후 재시도,
+--   로컬 캐시 보유 재방문도 포함되므로 게스트 전용 이름을 쓸 수 없다.
+--   게스트 이관 성공 여부는 source='deferred_sync' 중 answers 동반 비율로 판정한다.
+--   이 파일은 정정 후 상태를 고정한 것이며, 재구축 시 바로 현재 제약이 된다.
 --
 -- 배경: learning_style은 도입 이래 설문 결과만 담아온 컬럼이다.
 -- 행동 기반 확정값을 같은 컬럼에 쓰면 설문값과 구분되지 않아
@@ -70,14 +78,16 @@ CREATE TABLE IF NOT EXISTS public.learning_style_responses (
 
 -- source: 응답이 어느 경로로 들어왔는지. 시드 이관 성공률 측정의 근거가 된다.
 --   landing        = 랜딩 4문항, 로그인 상태에서 직접 저장
---   landing_guest  = 랜딩 4문항, 게스트로 받아 가입 시 이관
+--   deferred_sync  = 즉시 저장이 아닌 지연 경로로 뒤늦게 올라온 응답
+--                    (게스트 가입 후 이관, POST 실패 후 재시도,
+--                     로컬 캐시 보유 재방문 등을 포함한다)
 --   onboarding     = 온보딩 8문항
 --   backfill       = 기존 learning_style_answers 이관분
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'lsr_source_check') THEN
     ALTER TABLE public.learning_style_responses
       ADD CONSTRAINT lsr_source_check
-      CHECK (source IN ('landing', 'landing_guest', 'onboarding', 'backfill'));
+      CHECK (source IN ('landing', 'deferred_sync', 'onboarding', 'backfill'));
   END IF;
 END $$;
 
