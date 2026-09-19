@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useSession, signIn } from 'next-auth/react'
+import { kakaoSignIn } from '@/lib/kakaoSignIn'
 import { ChevronRight, ChevronDown, ChevronUp } from 'lucide-react'
 import type { TestResult, TestQuestion } from '@/lib/landingTest'
 import { SharePanel } from '@/components/common/SharePanel'
@@ -113,7 +114,7 @@ export default function LandingReportPage() {
             <div className="space-y-2.5 pt-1">
               {/* 카카오 */}
               <button
-                onClick={() => signIn('kakao', { callbackUrl: '/trainer/dashboard' })}
+                onClick={() => kakaoSignIn({ callbackUrl: '/trainer/dashboard' })}
                 className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl text-[14px] font-bold text-[#1A1A1A]"
                 style={{ backgroundColor: '#FEE500' }}
               >

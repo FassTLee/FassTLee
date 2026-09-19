@@ -2,6 +2,7 @@
 
 import { X, Trash2, Calendar, Plus } from 'lucide-react'
 import { signIn } from 'next-auth/react'
+import { kakaoSignIn } from '@/lib/kakaoSignIn'
 import PhoneRegisterModal from '@/components/PhoneRegisterModal'
 import { useDashboard } from './DashboardContext'
 import {
@@ -650,7 +651,7 @@ export default function DashboardModals() {
               <span>🔍</span> 구글로 시작하기
             </button>
             <button
-              onClick={() => signIn('kakao', { callbackUrl: '/trainer/dashboard' })}
+              onClick={() => kakaoSignIn({ callbackUrl: '/trainer/dashboard' })}
               className="w-full flex items-center justify-center gap-2 py-3 mb-3 bg-[#FEE500] rounded-2xl text-[14px] font-medium text-[#1A1A1A]"
             >
               <span>💬</span> 카카오로 시작하기

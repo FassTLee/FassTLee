@@ -2,6 +2,7 @@
 
 import { useSearchParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
+import { kakaoSignIn } from '@/lib/kakaoSignIn'
 
 export default function SignUpPage() {
   const searchParams = useSearchParams()
@@ -35,7 +36,7 @@ export default function SignUpPage() {
             </button>
 
             <button
-              onClick={() => signIn('kakao', { callbackUrl })}
+              onClick={() => kakaoSignIn({ callbackUrl })}
               className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl text-[14px] font-semibold text-[#000000] hover:opacity-90 transition-opacity"
               style={{ backgroundColor: '#FEE500' }}
             >

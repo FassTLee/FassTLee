@@ -1,6 +1,7 @@
 'use client'
 
 import { signIn } from 'next-auth/react'
+import { kakaoSignIn } from '@/lib/kakaoSignIn'
 import { X } from 'lucide-react'
 
 const GUEST_CLEANUP_KEYS = [
@@ -63,7 +64,7 @@ export function SignupPromptPopup({ onClose, callbackUrl = '/landing/survey' }: 
 
           {/* 카카오 */}
           <button
-            onClick={() => signIn('kakao', { callbackUrl })}
+            onClick={() => kakaoSignIn({ callbackUrl })}
             className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl text-[14px] font-bold text-[#1A1A1A]"
             style={{ backgroundColor: '#FEE500' }}
           >

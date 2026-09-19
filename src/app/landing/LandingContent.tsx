@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn, useSession } from 'next-auth/react'
+import { kakaoSignIn } from '@/lib/kakaoSignIn'
 import { Check, ChevronRight, Download } from 'lucide-react'
 import { usePwaInstall } from '@/app/providers'
 import { AppFooter } from '@/components/common/AppFooter'
@@ -129,7 +130,7 @@ export default function LandingContent() {
 
   const callbackUrl = searchParams.get('callbackUrl') ?? '/trainer/dashboard'
   const handleGoogleSignIn = () => { removeExitListeners(); signIn('google', { callbackUrl }) }
-  const handleKakaoSignIn  = () => { removeExitListeners(); signIn('kakao',  { callbackUrl }) }
+  const handleKakaoSignIn  = () => { removeExitListeners(); kakaoSignIn({ callbackUrl }) }
   const handleNaverSignIn  = () => { removeExitListeners(); signIn('naver',  { callbackUrl }) }
   const handleInstall = async () => {
     const choice = await promptInstall()
