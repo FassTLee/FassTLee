@@ -1,12 +1,12 @@
--- 20260924: anon 키 노출 면 차단 (권한 변경 2건)
+-- 20260928: anon 키 노출 면 차단 (권한 변경 2건)
 --
 -- 적용 이력:
---   dev  2026-09-24  오너가 Supabase SQL Editor에서 선적용, 검증 통과
---   prod 2026-09-24  (서울 리전 신 prod) 선적용, 검증 통과
+--   dev  2026-09-27~28 (KST)  오너가 Supabase SQL Editor에서 선적용, 검증 통과
+--   prod 2026-09-27~28 (KST)  (서울 리전 신 prod) 선적용, 검증 통과
 --
 -- 배경: 2026-09-19 배포부터 NEXT_PUBLIC_SUPABASE_ANON_KEY 가 브라우저 번들에 실린다.
 -- anon 키는 공개값이므로 anon 에 열린 권한·정책은 곧 전체 공개다.
--- 2026-09-24 사전 실측에서 두 곳이 열려 있었다.
+-- 2026-09-27~28 사전 실측에서 두 곳이 열려 있었다.
 --
 -- (1) v_learning_style_integrity
 --   실측: relkind=v / security_invoker 미설정 / anon SELECT 가능 (dev·prod 동일)
